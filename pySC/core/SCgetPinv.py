@@ -1,41 +1,33 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def SCgetPinv(M,N=0,alpha=[],damping=[],plot=0):
-    U,S,V = np.linalg.svd(M)
-    SVs = np.diag(S)
-    D = np.zeros(S.shape)
-    if len(alpha)>0:
-        D[0:len(SVs),0:len(SVs)] = np.diag(SVs / (SVs * SVs + alpha**2))
-    else:
-        D[0:len(SVs),0:len(SVs)] = np.diag(1./SVs)
-    if len(damping)>0:
-        D = damping * D
-    if N!=0:
-        keep = len(SVs)-N
-        D[keep+1:len(SVs),keep+1:len(SVs)] = 0
-    Minv = V * D.T * U.T
+def SCgetPinv(M, N=0, alpha=0, damping=1, plot=False):
+    u_mat, s_mat, vt_mat = np.linalg.svd(M, full_matrices=False)
+    num_singular_values = s_mat.shape[0] - N if N > 0 else s_mat.shape[0]
+    available = np.sum(s_mat > 0.)
+    keep = min(num_singular_values, available)
+    d_mat = np.zeros(s_mat.shape)
+    d_mat[:available] = s_mat[:available] / (np.square(s_mat[:available]) + alpha**2) if alpha else 1/s_mat[:available]
+    d_mat = damping * d_mat
+    minv = np.dot(np.dot(np.transpose(vt_mat[:keep, :]), np.diag(d_mat[:keep])), np.transpose(u_mat[:, :keep]))
     if plot:
-        plt.figure(66)
-        plt.subplot(1,2,1)
-        plt.semilogy(np.diag(S)/np.max(np.diag(S)),'o--')
-        plt.xlabel('Number of SV')
-        plt.ylabel('$\sigma/\sigma_0$')
-        plt.subplot(1,2,2)
-        plt.plot(np.diag(S)*np.diag(D),'o--')
-        plt.xlabel('Number of SV')
-        plt.ylabel('$\sigma * \sigma^+$')
-        plt.gca().yaxis.tick_right()
-        plt.gca().yaxis.set_label_position("right")
-        plt.gcf().set_size_inches(12,4)
-        plt.gcf().set_dpi(100)
-        plt.gcf().set_facecolor('w')
-        plt.show()
-    return Minv
-# End
-# Test
+        _plot(s_mat, d_mat)
+    return minv
 
-# M = np.random.rand(10,10)
-# Minv = SCgetPinv(M,N=0,alpha=0.1,damping=0.1,plot=1)
-# End
- 
+
+def _plot(s_mat, d_mat):
+    plt.figure(66)
+    plt.subplot(1, 2, 1)
+    plt.semilogy(np.diag(s_mat) / np.max(np.diag(s_mat)), 'o--')
+    plt.xlabel('Number of SV')
+    plt.ylabel('$\sigma/\sigma_0$')
+    plt.subplot(1, 2, 2)
+    plt.plot(np.diag(s_mat) * np.diag(d_mat), 'o--')
+    plt.xlabel('Number of SV')
+    plt.ylabel('$\sigma * \sigma^+$')
+    plt.gca().yaxis.tick_right()
+    plt.gca().yaxis.set_label_position("right")
+    plt.gcf().set_size_inches(12, 4)
+    plt.gcf().set_dpi(100)
+    plt.gcf().set_facecolor('w')
+    plt.show()
