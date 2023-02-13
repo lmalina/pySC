@@ -26,6 +26,8 @@ class SimulatedComissioning(DotDict):
         self.RING = RING
         self.IDEALRING = RING
         self.INJ = Injection()
+        self.SIG = DotDict()
+        self.ORD = DotDict()
         SCinjections = 0
         plotFunctionFlag = []
 

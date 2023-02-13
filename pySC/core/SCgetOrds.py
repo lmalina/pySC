@@ -1,14 +1,14 @@
-def SCgetOrds(RING,rx,verbose=0):
-    ords = []
-    if isinstance(rx,str):
-        for r in rx:
-            ords.append(SCgetOrds(RING,r,verbose=verbose))
-        return ords
-    for ord in range(len(RING)):
-        if rx in RING[ord]['FamName']:
-            ords.append(ord)
-            if verbose:
-                print('Matched: %s' % RING[ord]['FamName'])
-    return ords
-# End
- 
+import re
+
+
+def SCgetOrds(RING, rx, verbose=0):
+    if isinstance(rx, str):
+        if verbose:
+            return [_print_elem_get_index(ind, el) for ind, el in enumerate(RING) if re.search(rx, el.FamName)]
+        return [ind for ind, el in enumerate(RING) if re.search(rx, el.FamName)]
+    return [SCgetOrds(RING, r, verbose=0) for r in rx]
+
+
+def _print_elem_get_index(ind, el):
+    print(f'Matched: {el.FamName}')
+    return ind

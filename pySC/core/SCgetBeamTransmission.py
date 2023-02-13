@@ -2,9 +2,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def SCgetBeamTransmission(SC,nParticles=SC.INJ.nParticles,nTurns=SC.INJ.nTurns,plotFlag=0,verbose=0):
-    SC.INJ.nParticles = nParticles
-    SC.INJ.nTurns = nTurns
+def SCgetBeamTransmission(SC,nParticles=None, nTurns=None, plotFlag=0, verbose=0): # TODO Check if SC gets modified
+    if nParticles is not None:
+        SC.INJ.nParticles = nParticles
+    if nTurns is not None:
+        SC.INJ.nTurns = nTurns
     if verbose:
         print('Calculating maximum beam transmission for %d particles and %d turns: ' % (SC.INJ.nParticles,SC.INJ.nTurns),end='')
     Zin = SCgenBunches(SC)

@@ -7,7 +7,8 @@ defaults:
 
 on:  # Runs on all push events to any branch
   push:
-
+   branches-ignore:
+      - 'ai_translation_test'
 
 jobs:
   tests:

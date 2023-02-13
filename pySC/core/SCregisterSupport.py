@@ -1,52 +1,58 @@
 import numpy as np
 
 
-def SCregisterSupport(SC,*args):
-    if len(args)<2:
-        return
-    checkInput(args)
-    Nele = len(SC.RING)
-    ords = (args[1]-1)%Nele+1
-    type = args[0]
-    SC.ORD[type] = ords
-    for ordPair in ords:
-        for n in range(2):
-            SC.RING[ordPair[n]][type+'Offset'] = [0,0,0] # [x,y,z]
-            SC.RING[ordPair[n]][type+'Roll'] = [0,0,0] # [az,ax,ay]
-        for i in range(3,len(args),2):
-            if isinstance(args[i+1][0],list):
-                SC.SIG.Support[ordPair[0]][type+args[i]] = {args[i+1][0][0],args[i+1][1]}
-                if len(args[i+1][0])==2:
-                    SC.SIG.Support[ordPair[1]][type+args[i]] = {args[i+1][0][1],args[i+1][1]}
+def SCregisterSupport(SC,**args):
+    keywords = ['Girder', 'Plinth', 'Section']
+    stripped_dict={key: value for key, value in args.items() if key not in keywords}
+    type, ords = [[key, value] for key, value in args.items() if key in keywords][0]
+    #checkInput(args)  #
+    SC.ORD[type] = ords  #  TODO similar to register BPMs
+    if "Support" not in SC.SIG.keys():
+        SC.SIG["Support"] = dict()
+    for ord in np.ravel(ords):
+        setattr(SC.RING[ord], f"{type}Offset", np.zeros(3))  # [x,y,z]
+        setattr(SC.RING[ord], f"{type}Roll", np.zeros(3))  # [az,ax,ay]
+        SC.SIG["Support"][ord] = dict()
+    for ordPair in ords.T:
+        for key in stripped_dict.keys():
+            if isinstance(stripped_dict[key], list):
+                if stripped_dict[key][0].ndim == 1:
+                    SC.SIG.Support[ordPair[0]][f"{type}{key}"]= stripped_dict[key]
+                else:
+                    SC.SIG.Support[ordPair[0]][f"{type}{key}"]=[stripped_dict[key][0][0, :], stripped_dict[key][1]]
+                    SC.SIG.Support[ordPair[1]][f"{type}{key}"]= [stripped_dict[key][0][1, :], stripped_dict[key][1]]
+
             else:
-                SC.SIG.Support[ordPair[0]][type+args[i]] = args[i+1][0]
-                if len(args[i+1])==2:
-                    SC.SIG.Support[ordPair[1]][type+args[i]] = args[i+1][1]
+                if stripped_dict[key].ndim == 1:
+                    SC.SIG.Support[ordPair[0]][f"{type}{key}"]=stripped_dict[key]
+                else:
+                    SC.SIG.Support[ordPair[0]][f"{type}{key}"]=stripped_dict[key][0, :]
+                    SC.SIG.Support[ordPair[1]][f"{type}{key}"]= stripped_dict[key][1, :]
+    return SC
 
 def checkInput(args):
-    if args[0] not in ['Girder','Plinth','Section']:
+
+    if first_key:=list(args.keys())[0] not in ['Girder','Plinth','Section']:
         raise ValueError('Unsupported structure type. Allowed are ''Girder'', ''Plinth'' and ''Section''.')
-    if len(args[1])==0 or len(args[1][0])!=2:
+    if len(args[first_key])==0 or args[first_key].shape[0]!=2:
         raise ValueError('Ordinates must be a 2xn array of ordinates.')
-    if len(args)%2:
-        raise ValueError('Optional input must be given as name-value pairs.')
-    if any(np.diff(args[1],1)<0):
-        print('%d ''%s'' endpoint(s) might be upstream of startpoint(s).'%(sum(np.diff(args[1],1)<0),args[0]))
-    if 'Offset' in args:
-        offset = args[args.index('Offset')+1]
-        if isinstance(offset,list):
-            if len(offset[1])!=1:
-                raise ValueError('Sigma cutoff must be a single value.')
-            offset = offset[0]
-        if len(offset[0])!=3 or (len(offset)!=1 and len(offset)!=2):
-            print('Support structure offset uncertainty of ''%s'' must be given as [1x3] (start end endpoints get same offset errors) or [2x3] (start end endpoints get independent offset errors) array.'%args[0])
-    if 'Roll' in args:
-        roll = args[args.index('Roll')+1]
-        if isinstance(roll,list):
-            if len(roll[1])!=1:
-                raise ValueError('Sigma cutoff must be a single value.')
-            roll = roll[0]
-        if len(roll)!=3:
-            print('''%s roll uncertainty must be [1x3] array [az,ax,ay] of roll (around z-axis), pitch (roll around x-axis) and yaw (roll around y-axis) angle.'''%args[0])
-# End
+#     if any(np.diff(args[1],axis=0)<0):
+#         print('%d ''%s'' endpoint(s) might be upstream of startpoint(s).'%(sum(np.diff(args[1],1)<0),args[0]))
+#     if 'Offset' in args:
+#         offset = args[args.index('Offset')+1]
+#         if isinstance(offset,list):
+#             if len(offset[1])!=1:
+#                 raise ValueError('Sigma cutoff must be a single value.')
+#             offset = offset[0]
+#         if len(offset[0])!=3 or (len(offset)!=1 and len(offset)!=2):
+#             print('Support structure offset uncertainty of ''%s'' must be given as [1x3] (start end endpoints get same offset errors) or [2x3] (start end endpoints get independent offset errors) array.'%args[0])
+#     if 'Roll' in args:
+#         roll = args[args.index('Roll')+1]
+#         if isinstance(roll,list):
+#             if len(roll[1])!=1:
+#                 raise ValueError('Sigma cutoff must be a single value.')
+#             roll = roll[0]
+#         if len(roll)!=3:
+#             print('''%s roll uncertainty must be [1x3] array [az,ax,ay] of roll (around z-axis), pitch (roll around x-axis) and yaw (roll around y-axis) angle.'''%args[0])
+# # End
 

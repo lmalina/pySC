@@ -1,20 +1,8 @@
-import numpy as np
+from pySC.classes import SimulatedComissioning
 
 def SCinit(RING):
     global plotFunctionFlag, SCinjections
-    SC = {}
-    SC['RING'] = RING
-    SC['IDEALRING'] = RING
-    SC['INJ'] = {}
-    SC['INJ']['beamLostAt'] = 1
-    SC['INJ']['Z0ideal'] = np.zeros(6)
-    SC['INJ']['Z0'] = SC['INJ']['Z0ideal']
-    SC['INJ']['beamSize'] = np.zeros((6, 6))
-    SC['INJ']['randomInjectionZ'] = np.zeros(6)
-    SC['INJ']['nParticles'] = 1
-    SC['INJ']['nTurns'] = 1
-    SC['INJ']['nShots'] = 1
-    SC['INJ']['trackMode'] = 'TBT'
-    SCinjections = 0
+    SC = SimulatedComissioning(RING)
+    SCinjections = 0 # TODO only used in SCgenBunches
     plotFunctionFlag = []
     return SC
