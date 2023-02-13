@@ -1,4 +1,5 @@
 import numpy as np
+from at import Lattice
 
 
 class DotDict(dict):
@@ -19,7 +20,7 @@ class DotDict(dict):
 
 
 class SimulatedComissioning(DotDict):
-    def __init__(self, RING):
+    def __init__(self, RING: Lattice):
         super(SimulatedComissioning, self).__init__()
         global plotFunctionFlag
         global SCinjections
@@ -47,7 +48,7 @@ class Injection(DotDict):
 
 
 if __name__ == "__main__":
-    SC = SimulatedComissioning(0)
+    SC = SimulatedComissioning(Lattice([], energy=6e9))
     print("Atribute call:")
     print(SC.INJ)
 

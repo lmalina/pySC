@@ -1,29 +1,33 @@
-def SCcronoff(RING,*varargin):
-    for i in range(len(varargin)):
-        mode = varargin[i]
+from at import Lattice
+
+
+def SCcronoff(RING: Lattice, *args: str) -> Lattice:
+    valid_args = ('radiationoff', 'radiationon', 'cavityoff', 'cavityon')
+    if invalid_args := [arg for arg in args if arg not in valid_args]:
+        raise ValueError(f"Unknown arguments found: {invalid_args}")
+    for mode in args:
         if mode == 'radiationoff':
-            for ord in range(len(RING)):
-                if RING[ord].PassMethod == 'BndMPoleSymplectic4RadPass':
-                    RING[ord].PassMethod = 'BndMPoleSymplectic4Pass'
-                elif RING[ord].PassMethod == 'BndMPoleSymplectic4E2RadPass':
-                    RING[ord].PassMethod = 'BndMPoleSymplectic4E2Pass'
-                elif RING[ord].PassMethod == 'StrMPoleSymplectic4RadPass':
-                    RING[ord].PassMethod = 'StrMPoleSymplectic4Pass'
+            for ind in range(len(RING)):
+                if RING[ind].PassMethod == 'BndMPoleSymplectic4RadPass':
+                    RING[ind].PassMethod = 'BndMPoleSymplectic4Pass'
+                elif RING[ind].PassMethod == 'BndMPoleSymplectic4E2RadPass':
+                    RING[ind].PassMethod = 'BndMPoleSymplectic4E2Pass'
+                elif RING[ind].PassMethod == 'StrMPoleSymplectic4RadPass':
+                    RING[ind].PassMethod = 'StrMPoleSymplectic4Pass'
         elif mode == 'radiationon':
-            for ord in range(len(RING)):
-                if RING[ord].PassMethod == 'BndMPoleSymplectic4Pass':
-                    RING[ord].PassMethod = 'BndMPoleSymplectic4RadPass'
-                elif RING[ord].PassMethod == 'BndMPoleSymplectic4E2Pass':
-                    RING[ord].PassMethod = 'BndMPoleSymplectic4E2RadPass'
-                elif RING[ord].PassMethod == 'StrMPoleSymplectic4Pass':
-                    RING[ord].PassMethod = 'StrMPoleSymplectic4RadPass'
+            for ind in range(len(RING)):
+                if RING[ind].PassMethod == 'BndMPoleSymplectic4Pass':
+                    RING[ind].PassMethod = 'BndMPoleSymplectic4RadPass'
+                elif RING[ind].PassMethod == 'BndMPoleSymplectic4E2Pass':
+                    RING[ind].PassMethod = 'BndMPoleSymplectic4E2RadPass'
+                elif RING[ind].PassMethod == 'StrMPoleSymplectic4Pass':
+                    RING[ind].PassMethod = 'StrMPoleSymplectic4RadPass'
         elif mode == 'cavityoff':
-            for ord in range(len(RING)):
-                if 'Frequency' in RING[ord]:
-                    RING[ord].PassMethod = 'IdentityPass'
+            for ind in range(len(RING)):
+                if 'Frequency' in RING[ind]:
+                    RING[ind].PassMethod = 'IdentityPass'
         elif mode == 'cavityon':
-            for ord in range(len(RING)):
-                if 'Frequency' in RING[ord]:
-                    RING[ord].PassMethod = 'RFCavityPass'
-        else:
-            print('SCcronoff: mode %s not recognized. RING unchanged.' % mode)
+            for ind in range(len(RING)):
+                if 'Frequency' in RING[ind]:
+                    RING[ind].PassMethod = 'RFCavityPass'
+    return RING
