@@ -1,5 +1,5 @@
 import numpy as np
-import matplotlib.pyplot as plt
+
 
 def SCregisterCAVs(SC, CAVords, **kwargs):
     if 'Cavity' in SC.ORD:
@@ -17,8 +17,3 @@ def SCregisterCAVs(SC, CAVords, **kwargs):
 
         SC.SIG.RF[ord] = kwargs # TODO unify SC.SIG and SC.ORD (Cavity vs RF)
     return SC
-# End
-# Test
-
-# SC = SCregisterCAVs(SC,CAVords)
-# End
