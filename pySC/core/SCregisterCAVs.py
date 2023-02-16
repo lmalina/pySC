@@ -15,5 +15,5 @@ def SCregisterCAVs(SC, CAVords, **kwargs):
             setattr(SC.RING[ord], f"{field}Offset", 0)
             setattr(SC.RING[ord], f"{field}CalError", 0)
 
-        SC.SIG.RF[ord] = kwargs # TODO unify SC.SIG and SC.ORD (Cavity vs RF)
+        SC.SIG.RF[ord] = kwargs  # TODO unify SC.SIG and SC.ORD (Cavity vs RF)
     return SC

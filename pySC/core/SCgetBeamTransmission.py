@@ -23,7 +23,7 @@ def SCgetBeamTransmission(SC, nParticles=None, nTurns=None, plotFlag=0, verbose=
     else:
         Tx = T[0, :]
         maxTurns = np.where(np.isnan(Tx))[0][0] - 1
-    if maxTurns == []:
+    if not maxTurns:
         maxTurns = SC.INJ.nTurns
         ERROR = 0
     lostCount = np.sum(np.isnan(Tx), 1) / SC.INJ.nParticles

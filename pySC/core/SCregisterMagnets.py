@@ -13,9 +13,9 @@ def SCregisterMagnets(SC, MAGords, **kwargs):
         SC.RING[ord].SetPointA = SC.RING[ord].PolynomA
         SC.RING[ord].CalErrorB = np.zeros(len(SC.RING[ord].PolynomB))
         SC.RING[ord].CalErrorA = np.zeros(len(SC.RING[ord].PolynomA))
-        SC.RING[ord].MagnetOffset  = np.zeros(3)
+        SC.RING[ord].MagnetOffset = np.zeros(3)
         SC.RING[ord].SupportOffset = np.zeros(3)
-        SC.RING[ord].MagnetRoll  = np.zeros(3)
+        SC.RING[ord].MagnetRoll = np.zeros(3)
         SC.RING[ord].SupportRoll = np.zeros(3)
         SC.RING[ord].T1 = np.zeros(6)
         SC.RING[ord].T2 = np.zeros(6)
@@ -41,20 +41,21 @@ def setOptional(SC, ord, MAGords, **kwargs):
         # SC.RING[ord].MasterOf = varargin['MasterOf'][:, ord==MAGords].T
     return SC
 
+
 def storeOrds(SC, MAGords, kwargs):
-    if 'Magnet' in SC.ORD:   # TODO unify with Mag in SC.SIG
+    if 'Magnet' in SC.ORD:  # TODO unify with Mag in SC.SIG
         SC.ORD.Magnet = np.sort(np.unique(np.concatenate((SC.ORD.Magnet, MAGords))))
     else:
         SC.ORD.Magnet = MAGords[:]
     if 'SkewQuad' in kwargs.keys():
         if 'SkewQuad' in SC.ORD:
-            SC.ORD.SkewQuad = np.sort(np.unique(np.concatenate((SC.ORD.SkewQuad,MAGords))))
+            SC.ORD.SkewQuad = np.sort(np.unique(np.concatenate((SC.ORD.SkewQuad, MAGords))))
         else:
             SC.ORD.SkewQuad = MAGords[:]
     if ('HCM' in kwargs.keys() or 'VCM' in kwargs.keys()) and "CM" not in SC.ORD.keys():
         SC.ORD.CM = [np.zeros(0), np.zeros(0)]
     if 'HCM' in kwargs.keys():
-        SC.ORD.CM[0] = np.sort(np.unique(np.concatenate((SC.ORD.CM[0],MAGords))))
+        SC.ORD.CM[0] = np.sort(np.unique(np.concatenate((SC.ORD.CM[0], MAGords))))
     if 'VCM' in kwargs:
-        SC.ORD.CM[1] = np.sort(np.unique(np.concatenate((SC.ORD.CM[1],MAGords))))
+        SC.ORD.CM[1] = np.sort(np.unique(np.concatenate((SC.ORD.CM[1], MAGords))))
     return SC

@@ -2,6 +2,7 @@ import numpy as np
 
 from pySC.core.SCgetBPMreading import SCgetBPMreading
 from pySC.core.SCsetCMs2SetPoints import SCsetCMs2SetPoints
+from pySC.utils.feedback import isNew, isRepro, isTransmit, logLastBPM, goldenDonut
 
 
 def SCfeedbackFirstTurn(SC, Mplus, R0=None, maxsteps=100, wiggleAfter=20, wiggleSteps=64, wiggleRange=[50E-6, 200E-6],
@@ -12,27 +13,24 @@ def SCfeedbackFirstTurn(SC, Mplus, R0=None, maxsteps=100, wiggleAfter=20, wiggle
         CMords = SC.ORD.CM
     if BPMords is None:
         BPMords = SC.ORD.BPM
-    if verbose: print('SCfeedbackFirstTurn: Start')
+    if verbose:
+        print('SCfeedbackFirstTurn: Start')
     BPMhist = -1 * np.ones(1, 100)
-    ERROR = 1
     nWiggleCM = 1
     for n in range(maxsteps):
         B = SCgetBPMreading(SC, BPMords=BPMords)  # Inject...
         if np.all(np.isnan(B)):
-            if verbose: print('SCfeedbackFirstTurn: FAIL (no BPM reading to begin with)')
-            ERROR = 2
-            return
-        correctionStep()  # call correction subroutine.
+            raise RuntimeError('SCfeedbackFirstTurn: FAIL (no BPM reading to begin with)')
+        SC, BPMhist = correctionStep(SC, BPMhist, BPMords, CMords, B, R0, Mplus)  # call correction subroutine.
         if isRepro(BPMhist, 5) and isTransmit(BPMhist):
             if verbose:
                 print('SCfeedbackFirstTurn: Success')
-            ERROR = 0
-            return
+            return SC
         elif isRepro(BPMhist, wiggleAfter):
             if verbose:
                 print('SCfeedbackFirstTurn: Wiggling')
-            CMidxsH = getLastCMsDim(B, 1, nWiggleCM)  # Last CMs in horz
-            CMidxsV = getLastCMsDim(B, 2, nWiggleCM)  # Last CMs in vert
+            CMidxsH = getLastCMsDim(B, 1, nWiggleCM, BPMords, CMords)  # Last CMs in horz
+            CMidxsV = getLastCMsDim(B, 2, nWiggleCM, BPMords, CMords)  # Last CMs in vert
             CMordsH = CMords[0][CMidxsH]
             CMordsV = CMords[1][CMidxsV]
             pts = np.array([[0, 0], [0, 0]])
@@ -54,70 +52,32 @@ def SCfeedbackFirstTurn(SC, Mplus, R0=None, maxsteps=100, wiggleAfter=20, wiggle
                         nWiggleCM = 0  # Reset Wiggler CM number
                         break  # Continue with feedback
             B = SCgetBPMreading(SC, BPMords=BPMords)
-            correctionStep()
+            SC, BPMhist = correctionStep(SC, BPMhist, BPMords, CMords, B, R0, Mplus)
             B = SCgetBPMreading(SC, BPMords=BPMords)
-            correctionStep()
+            SC, BPMhist = correctionStep(SC, BPMhist, BPMords, CMords, B, R0, Mplus)
             B = SCgetBPMreading(SC, BPMords=BPMords)
-            correctionStep()
+            SC, BPMhist = correctionStep(SC, BPMhist, BPMords, CMords, B, R0, Mplus)
             nWiggleCM = nWiggleCM + 1
-    if verbose:
-        print('SCfeedbackFirstTurn: FAIL (maxsteps reached)')
-    ERROR = 1
-    return
+    raise RuntimeError('SCfeedbackFirstTurn: FAIL (maxsteps reached)')
 
-
-def correctionStep():
+def correctionStep(SC, BPMhist, BPMords, CMords, B, R0, Mplus):
     BPMhist = logLastBPM(BPMhist, B)
     R = np.array([B[0, :], B[1, :]])
     dR = R - R0
     dR[np.isnan(dR)] = 0
-    dphi = Mplus @ (dR)
-    lastCMh = getLastCMsDim(B, 1, 1)
-    lastCMv = getLastCMsDim(B, 2, 1)
+    dphi = Mplus @ dR
+    lastCMh = getLastCMsDim(B, 1, 1, BPMords, CMords)
+    lastCMv = getLastCMsDim(B, 2, 1, BPMords, CMords)
     dphi[lastCMh + 1:len(CMords[0])] = 0
     dphi[len(CMords[0]) + lastCMv:len(CMords[0]) + len(CMords[1])] = 0
     SC, _ = SCsetCMs2SetPoints(SC, CMords[0], -dphi[len(CMords[0])], 1, method='add')
     SC, _ = SCsetCMs2SetPoints(SC, CMords[1], -dphi[len(CMords[0]):len(CMords[0]) + len(CMords[1])], 2, method='add')
+    return SC, BPMhist
 
-
-def goldenDonut(r0, r1, Npts):
-    out = np.zeros((2, Npts))  # initialize output array
-    phi = 2 * np.pi / ((1 + np.sqrt(5)) / 2)  # golden ratio
-    theta = 0
-    for n in range(Npts):
-        out[:, n] = np.sqrt((r1 ** 2 - r0 ** 2) * n / (Npts - 1) + r0 ** 2) * np.array([np.cos(theta), np.sin(theta)])
-        theta = theta + phi
-    return out
-
-
-def getLastCMsDim(B, dim, n):
+def getLastCMsDim(B, dim, n, BPMords, CMords):
     lastBPMidx = np.where(~np.isnan(B))[1][-1]
     if len(lastBPMidx) == 0:
         lastBPMidx = len(BPMords)  # the last one
     lastBPMord = BPMords[lastBPMidx]
     idxs = np.where(CMords[dim] <= lastBPMord)[0][-n:]
     return idxs
-
-
-def logLastBPM(BPMhist, B):
-    BPMhist = np.roll(BPMhist, 1)
-    ord = getLastBPMord(B)
-    BPMhist[0] = ord if ord else 0
-    return BPMhist
-
-
-def getLastBPMord(B):
-    return np.where(np.isnan(B))[1][0] - 1
-
-
-def isRepro(BPMhist, N):
-    return np.all(BPMhist[0:N] == BPMhist[0])
-
-
-def isTransmit(BPMhist):
-    return BPMhist[0] == 0
-
-
-def isNew(BPMhist):
-    return BPMhist[0] != BPMhist[1]
-

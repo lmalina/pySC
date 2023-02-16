@@ -1,5 +1,5 @@
 import numpy as np
-
+from pySC.constants import SUPPORT_TYPES
 from pySC.core.SCfeedbackRun import SCfeedbackRun
 from pySC.core.SCgetModelRM import SCgetModelRM
 from pySC.core.SCgetPinv import SCgetPinv
@@ -42,8 +42,7 @@ def SCrampUpErrors(SC, nStepsRamp=10, eps=1e-5, target=0, alpha=10, maxsteps=30,
 
 
 def scaleSupport(SC, SC0, fields, scale):
-    supports = ['Girder', 'Plinth', 'Section']
-    for type in supports:
+    for type in SUPPORT_TYPES:
         if type in SC.ORD:
             for ordPair in SC.ORD[type]:
                 for field in fields:

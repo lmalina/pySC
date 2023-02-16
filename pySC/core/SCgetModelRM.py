@@ -35,7 +35,7 @@ def SCgetModelRM(SC, BPMords, CMords, trackMode='TBT', Z0=np.zeros(6), nTurns=1,
             else:
                 PolynomNominal = RING[CMord][PolynomDim[nDim]]
                 delta = dkick / RING[CMord].Length
-                RING[CMord][PolynomDim[nDim]][0] = PolynomNominal[0] + (-1) ** (nDim) * delta
+                RING[CMord][PolynomDim[nDim]][0] = PolynomNominal[0] + (-1) ** nDim * delta
                 TdB = trackmethod(RING, Z0, 1, nTurns, BPMords)
                 RING[CMord][PolynomDim[nDim]] = PolynomNominal
             dTdB = (TdB - Ta) / dkick

@@ -1,6 +1,7 @@
 import numpy as np
 from pySC.classes import DotDict, SimulatedComissioning
 
+
 def SCregisterBPMs(SC: SimulatedComissioning, BPMords, **kwargs):
     if 'BPM' in SC.ORD:
         SC.ORD.BPM = np.sort(np.unique(np.concatenate((SC.ORD.BPM, BPMords))))

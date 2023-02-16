@@ -2,6 +2,7 @@ import numpy as np
 from pySC.core.SCgetBPMreading import SCgetBPMreading
 from pySC.core.SCsetCMs2SetPoints import SCsetCMs2SetPoints
 from pySC.core.SCsetCavs2SetPoints import SCsetCavs2SetPoints
+from pySC.utils.feedback import is_stable_or_converged
 
 
 def SCfeedbackRun(SC, Mplus, R0=None, eps=1e-5, target=0, maxsteps=30, scaleDisp=0, CMords=None, BPMords=None,
@@ -32,22 +33,17 @@ def SCfeedbackRun(SC, Mplus, R0=None, eps=1e-5, target=0, maxsteps=30, scaleDisp
         if np.any(np.isnan(B[0, :])):
             raise RuntimeError('SCfeedbackRun: FAIL (lost transmission)')
 
-        if BPMhist[0] < target and _is_stable_or_converged(min(10, maxsteps), eps, BPMhist):
+        if BPMhist[0] < target and is_stable_or_converged(min(10, maxsteps), eps, BPMhist):
             if verbose:
                 print("SCfeedbackRun: Success (target reached)")
             return SC
-        if _is_stable_or_converged(3, eps, BPMhist):
+        if is_stable_or_converged(3, eps, BPMhist):
             if verbose:
                 print(f"SCfeedbackRun: Success (converged after {steps:d} steps)")
             return SC
 
-    if _is_stable_or_converged(min(10, maxsteps), eps, BPMhist) or maxsteps == 1:
+    if is_stable_or_converged(min(10, maxsteps), eps, BPMhist) or maxsteps == 1:
         if verbose:
             print("SCfeedbackRun: Success (maxsteps reached)")
         return SC
     raise RuntimeError("SCfeedbackRun: FAIL (maxsteps reached, unstable)")
-
-
-def _is_stable_or_converged(n, eps, BPMhist):
-    CV = np.var(BPMhist[:n], 1) / np.std(BPMhist[:n])
-    return CV < eps
