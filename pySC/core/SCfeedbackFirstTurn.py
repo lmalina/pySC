@@ -24,13 +24,15 @@ def SCfeedbackFirstTurn(SC, Mplus, R0=None, maxsteps=100, wiggleAfter=20, wiggle
             return
         correctionStep()  # call correction subroutine.
         if isRepro(BPMhist, 5) and isTransmit(BPMhist):
-            if verbose: print('SCfeedbackFirstTurn: Success')
+            if verbose:
+                print('SCfeedbackFirstTurn: Success')
             ERROR = 0
             return
         elif isRepro(BPMhist, wiggleAfter):
-            if verbose: print('SCfeedbackFirstTurn: Wiggling')
-            CMidxsH = getLastCMsDim(par, B, 1, nWiggleCM)  # Last CMs in horz
-            CMidxsV = getLastCMsDim(par, B, 2, nWiggleCM)  # Last CMs in vert
+            if verbose:
+                print('SCfeedbackFirstTurn: Wiggling')
+            CMidxsH = getLastCMsDim(B, 1, nWiggleCM)  # Last CMs in horz
+            CMidxsV = getLastCMsDim(B, 2, nWiggleCM)  # Last CMs in vert
             CMordsH = CMords[0][CMidxsH]
             CMordsV = CMords[1][CMidxsV]
             pts = np.array([[0, 0], [0, 0]])
@@ -39,8 +41,8 @@ def SCfeedbackFirstTurn(SC, Mplus, R0=None, maxsteps=100, wiggleAfter=20, wiggle
             for i in range(dpts.shape[1]):
                 SPH = dpts[0, i] * np.ones((len(CMordsH), 1))  # Horizontal setpoint change
                 SPV = dpts[1, i] * np.ones((len(CMordsV), 1))  # Vertical setpoint change
-                SC = SCsetCMs2SetPoints(SC, CMordsH, SPH, 1, 'add')
-                SC = SCsetCMs2SetPoints(SC, CMordsV, SPV, 2, 'add')
+                SC, _ = SCsetCMs2SetPoints(SC, CMordsH, SPH, 1, method='add')
+                SC, _ = SCsetCMs2SetPoints(SC, CMordsV, SPV, 2, method='add')
                 W = SCgetBPMreading(SC, BPMords=BPMords)
                 BPMhist = logLastBPM(BPMhist, W)
                 if isNew(BPMhist):
@@ -58,7 +60,8 @@ def SCfeedbackFirstTurn(SC, Mplus, R0=None, maxsteps=100, wiggleAfter=20, wiggle
             B = SCgetBPMreading(SC, BPMords=BPMords)
             correctionStep()
             nWiggleCM = nWiggleCM + 1
-    if verbose: print('SCfeedbackFirstTurn: FAIL (maxsteps reached)')
+    if verbose:
+        print('SCfeedbackFirstTurn: FAIL (maxsteps reached)')
     ERROR = 1
     return
 
@@ -69,12 +72,12 @@ def correctionStep():
     dR = R - R0
     dR[np.isnan(dR)] = 0
     dphi = Mplus @ (dR)
-    lastCMh = getLastCMsDim(par, B, 1, 1)
-    lastCMv = getLastCMsDim(par, B, 2, 1)
+    lastCMh = getLastCMsDim(B, 1, 1)
+    lastCMv = getLastCMsDim(B, 2, 1)
     dphi[lastCMh + 1:len(CMords[0])] = 0
     dphi[len(CMords[0]) + lastCMv:len(CMords[0]) + len(CMords[1])] = 0
-    SC = SCsetCMs2SetPoints(SC, CMords[0], -dphi[0:len(CMords[0])], 1, 'add')
-    SC = SCsetCMs2SetPoints(SC, CMords[1], -dphi[len(CMords[0]):len(CMords[0]) + len(CMords[1])], 2, 'add')
+    SC, _ = SCsetCMs2SetPoints(SC, CMords[0], -dphi[len(CMords[0])], 1, method='add')
+    SC, _ = SCsetCMs2SetPoints(SC, CMords[1], -dphi[len(CMords[0]):len(CMords[0]) + len(CMords[1])], 2, method='add')
 
 
 def goldenDonut(r0, r1, Npts):
@@ -87,7 +90,7 @@ def goldenDonut(r0, r1, Npts):
     return out
 
 
-def getLastCMsDim(par, B, dim, n):
+def getLastCMsDim(B, dim, n):
     lastBPMidx = np.where(~np.isnan(B))[1][-1]
     if len(lastBPMidx) == 0:
         lastBPMidx = len(BPMords)  # the last one
@@ -99,28 +102,22 @@ def getLastCMsDim(par, B, dim, n):
 def logLastBPM(BPMhist, B):
     BPMhist = np.roll(BPMhist, 1)
     ord = getLastBPMord(B)
-    if ord:
-        BPMhist[0] = ord
-    else:
-        BPMhist[0] = 0
+    BPMhist[0] = ord if ord else 0
     return BPMhist
 
 
 def getLastBPMord(B):
-    ord = np.where(np.isnan(B))[1][0] - 1
-    return ord
+    return np.where(np.isnan(B))[1][0] - 1
 
 
 def isRepro(BPMhist, N):
-    res = np.all(BPMhist[0:N] == BPMhist[0])
-    return res
+    return np.all(BPMhist[0:N] == BPMhist[0])
 
 
 def isTransmit(BPMhist):
-    res = BPMhist[0] == 0
-    return res
+    return BPMhist[0] == 0
 
 
 def isNew(BPMhist):
-    res = BPMhist[0] != BPMhist[1]
-    return res
+    return BPMhist[0] != BPMhist[1]
+

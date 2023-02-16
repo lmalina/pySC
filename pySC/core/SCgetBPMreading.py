@@ -3,14 +3,9 @@ import numpy as np
 
 from pySC.core.SCgenBunches import SCgenBunches
 from pySC.core.SCparticlesIn3D import SCparticlesIn3D
-from pySC.core.SCplotBPMreading import SCplotBPMreading
+#from pySC.core.SCplotBPMreading import SCplotBPMreading
 from pySC.core.SCrandnc import SCrandnc
-
-atgetfieldvalues=at.get_value_refpts  # TODO are these correct methods?
-atpass=at.atpass
-findorbit6=at.find_orbit6
-findspos = at.get_s_pos
-# twissline= ?
+from pySC import atgetfieldvalues
 
 def SCgetBPMreading(SC, BPMords=[]):
     global plotFunctionFlag
@@ -38,7 +33,8 @@ def SCgetBPMreading(SC, BPMords=[]):
         B1[:, :, nShot] = calcBPMreading(SC, T, atAllElements=plotFunctionFlag)
     B = np.nanmean(B1, 2)
     if plotFunctionFlag:
-        SCplotBPMreading(SC, B, T1)
+        pass  # TODO SCplotBPMreading(SC, B, T1)
+
     if SC.INJ.trackMode == 'pORB':
         Bpseudo = np.full((2, len(SC.ORD.BPM)), np.nan)
         for nBPM in range(len(SC.ORD.BPM)):
@@ -68,7 +64,7 @@ def calcBPMreading(SC, T, atAllElements=0):
     BPMcalError = np.tile(np.array(atgetfieldvalues(SC.RING[SC.ORD.BPM], 'CalError')), (1, nTurns))
     BPMroll = np.tile(atgetfieldvalues(SC.RING[SC.ORD.BPM], 'Roll'), (1, nTurns)) + np.tile(
         atgetfieldvalues(SC.RING[SC.ORD.BPM], 'SupportRoll'), (1, nTurns))
-    BPMnoise = np.tile(BPMnoise, (1, nTurns)) * SCrandnc(2, 2, nTurns * len(SC.ORD.BPM))
+    BPMnoise = np.tile(BPMnoise, (1, nTurns)) * SCrandnc(2, (2, nTurns * len(SC.ORD.BPM)))
     BPMsumError = np.tile(atgetfieldvalues(SC.RING[SC.ORD.BPM], 'SumError'), (1, nTurns))
     if atAllElements:
         nE = np.reshape((np.arange(nTurns) * len(SC.RING) + SC.ORD.BPM), (1, []))

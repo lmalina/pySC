@@ -1,24 +1,35 @@
 import sys
-import numpy as np
+
 import at
+import numpy as np
+
+from pySC.core.SCapplyErrors import SCapplyErrors
 from pySC.core.SCcronoff import SCcronoff
 from pySC.core.SCfeedbackBalance import SCfeedbackBalance
+from pySC.core.SCfeedbackFirstTurn import SCfeedbackFirstTurn
 from pySC.core.SCfeedbackRun import SCfeedbackRun
-from pySC.core.SCgetBeamTransmission import SCgetBeamTransmission
+from pySC.core.SCfeedbackStitch import SCfeedbackStitch
 from pySC.core.SCgetBPMreading import SCgetBPMreading
+from pySC.core.SCgetBeamTransmission import SCgetBeamTransmission
 from pySC.core.SCgetModelDispersion import SCgetModelDispersion
 from pySC.core.SCgetModelRM import SCgetModelRM
 from pySC.core.SCgetOrds import SCgetOrds
 from pySC.core.SCgetPinv import SCgetPinv
 from pySC.core.SCinit import SCinit
+from pySC.core.SClocoLib import SClocoLib
+from pySC.core.SCplotLattice import SCplotLattice
 from pySC.core.SCplotPhaseSpace import SCplotPhaseSpace
+#from pySC.core.SCplotSupport import SCplotSupport
 from pySC.core.SCpseudoBBA import SCpseudoBBA
 from pySC.core.SCregisterBPMs import SCregisterBPMs
 from pySC.core.SCregisterCAVs import SCregisterCAVs
 from pySC.core.SCregisterMagnets import SCregisterMagnets
 from pySC.core.SCregisterSupport import SCregisterSupport
+from pySC.core.SCsanityCheck import SCsanityCheck
 from pySC.core.SCsetCavs2SetPoints import SCsetCavs2SetPoints
 from pySC.core.SCsetMags2SetPoints import SCsetMags2SetPoints
+from pySC.core.SCsynchEnergyCorrection import SCsynchEnergyCorrection
+from pySC.core.SCsynchPhaseCorrection import SCsynchPhaseCorrection
 
 
 def create_at_lattice():
@@ -103,15 +114,14 @@ if __name__ == "__main__":
     SCsanityCheck(SC)
     SCplotLattice(SC, 'nSectors', 10)
     SC = SCapplyErrors(SC)
-    SCplotSupport(SC)
+    #SCplotSupport(SC)  # TODO
     SC.RING = SCcronoff(SC.RING, 'cavityoff')
     sextOrds = SCgetOrds(SC.RING, 'SF|SD')
-    SC = SCsetMags2SetPoints(SC, sextOrds, 2, 3, 0,
-                             'method', 'abs')
+    SC = SCsetMags2SetPoints(SC, sextOrds, 2, 3, 0, method='abs')
     RM1 = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, 'nTurns', 1)
     RM2 = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, 'nTurns', 2)
-    Minv1 = SCgetPinv(RM1, 'alpha', 50)
-    Minv2 = SCgetPinv(RM2, 'alpha', 50)
+    Minv1 = SCgetPinv(RM1, alpha=50)
+    Minv2 = SCgetPinv(RM2, alpha=50)
     SC.INJ.nParticles = 1
     SC.INJ.nTurns = 1
     SC.INJ.nShots = 1
@@ -119,45 +129,23 @@ if __name__ == "__main__":
     eps = 1E-4  # Noise level
     plotFunctionFlag = 0
     SCgetBPMreading(SC)
-    [CUR, ERROR] = SCfeedbackFirstTurn(SC, Minv1, 'verbose', 1)
+    [CUR, ERROR] = SCfeedbackFirstTurn(SC, Minv1, verbose=True)  # TODO
     if not ERROR:
         SC = CUR
     else:
         sys.exit()
     SC.INJ.nTurns = 2
-    [CUR, ERROR] = SCfeedbackStitch(SC, Minv2,
-                                    'nBPMs', 3,
-                                    'maxsteps', 20,
-                                    'verbose', 1)
-    if not ERROR:
-        SC = CUR
-    else:
-        sys.exit()
-    [CUR, ERROR] = SCfeedbackRun(SC, Minv2,
-                                 'target', 300E-6,
-                                 'maxsteps', 30,
-                                 'eps', eps,
-                                 'verbose', 1)
-    if not ERROR:
-        SC = CUR
-    else:
-        sys.exit()
-    [CUR, ERROR] = SCfeedbackBalance(SC, Minv2,
-                                     'maxsteps', 32,
-                                     'eps', eps,
-                                     'verbose', 1)
-    if not ERROR:
-        SC = CUR
-    else:
-        sys.exit()
+    SC = SCfeedbackStitch(SC, Minv2, nBPMs=3, maxsteps=20, verbose=True)
+    SC = SCfeedbackRun(SC, Minv2, target=300E-6, maxsteps=30, eps=eps, verbose=True)
+    SC = SCfeedbackBalance(SC, Minv2, maxsteps=32, eps=eps, verbose=True)
+
     for S in np.linspace(0.1, 1, 5):
-        SC = SCsetMags2SetPoints(SC, sextOrds, 2, 3, S,
-                                 'method', 'rel')
-        [CUR, ERROR] = SCfeedbackBalance(SC, Minv2,
-                                         'maxsteps', 10,
-                                         'eps', eps,
-                                         'verbose', 1)
-        if not ERROR: SC = CUR
+        SC = SCsetMags2SetPoints(SC, sextOrds, 2, 3, S, method='rel')
+        try:
+            SC = SCfeedbackBalance(SC, Minv2, maxsteps=32, eps=eps, verbose=True)
+        except RuntimeError:
+            pass
+
     plotFunctionFlag = 0
     SC.RING = SCcronoff(SC.RING, 'cavityon')
     SCplotPhaseSpace(SC,
@@ -169,10 +157,9 @@ if __name__ == "__main__":
                                                    'nSteps', 25,  # Number of phase steps
                                                    'plotResults', 1,  # Final results are plotted
                                                    'verbose', 1)  # Print results
-        if ERROR: sys.exit('Phase correction crashed')
-        SC = SCsetCavs2SetPoints(SC, SC.ORD.Cavity,
-                                 'TimeLag', deltaPhi,
-                                 'add')
+        if ERROR:
+            sys.exit('Phase correction crashed')
+        SC = SCsetCavs2SetPoints(SC, SC.ORD.Cavity, 'TimeLag', deltaPhi, method='add')
         [deltaF, ERROR] = SCsynchEnergyCorrection(SC,
                                                   'range', 40E3 * np.array([-1, 1]),  # Frequency range [kHz]
                                                   'nTurns', 20,  # Number of turns
@@ -180,34 +167,29 @@ if __name__ == "__main__":
                                                   'plotResults', 1,  # Final results are plotted
                                                   'verbose', 1)  # Print results
         if not ERROR:
-            SC = SCsetCavs2SetPoints(SC, SC.ORD.Cavity,
-                                     'Frequency', deltaF,
-                                     'add')
+            SC = SCsetCavs2SetPoints(SC, SC.ORD.Cavity, 'Frequency', deltaF, method='add')
         else:
             sys.exit()
     SCplotPhaseSpace(SC, 'nParticles', 10, 'nTurns', 1000)
-    [maxTurns, lostCount, ERROR] = SCgetBeamTransmission(SC,
-                                                         'nParticles', 100,
-                                                         'nTurns', 10,
-                                                         'verbose', True)
-    if ERROR: sys.exit()
+    [maxTurns, lostCount, ERROR] = SCgetBeamTransmission(SC, 'nParticles', 100, 'nTurns', 10, 'verbose', True)
+    if ERROR:
+        sys.exit()
     SC.INJ.trackMode = 'ORB'
-    MCO = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, 'trackMode', 'ORB')
+    MCO = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, trackMode='ORB')
     eta = SCgetModelDispersion(SC, SC.ORD.BPM, SC.ORD.Cavity)
     quadOrds = np.tile(SCgetOrds(SC.RING, 'QF|QD'), 2)
     BPMords = np.tile(SC.ORD.BPM, 2)
     SC = SCpseudoBBA(SC, BPMords, quadOrds, 50E-6)
     for alpha in range(10, 0, -1):
-        MinvCO = SCgetPinv(np.concatenate((MCO, 1E8 * eta)), 'alpha', alpha)
-        [CUR, ERROR] = SCfeedbackRun(SC, MinvCO,
-                                     'target', 0,
-                                     'maxsteps', 50,
-                                     'scaleDisp', 1E8,
-                                     'verbose', 1)
-        if ERROR: break
+        MinvCO = SCgetPinv(np.concatenate((MCO, 1E8 * eta)), alpha=alpha)
+        try:
+            CUR = SCfeedbackRun(SC, MinvCO, target=0, maxsteps=50, scaleDisp= 1E8, verbose=True)
+        except RuntimeError:
+            break
         B0rms = np.sqrt(np.mean(np.square(SCgetBPMreading(SC)), 1))
         Brms = np.sqrt(np.mean(np.square(SCgetBPMreading(CUR)), 1))
-        if np.mean(B0rms) < np.mean(Brms): break
+        if np.mean(B0rms) < np.mean(Brms):
+            break
         SC = CUR
     plotFunctionFlag = 0
     SC.RING = SCcronoff(SC.RING, 'cavityon')
@@ -216,7 +198,8 @@ if __name__ == "__main__":
                                                          'nParticles', 100,
                                                          'nTurns', 10,
                                                          'verbose', True)
-    if ERROR: sys.exit()
+    if ERROR:
+        sys.exit()
     CMstep = 1E-4  # [rad]
     RFstep = 1E3  # [Hz]
     [RINGdata, LOCOflags, Init] = SClocoLib('setupLOCOmodel', SC,

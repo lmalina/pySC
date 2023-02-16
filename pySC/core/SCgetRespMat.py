@@ -37,8 +37,7 @@ def SCgetRespMat(SC, Amp, BPMords, CMords, mode='fixedKick', nSteps=2, fit='line
                 dB = np.vstack((np.zeros((nSteps - 1, len(Bref))), dB.T))
                 for nStep in range(nSteps):
                     if CMstepVec[nStep] != 0 and CMstepVec[nStep] != MaxStep:
-                        SC, realCMsetPoint[nStep] = SCsetCMs2SetPoints(SC, CMords[nDim][nCM],
-                                                                       cmstart[nCM] + CMstepVec[nStep], nDim)
+                        SC, realCMsetPoint[nStep] = SCsetCMs2SetPoints(SC, CMords[nDim][nCM], cmstart[nCM] + CMstepVec[nStep], nDim)
                         dB[nStep, :] = np.reshape(SCgetBPMreading(SC, BPMords=BPMords), [], 1) - Bref
                 dCM = realCMsetPoint - cmstart[nCM]
             else:

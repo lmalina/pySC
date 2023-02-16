@@ -8,6 +8,8 @@ from pySC.core.SCgetRespMat import SCgetRespMat
 from pySC.core.SCsetMags2SetPoints import SCsetMags2SetPoints
 from pySC.core.SCupdateMagnets import SCupdateMagnets
 from pySC.classes import DotDict
+from pySC import atpass, atgetfieldvalues, findspos, findorbit6, findorbit4, atlinopt
+
 
 def SClocoLib(funName, *varargin):
     eval(funName + '(*varargin)')
@@ -121,7 +123,7 @@ def setupFitparameters(SC, RING0, RINGdata, DeltaRF, *varargin):
     return FitParameters
 
 
-def applyLatticeCorrection(SC, FitParameters, dipCompensation=1, damping=1):
+def applyLatticeCorrection(SC, FitParameters, dipCompensation=True, damping=1):
     for nGroup in range(len(FitParameters.Params)):
         for nElem in range(len(FitParameters.Params[nGroup])):
             ord = FitParameters.Params[nGroup][nElem].ElemIndex
@@ -129,7 +131,7 @@ def applyLatticeCorrection(SC, FitParameters, dipCompensation=1, damping=1):
             setpoint = FitParameters.OrigValues[nGroup] + damping * (
                         FitParameters.IdealValues[nGroup] - FitParameters.Values[nGroup])
             if field == 'SetPointB':  # Normal quadrupole
-                SC = SCsetMags2SetPoints(SC, ord, 2, 2, setpoint, 'dipCompensation', dipCompensation)
+                SC = SCsetMags2SetPoints(SC, ord, 2, 2, setpoint, dipCompensation=dipCompensation)
             elif field == 'SetPointA':  # Skew quadrupole
                 SC = SCsetMags2SetPoints(SC, ord, 1, 2, setpoint)
     SC = SCupdateMagnets(SC, SC.ORD.Magnet)
@@ -218,7 +220,7 @@ def fitChromaticity(SC, sOrds, targetChrom=[], verbose=0, InitStepSize=[2, 2], T
     SC0 = SC
     if len(sepTunesWithOrds) > 0 and len(sepTunesDeltaK) > 0:
         for nFam in range(len(sepTunesWithOrds)):
-            SC = SCsetMags2SetPoints(SC, sepTunesWithOrds[nFam], 2, 2, sepTunesDeltaK[nFam], 'method', 'add')
+            SC = SCsetMags2SetPoints(SC, sepTunesWithOrds[nFam], 2, 2, sepTunesDeltaK[nFam], method='add')
     if verbose:
         _, _, xi0 = atlinopt(SC.RING, 0, [])
         print('Fitting chromaticities from [%.3f,%.3f] to [%.3f,%.3f].' % (
@@ -276,6 +278,5 @@ def getLatProps(SC, FitInteger):
 
 def applySetpoints(SC, ords, setpoints, SP0):
     for nFam in range(len(ords)):
-        SC = SCsetMags2SetPoints(SC, ords[nFam], 2, 2, setpoints[nFam] + SP0[nFam], 'method', 'abs', 'dipCompensation',
-                                 1)
+        SC = SCsetMags2SetPoints(SC, ords[nFam], 2, 2, setpoints[nFam] + SP0[nFam], method='abs', dipCompensation=True)
     return SC

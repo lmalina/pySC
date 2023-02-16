@@ -11,7 +11,7 @@ def SCfeedbackBalance(SC,Mplus,eps=1e-5, R0=np.zeros((2, 1)), maxsteps=10, CMord
         print('SCfeedbackBalance: Start')
     BPMindHist = -1 * np.ones(100)
     BRMShist = np.nan*np.ones(100)
-    cnt=1
+
     for steps in range(maxsteps):
         B = SCgetBPMreading(SC, BPMords=BPMords) # Inject ...
         BPMindHist = logLastBPM(BPMindHist, B)
@@ -27,29 +27,22 @@ def SCfeedbackBalance(SC,Mplus,eps=1e-5, R0=np.zeros((2, 1)), maxsteps=10, CMord
         dphi = Mplus @ R
         BRMShist = np.roll(BRMShist, 1)
         BRMShist[0] = np.sqrt(np.var(R, 1))
-        SC = SCsetCMs2SetPoints(SC, CMords[0], -dphi[0:len(CMords[0])], 1, 'add')
-        SC = SCsetCMs2SetPoints(SC, CMords[1], -dphi[len(CMords[0]) + 1:end], 2, 'add')
+        SC, _ = SCsetCMs2SetPoints(SC, CMords[0], -dphi[:len(CMords[0])], 1, method='add')
+        SC, _ = SCsetCMs2SetPoints(SC, CMords[1], -dphi[len(CMords[0]):], 2, method='add')
         if isSetback(BPMindHist):
-            if verbose:
-                print('SCfeedbackBalance: FAIL (setback)')
-            return
+            raise RuntimeError('SCfeedbackBalance: FAIL (setback)')
         if not isTransmit(BPMindHist):
+            raise RuntimeError('SCfeedbackBalance: FAIL (lost transmission)')
+        if _is_stable_or_converged(3, eps, BRMShist):
             if verbose:
-                print('SCfeedbackBalance: FAIL (lost transmission)')
-            return
-        if isConverged(BRMShist,3,eps):
-            if verbose:
-                print('SCfeedbackBalance: Success (converged after %d steps)'%steps)
-            return
-        cnt = cnt+1
-    if isStable(min(10, maxsteps), eps):
+                print(f'SCfeedbackBalance: Success (converged after {steps} steps)')
+            return SC
+
+    if _is_stable_or_converged(min(10, maxsteps), eps, BRMShist):
         if verbose:
             print('SCfeedbackBalance: Success (maxsteps reached)')
-        return
-    else:
-        if verbose:
-            print('SCfeedbackBalance: FAIL (maxsteps reached, unstable)')
-        return
+        return SC
+    raise RuntimeError('SCfeedbackBalance: FAIL (maxsteps reached, unstable)')
 
 
 def isSetback(hist):
@@ -72,20 +65,10 @@ def logLastBPM(hist,B):
 
 def getLastBPMord(B):
     ord = np.where(np.isnan(B))[1]
-    if len(ord)>0:
+    if len(ord) > 0:
         return ord[0]-1
-    else:
-        return None
+    return None
 
-
-def isConverged(hist,n,eps):
-    CV=np.var(hist[0:n],1)/np.std(hist[0:n])
-    return CV<eps
-
-
-def isStable(n,eps):
-    CV=np.var(BRMShist[0:n],1)/np.std(BRMShist[0:n])
-    return CV<eps
-
-# End
- 
+def _is_stable_or_converged(n, eps, BPMhist):
+    CV = np.var(BPMhist[:n], 1) / np.std(BPMhist[:n])
+    return CV < eps
