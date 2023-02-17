@@ -1,16 +1,20 @@
 import numpy as np
+from pySC.classes import DotDict, SimulatedComissioning
+from numpy import ndarray
 
 
-def SCregisterMagnets(SC, MAGords, **kwargs):
+def SCregisterMagnets(SC: SimulatedComissioning, MAGords: ndarray, **kwargs) -> SimulatedComissioning:
     keywords = ['HCM', 'VCM', 'CF', 'SkewQuad', 'MasterOf']  # TODO MasterOf should be np.array
     nvpairs = {key: value for key, value in kwargs.items() if key not in keywords}
-    if "Mag" not in SC.SIG.keys():
-        SC.SIG.Mag = dict()
     for ord in MAGords:
-        SC.RING[ord].NomPolynomB = SC.RING[ord].PolynomB
-        SC.RING[ord].NomPolynomA = SC.RING[ord].PolynomA
-        SC.RING[ord].SetPointB = SC.RING[ord].PolynomB
-        SC.RING[ord].SetPointA = SC.RING[ord].PolynomA
+        if ord not in SC.SIG.Mag.keys():
+            SC.SIG.Mag[ord] = DotDict()
+        SC.SIG.Mag[ord].update(nvpairs)
+
+        SC.RING[ord].NomPolynomB = SC.RING[ord].PolynomB[:]
+        SC.RING[ord].NomPolynomA = SC.RING[ord].PolynomA[:]
+        SC.RING[ord].SetPointB = SC.RING[ord].PolynomB[:]
+        SC.RING[ord].SetPointA = SC.RING[ord].PolynomA[:]
         SC.RING[ord].CalErrorB = np.zeros(len(SC.RING[ord].PolynomB))
         SC.RING[ord].CalErrorA = np.zeros(len(SC.RING[ord].PolynomA))
         SC.RING[ord].MagnetOffset = np.zeros(3)
@@ -20,8 +24,6 @@ def SCregisterMagnets(SC, MAGords, **kwargs):
         SC.RING[ord].T1 = np.zeros(6)
         SC.RING[ord].T2 = np.zeros(6)
         SC = setOptional(SC, ord, MAGords, **kwargs)
-        SC.SIG.Mag[ord] = nvpairs
-
     return storeOrds(SC, MAGords, kwargs)
 
 
@@ -43,15 +45,9 @@ def setOptional(SC, ord, MAGords, **kwargs):
 
 
 def storeOrds(SC, MAGords, kwargs):
-    if 'Magnet' in SC.ORD:  # TODO unify with Mag in SC.SIG
-        SC.ORD.Magnet = np.sort(np.unique(np.concatenate((SC.ORD.Magnet, MAGords))))
-    else:
-        SC.ORD.Magnet = MAGords[:]
+    SC.ORD.Magnet = np.sort(np.unique(np.concatenate((SC.ORD.Magnet, MAGords))))  # TODO unify with Mag in SC.SIG
     if 'SkewQuad' in kwargs.keys():
-        if 'SkewQuad' in SC.ORD:
-            SC.ORD.SkewQuad = np.sort(np.unique(np.concatenate((SC.ORD.SkewQuad, MAGords))))
-        else:
-            SC.ORD.SkewQuad = MAGords[:]
+        SC.ORD.SkewQuad = np.sort(np.unique(np.concatenate((SC.ORD.SkewQuad, MAGords))))
     if ('HCM' in kwargs.keys() or 'VCM' in kwargs.keys()) and "CM" not in SC.ORD.keys():
         SC.ORD.CM = [np.zeros(0), np.zeros(0)]
     if 'HCM' in kwargs.keys():

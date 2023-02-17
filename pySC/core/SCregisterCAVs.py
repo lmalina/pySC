@@ -1,19 +1,16 @@
 import numpy as np
+from pySC.constants import RF_PROPERTIES
+from pySC.classes import DotDict, SimulatedComissioning
+from numpy import ndarray
 
-
-def SCregisterCAVs(SC, CAVords, **kwargs):
-    if 'Cavity' in SC.ORD:
-        SC.ORD.Cavity = np.sort(np.unique(np.concatenate((SC.ORD.Cavity, CAVords))))
-    else:
-        SC.ORD.Cavity = np.sort(CAVords)
-    fields = ['Voltage', 'Frequency', 'TimeLag']
-    if "RF" not in SC.SIG.keys():
-        SC.SIG.RF = dict()
+def SCregisterCAVs(SC: SimulatedComissioning, CAVords: ndarray, **kwargs) -> SimulatedComissioning:
+    SC.ORD.Cavity = np.sort(np.unique(np.concatenate((SC.ORD.Cavity, CAVords))))
     for ord in CAVords:
-        for field in fields:
+        if ord not in SC.SIG.RF.keys():
+            SC.SIG.RF[ord] = DotDict()
+        SC.SIG.RF[ord].update(kwargs)  # TODO unify SC.SIG and SC.ORD (Cavity vs RF)
+        for field in RF_PROPERTIES:
             setattr(SC.RING[ord], f"{field}SetPoint", getattr(SC.RING[ord], field))
             setattr(SC.RING[ord], f"{field}Offset", 0)
             setattr(SC.RING[ord], f"{field}CalError", 0)
-
-        SC.SIG.RF[ord] = kwargs  # TODO unify SC.SIG and SC.ORD (Cavity vs RF)
     return SC

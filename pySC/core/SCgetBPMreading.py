@@ -5,7 +5,7 @@ from pySC.core.SCgenBunches import SCgenBunches
 from pySC.core.SCparticlesIn3D import SCparticlesIn3D
 #from pySC.core.SCplotBPMreading import SCplotBPMreading
 from pySC.core.SCrandnc import SCrandnc
-from pySC import atgetfieldvalues
+from pySC import atgetfieldvalues, atpass
 
 def SCgetBPMreading(SC, BPMords=[]):
     global plotFunctionFlag
@@ -26,7 +26,7 @@ def SCgetBPMreading(SC, BPMords=[]):
             T = at.find_orbit6(SC.RING, refOrds)  # ,SC.INJ.Z0)
         else:
             Zin = SCgenBunches(SC)
-            T = at.atpass(SC.RING, Zin, 1, nTurns, refOrds)
+            T = atpass(SC.RING, Zin, 1, nTurns, refOrds)
         T[:, np.isnan(T[0, :])] = np.nan
         if plotFunctionFlag:
             T1[:, :, nShot] = T

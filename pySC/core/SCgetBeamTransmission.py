@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 from pySC.core.SCgenBunches import SCgenBunches
 from pySC.core.SCparticlesIn3D import SCparticlesIn3D
-
+from pySC import atpass
 
 def SCgetBeamTransmission(SC, nParticles=None, nTurns=None, plotFlag=0, verbose=0):  # TODO Check if SC gets modified
     if nParticles is not None:
@@ -15,7 +15,7 @@ def SCgetBeamTransmission(SC, nParticles=None, nTurns=None, plotFlag=0, verbose=
         print('Calculating maximum beam transmission for %d particles and %d turns: ' % (
         SC.INJ.nParticles, SC.INJ.nTurns), end='')
     Zin = SCgenBunches(SC)
-    T = at.atpass(SC.RING, Zin, 1, SC.INJ.nTurns, len(SC.RING) + 1)
+    T = atpass(SC.RING, Zin, 1, SC.INJ.nTurns, len(SC.RING) + 1)
     if SC.INJ.nParticles > 1:
         M = SCparticlesIn3D(T, SC.INJ.nParticles)
         Tx = np.squeeze(M[0, :, :])

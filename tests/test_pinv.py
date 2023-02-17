@@ -4,8 +4,8 @@ from pySC.core.SCgetPinv import SCgetPinv
 
 
 def test_pinv(matrix):
-    a = SCgetPinv(matrix, num_removed_values=0, alpha=0, damping=1, plot=False)
-    a2 = SCgetPinv(matrix, num_removed_values=0, alpha=0, damping=0.9, plot=True)
+    a = SCgetPinv(matrix, num_removed=0, alpha=0, damping=1, plot=False)
+    a2 = SCgetPinv(matrix, num_removed=0, alpha=0, damping=0.9, plot=True)
     b = np.linalg.pinv(matrix)
     assert np.allclose(a, b)
     assert np.allclose(a2, b * 0.9)

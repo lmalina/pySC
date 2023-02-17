@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import at
-
+from pySC import atpass
 
 def SCmomentumAperture(RING, REFPTS, inibounds, nturns=1000, accuracy=1e-4, stepsize=1e-3, plot=0, debug=0):
     dboundHI = np.zeros(len(REFPTS))
@@ -43,7 +43,7 @@ def refine_bounds(local_bounds, RING, ZCO, nturns):
     dmean = np.mean(local_bounds)
     Z0 = ZCO
     Z0[4] = Z0[4] + dmean
-    ROUT = at.atpass(RING, Z0, 1, nturns, [])
+    ROUT = atpass(RING, Z0, 1, nturns, [])
     if np.isnan(ROUT[0]):  # Particle dead :(
         local_bounds[1] = dmean  # Set abs-upper bound to midpoint
     else:  # Particle alive :)
@@ -54,7 +54,7 @@ def refine_bounds(local_bounds, RING, ZCO, nturns):
 def check_bounds(local_bounds, RING, ZCO, nturns):
     Z = np.array([ZCO, ZCO])
     Z[4, :] = Z[4, :] + local_bounds[:]
-    ROUT = at.atpass(RING, Z, 1, nturns, [])
+    ROUT = atpass(RING, Z, 1, nturns, [])
     if np.isnan(ROUT[0, 0]) and not np.isnan(ROUT[0, 1]):
         print('Closer-to-momentum particle is unstable. This shouldnt be!')
     return not np.isnan(ROUT[0, 0]) and np.isnan(ROUT[0, 1])

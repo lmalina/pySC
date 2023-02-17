@@ -2,7 +2,8 @@ import sys
 
 import at
 import numpy as np
-
+from at import Lattice
+from pySC.classes import SimulatedComissioning
 from pySC.core.SCapplyErrors import SCapplyErrors
 from pySC.core.SCcronoff import SCcronoff
 from pySC.core.SCfeedbackBalance import SCfeedbackBalance
@@ -32,30 +33,34 @@ from pySC.core.SCsynchEnergyCorrection import SCsynchEnergyCorrection
 from pySC.core.SCsynchPhaseCorrection import SCsynchPhaseCorrection
 
 
-def create_at_lattice():
-    QF = at.Quadrupole('QF', 0.5, 1.2, PassMethod='StrMPoleSymplectic4RadPass')
-    QD = at.Quadrupole('QD', 0.5, -1.2, PassMethod='StrMPoleSymplectic4RadPass')
-    SF = at.Sextupole('SF', 0.1, 6.0487, PassMethod='StrMPoleSymplectic4RadPass')
-    SD = at.Sextupole('SD', 0.1, -9.5203, PassMethod='StrMPoleSymplectic4RadPass')
-    BEND = at.Bend('BEND', 1, 2 * np.pi / 40, PassMethod='StrMPoleSymplectic4RadPass')
+def create_at_lattice() -> Lattice:
+    def _marker(name):
+        return at.Marker(name, PassMethod='IdentityPass')
+    qf = at.Quadrupole('QF', 0.5, 1.2, PassMethod='StrMPoleSymplectic4RadPass')
+    qd = at.Quadrupole('QD', 0.5, -1.2, PassMethod='StrMPoleSymplectic4RadPass')
+    sf = at.Sextupole('SF', 0.1, 6.0487, PassMethod='StrMPoleSymplectic4RadPass')
+    sd = at.Sextupole('SD', 0.1, -9.5203, PassMethod='StrMPoleSymplectic4RadPass')
+    bend = at.Bend('BEND', 1, 2 * np.pi / 40, PassMethod='StrMPoleSymplectic4RadPass')
+    d2 = at.Drift('Drift', 0.25)
+    d3 = at.Drift('Drift', 0.2)
 
-    D2 = at.Drift('Drift', 0.25)
-    D3 = at.Drift('Drift', 0.2)
-    MARK = lambda name: at.Marker(name, PassMethod='IdentityPass')
-    cell = at.Lattice([D2, MARK('SectionStart'), MARK('GirderStart'), BEND, D3, SF, D3, MARK('GirderEnd'),
-                       MARK('GirderStart'), MARK('BPM'), QF, D2, D2, BEND, D3, SD, D3, QD, D2, MARK('BPM'),
-                       MARK('GirderEnd'), MARK('SectionEnd')], name='Simple FODO cell', energy=2.5E9)
-    RING = cell * 20
-    RFC = at.RFCavity('RFCav', energy=2.5E9, voltage=2e6, frequency=1, harmonic_number=50, length=0)
-    RING.insert(0, RFC)
-    return RING
+    cell = at.Lattice([d2, _marker('SectionStart'), _marker('GirderStart'), bend, d3, sf, d3, _marker('GirderEnd'),
+                       _marker('GirderStart'), _marker('BPM'), qf, d2, d2, bend, d3, sd, d3, qd, d2, _marker('BPM'),
+                       _marker('GirderEnd'), _marker('SectionEnd')], name='Simple FODO cell', energy=2.5E9)
+    ring = at.Lattice(cell * 20)
+    rfc = at.RFCavity('RFCav', energy=2.5E9, voltage=2e6, frequency=1, harmonic_number=50, length=0)
+    ring.insert(0, rfc)
+    #test = at.lattice_pass(rin,1e-6 * np.arange(24).reshape(6,4), nturns=3, refpts=[0,1])
+    #print(test)
+    return ring
 
 
 if __name__ == "__main__":
-    RING = create_at_lattice()
-
-    # at.summary(RING)
-    SC = SCinit(RING)
+    ring = create_at_lattice()
+    print(len(ring))
+    SC = SimulatedComissioning(ring)
+    # at.summary(ring)
+    #SC = SCinit(ring)
     ords = SCgetOrds(SC.RING, 'BPM')
     SC = SCregisterBPMs(SC, ords, CalError=5E-2 * np.ones(2),  # x and y, relative
                         Offset=500E-6 * np.ones(2),  # x and y, [m]
@@ -129,11 +134,7 @@ if __name__ == "__main__":
     eps = 1E-4  # Noise level
     plotFunctionFlag = 0
     SCgetBPMreading(SC)
-    [CUR, ERROR] = SCfeedbackFirstTurn(SC, Minv1, verbose=True)  # TODO
-    if not ERROR:
-        SC = CUR
-    else:
-        sys.exit()
+    SC = SCfeedbackFirstTurn(SC, Minv1, verbose=True)
     SC.INJ.nTurns = 2
     SC = SCfeedbackStitch(SC, Minv2, nBPMs=3, maxsteps=20, verbose=True)
     SC = SCfeedbackRun(SC, Minv2, target=300E-6, maxsteps=30, eps=eps, verbose=True)
@@ -215,14 +216,14 @@ if __name__ == "__main__":
                               # {Ords, normal/skew, ind/fam, deltaK}
                               {SCgetOrds(SC.RING, 'QD'), 'normal', 'individual',
                                1E-4})  # {Ords, normal/skew, ind/fam, deltaK}
-    # for n in range(6):
-    #     [~, BPMData, CMData, FitParameters, LOCOflags, RINGdata] = at.loco(LOCOmeasData,  BPMData,  CMData,  FitParameters,  LOCOflags,  RINGdata)
-    #     SC = SClocoLib('applyLatticeCorrection', SC, FitParameters)
-    #     SC = SClocoLib('applyOrbitCorrection', SC)
-    #     SClocoLib('plotStatus', SC, Init, BPMData, CMData)
-    #     if n == 3:
-    #         LOCOflags.Coupling = 'Yes'
-    #         FitParameters = SClocoLib('setupFitparameters', SC, Init.SC.RING, RINGdata, RFstep,
-    #             {SCgetOrds(SC.RING, 'QF'), 'normal', 'individual', 1E-3},
-    #             {SCgetOrds(SC.RING, 'QD'), 'normal', 'individual', 1E-4},
-    #             {SC.ORD.SkewQuad, 'skew', 'individual', 1E-3})
+    for n in range(6):
+        _, BPMData, CMData, FitParameters, LOCOflags, RINGdata = at.loco(LOCOmeasData,  BPMData,  CMData,  FitParameters,  LOCOflags,  RINGdata)
+        SC = SClocoLib('applyLatticeCorrection', SC, FitParameters)
+        SC = SClocoLib('applyOrbitCorrection', SC)
+        SClocoLib('plotStatus', SC, Init, BPMData, CMData)
+        if n == 3:
+            LOCOflags.Coupling = 'Yes'
+            FitParameters = SClocoLib('setupFitparameters', SC, Init.SC.RING, RINGdata, RFstep,
+                                      {SCgetOrds(SC.RING, 'QF'), 'normal', 'individual', 1E-3},
+                                      {SCgetOrds(SC.RING, 'QD'), 'normal', 'individual', 1E-4},
+                                      {SC.ORD.SkewQuad, 'skew', 'individual', 1E-3})

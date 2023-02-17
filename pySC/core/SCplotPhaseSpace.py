@@ -1,7 +1,7 @@
 import at
 import matplotlib.pyplot as plt
 import numpy as np
-
+from pySC import atpass
 from pySC.core.SCgenBunches import SCgenBunches
 from pySC.core.SCparticlesIn3D import SCparticlesIn3D
 
@@ -18,7 +18,7 @@ def SCplotPhaseSpace(SC, ord=1, plotCO=0, customBunch=[], nParticles=None, nTurn
     else:
         Zin = customBunch
         SC.INJ.nParticles = Zin.shape[1]
-    T = at.atpass(SC.RING, Zin, 1, SC.INJ.nTurns, ord)
+    T = atpass(SC.RING, Zin, 1, SC.INJ.nTurns, ord)
     T[:, np.isnan(T[0, :])] = np.nan
     T3D = SCparticlesIn3D(T, SC.INJ.nParticles)
     labelStr = ['$\Delta x$ [$\mu$m]', '$\Delta x''$ [$\mu$rad]', '$\Delta y$ [$\mu$m]', '$\Delta y''$ [$\mu$rad]',

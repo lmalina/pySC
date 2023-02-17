@@ -14,7 +14,7 @@ __author__ = "lmalina"
 __author_email__ = "lukas.malina@desy.de"
 
 atgetfieldvalues = at.get_value_refpts  # TODO are these correct methods?
-atpass = at.atpass
+atpass = at.lattice_pass
 findorbit6 = at.find_orbit6
 findorbit4 = at.find_orbit4
 findspos = at.get_s_pos

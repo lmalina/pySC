@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from numpy import ndarray
 
 
-def SCgetPinv(matrix: ndarray, num_removed_values: int = 0, alpha: float = 0, damping: float = 1, plot: bool = False):
+def SCgetPinv(matrix: ndarray, num_removed: int = 0, alpha: float = 0, damping: float = 1, plot: bool = False) -> ndarray:
     """
     Computes the pseudo-inverse of a matrix using the Singular Value Decomposition (SVD) method.
 
@@ -11,7 +11,7 @@ def SCgetPinv(matrix: ndarray, num_removed_values: int = 0, alpha: float = 0, da
     ----------
     matrix : ndarray
         The matrix to be inverted.
-    num_removed_values : int, optional
+    num_removed : int, optional
         The number of singular values to be removed from the matrix.
     alpha : float, optional
         The regularization parameter.
@@ -26,7 +26,7 @@ def SCgetPinv(matrix: ndarray, num_removed_values: int = 0, alpha: float = 0, da
         The pseudo-inverse of the matrix.
     """
     u_mat, s_mat, vt_mat = np.linalg.svd(matrix, full_matrices=False)
-    num_singular_values = s_mat.shape[0] - num_removed_values if num_removed_values > 0 else s_mat.shape[0]
+    num_singular_values = s_mat.shape[0] - num_removed if num_removed > 0 else s_mat.shape[0]
     available = np.sum(s_mat > 0.)
     keep = min(num_singular_values, available)
     d_mat = np.zeros(s_mat.shape)

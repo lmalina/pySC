@@ -1,7 +1,7 @@
 import numpy as np
 import at
 from pySC.core.SCgetModelRING import SCgetModelRING
-
+from pySC import atpass
 
 def SCgetModelRM(SC, BPMords, CMords, trackMode='TBT', Z0=np.zeros(6), nTurns=1, dkick=1e-5, useIdealRing=0):
     print('Calculating model response matrix')
@@ -10,7 +10,7 @@ def SCgetModelRM(SC, BPMords, CMords, trackMode='TBT', Z0=np.zeros(6), nTurns=1,
     else:
         RING = SCgetModelRING(SC)
     if trackMode == 'TBT':
-        trackmethod = at.atpass
+        trackmethod = atpass
     elif trackMode == 'ORB':
         trackmethod = orbpass
         nTurns = 1
