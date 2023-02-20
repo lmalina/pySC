@@ -56,3 +56,5 @@ def SCplotBPMreading(SC,B,T):
     plt.tight_layout()
     plt.gcf().canvas.draw()
     plt.gcf().canvas.flush_events()
+
+    # TODO translate getRingAperture method

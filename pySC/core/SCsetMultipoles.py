@@ -14,6 +14,7 @@ def SCsetMultipoles(RING, ords, AB, method='rnd', order=[], type=[]):
         raise ValueError('Unsupported multipole method. Allowed are ''sys'' or ''rnd''.')
     return RING
 
+
 def applySysMultipoles(RING, ord, AB, order, type):
     AB[order, type] = 0
     if type == 1:
@@ -23,6 +24,7 @@ def applySysMultipoles(RING, ord, AB, order, type):
         RING[ord]['SysPolAFromB'][order] = AB[:, 0]
         RING[ord]['SysPolBFromB'][order] = AB[:, 1]
     return RING
+
 
 def applyRndMultipoles(RING, ord, AB):
     if 'PolynomAOffset' in RING[ord]:
@@ -34,6 +36,7 @@ def applyRndMultipoles(RING, ord, AB):
     else:
         RING[ord]['PolynomBOffset'] = AB[:, 1]
     return RING
+
 
 def addPadded(v1, v2):
     if not ((v1.ndim == 1 and v2.ndim == 1) or (v1.ndim == 2 and v2.ndim == 2)):

@@ -70,7 +70,7 @@ def SCtuneScan(SC, qOrds, qSPvec, verbose=0, plotFlag=0, nParticles=None, nTurns
                 qSP.append(qSPvec[1][q2])
                 if verbose:
                     print('Transmission target reached with:\n  %s SetPoint: %.4f\n  %s SetPoint: %.4f\n' % (
-                    SC.RING[qOrds[0][0]].FamName, qSP[0], SC.RING[qOrds[1][0]].FamName, qSP[1]))
+                        SC.RING[qOrds[0][0]].FamName, qSP[0], SC.RING[qOrds[1][0]].FamName, qSP[1]))
                 return qSP, SC, maxTurns, finTrans, ERROR
     for i in range(len(allInd)):
         testTrans[i] = finTrans[allInd[i][0], allInd[i][1], -1]
@@ -86,14 +86,14 @@ def SCtuneScan(SC, qOrds, qSPvec, verbose=0, plotFlag=0, nParticles=None, nTurns
             if verbose:
                 print(
                     'No transmission at final turn at all. Best number of turns (%d) reached with:\n  %s SetPoint: %.4f\n  %s SetPoint: %.4f\n' % (
-                    a[0], SC.RING[qOrds[0][0]].FamName, qSPvec[0][allInd[b[0]][0]], SC.RING[qOrds[1][0]].FamName,
-                    qSPvec[1][allInd[b[0]][1]]))
+                        a[0], SC.RING[qOrds[0][0]].FamName, qSPvec[0][allInd[b[0]][0]], SC.RING[qOrds[1][0]].FamName,
+                        qSPvec[1][allInd[b[0]][1]]))
     else:
         if verbose:
             print(
                 'Transmission target not reached. Best value (%d) reached with:\n  %s SetPoint: %.4f\n  %s SetPoint: %.4f\n' % (
-                a[0], SC.RING[qOrds[0][0]].FamName, qSPvec[0][allInd[b[0]][0]], SC.RING[qOrds[1][0]].FamName,
-                qSPvec[1][allInd[b[0]][1]]))
+                    a[0], SC.RING[qOrds[0][0]].FamName, qSPvec[0][allInd[b[0]][0]], SC.RING[qOrds[1][0]].FamName,
+                    qSPvec[1][allInd[b[0]][1]]))
     qSP.append(qSPvec[0][allInd[b[0]][0]])
     qSP.append(qSPvec[1][allInd[b[0]][1]])
     if qSP[0] == qSPvec[0][q1Ind[0]] and qSP[1] == qSPvec[1][q2Ind[0]]:
@@ -106,4 +106,3 @@ def SCtuneScan(SC, qOrds, qSPvec, verbose=0, plotFlag=0, nParticles=None, nTurns
     setpoints = np.hstack((np.repeat(qSP[0], len(qOrds[0])), np.repeat(qSP[1], len(qOrds[1]))))
     SC = SCsetMags2SetPoints(SC, ords, 2, 2, setpoints, method='rel')
     return qSP, SC, maxTurns, finTrans, ERROR
-

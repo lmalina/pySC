@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import at
 from pySC.core.SCgetBPMreading import SCgetBPMreading
-
+from pySC import atpass
 
 def SCfitInjectionZ(SC, mode, nDims=None, nBPMs=None, nShots=None, verbose=0, plotFlag=0):
     if nDims is None:
@@ -50,9 +50,9 @@ def SCfitInjectionZ(SC, mode, nDims=None, nBPMs=None, nShots=None, verbose=0, pl
                 plt.subplot(1, 2, nDim + 1)
                 plt.plot(sBPM, 1E6 * Bref[nDim, :], 'o', sBPM, 1E6 * (sol[nDim][0] * sBPM + sol[nDim][1]), '--', sBPM,
                          1E6 * (SC.INJ.Z0[2 * nDim] * sBPM + SC.INJ.Z0[2 * nDim - 1]), 'k-', sBPM, [0, 0], 'k--')
-                plt.legend(['BPM reading', 'Fitted trajectory', 'Real trajectory']);
-                plt.xlabel('s [m]');
-                plt.ylabel('Beam offset [mm]');
+                plt.legend(['BPM reading', 'Fitted trajectory', 'Real trajectory'])
+                plt.xlabel('s [m]')
+                plt.ylabel('Beam offset [mm]')
                 plt.title(titleStr[nDim])
             plt.show()
     else:
@@ -69,7 +69,7 @@ def SCfitInjectionZ(SC, mode, nDims=None, nBPMs=None, nShots=None, verbose=0, pl
 
 
 def merritFunction(x):
-    Ta = at.atpass(SC.IDEALRING, [x, 0, 0], 1, 1, ordsUsed)
+    Ta = atpass(SC.IDEALRING, [x, 0, 0], 1, 1, ordsUsed)
     T = Ta[[0, 2], :]
     out = np.sqrt(np.mean((Bref[:] - T[:]) ** 2))
     return out

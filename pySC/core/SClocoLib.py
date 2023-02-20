@@ -1,5 +1,7 @@
 import numpy as np
 
+from pySC import atlinopt
+from pySC.classes import DotDict
 from pySC.core.SCfeedbackRun import SCfeedbackRun
 from pySC.core.SCgetDispersion import SCgetDispersion
 from pySC.core.SCgetModelRM import SCgetModelRM
@@ -7,8 +9,6 @@ from pySC.core.SCgetPinv import SCgetPinv
 from pySC.core.SCgetRespMat import SCgetRespMat
 from pySC.core.SCsetMags2SetPoints import SCsetMags2SetPoints
 from pySC.core.SCupdateMagnets import SCupdateMagnets
-from pySC.classes import DotDict
-from pySC import atpass, atgetfieldvalues, findspos, findorbit6, findorbit4, atlinopt
 
 
 def SClocoLib(funName, *varargin):
@@ -16,7 +16,7 @@ def SClocoLib(funName, *varargin):
 
 
 def setupLOCOmodel(SC, *varargin):
-    RINGdata, Init, LOCOflags= DotDict(), DotDict(), DotDict()
+    RINGdata, Init, LOCOflags = DotDict(), DotDict(), DotDict()
     RINGdata.CavityFrequency = SC.IDEALRING[SC.ORD.Cavity].Frequency
     RINGdata.CavityHarmNumber = SC.IDEALRING[SC.ORD.Cavity].HarmNumber
     RINGdata.Lattice = SC.IDEALRING
@@ -129,7 +129,7 @@ def applyLatticeCorrection(SC, FitParameters, dipCompensation=True, damping=1):
             ord = FitParameters.Params[nGroup][nElem].ElemIndex
             field = FitParameters.Params[nGroup][nElem].SCFieldName
             setpoint = FitParameters.OrigValues[nGroup] + damping * (
-                        FitParameters.IdealValues[nGroup] - FitParameters.Values[nGroup])
+                    FitParameters.IdealValues[nGroup] - FitParameters.Values[nGroup])
             if field == 'SetPointB':  # Normal quadrupole
                 SC = SCsetMags2SetPoints(SC, ord, 2, 2, setpoint, dipCompensation=dipCompensation)
             elif field == 'SetPointA':  # Skew quadrupole
@@ -183,7 +183,7 @@ def applyOrbitCorrection(SC, Minv=[], alpha=50, CMords=None, BPMords=None, verbo
         CMords = SC.ORD.CM
     if BPMords is None:
         BPMords = SC.ORD.BPM
-    if Minv == []:
+    if not Minv:
         M = SCgetModelRM(SC, BPMords, CMords, trackMode='ORB')
         if np.any(np.isnan(M)):
             raise ValueError('NaN in model response, aborting.')
@@ -224,7 +224,7 @@ def fitChromaticity(SC, sOrds, targetChrom=[], verbose=0, InitStepSize=[2, 2], T
     if verbose:
         _, _, xi0 = atlinopt(SC.RING, 0, [])
         print('Fitting chromaticities from [%.3f,%.3f] to [%.3f,%.3f].' % (
-        xi0[0], xi0[1], targetChrom[0], targetChrom[1]))
+            xi0[0], xi0[1], targetChrom[0], targetChrom[1]))
     for nFam in range(len(sOrds)):
         for n in range(len(sOrds[nFam])):
             SP0[nFam][n] = SC.RING[sOrds[nFam][n]].SetPointB[2]
@@ -234,7 +234,7 @@ def fitChromaticity(SC, sOrds, targetChrom=[], verbose=0, InitStepSize=[2, 2], T
     if verbose:
         _, _, xi1 = atlinopt(SC.RING, 0, [])
         print('        Final chromaticity: [%.3f,%.3f]\n          Setpoints change: [%.2f,%.2f]' % (
-        xi1[0], xi1[1], sol[0], sol[1]))
+            xi1[0], xi1[1], sol[0], sol[1]))
     return SC
 
 

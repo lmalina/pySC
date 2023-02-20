@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
+from pySC import findspos
 from pySC.core.SCfeedbackRun import SCfeedbackRun
 from pySC.core.SCgetBPMreading import SCgetBPMreading
 from pySC.core.SCgetCMSetPoints import SCgetCMSetPoints
@@ -19,33 +20,33 @@ def SCBBA(SC,BPMords,magOrds,**kwargs):
     kwargs:    Optional arguments
     """
     # Optional arguments
-    mode = kwargs.get('mode',SC.INJ.trackMode)
-    outlierRejectionAt = kwargs.get('outlierRejectionAt',np.inf)
-    fakeMeasForFailures = kwargs.get('fakeMeasForFailures',0)
-    dipCompensation = kwargs.get('dipCompensation',1)
-    nSteps = kwargs.get('nSteps',10)
-    fitOrder = kwargs.get('fitOrder',1)
-    magOrder = kwargs.get('magOrder',2)
-    magSPvec = kwargs.get('magSPvec',[0.95,1.05])
-    magSPflag = kwargs.get('magSPflag','rel')
-    skewQuadrupole = kwargs.get('skewQuadrupole',0)
-    switchOffSext = kwargs.get('switchOffSext',0)
-    RMstruct = kwargs.get('RMstruct',[])
-    orbBumpWindow = kwargs.get('orbBumpWindow',5)
-    useBPMreadingsForOrbBumpRef = kwargs.get('useBPMreadingsForOrbBumpRef',0)
-    BBABPMtarget = kwargs.get('BBABPMtarget',1E-3)
-    minBPMrangeAtBBABBPM = kwargs.get('minBPMrangeAtBBABBPM',500E-6)
-    minBPMrangeOtherBPM = kwargs.get('minBPMrangeOtherBPM',100E-6)
-    maxStdForFittedCenters = kwargs.get('maxStdForFittedCenters',600E-6)
-    nXPointsNeededAtMeasBPM = kwargs.get('nXPointsNeededAtMeasBPM',3)
-    maxNumOfDownstreamBPMs = kwargs.get('maxNumOfDownstreamBPMs',len(SC.ORD.BPM))
-    minSlopeForFit = kwargs.get('minSlopeForFit',0.03)
-    maxTrajChangeAtInjection = kwargs.get('maxTrajChangeAtInjection',[.9E-3 .9E-3])
-    quadOrdPhaseAdvance = kwargs.get('quadOrdPhaseAdvance',[ ])
-    quadStrengthPhaseAdvance = kwargs.get('quadStrengthPhaseAdvance',[0.95 1.05])
-    plotLines = kwargs.get('plotLines',0)
-    plotResults = kwargs.get('plotResults',0)
-    verbose = kwargs.get('verbose',0)
+    mode = kwargs.get('mode', SC.INJ.trackMode)
+    outlierRejectionAt = kwargs.get('outlierRejectionAt', np.inf)
+    fakeMeasForFailures = kwargs.get('fakeMeasForFailures', 0)
+    dipCompensation = kwargs.get('dipCompensation', True)
+    nSteps = kwargs.get('nSteps', 10)
+    fitOrder = kwargs.get('fitOrder', 1)
+    magOrder = kwargs.get('magOrder', 2)
+    magSPvec = kwargs.get('magSPvec', [0.95, 1.05])
+    magSPflag = kwargs.get('magSPflag', 'rel')
+    skewQuadrupole = kwargs.get('skewQuadrupole', 0)
+    switchOffSext = kwargs.get('switchOffSext', 0)
+    RMstruct = kwargs.get('RMstruct', [])
+    orbBumpWindow = kwargs.get('orbBumpWindow', 5)
+    useBPMreadingsForOrbBumpRef = kwargs.get('useBPMreadingsForOrbBumpRef', 0)
+    BBABPMtarget = kwargs.get('BBABPMtarget', 1E-3)
+    minBPMrangeAtBBABBPM = kwargs.get('minBPMrangeAtBBABBPM', 500E-6)
+    minBPMrangeOtherBPM = kwargs.get('minBPMrangeOtherBPM', 100E-6)
+    maxStdForFittedCenters = kwargs.get('maxStdForFittedCenters', 600E-6)
+    nXPointsNeededAtMeasBPM = kwargs.get('nXPointsNeededAtMeasBPM', 3)
+    maxNumOfDownstreamBPMs = kwargs.get('maxNumOfDownstreamBPMs', len(SC.ORD.BPM))
+    minSlopeForFit = kwargs.get('minSlopeForFit', 0.03)
+    maxTrajChangeAtInjection = kwargs.get('maxTrajChangeAtInjection', [.9E-3, .9E-3])
+    quadOrdPhaseAdvance = kwargs.get('quadOrdPhaseAdvance', [ ])
+    quadStrengthPhaseAdvance = kwargs.get('quadStrengthPhaseAdvance', [0.95, 1.05])
+    plotLines = kwargs.get('plotLines', 0)
+    plotResults = kwargs.get('plotResults', 0)
+    verbose = kwargs.get('verbose', 0)
     # Check input
     if BPMords.shape != magOrds.shape:
         raise ValueError('Input arrays for BPMs and magnets must be same size.')
@@ -116,7 +117,7 @@ def dataMeasurement(SC,mOrd,BPMind,jBPM,nDim,par,varargin):
         for nKick in range(nMsteps):
             if par.mode == 'ORB':
                 for nD in range(2):
-                    SC = SCsetCMs2SetPoints(SC,CMords[nD],CMvec[nD][nKick,:],nD,'abs')
+                    SC, _ = SCsetCMs2SetPoints(SC,CMords[nD],CMvec[nD][nKick,:],nD,method='abs')
             elif par.mode == 'TBT':
                 SC.INJ.Z0[2*nDim]   = initialZ0[2*nDim  ] + kickVec[2,nKick] # kick angle
                 SC.INJ.Z0[2*nDim-1] = initialZ0[2*nDim-1] + kickVec[1,nKick] # offset
@@ -202,7 +203,7 @@ def dataEvaluation(SC,BPMords,jBPM,BPMpos,tmpTra,nDim,mOrd,par):
     if par.plotLines:
         p5 = plt.plot(0,1E6*OffsetChange,0,'kD',MarkerSize=30,MarkerFaceColor='r')
         p6 = plt.plot(0,1E6*(SC.RING[BPMords[nDim,jBPM]].Offset[nDim]+SC.RING[BPMords[nDim,jBPM]].SupportOffset[nDim]+OffsetChange),0,'kD',MarkerSize=30,MarkerFaceColor='g')
-        plt.title(sprintf('BBA-BPM: %d // mOrd: %d // mFam: %s // nDim: %d // FinOffset = %.0f $\\mu m$',jBPM,mOrd,SC.RING[mOrd].FamName,nDim,1E6*abs(SC.RING[BPMords[nDim,jBPM]].Offset[nDim] + SC.RING[BPMords[nDim,jBPM]].SupportOffset[nDim] + OffsetChange - SC.RING[mOrd].MagnetOffset[nDim] - SC.RING[mOrd].SupportOffset[nDim])))
+        plt.title(f'BBA-BPM: {jBPM:d} \n mOrd: {mOrd:d} \n mFam: {SC.RING[mOrd].FamName} \n nDim: {nDim:d} \n FinOffset = {1E6*np.abs(SC.RING[BPMords[nDim,jBPM]].Offset[nDim] + SC.RING[BPMords[nDim,jBPM]].SupportOffset[nDim] + OffsetChange - SC.RING[mOrd].MagnetOffset[nDim] - SC.RING[mOrd].SupportOffset[nDim]):3.0f} $\\mu m$')
         plt.legend((p1,p2,p3,p4,p5,p6),('Magnet center','Measured offset change','Line fit','Fitted BPM offset (individual)','Fitted BPM offset (mean)','Predicted magnet center'))
         plt.xlabel('Index of BPM')
         plt.ylabel('BBA-BPM offset [$\mu$m]')
@@ -249,7 +250,7 @@ def scanPhaseAdvance(SC,BPMind,nDim,initialZ0,kickVec0,par):
     for nQ in range(len(qVec)):
         if par.verbose:
             print('BBA-BPM range to small, try to change phase advance with quad ord %d to %.2f of nom. SP.' % (par.quadOrdPhaseAdvance,qVec[nQ]))
-        SC = SCsetMags2SetPoints(SC,mOrd,2,2,qVec[nQ],'method','rel','dipCompensation',1)
+        SC = SCsetMags2SetPoints(SC,mOrd,2,2,qVec[nQ],method='rel', dipCompensation=True)
         [kickVec, BPMrange] = scaleInjectionToReachBPM(SC,BPMind,nDim,initialZ0,kickVec0,par)
         allBPMRange[nQ] = BPMrange
         if par.verbose:
@@ -259,11 +260,11 @@ def scanPhaseAdvance(SC,BPMind,nDim,initialZ0,kickVec0,par):
     if BPMrange < par.BBABPMtarget:
         if BPMrange<max(allBPMRange):
             nBest = np.argmax(allBPMRange)
-            SC = SCsetMags2SetPoints(SC,mOrd,2,2,qVec[nBest],'method','rel','dipCompensation',1)
+            SC = SCsetMags2SetPoints(SC,mOrd,2,2,qVec[nBest], method='rel', dipCompensation=True)
             if par.verbose:
                 print('Changing phase advance of quad with ord %d NOT succesfull, returning to best value with BBA-BPM range = %.0fum.' % (mOrd,1E6*max(allBPMRange)))
         else:
-            SC = SCsetMags2SetPoints(SC,mOrd,2,2,q0,'method','abs','dipCompensation',1)
+            SC = SCsetMags2SetPoints(SC,mOrd,2,2,q0, method='abs',dipCompensation=True)
             if par.verbose:
                 print('Changing phase advance of quad with ord %d NOT succesfull, returning to initial setpoint.' % mOrd)
     else:
@@ -384,9 +385,9 @@ def plotBBAResults(SC,initOffsetErrors,errorFlags,jBPM,BPMords,magOrds):
     plt.draw()
 
 def getBPMoffsetFromMag(SC,BPMords,magOrds):
-    offset = np.nan(size(BPMords))
-    for nDim in range(size(BPMords,1)):
-        for nBPM in range(size(BPMords,2)):
+    offset = np.nan(len(BPMords))
+    for nDim in range(len(BPMords,1)):
+        for nBPM in range(len(BPMords,2)):
             offset[nDim,nBPM] = SC.RING[BPMords[nDim,nBPM]].Offset[nDim] + SC.RING[BPMords[nDim,nBPM]].SupportOffset[nDim] - SC.RING[magOrds[nDim,nBPM]].MagnetOffset[nDim] - SC.RING[magOrds[nDim,nBPM]].SupportOffset[nDim]
     return offset
 
@@ -394,11 +395,11 @@ def fakeMeasurement(SC,BPMords,magOrds,errorFlags):
     finOffsetErrors = getBPMoffsetFromMag(SC,BPMords,magOrds)
     finOffsetErrors[errorFlags!=0] = np.nan
     print('Final offset error is %.1f|%.1f um (hor|ver) with %d|%d measurement failures -> being re-calculated now.\n' %(1E6*np.sqrt(np.mean(finOffsetErrors.^2,2,'omitnan')),sum(errorFlags!=0,2)))
-    for nBPM in range(size(BPMords,2)):
+    for nBPM in range(len(BPMords,2)):
         for nDim in range(2):
             if errorFlags[nDim,nBPM]!=0:
                 fakeBPMoffset = SC.RING[magOrds[nDim,nBPM]].MagnetOffset[nDim] + SC.RING[magOrds[nDim,nBPM]].SupportOffset[nDim] - SC.RING[BPMords[nDim,nBPM]].SupportOffset[nDim] + np.sqrt(np.mean(finOffsetErrors(nDim,:).^2,'omitnan')) * SCrandnc(2)
-                if ~isnan(fakeBPMoffset):
+                if not np.isnan(fakeBPMoffset):
                     SC.RING[BPMords[nDim,nBPM]].Offset[nDim] = fakeBPMoffset
                 else:
                     print('BPM offset not reasigned, NaN.\n')
