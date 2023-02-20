@@ -14,13 +14,15 @@ __author__ = "lmalina"
 __author_email__ = "lukas.malina@desy.de"
 
 atgetfieldvalues = at.get_value_refpts  # TODO are these correct methods?
+
 atpass = at.lattice_pass
-findorbit6 = at.find_orbit6
+findorbit6 = at.find_orbit # TODO straight in pyAT there are switches between orbit4 and orbit6 (maybe usefull)
 findorbit4 = at.find_orbit4
 findspos = at.get_s_pos
 atlinopt = at.get_optics
 # atmatchchromdelta
-# twissline # TODO find single pass linopt
+# twissline,  # TODO find single pass linopt
+
 #pol2cart
 #cart2pol
 #rem

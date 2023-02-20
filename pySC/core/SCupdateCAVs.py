@@ -1,8 +1,11 @@
-def SCupdateCAVs(SC,ords=None):
-    if ords is None:
-        ords = SC.ORD.Cavity
-    fields = ['Voltage', 'Frequency', 'TimeLag']
-    for ord in ords:
-        for field in fields:
-            SC.RING[ord][field] = SC.RING[ord][field + 'SetPoint'] * (1 + SC.RING[ord][field + 'CalError']) + SC.RING[ord][field + 'Offset']
+from pySC.constants import RF_PROPERTIES
+
+
+def SCupdateCAVs(SC, ords=None):
+    for ord in (SC.ORD.Cavity if ords is None else ords):
+        for field in RF_PROPERTIES:
+            setattr(SC.RING[ord], field,
+                    getattr(SC.RING[ord], f"{field}SetPoint")
+                    * (1 + getattr(SC.RING[ord], f"{field}CalError"))
+                    + getattr(SC.RING[ord], f"{field}Offset"))
     return SC

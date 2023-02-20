@@ -1,5 +1,5 @@
 import numpy as np
-from pySC.constants import SUPPORT_TYPES
+from pySC.constants import SUPPORT_TYPES, RF_PROPERTIES
 from pySC.core.SCfeedbackRun import SCfeedbackRun
 from pySC.core.SCgetModelRM import SCgetModelRM
 from pySC.core.SCgetPinv import SCgetPinv
@@ -71,8 +71,7 @@ def scaleBPMs(SC, SC0, fields, scale):
 
 
 def scaleRF(SC, SC0, fields, scale):
-    rfTypes = ['Frequency', 'Voltage', 'TimeLag']
-    for type in rfTypes:
+    for type in RF_PROPERTIES:
         for field in fields:
             for ord in SC.ORD.Cavity:
                 SC.RING[ord][type + field] = scale * SC0.RING[ord][type + field]

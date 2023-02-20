@@ -1,9 +1,9 @@
 import matplotlib.pyplot as plt
 import numpy as np
-
+from pySC.constants import SUPPORT_TYPES
 from pySC.core.SCgetSupportOffset import SCgetSupportOffset
 from pySC.core.SCgetSupportRoll import SCgetSupportRoll
-
+from pySC import atpass, atgetfieldvalues, findspos, findorbit6, findorbit4, atlinopt
 
 def SCplotSupport(SC,fontSize=12,shiftAxes=0.03,xLim=[0, findspos(SC.RING,len(SC.RING)+1)]):
     if not hasattr(SC.ORD,'Magnet'):
@@ -26,7 +26,7 @@ def SCplotSupport(SC,fontSize=12,shiftAxes=0.03,xLim=[0, findspos(SC.RING,len(SC
             rollMagInd[:,i]=SC.RING[ord-1].MagnetRoll
             offMagTot[:,i]=SC.RING[ord-1].T2([1, 3, 6])
             rollMagTot[:,i]=SC.RING[ord-1].MagnetRoll + SC.RING[ord-1].SupportRoll
-    for type in ['Section','Plinth','Girder']:
+    for type in SUPPORT_TYPES:
         if hasattr(SC.ORD,type):
             i=1
             for ordPair in SC.ORD.(type):
@@ -70,7 +70,7 @@ def SCplotSupport(SC,fontSize=12,shiftAxes=0.03,xLim=[0, findspos(SC.RING,len(SC
         for type in ['Section','Plinth','Girder']:
             if hasattr(SuppOrds,type):
                 for i in range(SuppOrds.(type).shape[1]):
-                    if diff(findspos(SC.RING,SuppOrds.(type)[:,i]))<0:
+                    if np.diff(findspos(SC.RING,SuppOrds.(type)[:,i]))<0:
                         for nCase in range(2):
                             if nCase==1:
                                 splot  = findspos(SC.RING,[SuppOrds.(type)[0,i], len(SC.RING)])
@@ -112,7 +112,7 @@ def SCplotSupport(SC,fontSize=12,shiftAxes=0.03,xLim=[0, findspos(SC.RING,len(SC
         for type in ['Section','Plinth','Girder']:
             if hasattr(SuppOrds,type):
                 for i in range(SuppOrds.(type).shape[1]):
-                    if diff(findspos(SC.RING,SuppOrds.(type)[:,i]))<0:
+                    if np.diff(findspos(SC.RING,SuppOrds.(type)[:,i]))<0:
                         for nCase in range(2):
                             if nCase==1:
                                 splot  = findspos(SC.RING,[SuppOrds.(type)[0,i], len(SC.RING)])

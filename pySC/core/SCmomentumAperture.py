@@ -14,7 +14,7 @@ def SCmomentumAperture(RING, REFPTS, inibounds, nturns=1000, accuracy=1e-4, step
     for i in range(len(REFPTS)):
         ord = REFPTS[i]
         local_bounds = inibounds
-        SHIFTRING = circshift(RING, -ord + 1)
+        SHIFTRING = RING.rotate(-ord)  # TODO +/-
         ZCO = ZCOs[:, i]
         while not check_bounds(local_bounds, SHIFTRING, ZCO, nturns):
             local_bounds = increment_bounds(local_bounds, stepsize)

@@ -2,21 +2,19 @@ import numpy as np
 
 
 def SCupdateMagnets(SC, ords=None):
-    if ords is None:
-        ords = SC.ORD.Magnet
-    for ord in ords:
-        SC = updateMagnets(SC, ord, ord)
+    for ord in (SC.ORD.Magnet if ords is None else ords):
+        SC = _updateMagnets(SC, ord, ord)
         if hasattr(SC.RING[ord], 'MasterOf'):
             for childOrd in SC.RING[ord].MasterOf:
-                SC = updateMagnets(SC, ord, childOrd)
+                SC = _updateMagnets(SC, ord, childOrd)
     return SC
 
 
-def updateMagnets(SC, source, target):
-    SC.RING[target].PolynomB = SC.RING[source].SetPointB * addPadded(np.ones(len(SC.RING[source].SetPointB)),
-                                                                     SC.RING[source].CalErrorB)
-    SC.RING[target].PolynomA = SC.RING[source].SetPointA * addPadded(np.ones(len(SC.RING[source].SetPointA)),
-                                                                     SC.RING[source].CalErrorA)
+def _updateMagnets(SC, source, target):
+    SC.RING[target].PolynomB = SC.RING[source].SetPointB * _addPadded(np.ones(len(SC.RING[source].SetPointB)),
+                                                                      SC.RING[source].CalErrorB)
+    SC.RING[target].PolynomA = SC.RING[source].SetPointA * _addPadded(np.ones(len(SC.RING[source].SetPointA)),
+                                                                      SC.RING[source].CalErrorA)
     sysPolynomB = []
     sysPolynomA = []
     if hasattr(SC.RING[target], 'SysPolBFromB'):
@@ -37,15 +35,15 @@ def updateMagnets(SC, source, target):
                 sysPolynomA.append(SC.RING[target].PolynomA[n] * SC.RING[target].SysPolAFromA[n])
     if len(sysPolynomA) > 0:
         for n in range(len(sysPolynomA) - 1):
-            sysPolynomA[n + 1] = addPadded(sysPolynomA[n + 1], sysPolynomA[n])
-        SC.RING[target].PolynomA = addPadded(SC.RING[target].PolynomA, sysPolynomA[-1])
+            sysPolynomA[n + 1] = _addPadded(sysPolynomA[n + 1], sysPolynomA[n])
+        SC.RING[target].PolynomA = _addPadded(SC.RING[target].PolynomA, sysPolynomA[-1])
     if len(sysPolynomB) > 0:
         for n in range(len(sysPolynomB) - 1):
-            sysPolynomB[n + 1] = addPadded(sysPolynomB[n + 1], sysPolynomB[n])
-        SC.RING[target].PolynomB = addPadded(SC.RING[target].PolynomB, sysPolynomB[-1])
+            sysPolynomB[n + 1] = _addPadded(sysPolynomB[n + 1], sysPolynomB[n])
+        SC.RING[target].PolynomB = _addPadded(SC.RING[target].PolynomB, sysPolynomB[-1])
     if hasattr(SC.RING[target], 'PolynomBOffset'):
-        SC.RING[target].PolynomB = addPadded(SC.RING[target].PolynomB, SC.RING[target].PolynomBOffset)
-        SC.RING[target].PolynomA = addPadded(SC.RING[target].PolynomA, SC.RING[target].PolynomAOffset)
+        SC.RING[target].PolynomB = _addPadded(SC.RING[target].PolynomB, SC.RING[target].PolynomBOffset)
+        SC.RING[target].PolynomA = _addPadded(SC.RING[target].PolynomA, SC.RING[target].PolynomAOffset)
     if hasattr(SC.RING[source], 'BendingAngleError'):
         SC.RING[target].PolynomB[0] = SC.RING[target].PolynomB[0] + SC.RING[source].BendingAngleError * SC.RING[
             target].BendingAngle / SC.RING[target].Length
@@ -55,7 +53,7 @@ def updateMagnets(SC, source, target):
                 1]
             effBendingAngle = alpha_act * SC.RING[target].BendingAngle
             SC.RING[target].PolynomB[0] = SC.RING[target].PolynomB[0] + (
-                        effBendingAngle - SC.RING[target].BendingAngle) / SC.RING[target].Length
+                    effBendingAngle - SC.RING[target].BendingAngle) / SC.RING[target].Length
     if SC.RING[source].PassMethod == 'CorrectorPass':
         SC.RING[target].KickAngle[0] = SC.RING[target].PolynomB[0]
         SC.RING[target].KickAngle[1] = SC.RING[target].PolynomA[0]
@@ -63,7 +61,7 @@ def updateMagnets(SC, source, target):
     return SC
 
 
-def addPadded(v1, v2):  # TODO this is probably wrong
+def _addPadded(v1, v2):  # TODO this is probably wrong
     if not ((v1.ndim == 1 and v2.ndim == 1) or (v1.ndim == 2 and v2.ndim == 2)):
         raise ValueError('Wrong dimensions.')
     l1 = len(v1)

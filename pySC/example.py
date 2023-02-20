@@ -98,13 +98,11 @@ if __name__ == "__main__":
                         VoltageOffset=5E3,  # [V]
                         TimeLagOffset=0.5)  # [m]
     ords = np.vstack((SCgetOrds(SC.RING, 'GirderStart'), SCgetOrds(SC.RING, 'GirderEnd')))
-    SC = SCregisterSupport(SC,
-                           Girder=ords,
+    SC = SCregisterSupport(SC, ords, "Girder",
                            Offset=100E-6 * np.array([1, 1, 0]),  # x, y and z, [m]
                            Roll=200E-6 * np.array([1, 0, 0]))  # az, ax and ay, [rad]
     ords = np.vstack((SCgetOrds(SC.RING, 'SectionStart'), SCgetOrds(SC.RING, 'SectionEnd')))
-    SC = SCregisterSupport(SC,
-                           Section=ords,
+    SC = SCregisterSupport(SC, ords, "Section",
                            Offset=100E-6 * np.array([1, 1, 0]))  # x, y and z, [m]
     SC.INJ.beamSize = np.diag(np.array([200E-6, 100E-6, 100E-6, 50E-6, 1E-3, 1E-4]) ** 2)
     SC.SIG.randomInjectionZ = np.array([1E-4, 1E-5, 1E-4, 1E-5, 1E-4, 1E-4])  # [m; rad; m; rad; rel.; m]

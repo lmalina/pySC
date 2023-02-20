@@ -65,6 +65,15 @@ class Indices(DotDict):
         self.Cavity: ndarray = np.array([], dtype=int)
         self.Magnet: ndarray = np.array([], dtype=int)
         self.SkewQuad: ndarray = np.array([], dtype=int)
+        self.HCM: ndarray = np.array([], dtype=int)
+        self.VCM: ndarray = np.array([], dtype=int)
+        self.Girder: ndarray = np.zeros((2, 0), dtype=int)
+        self.Plinth: ndarray = np.zeros((2, 0), dtype=int)
+        self.Section: ndarray = np.zeros((2, 0), dtype=int)
+
+    @property
+    def CM(self):
+        return [self.HCM, self.VCM]
 
 
 class Sigmas(DotDict):

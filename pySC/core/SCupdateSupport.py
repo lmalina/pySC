@@ -8,15 +8,13 @@ from pySC.core.SCgetTransformation import SCgetTransformation
 
 def SCupdateSupport(SC, BPMstructOffset=True, MAGstructOffset=True):
     if MAGstructOffset:
-        if 'Magnet' in SC.ORD:
-            ords = np.unique([SC.ORD['Magnet']])
-            s = at.get_s_pos(SC.RING, ords)
+        if len(SC.ORD.Magnet) > 0:
+            s = at.get_s_pos(SC.RING, SC.ORD.Magnet)
             offsets = SCgetSupportOffset(SC, s)
             rolls = SCgetSupportRoll(SC, s)
-            for i in range(len(ords)):
-                ord = ords[i]
-                SC.RING[ord].SupportOffset = offsets[:, i]
-                SC.RING[ord].SupportRoll = rolls[:, i]
+            for i, ord in enumerate(SC.ORD.Magnet):
+                setattr(SC.RING[ord], "SupportOffset", offsets[:, i])  # Longitudinal BPM offsets not yet implemented
+                setattr(SC.RING[ord], "SupportRoll", rolls[:, i])  # BPM pitch and yaw angles not yet implemented
                 magLength = SC.RING[ord].Length
                 if 'BendingAngle' in SC.RING[ord]:
                     magTheta = SC.RING[ord].BendingAngle
@@ -42,15 +40,13 @@ def SCupdateSupport(SC, BPMstructOffset=True, MAGstructOffset=True):
         else:
             print('SC: No magnets have been registered!')
     if BPMstructOffset:
-        if 'BPM' in SC.ORD:
-            ords = np.unique([SC.ORD['BPM']])
-            s = at.get_s_pos(SC.RING, ords)
+        if len(SC.ORD.BPM) > 0:
+            s = at.get_s_pos(SC.RING, SC.ORD.BPM)
             offsets = SCgetSupportOffset(SC, s)
             rolls = SCgetSupportRoll(SC, s)
-            for i in range(len(ords)):
-                ord = ords[i]
-                SC.RING[ord].SupportOffset = offsets[0:2, i]  # Longitudinal BPM offsets not yet implemented
-                SC.RING[ord].SupportRoll = rolls[0, i]  # BPM pitch and yaw angles not yet implemented
+            for i, ord in enumerate(SC.ORD.BPM):
+                setattr(SC.RING[ord], "SupportOffset", offsets[0:2, i])  # Longitudinal BPM offsets not yet implemented
+                setattr(SC.RING[ord], "SupportRoll", rolls[0, i])  # BPM pitch and yaw angles not yet implemented
         else:
             print('SC: No BPMs have been registered!')
     return SC

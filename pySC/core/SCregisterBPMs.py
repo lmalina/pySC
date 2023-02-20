@@ -4,7 +4,7 @@ from numpy import ndarray
 
 
 def SCregisterBPMs(SC: SimulatedComissioning, BPMords: ndarray, **kwargs) -> SimulatedComissioning:
-    SC.ORD.BPM = np.sort(np.unique(np.concatenate((SC.ORD.BPM, BPMords))))
+    SC.ORD.BPM = np.unique(np.concatenate((SC.ORD.BPM, BPMords)))
     for ord in BPMords:
         if ord not in SC.SIG.BPM.keys():
             SC.SIG.BPM[ord] = DotDict()

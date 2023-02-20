@@ -35,7 +35,7 @@ def SCfeedbackStitch(SC, Mplus, R0=np.zeros((2, 1)), nBPMs=4, maxsteps=30, nRepr
                     BPMhist = logLastBPM(BPMhist, SCgetBPMreading(SC, BPMords=BPMords))
                     if isRepro(BPMhist, 3):
                         BPMhist[0:3] = -1  # void last hist
-
+                        break
     B = SCgetBPMreading(SC, BPMords=BPMords)
     if not isSignal(B, nBPMs):
         raise RuntimeError('SCfeedbackStitch: FAIL Wiggling failed')

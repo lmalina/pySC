@@ -53,10 +53,10 @@ def SCdynamicAperture(RING, dE, bounds=np.array([0, 1e-3]), nturns=1000, thetas=
         else:
             tmp = findorbit4(RING, 0)
         if not np.isnan(tmp[0]):
-            x, y = pol2cart(thetas, RMAXs)
+            x, y = pol2cart(RMAXs, thetas)
             x = x - tmp[0]
             y = y - tmp[2]
-            thetas, RMAXs = cart2pol(x, y)
+            RMAXs, thetas = cart2pol(x, y)
             RMAXs = RMAXs.T
     return DA, RMAXs, thetas
 
@@ -111,3 +111,13 @@ def _autothetas(RING, dE, nt):
     rout = np.abs(np.cosh(mu + 1j * nu))
     tout = np.angle(np.cosh(mu + 1j * nu))
     return rout, tout
+
+def cart2pol(x, y):
+    rho = np.sqrt(x**2 + y**2)
+    phi = np.arctan2(y, x)
+    return rho, phi
+
+def pol2cart(rho, phi):
+    x = rho * np.cos(phi)
+    y = rho * np.sin(phi)
+    return x, y

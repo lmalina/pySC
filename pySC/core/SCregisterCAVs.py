@@ -4,7 +4,7 @@ from pySC.classes import DotDict, SimulatedComissioning
 from numpy import ndarray
 
 def SCregisterCAVs(SC: SimulatedComissioning, CAVords: ndarray, **kwargs) -> SimulatedComissioning:
-    SC.ORD.Cavity = np.sort(np.unique(np.concatenate((SC.ORD.Cavity, CAVords))))
+    SC.ORD.Cavity = np.unique(np.concatenate((SC.ORD.Cavity, CAVords)))
     for ord in CAVords:
         if ord not in SC.SIG.RF.keys():
             SC.SIG.RF[ord] = DotDict()

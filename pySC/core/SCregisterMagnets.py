@@ -6,6 +6,13 @@ from numpy import ndarray
 def SCregisterMagnets(SC: SimulatedComissioning, MAGords: ndarray, **kwargs) -> SimulatedComissioning:
     keywords = ['HCM', 'VCM', 'CF', 'SkewQuad', 'MasterOf']  # TODO MasterOf should be np.array
     nvpairs = {key: value for key, value in kwargs.items() if key not in keywords}
+    SC.ORD.Magnet = np.unique(np.concatenate((SC.ORD.Magnet, MAGords)))  # TODO unify with Mag in SC.SIG
+    if 'SkewQuad' in kwargs.keys():
+        SC.ORD.SkewQuad = np.unique(np.concatenate((SC.ORD.SkewQuad, MAGords)))
+    if 'HCM' in kwargs.keys():
+        SC.ORD.HCM = np.unique(np.concatenate((SC.ORD.HCM, MAGords)))
+    if 'VCM' in kwargs.keys():
+        SC.ORD.VCM = np.unique(np.concatenate((SC.ORD.VCM, MAGords)))
     for ord in MAGords:
         if ord not in SC.SIG.Mag.keys():
             SC.SIG.Mag[ord] = DotDict()
@@ -24,7 +31,7 @@ def SCregisterMagnets(SC: SimulatedComissioning, MAGords: ndarray, **kwargs) -> 
         SC.RING[ord].T1 = np.zeros(6)
         SC.RING[ord].T2 = np.zeros(6)
         SC = setOptional(SC, ord, MAGords, **kwargs)
-    return storeOrds(SC, MAGords, kwargs)
+    return SC
 
 
 def setOptional(SC, ord, MAGords, **kwargs):
@@ -43,15 +50,3 @@ def setOptional(SC, ord, MAGords, **kwargs):
         # SC.RING[ord].MasterOf = varargin['MasterOf'][:, ord==MAGords].T
     return SC
 
-
-def storeOrds(SC, MAGords, kwargs):
-    SC.ORD.Magnet = np.sort(np.unique(np.concatenate((SC.ORD.Magnet, MAGords))))  # TODO unify with Mag in SC.SIG
-    if 'SkewQuad' in kwargs.keys():
-        SC.ORD.SkewQuad = np.sort(np.unique(np.concatenate((SC.ORD.SkewQuad, MAGords))))
-    if ('HCM' in kwargs.keys() or 'VCM' in kwargs.keys()) and "CM" not in SC.ORD.keys():
-        SC.ORD.CM = [np.zeros(0), np.zeros(0)]
-    if 'HCM' in kwargs.keys():
-        SC.ORD.CM[0] = np.sort(np.unique(np.concatenate((SC.ORD.CM[0], MAGords))))
-    if 'VCM' in kwargs:
-        SC.ORD.CM[1] = np.sort(np.unique(np.concatenate((SC.ORD.CM[1], MAGords))))
-    return SC
