@@ -86,29 +86,22 @@ def applySupportAlignmentError(SC, nSig):
                 if support_type not in field:
                     continue
                 setattr(SC.RING[ordPair[0]], field, rand_support(value, nSig))
-                if len(SC.SIG.Support) >= ordPair[1] and field in SC.SIG.Support[ordPair[1]].keys():  # TODO also rather strange condition
+                if field in SC.SIG.Support[ordPair[1]].keys():
                     setattr(SC.RING[ordPair[1]], field, rand_support(value, nSig))
                 else:
                     setattr(SC.RING[ordPair[1]], field, getattr(SC.RING[ordPair[0]], field))
 
-            if ordPair[1] - ordPair[0] >= 0:
-                structLength = np.abs(np.diff(at.get_s_pos(SC.RING, ordPair)))
-            else:
-                structLength = at.get_s_pos(SC.RING, ordPair[1]) + np.diff(
-                    at.get_s_pos(SC.RING, np.array([ordPair[0], len(SC.RING) + 1])))
-                # TODO strange. I would expect something like
-                #  lentgth = np.diff(at.get_s_pos(SC.RING, ordPair))
-                #  if ordPair[0] > ordPair[1]:
-                #      length = C-length
-
+            structLength = np.diff(at.get_s_pos(SC.RING, ordPair))
+            if ordPair[0] > ordPair[1]:
+                structLength = at.get_s_pos(SC.RING, len(SC.RING))[0] - structLength
 
             rolls0 = getattr(SC.RING[ordPair[0]], f"{support_type}Roll")
             offsets0 = getattr(SC.RING[ordPair[0]], f"{support_type}Offset")
-            rolls1 = getattr(SC.RING[ordPair[1]], f"{support_type}Roll")  # Not implemented?
+            rolls1 = getattr(SC.RING[ordPair[1]], f"{support_type}Roll")  # TODO Not implemented?
             offsets1 = getattr(SC.RING[ordPair[1]], f"{support_type}Offset")
 
             if rolls0[1] != 0:
-                if len(SC.SIG.Support) >= ordPair[1] and f"{support_type}Offset" in SC.SIG.Support[ordPair[1]].keys():
+                if f"{support_type}Offset" in SC.SIG.Support[ordPair[1]].keys():
                     raise Exception(f'Pitch angle errors can not be given explicitly if {support_type} start and endpoints '
                                     f'each have offset uncertainties.')
                 offsets0[1] -= rolls0[1] * structLength / 2
@@ -117,7 +110,7 @@ def applySupportAlignmentError(SC, nSig):
             else:
                 rolls0[1] = (offsets1[1] - offsets0[1]) / structLength
             if rolls0[2] != 0:
-                if len(SC.SIG.Support) >= ordPair[1] and f"{support_type}Offset" in SC.SIG.Support[ordPair[1]].keys():
+                if f"{support_type}Offset" in SC.SIG.Support[ordPair[1]].keys():
                     raise Exception(f'Yaw angle errors can not be given explicitly if {support_type} start and endpoints '
                                     f'each have offset uncertainties.')
                 offsets0[0] -= rolls0[2] * structLength / 2

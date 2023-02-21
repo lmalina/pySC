@@ -6,7 +6,7 @@ from pySC.utils.feedback import is_stable_or_converged
 
 
 def SCfeedbackRun(SC, Mplus, R0=None, eps=1e-5, target=0, maxsteps=30, scaleDisp=0, CMords=None, BPMords=None,
-                  weight=None, verbose=False):
+                  weight=None, verbose=False, plotFunctionFlag=False):
     if R0 is None:
         R0 = np.zeros((Mplus.shape[1], 1))
     if CMords is None:
@@ -19,7 +19,7 @@ def SCfeedbackRun(SC, Mplus, R0=None, eps=1e-5, target=0, maxsteps=30, scaleDisp
         print('SCfeedbackRun: Start')
     BPMhist = np.nan * np.ones((1, 100))
     for steps in range(maxsteps):
-        B = SCgetBPMreading(SC, BPMords=BPMords)  # Inject ...
+        B = SCgetBPMreading(SC, BPMords=BPMords, plotFunctionFlag=plotFunctionFlag)  # Inject ...
         R = np.array([B[0, :], B[1, :]])
         R[np.isnan(R)] = 0
         dphi = Mplus @ ((R - R0) * weight)

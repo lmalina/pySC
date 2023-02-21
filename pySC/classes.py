@@ -4,6 +4,7 @@ from at import Lattice
 from numpy import ndarray
 
 
+
 class DotDict(dict):
     def __init__(self, *args, **kwargs):
         super(DotDict, self).__init__(*args, **kwargs)
@@ -32,15 +33,11 @@ class DotDict(dict):
 class SimulatedComissioning(DotDict):
     def __init__(self, ring: Lattice):
         super(SimulatedComissioning, self).__init__()
-        global plotFunctionFlag
-        global SCinjections
         self.RING: Lattice = ring.deepcopy()
         self.IDEALRING: Lattice = ring.deepcopy()
         self.INJ: Injection = Injection()
         self.SIG: Sigmas = Sigmas()
         self.ORD: Indices = Indices()
-        SCinjections = 0
-        plotFunctionFlag = []
 
 
 class Injection(DotDict):

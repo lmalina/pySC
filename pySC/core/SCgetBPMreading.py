@@ -7,8 +7,8 @@ from pySC.core.SCparticlesIn3D import SCparticlesIn3D
 from pySC.core.SCrandnc import SCrandnc
 from pySC import atgetfieldvalues, atpass
 
-def SCgetBPMreading(SC, BPMords=[]):
-    global plotFunctionFlag
+
+def SCgetBPMreading(SC, BPMords=[], plotFunctionFlag=False):
     if SC.INJ.trackMode == 'ORB':
         nTurns = 1
         nParticles = 1
@@ -26,7 +26,7 @@ def SCgetBPMreading(SC, BPMords=[]):
             T = at.find_orbit6(SC.RING, refOrds)  # ,SC.INJ.Z0)
         else:
             Zin = SCgenBunches(SC)
-            T = atpass(SC.RING, Zin, 1, nTurns, refOrds)
+            T = atpass(SC.RING, Zin, nTurns, refOrds, keep_lattice=False)
         T[:, np.isnan(T[0, :])] = np.nan
         if plotFunctionFlag:
             T1[:, :, nShot] = T
@@ -53,19 +53,19 @@ def SCgetBPMreading(SC, BPMords=[]):
 def calcBPMreading(SC, T, atAllElements=0):
     if SC.INJ.trackMode == 'ORB':
         nTurns = 1
-        BPMnoise = np.array(atgetfieldvalues(SC.RING[SC.ORD.BPM], 'NoiseCO'))
+        BPMnoise = np.array(atgetfieldvalues(SC.RING,SC.ORD.BPM, 'NoiseCO'))
         nParticles = 1
     else:
         nTurns = SC.INJ.nTurns
-        BPMnoise = np.array(atgetfieldvalues(SC.RING[SC.ORD.BPM], 'Noise'))
+        BPMnoise = np.array(atgetfieldvalues(SC.RING,SC.ORD.BPM, 'Noise'))
         nParticles = SC.INJ.nParticles
-    BPMoffset = np.tile(np.array(atgetfieldvalues(SC.RING[SC.ORD.BPM], 'Offset')) + np.array(
-        atgetfieldvalues(SC.RING[SC.ORD.BPM], 'SupportOffset')), (1, nTurns))
-    BPMcalError = np.tile(np.array(atgetfieldvalues(SC.RING[SC.ORD.BPM], 'CalError')), (1, nTurns))
-    BPMroll = np.tile(atgetfieldvalues(SC.RING[SC.ORD.BPM], 'Roll'), (1, nTurns)) + np.tile(
-        atgetfieldvalues(SC.RING[SC.ORD.BPM], 'SupportRoll'), (1, nTurns))
-    BPMnoise = np.tile(BPMnoise, (1, nTurns)) * SCrandnc(2, (2, nTurns * len(SC.ORD.BPM)))
-    BPMsumError = np.tile(atgetfieldvalues(SC.RING[SC.ORD.BPM], 'SumError'), (1, nTurns))
+    BPMoffset = np.tile(np.array(atgetfieldvalues(SC.RING,SC.ORD.BPM, 'Offset')) + np.array(
+        atgetfieldvalues(SC.RING,SC.ORD.BPM, 'SupportOffset')), (1, nTurns))
+    BPMcalError = np.tile(np.array(atgetfieldvalues(SC.RING,SC.ORD.BPM, 'CalError')), (1, nTurns))
+    BPMroll = np.tile(atgetfieldvalues(SC.RING,SC.ORD.BPM, 'Roll'), (1, nTurns)) + np.tile(  # TODO this is fishy
+        atgetfieldvalues(SC.RING,SC.ORD.BPM, 'SupportRoll'), (1, nTurns))
+    BPMnoise = np.tile(BPMnoise, (1, nTurns)) * SCrandnc(2, (nTurns * len(SC.ORD.BPM), 2))
+    BPMsumError = np.tile(atgetfieldvalues(SC.RING,SC.ORD.BPM, 'SumError'), (1, nTurns))
     if atAllElements:
         nE = np.reshape((np.arange(nTurns) * len(SC.RING) + SC.ORD.BPM), (1, []))
     else:

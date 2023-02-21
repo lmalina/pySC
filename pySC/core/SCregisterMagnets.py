@@ -4,7 +4,7 @@ from numpy import ndarray
 
 
 def SCregisterMagnets(SC: SimulatedComissioning, MAGords: ndarray, **kwargs) -> SimulatedComissioning:
-    keywords = ['HCM', 'VCM', 'CF', 'SkewQuad', 'MasterOf']  # TODO MasterOf should be np.array
+    keywords = ['HCM', 'VCM', 'CF', 'SkewQuad', 'MasterOf']
     nvpairs = {key: value for key, value in kwargs.items() if key not in keywords}
     SC.ORD.Magnet = np.unique(np.concatenate((SC.ORD.Magnet, MAGords)))  # TODO unify with Mag in SC.SIG
     if 'SkewQuad' in kwargs.keys():
@@ -45,7 +45,9 @@ def setOptional(SC, ord, MAGords, **kwargs):
         SC.RING[ord].CMlimit[1] = kwargs['VCM']
     if 'SkewQuad' in kwargs.keys():
         SC.RING[ord].SkewQuadLimit = kwargs['SkewQuad']
-    if 'MasterOf' in kwargs.keys():  # TODO
-        SC.RING[ord].MasterOf = kwargs['MasterOf'][:, ord==MAGords].T
+    if 'MasterOf' in kwargs.keys():
+        if np.count_nonzero(MAGords == ord) > 1:
+            raise ValueError(f"Non-unique element index {ord} found together with ``MasterOf``")
+        SC.RING[ord].MasterOf = kwargs['MasterOf'][:, np.nonzero(MAGords == ord)].ravel()
     return SC
 

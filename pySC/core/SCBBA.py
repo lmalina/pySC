@@ -309,16 +309,13 @@ def getOrbitBump(SC,mOrd,BPMord,nDim,par):
     return CMords,CMvec
 
 def plotBBAstep(SC,BPMind,jBPM,nDim,nQ,mOrd,nKick,par):
-    global plotFunctionFlag
     sPos = findspos(SC.RING,np.arange(len(SC.RING)))
     xLim = sPos[mOrd]+[-10 10]
     yLim = 1.3*[-1 1]
     if nQ==1 and nKick==1:
         plt.figure(99)
         plt.clf()
-    plotFunctionFlag=1
-    B,T=SCgetBPMreading(SC)
-    plotFunctionFlag=[]
+    B,T=SCgetBPMreading(SC, plotFunctionFlag=True)
     T=SCparticlesIn3D(T,SC.INJ.nParticles)
     T=T[:,:,1]
     plt.figure(99)

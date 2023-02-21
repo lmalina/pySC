@@ -25,10 +25,8 @@ def SCrampUpErrors(SC, nStepsRamp=10, eps=1e-5, target=0, alpha=10, maxsteps=30,
         SC = scaleRF(SC, SC0, errFieldsRF, scale)
         SC = scaleInjection(SC, SC0, scale)
         SC = scaleCircumference(SC, SC0, scale)
-        global plotFunctionFlag
-        plotFunctionFlag = 1
         try:
-            SC = SCfeedbackRun(SC, Mplus, target=target, maxsteps=maxsteps, eps=eps, verbose=verbose)
+            SC = SCfeedbackRun(SC, Mplus, target=target, maxsteps=maxsteps, eps=eps, verbose=verbose, plotFunctionFlag=True)
         except RuntimeError:
             if 2 * nStepsRamp > 100:
                 raise Exception(f'Ramping up failed at scaling {scale:.2f} with {nStepsRamp} ramping steps. '

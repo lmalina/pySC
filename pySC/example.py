@@ -130,7 +130,6 @@ if __name__ == "__main__":
     SC.INJ.nShots = 1
     SC.INJ.trackMode = 'TBT'
     eps = 1E-4  # Noise level
-    plotFunctionFlag = 0
     SCgetBPMreading(SC)
     SC = SCfeedbackFirstTurn(SC, Minv1, verbose=True)
     SC.INJ.nTurns = 2
@@ -145,7 +144,6 @@ if __name__ == "__main__":
         except RuntimeError:
             pass
 
-    plotFunctionFlag = 0
     SC.RING = SCcronoff(SC.RING, 'cavityon')
     SCplotPhaseSpace(SC,
                      'nParticles', 10,
@@ -190,7 +188,6 @@ if __name__ == "__main__":
         if np.mean(B0rms) < np.mean(Brms):
             break
         SC = CUR
-    plotFunctionFlag = 0
     SC.RING = SCcronoff(SC.RING, 'cavityon')
     SCplotPhaseSpace(SC, 'nParticles', 10, 'nTurns', 1000)
     [maxTurns, lostCount, ERROR] = SCgetBeamTransmission(SC,

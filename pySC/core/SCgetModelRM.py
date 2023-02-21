@@ -2,44 +2,43 @@ import numpy as np
 import at
 from pySC.core.SCgetModelRING import SCgetModelRING
 from pySC import atpass
+from pySC.constants import NUM_TO_AB
 
-def SCgetModelRM(SC, BPMords, CMords, trackMode='TBT', Z0=np.zeros(6), nTurns=1, dkick=1e-5, useIdealRing=0):
+
+def SCgetModelRM(SC, BPMords, CMords, trackMode='TBT', Z0=np.zeros(6), nTurns=1, dkick=1e-5, useIdealRing=False):
     print('Calculating model response matrix')
-    if useIdealRing:
-        RING = SC.IDEALRING
-    else:
-        RING = SCgetModelRING(SC)
-    if trackMode == 'TBT':
-        trackmethod = atpass
-    elif trackMode == 'ORB':
-        trackmethod = orbpass
+    track_methods = dict(TBT=atpass, ORB=orbpass)
+    if trackMode not in track_methods.keys():
+        ValueError(f'Unknown track mode {trackMode}. Valid values are {track_methods.keys()}')
+    ring = SC.IDEALRING.deepcopy() if useIdealRing else SCgetModelRING(SC)
+    trackmethod = track_methods[trackMode]
+    if trackMode == 'ORB':
         nTurns = 1
-    else:
-        raise ValueError('trackMode "%s" unknown. Valid values are "TBT" and "ORB".' % trackMode)
     nBPM = len(BPMords)
-    nCM = len([CMords[0]])
-    RM = np.nan * np.ones((2 * nBPM * nTurns, nCM))
-    Ta = trackmethod(RING, Z0, 1, nTurns, BPMords)
+    nCM = len(CMords[0]) + len(CMords[1])
+    RM = np.full((2 * nBPM * nTurns, nCM), np.nan)
+    Ta = trackmethod(ring, Z0,  nTurns, BPMords, keep_lattice=False)
     if np.any(np.isnan(Ta)):
-        print('Initial trajectory/orbit is NaN. Aborting. ')
-        return
-    PolynomDim = ['PolynomB', 'PolynomA']
+        raise ValueError('Initial trajectory/orbit is NaN. Aborting. ')
+
     cnt = 0
     for nDim in range(2):
         for CMord in CMords[nDim]:
-            if RING[CMord].PassMethod == 'CorrectorPass':
-                KickNominal = RING[CMord].KickAngle[nDim]
-                RING[CMord].KickAngle[nDim] = KickNominal + dkick
-                TdB = trackmethod(RING, Z0, 1, nTurns, BPMords)
-                RING[CMord].KickAngle[nDim] = KickNominal
+            if ring[CMord].PassMethod == 'CorrectorPass':
+                KickNominal = ring[CMord].KickAngle[nDim]
+                ring[CMord].KickAngle[nDim] = KickNominal + dkick
+                TdB = trackmethod(ring, Z0, nTurns, BPMords, keep_lattice=False)
+                ring[CMord].KickAngle[nDim] = KickNominal
             else:
-                PolynomNominal = RING[CMord][PolynomDim[nDim]]
-                delta = dkick / RING[CMord].Length
-                RING[CMord][PolynomDim[nDim]][0] = PolynomNominal[0] + (-1) ** nDim * delta
-                TdB = trackmethod(RING, Z0, 1, nTurns, BPMords)
-                RING[CMord][PolynomDim[nDim]] = PolynomNominal
+                PolynomNominal = getattr(ring[CMord], f"Polynom{NUM_TO_AB[nDim]}")
+                delta = dkick / ring[CMord].Length
+                changed_polynom = PolynomNominal[:]
+                changed_polynom[0] += (-1) ** nDim * delta
+                setattr(ring[CMord], f"Polynom{NUM_TO_AB[nDim]}", changed_polynom[:])
+                TdB = trackmethod(ring, Z0, nTurns, BPMords, keep_lattice=False)
+                setattr(ring[CMord], f"Polynom{NUM_TO_AB[nDim]}", PolynomNominal[:])
             dTdB = (TdB - Ta) / dkick
-            RM[:, cnt] = np.concatenate((dTdB[0, :], dTdB[2, :]))
+            RM[:, cnt] = np.concatenate((np.ravel(dTdB[0, :, :, :]), np.ravel(dTdB[2, :, :, :])))
             cnt = cnt + 1
     return RM
 

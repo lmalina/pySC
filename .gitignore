@@ -130,3 +130,6 @@ dmypy.json
 
 # Pycharm stuff
 .idea
+
+# matlab raw files
+matlab
