@@ -4,13 +4,13 @@ import numpy as np
 def SCupdateMagnets(SC, ords=None):
     for ord in (SC.ORD.Magnet if ords is None else ords):
         SC = _updateMagnets(SC, ord, ord)
-        if hasattr(SC.RING[ord], 'MasterOf'):  # TODO
+        if hasattr(SC.RING[ord], 'MasterOf'):
             for childOrd in SC.RING[ord].MasterOf:
                 SC = _updateMagnets(SC, ord, childOrd)
     return SC
 
 
-def _updateMagnets(SC, source, target):
+def _updateMagnets(SC, source, target):  # TODO simplify AB calculated in place
     SC.RING[target].PolynomB = SC.RING[source].SetPointB * add_padded(np.ones(len(SC.RING[source].SetPointB)),
                                                                       SC.RING[source].CalErrorB)
     SC.RING[target].PolynomA = SC.RING[source].SetPointA * add_padded(np.ones(len(SC.RING[source].SetPointA)),

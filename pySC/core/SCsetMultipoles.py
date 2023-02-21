@@ -2,7 +2,7 @@ import numpy as np
 from pySC.core.SCrandnc import SCrandnc
 
 
-def SCsetMultipoles(RING, ords, AB, method='rnd', order=[], type=[]):
+def SCsetMultipoles(RING, ords, AB, method='rnd', order=[], type=[]):  # TODO nowhere used? calculate AB in place
     allowed_methods = ("sys", "rnd")
     if method not in allowed_methods:
         raise ValueError(f'Unsupported multipole method {method}. Allowed are {allowed_methods}.')

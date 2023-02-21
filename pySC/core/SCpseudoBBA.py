@@ -13,4 +13,3 @@ def SCpseudoBBA(SC, BPMords, MagOrds, postBBAoffset, sigma=2):
                                                         SC.RING[BPMords[nBPM, nDim]].SupportOffset[nDim] + \
                                                         postBBAoffset[nDim, nBPM] * SCrandnc(sigma)
     return SC
-# End

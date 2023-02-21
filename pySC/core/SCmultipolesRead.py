@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def SCmultipolesRead(fname):
+def SCmultipolesRead(fname):  # TODO sample of the input anywhere?
     f = open(fname, 'r')
     tab = np.array(f.read().split()).astype(float)
     f.close()
