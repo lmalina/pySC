@@ -45,8 +45,7 @@ def setOptional(SC, ord, MAGords, **kwargs):
         SC.RING[ord].CMlimit[1] = kwargs['VCM']
     if 'SkewQuad' in kwargs.keys():
         SC.RING[ord].SkewQuadLimit = kwargs['SkewQuad']
-    if 'MasterOf' in kwargs.keys():
-        raise NotImplementedError("Impement it first!")
-        # SC.RING[ord].MasterOf = varargin['MasterOf'][:, ord==MAGords].T
+    if 'MasterOf' in kwargs.keys():  # TODO
+        SC.RING[ord].MasterOf = kwargs['MasterOf'][:, ord==MAGords].T
     return SC
 

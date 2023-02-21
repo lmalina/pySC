@@ -5,7 +5,7 @@ from pySC.core.SCupdateMagnets import SCupdateMagnets
 
 
 def SCsetMags2SetPoints(SC, MAGords, type, order, setpoints, method='abs', dipCompensation=False):
-    # TODO correct accessing SC.RING.attr.subattr/elements
+    # TODO type to 0 and 1
     valid_methods = ("abs", "rel", "add")
     if method not in valid_methods:
         raise ValueError(f'Unsupported setpoint method: {method}. Allowed options are: {valid_methods}.')
@@ -27,7 +27,7 @@ def SCsetMags2SetPoints(SC, MAGords, type, order, setpoints, method='abs', dipCo
             SC.RING[ord].SetPointA[order] = setpoints[i]
         else:
             SC.RING[ord].SetPointB[order] = setpoints[i]
-        SC = SCupdateMagnets(SC, ord)
+        SC = SCupdateMagnets(SC, np.array([ord]))
     return SC
 
 

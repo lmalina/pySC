@@ -17,9 +17,9 @@ def SCapplyErrors(SC, nSig: float = 2):
     SC = applySupportAlignmentError(SC, nSig)
     SC = applyMagnetError(SC, nSig)
     SC = SCupdateSupport(SC)
-    if SC.ORD.Magnet:
+    if len(SC.ORD.Magnet):
         SC = SCupdateMagnets(SC)
-    if SC.ORD.Cavity and SC.SIG.RF:
+    if len(SC.ORD.Cavity) and len(SC.SIG.RF):
         SC = SCupdateCAVs(SC)
     return SC
 

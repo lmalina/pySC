@@ -25,10 +25,10 @@ def SCcronoff(ring: Lattice, *args: str) -> Lattice:  # TODO some at methods do 
                     ring[ind].PassMethod = 'StrMPoleSymplectic4RadPass'
         elif mode == 'cavityoff':
             for ind in range(len(ring)):
-                if 'Frequency' in ring[ind]:
+                if hasattr(ring[ind], 'Frequency'):
                     ring[ind].PassMethod = 'IdentityPass'
         elif mode == 'cavityon':
             for ind in range(len(ring)):
-                if 'Frequency' in ring[ind]:
+                if hasattr(ring[ind], 'Frequency'):
                     ring[ind].PassMethod = 'RFCavityPass'
     return ring

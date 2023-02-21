@@ -4,16 +4,16 @@ import numpy as np
 def SCupdateMagnets(SC, ords=None):
     for ord in (SC.ORD.Magnet if ords is None else ords):
         SC = _updateMagnets(SC, ord, ord)
-        if hasattr(SC.RING[ord], 'MasterOf'):
+        if hasattr(SC.RING[ord], 'MasterOf'):  # TODO
             for childOrd in SC.RING[ord].MasterOf:
                 SC = _updateMagnets(SC, ord, childOrd)
     return SC
 
 
 def _updateMagnets(SC, source, target):
-    SC.RING[target].PolynomB = SC.RING[source].SetPointB * _addPadded(np.ones(len(SC.RING[source].SetPointB)),
+    SC.RING[target].PolynomB = SC.RING[source].SetPointB * add_padded(np.ones(len(SC.RING[source].SetPointB)),
                                                                       SC.RING[source].CalErrorB)
-    SC.RING[target].PolynomA = SC.RING[source].SetPointA * _addPadded(np.ones(len(SC.RING[source].SetPointA)),
+    SC.RING[target].PolynomA = SC.RING[source].SetPointA * add_padded(np.ones(len(SC.RING[source].SetPointA)),
                                                                       SC.RING[source].CalErrorA)
     sysPolynomB = []
     sysPolynomA = []
@@ -35,15 +35,15 @@ def _updateMagnets(SC, source, target):
                 sysPolynomA.append(SC.RING[target].PolynomA[n] * SC.RING[target].SysPolAFromA[n])
     if len(sysPolynomA) > 0:
         for n in range(len(sysPolynomA) - 1):
-            sysPolynomA[n + 1] = _addPadded(sysPolynomA[n + 1], sysPolynomA[n])
-        SC.RING[target].PolynomA = _addPadded(SC.RING[target].PolynomA, sysPolynomA[-1])
+            sysPolynomA[n + 1] = add_padded(sysPolynomA[n + 1], sysPolynomA[n])
+        SC.RING[target].PolynomA = add_padded(SC.RING[target].PolynomA, sysPolynomA[-1])
     if len(sysPolynomB) > 0:
         for n in range(len(sysPolynomB) - 1):
-            sysPolynomB[n + 1] = _addPadded(sysPolynomB[n + 1], sysPolynomB[n])
-        SC.RING[target].PolynomB = _addPadded(SC.RING[target].PolynomB, sysPolynomB[-1])
+            sysPolynomB[n + 1] = add_padded(sysPolynomB[n + 1], sysPolynomB[n])
+        SC.RING[target].PolynomB = add_padded(SC.RING[target].PolynomB, sysPolynomB[-1])
     if hasattr(SC.RING[target], 'PolynomBOffset'):
-        SC.RING[target].PolynomB = _addPadded(SC.RING[target].PolynomB, SC.RING[target].PolynomBOffset)
-        SC.RING[target].PolynomA = _addPadded(SC.RING[target].PolynomA, SC.RING[target].PolynomAOffset)
+        SC.RING[target].PolynomB = add_padded(SC.RING[target].PolynomB, SC.RING[target].PolynomBOffset)
+        SC.RING[target].PolynomA = add_padded(SC.RING[target].PolynomA, SC.RING[target].PolynomAOffset)
     if hasattr(SC.RING[source], 'BendingAngleError'):
         SC.RING[target].PolynomB[0] = SC.RING[target].PolynomB[0] + SC.RING[source].BendingAngleError * SC.RING[
             target].BendingAngle / SC.RING[target].Length
@@ -61,11 +61,13 @@ def _updateMagnets(SC, source, target):
     return SC
 
 
-def _addPadded(v1, v2):  # TODO this is probably wrong
-    if not ((v1.ndim == 1 and v2.ndim == 1) or (v1.ndim == 2 and v2.ndim == 2)):
-        raise ValueError('Wrong dimensions.')
-    l1 = len(v1)
-    l2 = len(v2)
-    if l2 > l1: v1[l2 - 1] = 0
-    if l1 > l2: v2[l1 - 1] = 0
-    return v1 + v2
+def add_padded(v1, v2):
+    if v1.ndim != v2.ndim:
+        raise ValueError(f'Unmatched number of dimensions {v1.ndim} and {v2.ndim}.')
+    max_dims = np.array([max(d1, d2) for d1, d2 in zip(v1.shape, v2.shape)])
+    if np.sum(max_dims > 1) > 1:
+        raise ValueError(f'Wrong or mismatching dimensions {v1.shape} and {v2.shape}.')
+    vsum = np.zeros(np.prod(max_dims))
+    vsum[:np.max(v1.shape)] += v1
+    vsum[:np.max(v2.shape)] += v2
+    return vsum

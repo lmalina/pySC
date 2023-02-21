@@ -16,10 +16,8 @@ def SCupdateSupport(SC, BPMstructOffset=True, MAGstructOffset=True):
                 setattr(SC.RING[ord], "SupportOffset", offsets[:, i])  # Longitudinal BPM offsets not yet implemented
                 setattr(SC.RING[ord], "SupportRoll", rolls[:, i])  # BPM pitch and yaw angles not yet implemented
                 magLength = SC.RING[ord].Length
-                if 'BendingAngle' in SC.RING[ord]:
-                    magTheta = SC.RING[ord].BendingAngle
-                else:
-                    magTheta = 0
+                magTheta = SC.RING[ord].BendingAngle if hasattr(SC.RING[ord], 'BendingAngle') else 0
+
                 dx = SC.RING[ord].SupportOffset[0] + SC.RING[ord].MagnetOffset[0]
                 dy = SC.RING[ord].SupportOffset[1] + SC.RING[ord].MagnetOffset[1]
                 dz = SC.RING[ord].SupportOffset[2] + SC.RING[ord].MagnetOffset[2]
@@ -31,12 +29,11 @@ def SCupdateSupport(SC, BPMstructOffset=True, MAGstructOffset=True):
                 SC.RING[ord].T2 = T2
                 SC.RING[ord].R1 = R1
                 SC.RING[ord].R2 = R2
-                if 'MasterOf' in SC.RING[ord]:
+                if hasattr(SC.RING[ord], 'MasterOf'):
                     for childOrd in SC.RING[ord].MasterOf:
-                        SC.RING[childOrd].T1 = SC.RING[ord].T1
-                        SC.RING[childOrd].T2 = SC.RING[ord].T2
-                        SC.RING[childOrd].R1 = SC.RING[ord].R1
-                        SC.RING[childOrd].R2 = SC.RING[ord].R2
+                        for field in ("T1", "T2", "R1", "R2"):
+                            setattr(SC.RING[childOrd], field, getattr(SC.RING[ord], field))
+
         else:
             print('SC: No magnets have been registered!')
     if BPMstructOffset:

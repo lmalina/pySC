@@ -120,9 +120,9 @@ if __name__ == "__main__":
     #SCplotSupport(SC)  # TODO
     SC.RING = SCcronoff(SC.RING, 'cavityoff')
     sextOrds = SCgetOrds(SC.RING, 'SF|SD')
-    SC = SCsetMags2SetPoints(SC, sextOrds, 2, 3, 0, method='abs')
-    RM1 = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, 'nTurns', 1)
-    RM2 = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, 'nTurns', 2)
+    SC = SCsetMags2SetPoints(SC, sextOrds, 2, 2, np.array([0.0]), method='abs')
+    RM1 = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, nTurns=1)
+    RM2 = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, nTurns=2)
     Minv1 = SCgetPinv(RM1, alpha=50)
     Minv2 = SCgetPinv(RM2, alpha=50)
     SC.INJ.nParticles = 1
