@@ -1,8 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import at
 from pySC.core.SCgetBPMreading import SCgetBPMreading
-from pySC import atpass
+from pySC.at_wrapper import atpass, findspos
 
 def SCfitInjectionZ(SC, mode, nDims=None, nBPMs=None, nShots=None, verbose=0, plotFlag=0):
     if nDims is None:
@@ -22,7 +21,7 @@ def SCfitInjectionZ(SC, mode, nDims=None, nBPMs=None, nShots=None, verbose=0, pl
         if plotFlag:
             SC.INJ.Z0 = SC.INJ.Z0 + deltaZ0
             B1 = SCgetBPMreading(SC)
-            sBPM = at.get_s_pos(SC.RING, SC.ORD.BPM[nBPMs])
+            sBPM = findspos(SC.RING, SC.ORD.BPM[nBPMs])
             plt.figure(342)
             plt.clf()
             titleStr = ['Horizontal', 'Vertical']
@@ -35,8 +34,8 @@ def SCfitInjectionZ(SC, mode, nDims=None, nBPMs=None, nShots=None, verbose=0, pl
                 plt.legend(['Initial', 'After correction'])
             plt.show()
     elif mode == 'injectionDrift':
-        tmpS = at.get_s_pos(SC.RING, SC.ORD.BPM)
-        sBPM = [tmpS[-1] - at.get_s_pos(SC.RING, len(SC.RING) + 1), tmpS[0]]
+        tmpS = findspos(SC.RING, SC.ORD.BPM)
+        sBPM = [tmpS[-1] - findspos(SC.RING, len(SC.RING) + 1)[0], tmpS[0]]
         Bref = [B[:, len(SC.ORD.BPM) - 1], B[:, len(SC.ORD.BPM)]]
         for nDim in nDims:
             sol[nDim] = np.polyfit(sBPM, Bref[nDim, :], 1)

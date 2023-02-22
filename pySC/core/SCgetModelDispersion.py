@@ -1,5 +1,5 @@
 import numpy as np
-import at
+from pySC.at_wrapper import findorbit6
 
 
 def SCgetModelDispersion(SC, BPMords, CAVords, rfStep=1E3, useIdealRing=0):
@@ -16,12 +16,12 @@ def SCgetModelDispersion(SC, BPMords, CAVords, rfStep=1E3, useIdealRing=0):
                 del RING[ord][rmf]
     nBPM = len(BPMords)
     eta = np.nan * np.ones((2 * nBPM, 1))
-    Bref = at.find_orbit6(RING, BPMords)
+    Bref = findorbit6(RING, BPMords)
     if np.any(np.isnan(Bref)):
         print('Initial orbit is NaN. Aborting. \n')
         return
     for ord in CAVords:
         RING[ord]['Frequency'] = RING[ord]['Frequency'] + rfStep
-    B = at.find_orbit6(RING, BPMords)
+    B = findorbit6(RING, BPMords)
     eta = np.reshape((B[0:2, :] - Bref[0:2, :]) / rfStep, [], 1)
     return eta

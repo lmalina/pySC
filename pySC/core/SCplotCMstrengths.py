@@ -1,14 +1,13 @@
-import at
 import numpy as np
 import matplotlib.pyplot as plt
-
+from pySC.at_wrapper import findspos
 
 
 def SCplotCMstrengths(SC,varargin):
     fieldNames = {'SetPointB','SetPointA'}; # {hor,ver}
     plt.figure(86);plt.clf()
     for nDim in range(2):
-        CMs[nDim] = at.get_s_pos(SC.RING,SC.ORD.CM[nDim])';
+        CMs[nDim] = findspos(SC.RING,SC.ORD.CM[nDim])';
         nCM=1;
         for ord in SC.ORD.CM[nDim]:
             if SC.RING[ord].PassMethod == 'CorrectorPass':

@@ -3,7 +3,7 @@ import numpy as np
 from pySC.constants import SUPPORT_TYPES
 from pySC.core.SCgetSupportOffset import SCgetSupportOffset
 from pySC.core.SCgetSupportRoll import SCgetSupportRoll
-from pySC import atpass, atgetfieldvalues, findspos, findorbit6, findorbit4, atlinopt
+from pySC.at_wrapper import atpass, atgetfieldvalues, findspos, findorbit6, findorbit4, atlinopt
 
 def SCplotSupport(SC,fontSize=12,shiftAxes=0.03,xLim=[0, findspos(SC.RING,len(SC.RING)+1)]):
     if not hasattr(SC.ORD,'Magnet'):

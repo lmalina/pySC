@@ -1,8 +1,7 @@
-import at
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-
+from pySC.at_wrapper import twissline, atlinopt
 
 def SCplotLattice(SC, transferLine=0, nSectors=1, oList=[], plotIdealRing=1, sRange=[], plotMagNames=0, fontSize=16):
     sPos = np.cumsum(np.array([el.Length for el in SC.RING]))
@@ -21,9 +20,9 @@ def SCplotLattice(SC, transferLine=0, nSectors=1, oList=[], plotIdealRing=1, sRa
             disp = np.reshape([TD.Dispersion], (4, len(oList)))
     else:
         if plotIdealRing:
-            ld, _, _ = at.linopt(SC.IDEALRING, 1e-3, oList)
+            ld, _, _ = atlinopt(SC.IDEALRING, 1e-3, oList)
         else:
-            ld, _, _ = at.linopt(SC.RING, 1e-3, oList)
+            ld, _, _ = atlinopt(SC.RING, 1e-3, oList)
         beta = np.reshape([ld.beta], (2, len(oList)))
         disp = np.reshape([ld.Dispersion], (4, len(oList)))
     DIP = []

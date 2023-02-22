@@ -1,11 +1,11 @@
-import at
+from pySC.at_wrapper import findspos
 
 
 def SCscaleCircumference(RING, circ, mode='abs'):
     allowed_modes = ("abs", "rel")
     if mode not in allowed_modes:
         raise ValueError(f'Unsupported circumference scaling mode: ``{mode}``. Allowed are {allowed_modes}.')
-    C = at.get_s_pos(RING)[-1]
+    C = findspos(RING)[-1]
     D = 0
     for ord in range(len(RING)):
         if RING[ord].PassMethod == 'DriftPass':

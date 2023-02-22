@@ -1,10 +1,9 @@
-import at
 import numpy as np
 import matplotlib.pyplot as plt
 
 from pySC.core.SCgenBunches import SCgenBunches
 from pySC.core.SCparticlesIn3D import SCparticlesIn3D
-from pySC import atpass
+from pySC.at_wrapper import atpass
 
 def SCgetBeamTransmission(SC, nParticles=None, nTurns=None, plotFlag=0, verbose=0):  # TODO Check if SC gets modified
     if nParticles is not None:

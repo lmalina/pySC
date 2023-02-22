@@ -6,7 +6,7 @@ from pySC.core.SCupdateCAVs import SCupdateCAVs
 from pySC.core.SCupdateMagnets import SCupdateMagnets
 from pySC.core.SCrandnc import SCrandnc
 from pySC.core.SCscaleCircumference import SCscaleCircumference
-import at
+from pySC.at_wrapper import findspos
 
 
 def SCapplyErrors(SC, nSig: float = 2):
@@ -91,9 +91,9 @@ def applySupportAlignmentError(SC, nSig):
                 else:
                     setattr(SC.RING[ordPair[1]], field, getattr(SC.RING[ordPair[0]], field))
 
-            structLength = np.diff(at.get_s_pos(SC.RING, ordPair))
+            structLength = np.diff(findspos(SC.RING, ordPair))
             if ordPair[0] > ordPair[1]:
-                structLength = at.get_s_pos(SC.RING, len(SC.RING))[0] - structLength
+                structLength = findspos(SC.RING, len(SC.RING))[0] - structLength
 
             rolls0 = getattr(SC.RING[ordPair[0]], f"{support_type}Roll")
             offsets0 = getattr(SC.RING[ordPair[0]], f"{support_type}Offset")

@@ -1,7 +1,6 @@
 import numpy as np
-import at
 from pySC.core.SCgetModelRING import SCgetModelRING
-from pySC import atpass
+from pySC.at_wrapper import atpass, findorbit6
 from pySC.constants import NUM_TO_AB
 
 
@@ -44,5 +43,4 @@ def SCgetModelRM(SC, BPMords, CMords, trackMode='TBT', Z0=np.zeros(6), nTurns=1,
 
 
 def orbpass(RING, Z0, newlat, nTurns, REFPTS):
-    OUT = at.find_orbit6(RING, REFPTS, Z0)
-    return OUT
+    return findorbit6(RING, REFPTS, Z0)

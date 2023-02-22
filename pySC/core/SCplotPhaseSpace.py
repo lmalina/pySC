@@ -1,7 +1,6 @@
-import at
 import matplotlib.pyplot as plt
 import numpy as np
-from pySC import atpass
+from pySC.at_wrapper import atpass, findorbit6
 from pySC.core.SCgenBunches import SCgenBunches
 from pySC.core.SCparticlesIn3D import SCparticlesIn3D
 
@@ -33,10 +32,10 @@ def SCplotPhaseSpace(SC, ord=1, plotCO=0, customBunch=[], nParticles=None, nTurn
         T3D[6, :, :] = T3D[6, :, :] - lengthSlippage * np.arange(1, nTurns + 1)
         labelStr[5] = '$\Delta S_{act}$ [m]'
     if plotCO:
-        CO = at.find_orbit6(SC.RING, ord)
+        CO = findorbit6(SC.RING, ord)
         if np.isnan(CO[0]):
             startPointGuess = np.nanmean(np.nanmean(T3D, 2), 2)
-            CO = at.find_orbit6(SC.RING, ord, startPointGuess)
+            CO = findorbit6(SC.RING, ord, startPointGuess)
             if np.isnan(CO[0]):
                 CO = np.nan * np.ones(6)
     else:

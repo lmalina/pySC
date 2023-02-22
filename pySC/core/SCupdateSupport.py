@@ -1,6 +1,5 @@
-import at
 import numpy as np
-
+from pySC.at_wrapper import findspos
 from pySC.core.SCgetSupportOffset import SCgetSupportOffset
 from pySC.core.SCgetSupportRoll import SCgetSupportRoll
 from pySC.core.SCgetTransformation import SCgetTransformation
@@ -9,7 +8,7 @@ from pySC.core.SCgetTransformation import SCgetTransformation
 def SCupdateSupport(SC, BPMstructOffset=True, MAGstructOffset=True):
     if MAGstructOffset:
         if len(SC.ORD.Magnet):
-            s = at.get_s_pos(SC.RING, SC.ORD.Magnet)
+            s = findspos(SC.RING, SC.ORD.Magnet)
             offsets = SCgetSupportOffset(SC, s)
             rolls = SCgetSupportRoll(SC, s)
             for i, ord in enumerate(SC.ORD.Magnet):
@@ -38,12 +37,12 @@ def SCupdateSupport(SC, BPMstructOffset=True, MAGstructOffset=True):
             print('SC: No magnets have been registered!')
     if BPMstructOffset:
         if len(SC.ORD.BPM):
-            s = at.get_s_pos(SC.RING, SC.ORD.BPM)
+            s = findspos(SC.RING, SC.ORD.BPM)
             offsets = SCgetSupportOffset(SC, s)
             rolls = SCgetSupportRoll(SC, s)
             for i, ord in enumerate(SC.ORD.BPM):
                 setattr(SC.RING[ord], "SupportOffset", offsets[0:2, i])  # TODO Longitudinal BPM offsets not yet implemented
-                setattr(SC.RING[ord], "SupportRoll", rolls[0, i])  # TODO BPM pitch and yaw angles not yet implemented
+                setattr(SC.RING[ord], "SupportRoll", np.array([rolls[0, i]]))  # TODO BPM pitch and yaw angles not yet implemented
         else:
             print('SC: No BPMs have been registered!')
     return SC

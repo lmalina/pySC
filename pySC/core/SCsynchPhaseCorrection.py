@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.optimize import root, minimize
 
-from pySC import findorbit6
+from pySC.at_wrapper import findorbit6
 from pySC.core.SCgetBPMreading import SCgetBPMreading
 from pySC.core.SCsetCavs2SetPoints import SCsetCavs2SetPoints
 

@@ -1,12 +1,12 @@
-import at
 import numpy as np
 import matplotlib.pyplot as plt
+from pySC.at_wrapper import findorbit6, findspos
 
 
 def SCgetCOD(SC, ords=None, plot=False):
     if ords is None:
         ords = SC.ORD.Magnet
-    T = at.find_orbit6(SC.RING, ords)
+    T = findorbit6(SC.RING, ords)
     if any(np.isnan(T)):
         print('Closed orbit could not be found.')
         COD = np.nan(2, len(ords))
@@ -16,13 +16,12 @@ def SCgetCOD(SC, ords=None, plot=False):
         magOffset[:, i] = SC.RING[ord].T2([1, 3])
     COD = T[[1, 3], :] - magOffset
     if plot:
-        sPos = at.get_s_pos(SC.RING, ords)
+        sPos = findspos(SC.RING, ords)
         ylabelStr = ['$\Delta x$ [mm]', '$\Delta y$ [mm]']
         plt.figure(784)
         plt.clf()
         for nDim in range(2):
             ax = plt.subplot(2, 1, nDim + 1)
-            plt.hold(True)
             plt.plot(sPos, 1E3 * COD[nDim, :], linewidth=2)
             plt.plot(sPos, 1E3 * magOffset[nDim, :], linewidth=2)
             plt.plot(sPos, 1E3 * T[2 * nDim, :], linewidth=2)

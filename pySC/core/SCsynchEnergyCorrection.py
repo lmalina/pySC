@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from pySC import findorbit6
+from pySC.at_wrapper import findorbit6
 from pySC.core.SCgetBPMreading import SCgetBPMreading
 from pySC.core.SCsetCavs2SetPoints import SCsetCavs2SetPoints
 

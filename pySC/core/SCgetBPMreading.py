@@ -1,11 +1,10 @@
-import at
 import numpy as np
 
 from pySC.core.SCgenBunches import SCgenBunches
 from pySC.core.SCparticlesIn3D import SCparticlesIn3D
 #from pySC.core.SCplotBPMreading import SCplotBPMreading
 from pySC.core.SCrandnc import SCrandnc
-from pySC import atgetfieldvalues, atpass
+from pySC.at_wrapper import atgetfieldvalues, atpass, findorbit6
 
 
 def SCgetBPMreading(SC, BPMords=[], plotFunctionFlag=False):
@@ -23,7 +22,7 @@ def SCgetBPMreading(SC, BPMords=[], plotFunctionFlag=False):
         refOrds = SC.ORD.BPM
     for nShot in range(SC.INJ.nShots):
         if SC.INJ.trackMode == 'ORB':
-            T = at.find_orbit6(SC.RING, refOrds)  # ,SC.INJ.Z0)
+            T = findorbit6(SC.RING, refOrds)  # ,SC.INJ.Z0)
         else:
             Zin = SCgenBunches(SC)
             T = atpass(SC.RING, Zin, nTurns, refOrds, keep_lattice=False)

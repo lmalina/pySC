@@ -3,6 +3,7 @@ import sys
 import at
 import numpy as np
 from at import Lattice
+from pySC.at_wrapper import atloco
 from pySC.classes import SimulatedComissioning
 from pySC.core.SCapplyErrors import SCapplyErrors
 from pySC.core.SCcronoff import SCcronoff
@@ -212,7 +213,7 @@ if __name__ == "__main__":
                               {SCgetOrds(SC.RING, 'QD'), 'normal', 'individual',
                                1E-4})  # {Ords, normal/skew, ind/fam, deltaK}
     for n in range(6):
-        _, BPMData, CMData, FitParameters, LOCOflags, RINGdata = at.loco(LOCOmeasData,  BPMData,  CMData,  FitParameters,  LOCOflags,  RINGdata)
+        _, BPMData, CMData, FitParameters, LOCOflags, RINGdata = atloco(LOCOmeasData,  BPMData,  CMData,  FitParameters,  LOCOflags,  RINGdata)
         SC = SClocoLib('applyLatticeCorrection', SC, FitParameters)
         SC = SClocoLib('applyOrbitCorrection', SC)
         SClocoLib('plotStatus', SC, Init, BPMData, CMData)

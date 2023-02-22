@@ -1,12 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import at
-from pySC import atpass
+from pySC.at_wrapper import atpass, findspos, findorbit6
 
 def SCmomentumAperture(RING, REFPTS, inibounds, nturns=1000, accuracy=1e-4, stepsize=1e-3, plot=0, debug=0):
     dboundHI = np.zeros(len(REFPTS))
     dboundLO = np.zeros(len(REFPTS))
-    ZCOs = at.find_orbit6(RING, REFPTS)
+    ZCOs = findorbit6(RING, REFPTS)
     if any(~np.isfinite(ZCOs.flatten())):
         dbounds = np.array([dboundHI, dboundLO]).T
         print('Closed Orbit could not be determined during MA evaluation. MA set to zero.')
@@ -27,10 +26,9 @@ def SCmomentumAperture(RING, REFPTS, inibounds, nturns=1000, accuracy=1e-4, step
         if debug: print('ord: %d; Found: %+0.5e %+0.5e' % (ord, local_bounds[0], local_bounds[1]))
     dbounds = np.array([dboundHI, dboundLO]).T
     if plot:
-        spos = at.get_s_pos(RING, REFPTS)
+        spos = findspos(RING, REFPTS)
         plt.figure(81222)
         plt.clf()
-        plt.hold(True)
         plt.plot(spos, dboundHI, 'kx-')
         plt.plot(spos, dboundLO, 'rx-')
         plt.xlabel('s [m]')

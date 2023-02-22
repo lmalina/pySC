@@ -1,6 +1,5 @@
 import numpy as np
 from pySC.constants import SUPPORT_TYPES
-from pySC import findspos
 from pySC.core.SCgetSupportOffset import SCgetSupportOffset
 
 

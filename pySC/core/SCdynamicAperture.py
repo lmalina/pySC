@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from pySC import atpass, findorbit6, findorbit4
+from pySC.at_wrapper import atpass, findorbit6, findorbit4
 
 
 def SCdynamicAperture(RING, dE, bounds=np.array([0, 1e-3]), nturns=1000, thetas=np.linspace(0, 2 * np.pi, 16), accuracy=1e-6,

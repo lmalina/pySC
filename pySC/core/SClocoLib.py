@@ -1,6 +1,6 @@
 import numpy as np
 
-from pySC import atlinopt
+from pySC.at_wrapper import atlinopt, atmatchchromdelta
 from pySC.classes import DotDict
 from pySC.core.SCfeedbackRun import SCfeedbackRun
 from pySC.core.SCgetDispersion import SCgetDispersion
