@@ -4,7 +4,6 @@ from at import Lattice
 from numpy import ndarray
 
 
-
 class DotDict(dict):
     def __init__(self, *args, **kwargs):
         super(DotDict, self).__init__(*args, **kwargs)
@@ -52,6 +51,10 @@ class Injection(DotDict):
         self.nTurns: int = 1
         self.nShots: int = 1
         self.trackMode: str = 'TBT'
+        self.postFun = self._dummy_func
+
+    def _dummy_func(self, matrix):
+        return matrix
 
 
 class Indices(DotDict):
