@@ -3,21 +3,19 @@ import numpy as np
 from pySC.core.SCgetBPMreading import SCgetBPMreading
 from pySC.at_wrapper import atpass, findspos
 
-def SCfitInjectionZ(SC, mode, nDims=None, nBPMs=None, nShots=None, verbose=0, plotFlag=0):
-    if nDims is None:
-        nDims = [0, 1]
-    if nBPMs is None:
-        nBPMs = [0, 1, 2]
+def SCfitInjectionZ(SC, mode, nDims=np.array([0,1]), nBPMs=np.array([0,1,2]), nShots=None, verbose=0, plotFlag=False):
     if nShots is None:
         nShots = SC.INJ.nShots
+    else:
+        SC.INJ.nShots = nShots
     ERROR = 0
     deltaZ0 = np.zeros(6)
-    SC.INJ.nShots = nShots
+
     B = SCgetBPMreading(SC)
     if mode == 'fitTrajectory':
         ordsUsed = SC.ORD.BPM[nBPMs]
         Bref = B[:, nBPMs]
-        deltaZ0[0:4] = -fminsearch(merritFunction, np.zeros(4))
+        deltaZ0[0:4] = -fminsearch(merritFunction, np.zeros(4)) # TODO pass variables?
         if plotFlag:
             SC.INJ.Z0 = SC.INJ.Z0 + deltaZ0
             B1 = SCgetBPMreading(SC)
@@ -67,7 +65,7 @@ def SCfitInjectionZ(SC, mode, nDims=None, nBPMs=None, nShots=None, verbose=0, pl
     return deltaZ0
 
 
-def merritFunction(x):
+def merritFunction(SC, Bref, ordsUsed, x):
     Ta = atpass(SC.IDEALRING, [x, 0, 0], 1, 1, ordsUsed)
     T = Ta[[0, 2], :]
     out = np.sqrt(np.mean((Bref[:] - T[:]) ** 2))

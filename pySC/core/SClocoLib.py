@@ -8,7 +8,7 @@ from pySC.core.SCgetModelRM import SCgetModelRM
 from pySC.core.SCgetPinv import SCgetPinv
 from pySC.core.SCgetRespMat import SCgetRespMat
 from pySC.core.SCsetMags2SetPoints import SCsetMags2SetPoints
-from pySC.core.SCupdateMagnets import SCupdateMagnets
+from pySC.core.SCregisterUpdate import SCupdateMagnets
 
 
 def SClocoLib(funName, *varargin):

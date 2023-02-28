@@ -1,7 +1,7 @@
 import numpy as np
 from pySC.core.SCgetBPMreading import SCgetBPMreading
 from pySC.core.SCsetCMs2SetPoints import SCsetCMs2SetPoints
-from pySC.utils.feedback import  isTransmit, logLastBPM, is_stable_or_converged
+from pySC.utils.feedback import isTransmit, logLastBPM, is_stable_or_converged
 
 
 def SCfeedbackBalance(SC, Mplus, eps=1e-5, R0=np.zeros((2, 1)), maxsteps=10, CMords=None, BPMords=None, verbose=False):

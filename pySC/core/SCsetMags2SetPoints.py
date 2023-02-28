@@ -1,7 +1,7 @@
 import numpy as np
 
 from pySC.core.SCsetCMs2SetPoints import SCsetCMs2SetPoints
-from pySC.core.SCupdateMagnets import SCupdateMagnets
+from pySC.core.SCregisterUpdate import SCupdateMagnets
 
 
 def SCsetMags2SetPoints(SC, MAGords, type, order, setpoints, method='abs', dipCompensation=False):

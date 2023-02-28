@@ -23,10 +23,7 @@ from pySC.core.SCplotLattice import SCplotLattice
 from pySC.core.SCplotPhaseSpace import SCplotPhaseSpace
 #from pySC.core.SCplotSupport import SCplotSupport
 from pySC.core.SCpseudoBBA import SCpseudoBBA
-from pySC.core.SCregisterBPMs import SCregisterBPMs
-from pySC.core.SCregisterCAVs import SCregisterCAVs
-from pySC.core.SCregisterMagnets import SCregisterMagnets
-from pySC.core.SCregisterSupport import SCregisterSupport
+from pySC.core.SCregisterUpdate import SCregisterBPMs, SCregisterCAVs, SCregisterMagnets, SCregisterSupport
 from pySC.core.SCsanityCheck import SCsanityCheck
 from pySC.core.SCsetCavs2SetPoints import SCsetCavs2SetPoints
 from pySC.core.SCsetMags2SetPoints import SCsetMags2SetPoints

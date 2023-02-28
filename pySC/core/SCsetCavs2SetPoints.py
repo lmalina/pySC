@@ -1,6 +1,6 @@
 import numpy as np
 
-from pySC.core.SCupdateCAVs import SCupdateCAVs
+from pySC.core.SCregisterUpdate import SCupdateCAVs
 
 
 def SCsetCavs2SetPoints(SC, CAVords, type, setpoints, method='abs'):

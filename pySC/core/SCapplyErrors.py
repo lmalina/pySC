@@ -1,21 +1,21 @@
 import re
 import numpy as np
 from pySC.constants import SUPPORT_TYPES
-from pySC.core.SCupdateSupport import SCupdateSupport
-from pySC.core.SCupdateCAVs import SCupdateCAVs
-from pySC.core.SCupdateMagnets import SCupdateMagnets
+from pySC.core.SCregisterUpdate import SCupdateCAVs, SCupdateMagnets, SCupdateSupport
 from pySC.core.SCrandnc import SCrandnc
 from pySC.core.SCscaleCircumference import SCscaleCircumference
 from pySC.at_wrapper import findspos
 
+from pySC.classes import SimulatedComissioning
 
-def SCapplyErrors(SC, nSig: float = 2):
-    SC = applyCavityError(SC, nSig)
-    SC = applyInjectionError(SC, nSig)
-    SC = applyBPMerrors(SC, nSig)
-    SC = applyCircumferenceError(SC, nSig)
-    SC = applySupportAlignmentError(SC, nSig)
-    SC = applyMagnetError(SC, nSig)
+
+def SCapplyErrors(SC: SimulatedComissioning, nsigmas: float = 2) -> SimulatedComissioning:
+    SC = _apply_cavity_error(SC, nsigmas)
+    SC = _apply_injection_error(SC, nsigmas)
+    SC = _apply_bpm_errors(SC, nsigmas)
+    SC = _apply_circumference_error(SC, nsigmas)
+    SC = _apply_support_alignment_error(SC, nsigmas)
+    SC = _apply_magnet_error(SC, nsigmas)
     SC = SCupdateSupport(SC)
     if len(SC.ORD.Magnet):
         SC = SCupdateMagnets(SC)
@@ -24,21 +24,16 @@ def SCapplyErrors(SC, nSig: float = 2):
     return SC
 
 
-def applyCavityError(SC, nSig):
-    for ord in SC.ORD.Cavity:
-        if not SC.SIG.RF[ord]:
-            continue
+def _apply_cavity_error(SC, nsigmas):
+    for ord in _intersect(SC.ORD.Cavity, SC.SIG.RF.keys()):
         for field in SC.SIG.RF[ord]:
-            if isinstance(SC.SIG.RF[ord][field], list):
-                setattr(SC.RING[ord], field, SC.SIG.RF[ord][field][0] * SCrandnc(SC.SIG.RF[ord][field][1]))
-            else:
-                setattr(SC.RING[ord], field, SC.SIG.RF[ord][field] * SCrandnc(nSig))
+            setattr(SC.RING[ord], field, _randn_cutoff(SC.SIG.RF[ord][field], nsigmas))
     return SC
 
 
-def applyInjectionError(SC, nSig):
+def _apply_injection_error(SC, nsigmas):
     if 'staticInjectionZ' in SC.SIG.keys():
-        SC.INJ.Z0 = SC.INJ.Z0ideal + SC.SIG.staticInjectionZ * SCrandnc(nSig, (6,))
+        SC.INJ.Z0 = SC.INJ.Z0ideal + SC.SIG.staticInjectionZ * SCrandnc(nsigmas, (6,))
         print('Static injection error applied.')
     if 'randomInjectionZ' in SC.SIG.keys():
         SC.INJ.randomInjectionZ = SC.SIG.randomInjectionZ[:]
@@ -46,38 +41,25 @@ def applyInjectionError(SC, nSig):
     return SC
 
 
-def applyBPMerrors(SC, nSig):
-    for ord in SC.ORD.BPM:
-        if ord not in SC.SIG.BPM.keys():
-            continue
+def _apply_bpm_errors(SC, nsigmas):
+    for ord in _intersect(SC.ORD.BPM, SC.SIG.BPM.keys()):
         for field in SC.SIG.BPM[ord]:
             if re.search('Noise', field):
                 setattr(SC.RING[ord], field, SC.SIG.BPM[ord][field])
             else:
-                if isinstance(SC.SIG.BPM[ord][field], list):
-                    setattr(SC.RING[ord], field, SC.SIG.BPM[ord][field][0] *
-                            SCrandnc(SC.SIG.BPM[ord][field][1], np.shape(SC.SIG.BPM[ord][field][0])))
-                else:
-                    setattr(SC.RING[ord], field,
-                            SC.SIG.BPM[ord][field] * SCrandnc(nSig, np.shape(SC.SIG.BPM[ord][field])))
+                setattr(SC.RING[ord], field, _randn_cutoff(SC.SIG.BPM[ord][field], nsigmas))
     return SC
 
 
-def applyCircumferenceError(SC, nSig):
+def _apply_circumference_error(SC, nsigmas):
     if 'Circumference' in SC.SIG.keys():
-        circScaling = 1 + SC.SIG.Circumference * SCrandnc(nSig, (1, 1))
+        circScaling = 1 + SC.SIG.Circumference * SCrandnc(nsigmas, (1, 1))
         SC.RING = SCscaleCircumference(SC.RING, circScaling, 'rel')
         print('Circumference error applied.')
     return SC
 
 
-def rand_support(field, nSig):
-    if isinstance(field, list):
-        return field[0] * SCrandnc(field[1], np.shape(field[0]))
-    return field * SCrandnc(nSig, np.shape(field))
-
-
-def applySupportAlignmentError(SC, nSig):
+def _apply_support_alignment_error(SC, nsigmas):
     for support_type in SUPPORT_TYPES:
         for ordPair in SC.ORD[support_type].T:
             if ordPair[0] not in SC.SIG.Support.keys():
@@ -85,15 +67,13 @@ def applySupportAlignmentError(SC, nSig):
             for field, value in SC.SIG.Support[ordPair[0]].items():
                 if support_type not in field:
                     continue
-                setattr(SC.RING[ordPair[0]], field, rand_support(value, nSig))
-                if field in SC.SIG.Support[ordPair[1]].keys():
-                    setattr(SC.RING[ordPair[1]], field, rand_support(value, nSig))
-                else:
-                    setattr(SC.RING[ordPair[1]], field, getattr(SC.RING[ordPair[0]], field))
+                setattr(SC.RING[ordPair[0]], field, _randn_cutoff(value, nsigmas))
+                setattr(SC.RING[ordPair[1]], field, _randn_cutoff(value, nsigmas) if field in SC.SIG.Support[ordPair[1]].keys()
+                        else getattr(SC.RING[ordPair[0]], field))
 
-            structLength = np.diff(findspos(SC.RING, ordPair))
+            struct_length = np.diff(findspos(SC.RING, ordPair))
             if ordPair[0] > ordPair[1]:
-                structLength = findspos(SC.RING, len(SC.RING))[0] - structLength
+                struct_length = findspos(SC.RING, len(SC.RING))[0] - struct_length
 
             rolls0 = getattr(SC.RING[ordPair[0]], f"{support_type}Roll")
             offsets0 = getattr(SC.RING[ordPair[0]], f"{support_type}Offset")
@@ -104,19 +84,19 @@ def applySupportAlignmentError(SC, nSig):
                 if f"{support_type}Offset" in SC.SIG.Support[ordPair[1]].keys():
                     raise Exception(f'Pitch angle errors can not be given explicitly if {support_type} start and endpoints '
                                     f'each have offset uncertainties.')
-                offsets0[1] -= rolls0[1] * structLength / 2
-                offsets1[1] += rolls0[1] * structLength / 2
+                offsets0[1] -= rolls0[1] * struct_length / 2
+                offsets1[1] += rolls0[1] * struct_length / 2
 
             else:
-                rolls0[1] = (offsets1[1] - offsets0[1]) / structLength
+                rolls0[1] = (offsets1[1] - offsets0[1]) / struct_length
             if rolls0[2] != 0:
                 if f"{support_type}Offset" in SC.SIG.Support[ordPair[1]].keys():
                     raise Exception(f'Yaw angle errors can not be given explicitly if {support_type} start and endpoints '
                                     f'each have offset uncertainties.')
-                offsets0[0] -= rolls0[2] * structLength / 2
-                offsets1[0] += rolls0[2] * structLength / 2
+                offsets0[0] -= rolls0[2] * struct_length / 2
+                offsets1[0] += rolls0[2] * struct_length / 2
             else:
-                rolls0[2] = (offsets1[0] - offsets0[0]) / structLength
+                rolls0[2] = (offsets1[0] - offsets0[0]) / struct_length
             setattr(SC.RING[ordPair[0]], f"{support_type}Roll", rolls0)
             setattr(SC.RING[ordPair[0]], f"{support_type}Offset", offsets0)
             #setattr(SC.RING[ordPair[1]], f"{support_type}Roll", rolls1)
@@ -124,19 +104,19 @@ def applySupportAlignmentError(SC, nSig):
     return SC
 
 
-def applyMagnetError(SC, nSig):
-    for ord in SC.ORD.Magnet:
-        if ord not in SC.SIG.Mag.keys():
-            continue
+def _apply_magnet_error(SC, nsigmas):
+    for ord in _intersect(SC.ORD.Magnet, SC.SIG.Mag.keys()):
         for field in SC.SIG.Mag[ord]:
-            if isinstance(SC.SIG.Mag[ord][field], list):
-                cut_off = SC.SIG.Mag[ord][field][1]
-                sig = SC.SIG.Mag[ord][field][0]
-            else:
-                cut_off = nSig
-                sig = SC.SIG.Mag[ord][field]
-            if field == 'BendingAngle':
-                setattr(SC.RING[ord], 'BendingAngleError', sig * SCrandnc(cut_off, (1, 1)))
-            else:
-                setattr(SC.RING[ord], field, sig * SCrandnc(cut_off, np.shape(sig)))
+            setattr(SC.RING[ord], 'BendingAngleError' if field == 'BendingAngle' else field,
+                    _randn_cutoff(SC.SIG.Mag[ord][field], nsigmas))
     return SC
+
+
+def _intersect(primary, secondary):
+    return [elem for elem in primary if elem in secondary]
+
+
+def _randn_cutoff(field, default_cut_off):
+    if isinstance(field, list):
+        return field[0] * SCrandnc(field[1], np.shape(field[0]))
+    return field * SCrandnc(default_cut_off, np.shape(field))

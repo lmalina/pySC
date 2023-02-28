@@ -4,8 +4,7 @@ from pySC.core.SCfeedbackRun import SCfeedbackRun
 from pySC.core.SCgetModelRM import SCgetModelRM
 from pySC.core.SCgetPinv import SCgetPinv
 from pySC.core.SCscaleCircumference import SCscaleCircumference
-from pySC.core.SCupdateMagnets import SCupdateMagnets
-from pySC.core.SCupdateSupport import SCupdateSupport
+from pySC.core.SCregisterUpdate import SCupdateMagnets, SCupdateSupport
 
 
 def SCrampUpErrors(SC, nStepsRamp=10, eps=1e-5, target=0, alpha=10, maxsteps=30, verbose=0):
