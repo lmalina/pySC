@@ -72,6 +72,8 @@ def SCtuneScan(SC, qOrds, qSPvec, verbose=0, plotFlag=0, nParticles=None, nTurns
                     print('Transmission target reached with:\n  %s SetPoint: %.4f\n  %s SetPoint: %.4f\n' % (
                         SC.RING[qOrds[0][0]].FamName, qSP[0], SC.RING[qOrds[1][0]].FamName, qSP[1]))
                 return qSP, SC, maxTurns, finTrans, ERROR
+    testTrans = np.zeros(len(allInd))
+    testTurns = np.zeros(len(allInd))
     for i in range(len(allInd)):
         testTrans[i] = finTrans[allInd[i][0], allInd[i][1], -1]
         testTurns[i] = maxTurns[allInd[i][0], allInd[i][1]]

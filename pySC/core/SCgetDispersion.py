@@ -19,6 +19,7 @@ def SCgetDispersion(SC,RFstep,BPMords=None,CAVords=None,nSteps=2):
         B = np.reshape(SCgetBPMreading(SC,BPMords=BPMords),[],1)
         eta = (B-Bref)/RFstep
     else:
+        dB = np.zeros((nSteps,*np.shape(Bref)))
         for nStep in range(nSteps):
             SC = SCsetCavs2SetPoints(SC,CAVords,'Frequency',RFsteps[:,nStep],'abs')
             dB[nStep,:] = np.reshape(SCgetBPMreading(SC,BPMords=BPMords),[],1) - Bref

@@ -225,6 +225,7 @@ def fitChromaticity(SC, sOrds, targetChrom=[], verbose=0, InitStepSize=[2, 2], T
         _, _, xi0 = atlinopt(SC.RING, 0, [])
         print('Fitting chromaticities from [%.3f,%.3f] to [%.3f,%.3f].' % (
             xi0[0], xi0[1], targetChrom[0], targetChrom[1]))
+    SP0 = np.zeros((len(sOrds), len(sOrds[0])))  # TODO can the lengts vary
     for nFam in range(len(sOrds)):
         for n in range(len(sOrds[nFam])):
             SP0[nFam][n] = SC.RING[sOrds[nFam][n]].SetPointB[2]
@@ -248,6 +249,7 @@ def fitTune(SC, qOrds, targetTune=[], verbose=0, TolX=1E-4, TolFun=1E-3, InitSte
     if verbose:
         nu0 = getLatProps(SC, FitInteger)
         print('Fitting tunes from [%.4f,%.4f] to [%.4f,%.4f].' % (nu0[0], nu0[1], targetTune[0], targetTune[1]))
+    SP0 = np.zeros((len(qOrds), len(qOrds[0])))  # TODO can the lengts vary
     for nFam in range(len(qOrds)):
         for n in range(len(qOrds[nFam])):
             SP0[nFam][n] = SC.RING[qOrds[nFam][n]].SetPointB[1]

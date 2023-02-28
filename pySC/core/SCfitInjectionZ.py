@@ -15,7 +15,7 @@ def SCfitInjectionZ(SC, mode, nDims=np.array([0,1]), nBPMs=np.array([0,1,2]), nS
     if mode == 'fitTrajectory':
         ordsUsed = SC.ORD.BPM[nBPMs]
         Bref = B[:, nBPMs]
-        deltaZ0[0:4] = -fminsearch(merritFunction, np.zeros(4)) # TODO pass variables?
+        deltaZ0[0:4] = -fminsearch(merritFunction, np.zeros(4))  # TODO pass variables?
         if plotFlag:
             SC.INJ.Z0 = SC.INJ.Z0 + deltaZ0
             B1 = SCgetBPMreading(SC)
@@ -35,6 +35,7 @@ def SCfitInjectionZ(SC, mode, nDims=np.array([0,1]), nBPMs=np.array([0,1,2]), nS
         tmpS = findspos(SC.RING, SC.ORD.BPM)
         sBPM = [tmpS[-1] - findspos(SC.RING, len(SC.RING) + 1)[0], tmpS[0]]
         Bref = [B[:, len(SC.ORD.BPM) - 1], B[:, len(SC.ORD.BPM)]]
+        sol = np.zeros((len(nDims),2))
         for nDim in nDims:
             sol[nDim] = np.polyfit(sBPM, Bref[nDim, :], 1)
             deltaZ0[2 * nDim] = - sol[nDim][1]
