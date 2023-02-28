@@ -34,7 +34,7 @@ def SCgetBPMreading(SC, BPMords=[], plotFunctionFlag=False):
     if plotFunctionFlag:
         pass  # TODO SCplotBPMreading(SC, B, T1)
 
-    if SC.INJ.trackMode == 'pORB':
+    if SC.INJ.trackMode == 'pORB':   #  TODO what is pORB?
         Bpseudo = np.full((2, len(SC.ORD.BPM)), np.nan)
         for nBPM in range(len(SC.ORD.BPM)):
             Bpseudo[:, nBPM] = np.nanmean(B[:, nBPM::len(SC.ORD.BPM)], 1)
@@ -58,13 +58,12 @@ def calcBPMreading(SC, T, atAllElements=0):
         nTurns = SC.INJ.nTurns
         BPMnoise = np.array(atgetfieldvalues(SC.RING,SC.ORD.BPM, 'Noise'))
         nParticles = SC.INJ.nParticles
-    BPMoffset = np.tile(np.array(atgetfieldvalues(SC.RING,SC.ORD.BPM, 'Offset')) + np.array(
-        atgetfieldvalues(SC.RING,SC.ORD.BPM, 'SupportOffset')), (1, nTurns))
-    BPMcalError = np.tile(np.array(atgetfieldvalues(SC.RING,SC.ORD.BPM, 'CalError')), (1, nTurns))
-    BPMroll = np.tile(atgetfieldvalues(SC.RING,SC.ORD.BPM, 'Roll'), (1, nTurns)) + np.tile(  # TODO this is fishy
-        atgetfieldvalues(SC.RING,SC.ORD.BPM, 'SupportRoll'), (1, nTurns))
-    BPMnoise = np.tile(BPMnoise, (1, nTurns)) * SCrandnc(2, (nTurns * len(SC.ORD.BPM), 2))
-    BPMsumError = np.tile(atgetfieldvalues(SC.RING,SC.ORD.BPM, 'SumError'), (1, nTurns))
+    # TODO for later $D matrices and here no repetition
+    BPMoffset = np.array(atgetfieldvalues(SC.RING,SC.ORD.BPM, 'Offset')) + np.array(atgetfieldvalues(SC.RING,SC.ORD.BPM, 'SupportOffset'))
+    BPMcalError = np.array(atgetfieldvalues(SC.RING,SC.ORD.BPM, 'CalError'))
+    BPMroll = atgetfieldvalues(SC.RING, SC.ORD.BPM, 'Roll') + atgetfieldvalues(SC.RING, SC.ORD.BPM, 'SupportRoll')
+    BPMnoise = np.repeat(BPMnoise, nTurns, axis=0) * SCrandnc(2, (nTurns * len(SC.ORD.BPM), 2))
+    BPMsumError = np.repeat(atgetfieldvalues(SC.RING, SC.ORD.BPM, 'SumError'), nTurns)
     if atAllElements:
         nE = np.reshape((np.arange(nTurns) * len(SC.RING) + SC.ORD.BPM), (1, []))
     else:
@@ -73,19 +72,19 @@ def calcBPMreading(SC, T, atAllElements=0):
         M = SCparticlesIn3D(T, nParticles)
         Tx = np.squeeze(M[0, nE, :])
         Ty = np.squeeze(M[2, nE, :])
-        Bx1 = np.nanmean(Tx, 1)
-        By1 = np.nanmean(Ty, 1)
-        beamLost = np.where(np.sum(np.isnan(Tx), 1) * (1 + BPMsumError * SCrandnc(2, BPMsumError.shape)) > (
-                    nParticles * SC.INJ.beamLostAt))[0][0]
-        Bx1[beamLost:] = np.nan
-        By1[beamLost:] = np.nan
+        Bx1 = np.nanmean(Tx, axis=1)
+        By1 = np.nanmean(Ty, axis=1)
+        beamLost = np.nonzero(np.sum(np.isnan(Tx), axis=1) * (1 + BPMsumError * SCrandnc(2, BPMsumError.shape)) > (
+                    nParticles * SC.INJ.beamLostAt))
+        Bx1[beamLost] = np.nan
+        By1[beamLost] = np.nan
     else:
         Bx1 = T[0, nE]
         By1 = T[2, nE]
     Bx = np.cos(BPMroll) * Bx1 - np.sin(BPMroll) * By1
     By = np.sin(BPMroll) * Bx1 + np.cos(BPMroll) * By1
-    Bx = (Bx - BPMoffset[0, :]) * (1 + BPMcalError[0, :])
-    By = (By - BPMoffset[1, :]) * (1 + BPMcalError[1, :])
+    Bx = (Bx - BPMoffset[:,0]) * (1 + BPMcalError[:, 0])
+    By = (By - BPMoffset[:,1]) * (1 + BPMcalError[:, 1])
     Bx = Bx + BPMnoise[0, :]
     By = By + BPMnoise[1, :]
     B = np.array([Bx, By])

@@ -1,7 +1,6 @@
 import numpy as np
 from pySC.core.SCgetBPMreading import SCgetBPMreading
-from pySC.core.SCsetCMs2SetPoints import SCsetCMs2SetPoints
-from pySC.core.SCsetCavs2SetPoints import SCsetCavs2SetPoints
+from pySC.core.SCsetpoints import SCsetCavs2SetPoints, SCsetCMs2SetPoints
 from pySC.utils.feedback import is_stable_or_converged
 
 

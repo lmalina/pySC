@@ -3,7 +3,7 @@ from scipy.optimize import root, minimize
 
 from pySC.at_wrapper import findorbit6
 from pySC.core.SCgetBPMreading import SCgetBPMreading
-from pySC.core.SCsetCavs2SetPoints import SCsetCavs2SetPoints
+from pySC.core.SCsetpoints import SCsetCavs2SetPoints
 
 
 # TODO maybe translate again

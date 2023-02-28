@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from pySC.core.SCgetBPMreading import SCgetBPMreading
-from pySC.core.SCsetCavs2SetPoints import SCsetCavs2SetPoints
+from pySC.core.SCsetpoints import SCsetCavs2SetPoints
 
 
 def SCgetDispersion(SC,RFstep,BPMords=None,CAVords=None,nSteps=2):

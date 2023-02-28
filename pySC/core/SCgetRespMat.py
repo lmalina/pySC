@@ -2,7 +2,7 @@ import numpy as np
 
 from pySC.core.SCgetBPMreading import SCgetBPMreading
 from pySC.core.SCgetCMSetPoints import SCgetCMSetPoints
-from pySC.core.SCsetCMs2SetPoints import SCsetCMs2SetPoints
+from pySC.core.SCsetpoints import SCsetCMs2SetPoints
 
 
 def SCgetRespMat(SC, Amp, BPMords, CMords, mode='fixedKick', nSteps=2, fit='linear', verbose=0):

@@ -1,12 +1,15 @@
 import numpy as np
+from at import Lattice
 from numpy import ndarray
-
 from pySC.at_wrapper import findspos
 from pySC.classes import SimulatedComissioning
 from pySC.constants import RF_PROPERTIES
-from pySC.core.SCgetSupportOffset import SCgetSupportOffset
-from pySC.core.SCgetSupportRoll import SCgetSupportRoll
+from pySC.core.SCgetSupportOffsetRoll import support_offset_and_roll
 from pySC.core.SCgetTransformation import SCgetTransformation
+
+
+def SCinit(RING: Lattice) -> SimulatedComissioning:
+    return SimulatedComissioning(RING)
 
 
 def SCregisterBPMs(SC: SimulatedComissioning, BPMords: ndarray, **kwargs) -> SimulatedComissioning:
@@ -52,8 +55,7 @@ def SCupdateSupport(SC: SimulatedComissioning, BPMstructOffset: bool = True, MAG
     if MAGstructOffset:
         if len(SC.ORD.Magnet):
             s = findspos(SC.RING, SC.ORD.Magnet)
-            offsets = SCgetSupportOffset(SC, s)
-            rolls = SCgetSupportRoll(SC, s)
+            offsets, rolls = support_offset_and_roll(SC, s)
             for i, ord in enumerate(SC.ORD.Magnet):
                 setattr(SC.RING[ord], "SupportOffset", offsets[:, i])
                 setattr(SC.RING[ord], "SupportRoll", rolls[:, i])
@@ -81,8 +83,7 @@ def SCupdateSupport(SC: SimulatedComissioning, BPMstructOffset: bool = True, MAG
     if BPMstructOffset:
         if len(SC.ORD.BPM):
             s = findspos(SC.RING, SC.ORD.BPM)
-            offsets = SCgetSupportOffset(SC, s)
-            rolls = SCgetSupportRoll(SC, s)
+            offsets, rolls = support_offset_and_roll(SC, s)
             for i, ord in enumerate(SC.ORD.BPM):
                 setattr(SC.RING[ord], "SupportOffset", offsets[0:2, i])  # TODO Longitudinal BPM offsets not yet implemented
                 setattr(SC.RING[ord], "SupportRoll", np.array([rolls[0, i]]))  # TODO BPM pitch and yaw angles not yet implemented

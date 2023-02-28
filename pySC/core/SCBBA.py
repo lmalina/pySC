@@ -7,8 +7,7 @@ from pySC.core.SCgetBPMreading import SCgetBPMreading
 from pySC.core.SCgetCMSetPoints import SCgetCMSetPoints
 from pySC.core.SCparticlesIn3D import SCparticlesIn3D
 from pySC.core.SCrandnc import SCrandnc
-from pySC.core.SCsetCMs2SetPoints import SCsetCMs2SetPoints
-from pySC.core.SCsetMags2SetPoints import SCsetMags2SetPoints
+from pySC.core.SCsetpoints import SCsetCMs2SetPoints, SCsetMags2SetPoints
 
 
 def SCBBA(SC,BPMords,magOrds,**kwargs):

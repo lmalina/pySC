@@ -1,6 +1,6 @@
 import numpy as np
 from pySC.core.SCgetBPMreading import SCgetBPMreading
-from pySC.core.SCsetCMs2SetPoints import SCsetCMs2SetPoints
+from pySC.core.SCsetpoints import SCsetCMs2SetPoints
 from pySC.utils.feedback import isTransmit, logLastBPM, is_stable_or_converged
 
 

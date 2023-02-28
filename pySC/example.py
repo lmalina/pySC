@@ -17,16 +17,14 @@ from pySC.core.SCgetModelDispersion import SCgetModelDispersion
 from pySC.core.SCgetModelRM import SCgetModelRM
 from pySC.core.SCgetOrds import SCgetOrds
 from pySC.core.SCgetPinv import SCgetPinv
-from pySC.core.SCinit import SCinit
 from pySC.core.SClocoLib import SClocoLib
 from pySC.core.SCplotLattice import SCplotLattice
 from pySC.core.SCplotPhaseSpace import SCplotPhaseSpace
 #from pySC.core.SCplotSupport import SCplotSupport
 from pySC.core.SCpseudoBBA import SCpseudoBBA
-from pySC.core.SCregisterUpdate import SCregisterBPMs, SCregisterCAVs, SCregisterMagnets, SCregisterSupport
+from pySC.core.SCregisterUpdate import SCregisterBPMs, SCregisterCAVs, SCregisterMagnets, SCregisterSupport, SCinit
 from pySC.core.SCsanityCheck import SCsanityCheck
-from pySC.core.SCsetCavs2SetPoints import SCsetCavs2SetPoints
-from pySC.core.SCsetMags2SetPoints import SCsetMags2SetPoints
+from pySC.core.SCsetpoints import SCsetCavs2SetPoints, SCsetMags2SetPoints
 from pySC.core.SCsynchEnergyCorrection import SCsynchEnergyCorrection
 from pySC.core.SCsynchPhaseCorrection import SCsynchPhaseCorrection
 

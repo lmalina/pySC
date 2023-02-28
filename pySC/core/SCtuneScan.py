@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from pySC.core.SCgetBeamTransmission import SCgetBeamTransmission
-from pySC.core.SCsetMags2SetPoints import SCsetMags2SetPoints
+from pySC.core.SCsetpoints import SCsetMags2SetPoints
 
 
 def SCtuneScan(SC, qOrds, qSPvec, verbose=0, plotFlag=0, nParticles=None, nTurns=None, target=1, fullScan=0):

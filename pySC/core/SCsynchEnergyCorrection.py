@@ -3,7 +3,7 @@ import numpy as np
 
 from pySC.at_wrapper import findorbit6
 from pySC.core.SCgetBPMreading import SCgetBPMreading
-from pySC.core.SCsetCavs2SetPoints import SCsetCavs2SetPoints
+from pySC.core.SCsetpoints import SCsetCavs2SetPoints
 
 
 def SCsynchEnergyCorrection(SC, cavOrd=None, range=(-1E3, 1E3), nSteps=15, nTurns=150, minTurns=0, plotResults=0,
