@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from pySC.core.SCgetPinv import SCgetPinv
+from pySC.utils.sc_utils import SCgetPinv
 
 
 def test_pinv(matrix):
@@ -9,6 +9,7 @@ def test_pinv(matrix):
     b = np.linalg.pinv(matrix)
     assert np.allclose(a, b)
     assert np.allclose(a2, b * 0.9)
+    a3 = SCgetPinv(matrix, num_removed=0, alpha=0.1, damping=0.9, plot=True)
 
 
 @pytest.fixture

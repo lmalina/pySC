@@ -15,8 +15,7 @@ from pySC.core.SCgetBPMreading import SCgetBPMreading
 from pySC.core.SCgetBeamTransmission import SCgetBeamTransmission
 from pySC.core.SCgetModelDispersion import SCgetModelDispersion
 from pySC.core.SCgetModelRM import SCgetModelRM
-from pySC.core.SCgetOrds import SCgetOrds
-from pySC.core.SCgetPinv import SCgetPinv
+from pySC.utils.sc_utils import SCgetOrds, SCgetPinv
 from pySC.core.SClocoLib import SClocoLib
 from pySC.core.SCplotLattice import SCplotLattice
 from pySC.core.SCplotPhaseSpace import SCplotPhaseSpace

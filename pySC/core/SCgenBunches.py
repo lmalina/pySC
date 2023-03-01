@@ -1,6 +1,6 @@
 import numpy as np
 from pySC.classes import SimulatedComissioning
-from pySC.core.SCrandnc import SCrandnc
+from pySC.utils.sc_utils import SCrandnc
 from numpy import ndarray
 
 

@@ -5,7 +5,7 @@ from pySC.classes import DotDict
 from pySC.core.SCfeedbackRun import SCfeedbackRun
 from pySC.core.SCgetDispersion import SCgetDispersion
 from pySC.core.SCgetModelRM import SCgetModelRM
-from pySC.core.SCgetPinv import SCgetPinv
+from pySC.utils.sc_utils import SCgetPinv
 from pySC.core.SCgetRespMat import SCgetRespMat
 from pySC.core.SCsetpoints import SCsetMags2SetPoints
 from pySC.core.SCregisterUpdate import SCupdateMagnets
