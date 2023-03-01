@@ -56,11 +56,11 @@ class SimulatedComissioning(DotDict):
             self.RING[ord].SumError = 0
 
     def register_cavities(self, CAVords: ndarray, **kwargs):
-        self.ORD.Cavity = np.unique(np.concatenate((self.ORD.Cavity, CAVords)))
+        self.ORD.RF = np.unique(np.concatenate((self.ORD.RF, CAVords)))
         for ord in np.unique(CAVords):
             if ord not in self.SIG.RF.keys():
                 self.SIG.RF[ord] = DotDict()
-            self.SIG.RF[ord].update(kwargs)  # TODO unify self.SIG and self.ORD (Cavity vs RF)
+            self.SIG.RF[ord].update(kwargs)
             for field in RF_PROPERTIES:
                 setattr(self.RING[ord], f"{field}SetPoint", getattr(self.RING[ord], field))
                 setattr(self.RING[ord], f"{field}Offset", 0)
@@ -77,9 +77,9 @@ class SimulatedComissioning(DotDict):
         if 'VCM' in kwargs.keys():
             self.ORD.VCM = np.unique(np.concatenate((self.ORD.VCM, MAGords)))
         for ord in MAGords:
-            if ord not in self.SIG.Mag.keys():
-                self.SIG.Mag[ord] = DotDict()
-            self.SIG.Mag[ord].update(nvpairs)
+            if ord not in self.SIG.Magnet.keys():
+                self.SIG.Magnet[ord] = DotDict()
+            self.SIG.Magnet[ord].update(nvpairs)
 
             self.RING[ord].NomPolynomB = self.RING[ord].PolynomB[:]
             self.RING[ord].NomPolynomA = self.RING[ord].PolynomA[:]
@@ -168,7 +168,7 @@ class Indices(DotDict):
     def __init__(self):
         super(Indices, self).__init__()
         self.BPM: ndarray = np.array([], dtype=int)
-        self.Cavity: ndarray = np.array([], dtype=int)
+        self.RF: ndarray = np.array([], dtype=int)
         self.Magnet: ndarray = np.array([], dtype=int)
         self.SkewQuad: ndarray = np.array([], dtype=int)
         self.HCM: ndarray = np.array([], dtype=int)
@@ -187,6 +187,6 @@ class Sigmas(DotDict):
     def __init__(self):
         super(Sigmas, self).__init__()
         self.BPM: DotDict = DotDict()
-        self.Mag: DotDict = DotDict()
+        self.Magnet: DotDict = DotDict()
         self.RF: DotDict = DotDict()
         self.Support: DotDict = DotDict()

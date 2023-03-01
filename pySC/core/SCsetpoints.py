@@ -58,7 +58,8 @@ def SCsetMags2SetPoints(SC: SimulatedComissioning, MAGords: ndarray, type: int, 
             setpoints[i] += curAB[order, type]
 
         setpoints[i] = _checkClipping(SC, ord, type, order, setpoints[i])
-        if dipCompensation and order == 2:
+        # TODO should check CF magnets
+        if dipCompensation and order == 2:  # quad
             SC = _dipCompensation(SC, ord, setpoints[i])
         if type == 1:
             SC.RING[ord].SetPointA[order] = setpoints[i]
@@ -78,7 +79,7 @@ def _dipCompensation(SC, ord, setpoint):
 
 
 def _checkClipping(SC, ord, type, order, setpoint):
-    if not (type == 1 and order == 2):
+    if not (type == 1 and order == 2): # not a skew quad
         return setpoint
     if hasattr(SC.RING[ord], 'SkewQuadLimit') and abs(setpoint) > abs(SC.RING[ord].SkewQuadLimit):
         print('SC:SkewLim', 'Skew quadrupole (ord: %d) is clipping' % ord)

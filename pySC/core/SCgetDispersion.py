@@ -9,7 +9,7 @@ def SCgetDispersion(SC,RFstep,BPMords=None,CAVords=None,nSteps=2):
     if BPMords is None:
         BPMords = SC.ORD.BPM
     if CAVords is None:
-        CAVords = SC.ORD.Cavity
+        CAVords = SC.ORD.RF
     RFsteps = np.zeros((len(CAVords),nSteps))
     for nCav in range(len(CAVords)):
         RFsteps[nCav,:] = SC.RING[CAVords[nCav]].FrequencySetPoint + np.linspace(-RFstep,RFstep,nSteps)

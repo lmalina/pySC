@@ -23,7 +23,7 @@ def SCfeedbackRun(SC, Mplus, R0=None, eps=1e-5, target=0, maxsteps=30, scaleDisp
         R[np.isnan(R)] = 0
         dphi = Mplus @ ((R - R0) * weight)
         if scaleDisp != 0:
-            SC = SCsetCavs2SetPoints(SC, SC.ORD.Cavity, -scaleDisp * dphi[-1], method="add")
+            SC = SCsetCavs2SetPoints(SC, SC.ORD.RF, -scaleDisp * dphi[-1], method="add")
             dphi = dphi[:-1]
         SC, _ = SCsetCMs2SetPoints(SC, CMords[0], -dphi[:len(CMords[0])], 1, method="add")
         SC, _ = SCsetCMs2SetPoints(SC, CMords[1], -dphi[len(CMords[0]):], 2, method="add")

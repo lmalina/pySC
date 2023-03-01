@@ -33,7 +33,7 @@ def SCregisterSupport(SC: SimulatedComissioning, support_ords: ndarray, support_
 
 
 def SCupdateCAVs(SC: SimulatedComissioning, ords: ndarray = None) -> SimulatedComissioning:
-    for ord in (SC.ORD.Cavity if ords is None else ords):
+    for ord in (SC.ORD.RF if ords is None else ords):
         for field in RF_PROPERTIES:
             setattr(SC.RING[ord], field,
                     getattr(SC.RING[ord], f"{field}SetPoint")
@@ -61,18 +61,10 @@ def SCupdateSupport(SC: SimulatedComissioning, BPMstructOffset: bool = True, MAG
                 setattr(SC.RING[ord], "SupportRoll", rolls[:, i])
                 magLength = SC.RING[ord].Length
                 magTheta = SC.RING[ord].BendingAngle if hasattr(SC.RING[ord], 'BendingAngle') else 0
-
-                dx = SC.RING[ord].SupportOffset[0] + SC.RING[ord].MagnetOffset[0]
-                dy = SC.RING[ord].SupportOffset[1] + SC.RING[ord].MagnetOffset[1]
-                dz = SC.RING[ord].SupportOffset[2] + SC.RING[ord].MagnetOffset[2]
-                az = SC.RING[ord].MagnetRoll[0] + SC.RING[ord].SupportRoll[0]
-                ax = SC.RING[ord].MagnetRoll[1] + SC.RING[ord].SupportRoll[1]
-                ay = SC.RING[ord].MagnetRoll[2] + SC.RING[ord].SupportRoll[2]
-                [T1, T2, R1, R2] = SCgetTransformation(dx, dy, dz, ax, ay, az, magTheta, magLength)
-                SC.RING[ord].T1 = T1
-                SC.RING[ord].T2 = T2
-                SC.RING[ord].R1 = R1
-                SC.RING[ord].R2 = R2
+                magnet_offsets = SC.RING[ord].SupportOffset + SC.RING[ord].MagnetOffset
+                magnet_rolls = np.roll(SC.RING[ord].MagnetRoll + SC.RING[ord].SupportRoll, -1)  # z,x,y -> x,y,z
+                SC.RING[ord].T1, SC.RING[ord].T2, SC.RING[ord].R1, SC.RING[ord].R2 = SCgetTransformation(
+                    magnet_offsets, magnet_rolls, magTheta, magLength)
                 if hasattr(SC.RING[ord], 'MasterOf'):
                     for childOrd in SC.RING[ord].MasterOf:
                         for field in ("T1", "T2", "R1", "R2"):
@@ -85,8 +77,8 @@ def SCupdateSupport(SC: SimulatedComissioning, BPMstructOffset: bool = True, MAG
             s = findspos(SC.RING, SC.ORD.BPM)
             offsets, rolls = support_offset_and_roll(SC, s)
             for i, ord in enumerate(SC.ORD.BPM):
-                setattr(SC.RING[ord], "SupportOffset", offsets[0:2, i])  # TODO Longitudinal BPM offsets not yet implemented
-                setattr(SC.RING[ord], "SupportRoll", np.array([rolls[0, i]]))  # TODO BPM pitch and yaw angles not yet implemented
+                setattr(SC.RING[ord], "SupportOffset", offsets[0:2, i])  # Longitudinal BPM offsets not implemented
+                setattr(SC.RING[ord], "SupportRoll", np.array([rolls[0, i]]))  # BPM pitch and yaw angles not  implemented
         else:
             print('SC: No BPMs have been registered!')
     return SC

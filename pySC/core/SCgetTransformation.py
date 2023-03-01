@@ -1,19 +1,14 @@
 import numpy as np
 
 
-def SCgetTransformation(dx, dy, dz, ax, ay, az, magTheta, magLength, refPoint='center'):
-    if refPoint not in ('center', 'entrance'):
-        raise ValueError(f'Unsupported reference point {refPoint}. Allowed are ''center'' or ''entrance''.')
-    d0Vector = np.array([dx, dy, dz])
+def SCgetTransformation(d0Vector, rolls, magTheta, magLength, refPoint='center'):
+    allowed_ref_points = ('center', 'entrance')
+    if refPoint not in allowed_ref_points:
+        raise ValueError(f'Unsupported reference point {refPoint}. Allowed are {allowed_ref_points}.')
     xAxis = np.array([1, 0, 0])
     yAxis = np.array([0, 1, 0])
     zAxis = np.array([0, 0, 1])
-
-    R0 = np.array([[np.cos(ay) * np.cos(az), -np.cos(ay) * np.sin(az), np.sin(ay)],
-                   [np.cos(az) * np.sin(ax) * np.sin(ay) + np.cos(ax) * np.sin(az),
-                    np.cos(ax) * np.cos(az) - np.sin(ax) * np.sin(ay) * np.sin(az), -np.cos(ay) * np.sin(ax)],
-                   [-np.cos(ax) * np.cos(az) * np.sin(ay) + np.sin(ax) * np.sin(az),
-                    np.cos(az) * np.sin(ax) + np.cos(ax) * np.sin(ay) * np.sin(az), np.cos(ax) * np.cos(ay)]])
+    R0 = rotation(rolls)
     if refPoint == 'center':
         RB2 = np.array([[np.cos(magTheta / 2), 0, -np.sin(magTheta / 2)],
                         [0, 1, 0],
@@ -74,6 +69,17 @@ def SCgetTransformation(dx, dy, dz, ax, ay, az, magTheta, magLength, refPoint='c
             R2 = LinMat
             T2 = T
     return T1, T2, R1, R2
+
+
+def rotation(rolls):
+    ax, ay, az = rolls
+    # The order of extrinsic rotations (fixed frame) around ZYX, i.e. Roll, Yaw, Pitch
+    R0 = np.array([[np.cos(ay) * np.cos(az), -np.cos(ay) * np.sin(az), np.sin(ay)],
+                   [np.cos(az) * np.sin(ax) * np.sin(ay) + np.cos(ax) * np.sin(az),
+                    np.cos(ax) * np.cos(az) - np.sin(ax) * np.sin(ay) * np.sin(az), -np.cos(ay) * np.sin(ax)],
+                   [-np.cos(ax) * np.cos(az) * np.sin(ay) + np.sin(ax) * np.sin(az),
+                    np.cos(az) * np.sin(ax) + np.cos(ax) * np.sin(ay) * np.sin(az), np.cos(ax) * np.cos(ay)]])
+    return R0
 
 
 def sc_get_transformation(dx, dy, dz, ax, ay, az, magTheta, magLength, refPoint='center'):

@@ -14,7 +14,7 @@ def SCgetModelRING(SC,includeAperture=0):
                 ring[ord].EApertures = SC.RING[ord].EApertures
             if 'RApertures' in SC.RING[ord]:
                 ring[ord].RApertures = SC.RING[ord].RApertures
-        if len(SC.ORD.Cavity) and hasattr(SC.RING[ord], 'Frequency'):
+        if len(SC.ORD.RF) and hasattr(SC.RING[ord], 'Frequency'):
             for field in RF_PROPERTIES:
                 setattr(ring[ord], field, getattr(SC.RING[ord], f"{field}SetPoint"))
     return ring

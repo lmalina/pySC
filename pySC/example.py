@@ -152,7 +152,7 @@ if __name__ == "__main__":
                                                    'verbose', 1)  # Print results
         if ERROR:
             sys.exit('Phase correction crashed')
-        SC = SCsetCavs2SetPoints(SC, SC.ORD.Cavity, 'TimeLag', deltaPhi, method='add')
+        SC = SCsetCavs2SetPoints(SC, SC.ORD.RF, 'TimeLag', deltaPhi, method='add')
         [deltaF, ERROR] = SCsynchEnergyCorrection(SC,
                                                   'range', 40E3 * np.array([-1, 1]),  # Frequency range [kHz]
                                                   'nTurns', 20,  # Number of turns
@@ -160,7 +160,7 @@ if __name__ == "__main__":
                                                   'plotResults', 1,  # Final results are plotted
                                                   'verbose', 1)  # Print results
         if not ERROR:
-            SC = SCsetCavs2SetPoints(SC, SC.ORD.Cavity, 'Frequency', deltaF, method='add')
+            SC = SCsetCavs2SetPoints(SC, SC.ORD.RF, 'Frequency', deltaF, method='add')
         else:
             sys.exit()
     SCplotPhaseSpace(SC, 'nParticles', 10, 'nTurns', 1000)
@@ -169,7 +169,7 @@ if __name__ == "__main__":
         sys.exit()
     SC.INJ.trackMode = 'ORB'
     MCO = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, trackMode='ORB')
-    eta = SCgetModelDispersion(SC, SC.ORD.BPM, SC.ORD.Cavity)
+    eta = SCgetModelDispersion(SC, SC.ORD.BPM, SC.ORD.RF)
     quadOrds = np.tile(SCgetOrds(SC.RING, 'QF|QD'), 2)
     BPMords = np.tile(SC.ORD.BPM, 2)
     SC = SCpseudoBBA(SC, BPMords, quadOrds, 50E-6)

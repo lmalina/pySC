@@ -5,11 +5,11 @@ from pySC.at_wrapper import findorbit6
 from pySC.core.SCgetBPMreading import SCgetBPMreading
 from pySC.core.SCsetpoints import SCsetCavs2SetPoints
 
-
+# TODO currently not needed
 def SCsynchEnergyCorrection(SC, cavOrd=None, range=(-1E3, 1E3), nSteps=15, nTurns=150, minTurns=0, plotResults=0,
                             plotProgress=0, verbose=0):
     if cavOrd is None:
-        cavOrd = SC.ORD.Cavity
+        cavOrd = SC.ORD.RF
     ERROR = 0
     deltaF = 0
     fTestVec = np.linspace(range[0], range[1], nSteps)

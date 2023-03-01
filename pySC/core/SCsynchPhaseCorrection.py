@@ -6,11 +6,11 @@ from pySC.core.SCgetBPMreading import SCgetBPMreading
 from pySC.core.SCsetpoints import SCsetCavs2SetPoints
 
 
-# TODO maybe translate again
+# TODO maybe translate again, currently not needed
 
 def SCsynchPhaseCorrection(SC, cavOrd=None, nSteps=15, nTurns=20, plotResults=0, plotProgress=0, verbose=0):
     if cavOrd is None:
-        cavOrd = SC.ORD.Cavity
+        cavOrd = SC.ORD.RF
     ERROR = 0
     deltaPhi = 0
     BPMshift = np.nan(1, nSteps)

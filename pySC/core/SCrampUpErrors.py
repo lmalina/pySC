@@ -70,7 +70,7 @@ def scaleBPMs(SC, SC0, fields, scale):
 def scaleRF(SC, SC0, fields, scale):
     for type in RF_PROPERTIES:
         for field in fields:
-            for ord in SC.ORD.Cavity:
+            for ord in SC.ORD.RF:
                 SC.RING[ord][type + field] = scale * SC0.RING[ord][type + field]
     return SC
 

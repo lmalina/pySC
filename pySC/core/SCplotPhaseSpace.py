@@ -23,12 +23,12 @@ def SCplotPhaseSpace(SC, ord=1, plotCO=0, customBunch=[], nParticles=None, nTurn
     labelStr = ['$\Delta x$ [$\mu$m]', '$\Delta x''$ [$\mu$rad]', '$\Delta y$ [$\mu$m]', '$\Delta y''$ [$\mu$rad]',
                 '$\Delta S$ [m]', '$\delta E$ $[\%]$']
     titleStr = ['Horizontal', 'Vertical', 'Longitudinal']
-    if SC.RING[SC.ORD.Cavity[0]].PassMethod == 'RFCavityPass':
+    if SC.RING[SC.ORD.RF[0]].PassMethod == 'RFCavityPass':
         L0_tot = 0
         for i in range(len(SC.RING)):
             L0_tot = L0_tot + SC.RING[i].Length
         lengthSlippage = 299792458 * (
-                    SC.RING[SC.ORD.Cavity[0]].HarmNumber / SC.RING[SC.ORD.Cavity[0]].Frequency - L0_tot / 299792458)
+                SC.RING[SC.ORD.RF[0]].HarmNumber / SC.RING[SC.ORD.RF[0]].Frequency - L0_tot / 299792458)
         T3D[6, :, :] = T3D[6, :, :] - lengthSlippage * np.arange(1, nTurns + 1)
         labelStr[5] = '$\Delta S_{act}$ [m]'
     if plotCO:

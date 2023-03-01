@@ -19,13 +19,13 @@ def SCapplyErrors(SC: SimulatedComissioning, nsigmas: float = 2) -> SimulatedCom
     SC = SCupdateSupport(SC)
     if len(SC.ORD.Magnet):
         SC = SCupdateMagnets(SC)
-    if len(SC.ORD.Cavity) and len(SC.SIG.RF):
+    if len(SC.ORD.RF) and len(SC.SIG.RF):
         SC = SCupdateCAVs(SC)
     return SC
 
 
 def _apply_cavity_error(SC, nsigmas):
-    for ord in _intersect(SC.ORD.Cavity, SC.SIG.RF.keys()):
+    for ord in _intersect(SC.ORD.RF, SC.SIG.RF.keys()):
         for field in SC.SIG.RF[ord]:
             setattr(SC.RING[ord], field, _randn_cutoff(SC.SIG.RF[ord][field], nsigmas))
     return SC
@@ -75,9 +75,8 @@ def _apply_support_alignment_error(SC, nsigmas):
             if ordPair[0] > ordPair[1]:
                 struct_length = findspos(SC.RING, len(SC.RING))[0] - struct_length
 
-            rolls0 = getattr(SC.RING[ordPair[0]], f"{support_type}Roll")
+            rolls0 = getattr(SC.RING[ordPair[0]], f"{support_type}Roll")  # Twisted supports are not considered
             offsets0 = getattr(SC.RING[ordPair[0]], f"{support_type}Offset")
-            rolls1 = getattr(SC.RING[ordPair[1]], f"{support_type}Roll")  # TODO Not implemented?
             offsets1 = getattr(SC.RING[ordPair[1]], f"{support_type}Offset")
 
             if rolls0[1] != 0:
@@ -105,10 +104,10 @@ def _apply_support_alignment_error(SC, nsigmas):
 
 
 def _apply_magnet_error(SC, nsigmas):
-    for ord in _intersect(SC.ORD.Magnet, SC.SIG.Mag.keys()):
-        for field in SC.SIG.Mag[ord]:
+    for ord in _intersect(SC.ORD.Magnet, SC.SIG.Magnet.keys()):
+        for field in SC.SIG.Magnet[ord]:
             setattr(SC.RING[ord], 'BendingAngleError' if field == 'BendingAngle' else field,
-                    _randn_cutoff(SC.SIG.Mag[ord][field], nsigmas))
+                    _randn_cutoff(SC.SIG.Magnet[ord][field], nsigmas))
     return SC
 
 

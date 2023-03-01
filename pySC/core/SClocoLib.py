@@ -11,14 +11,14 @@ from pySC.core.SCsetpoints import SCsetMags2SetPoints
 from pySC.core.SCregisterUpdate import SCupdateMagnets
 
 
-def SClocoLib(funName, *varargin):
+def SClocoLib(funName, *varargin):  # TODO don't work on this, not realy needed and not present in pyAT
     eval(funName + '(*varargin)')
 
 
 def setupLOCOmodel(SC, *varargin):
     RINGdata, Init, LOCOflags = DotDict(), DotDict(), DotDict()
-    RINGdata.CavityFrequency = SC.IDEALRING[SC.ORD.Cavity].Frequency
-    RINGdata.CavityHarmNumber = SC.IDEALRING[SC.ORD.Cavity].HarmNumber
+    RINGdata.CavityFrequency = SC.IDEALRING[SC.ORD.RF].Frequency
+    RINGdata.CavityHarmNumber = SC.IDEALRING[SC.ORD.RF].HarmNumber
     RINGdata.Lattice = SC.IDEALRING
     Init.SC = SC
     LOCOflags.HorizontalDispersionWeight = 10  # Hor. dispersion VS. ORM elements
@@ -78,7 +78,7 @@ def getBPMCMstructure(SC, CMsteps, *varargin):
 
 def getMeasurement(SC, CMstep, deltaRF, BPMords, CMords, *varargin):
     LocoMeasData = DotDict()
-    LocoMeasData.RF = SC.RING[SC.ORD.Cavity[0]].Frequency
+    LocoMeasData.RF = SC.RING[SC.ORD.RF[0]].Frequency
     LocoMeasData.DeltaRF = deltaRF
     LocoMeasData.BPMSTD = 1E-3 * np.ones(2 * len(BPMords))  # [mm]
     RM, Err, CMsteps = SCgetRespMat(SC, CMstep, BPMords, CMords, *varargin)

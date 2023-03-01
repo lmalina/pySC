@@ -11,7 +11,6 @@ def SCfeedbackStitch(SC, Mplus, R0=np.zeros((2, 1)), nBPMs=4, maxsteps=30, nRepr
         CMords = SC.ORD.CM
     if BPMords is None:
         BPMords = SC.ORD.BPM
-    ERROR = 1  # TODO should there be Error at the end of loop?
     BPMhist = -1 * np.ones(1, 100)
     B = SCgetBPMreading(SC, BPMords=BPMords)
     if not isSignal(B, nBPMs):
