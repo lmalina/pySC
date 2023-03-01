@@ -2,7 +2,7 @@ import re
 import numpy as np
 from pySC.constants import SUPPORT_TYPES
 from pySC.core.SCregisterUpdate import SCupdateCAVs, SCupdateMagnets, SCupdateSupport
-from pySC.core.SCrandnc import SCrandnc
+from pySC.utils.sc_utils import SCrandnc
 from pySC.core.SCscaleCircumference import SCscaleCircumference
 from pySC.at_wrapper import findspos
 

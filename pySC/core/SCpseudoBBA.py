@@ -1,6 +1,6 @@
 import numpy as np
 
-from pySC.core.SCrandnc import SCrandnc
+from pySC.utils.sc_utils import SCrandnc
 
 
 def SCpseudoBBA(SC, BPMords, MagOrds, postBBAoffset, sigma=2):

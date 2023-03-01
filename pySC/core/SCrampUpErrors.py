@@ -2,7 +2,7 @@ import numpy as np
 from pySC.constants import SUPPORT_TYPES, RF_PROPERTIES
 from pySC.core.SCfeedbackRun import SCfeedbackRun
 from pySC.core.SCgetModelRM import SCgetModelRM
-from pySC.core.SCgetPinv import SCgetPinv
+from pySC.utils.sc_utils import SCgetPinv
 from pySC.core.SCscaleCircumference import SCscaleCircumference
 from pySC.core.SCregisterUpdate import SCupdateMagnets, SCupdateSupport
 

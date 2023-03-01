@@ -6,7 +6,7 @@ from pySC.core.SCfeedbackRun import SCfeedbackRun
 from pySC.core.SCgetBPMreading import SCgetBPMreading
 from pySC.core.SCgetCMSetPoints import SCgetCMSetPoints
 from pySC.core.SCparticlesIn3D import SCparticlesIn3D
-from pySC.core.SCrandnc import SCrandnc
+from pySC.utils.sc_utils import SCrandnc
 from pySC.core.SCsetpoints import SCsetCMs2SetPoints, SCsetMags2SetPoints
 
 

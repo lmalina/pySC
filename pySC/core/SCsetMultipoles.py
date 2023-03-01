@@ -1,5 +1,5 @@
 import numpy as np
-from pySC.core.SCrandnc import SCrandnc
+from pySC.utils.sc_utils import SCrandnc
 
 
 def SCsetMultipoles(RING, ords, AB, method='rnd', order=[], type=[]):  # TODO nowhere used? calculate AB in place
