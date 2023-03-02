@@ -2,24 +2,23 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pySC.at_wrapper import atpass, findorbit6
 from pySC.core.SCgenBunches import SCgenBunches
-from pySC.core.SCparticlesIn3D import SCparticlesIn3D
+
+SPEED_OF_LIGHT = 299792458
 
 
-def SCplotPhaseSpace(SC, ord=1, plotCO=0, customBunch=[], nParticles=None, nTurns=None):
-    if nParticles is None:
-        nParticles = SC.INJ.nParticles
+def SCplotPhaseSpace(SC, ord=np.zeros(1), customBunch=[], nParticles=None, nTurns=None, plotCO=False):
+    if len(customBunch):
+        Zin = customBunch[:]
+        nParticles = Zin.shape[1]
+    else:
+        if nParticles is None:
+            nParticles = SC.INJ.nParticles
+        Zin = SCgenBunches(SC, nParticles=nParticles)
     if nTurns is None:
         nTurns = SC.INJ.nTurns
-    SC.INJ.nParticles = nParticles
-    SC.INJ.nTurns = nTurns
-    if len(customBunch) == 0:
-        Zin = SCgenBunches(SC)
-    else:
-        Zin = customBunch
-        SC.INJ.nParticles = Zin.shape[1]
-    T = atpass(SC.RING, Zin, 1, SC.INJ.nTurns, ord)
+
+    T = atpass(SC.RING, Zin, nTurns, ord, keep_lattice=False)
     T[:, np.isnan(T[0, :])] = np.nan
-    T3D = SCparticlesIn3D(T, SC.INJ.nParticles)
     labelStr = ['$\Delta x$ [$\mu$m]', '$\Delta x''$ [$\mu$rad]', '$\Delta y$ [$\mu$m]', '$\Delta y''$ [$\mu$rad]',
                 '$\Delta S$ [m]', '$\delta E$ $[\%]$']
     titleStr = ['Horizontal', 'Vertical', 'Longitudinal']
@@ -27,50 +26,43 @@ def SCplotPhaseSpace(SC, ord=1, plotCO=0, customBunch=[], nParticles=None, nTurn
         L0_tot = 0
         for i in range(len(SC.RING)):
             L0_tot = L0_tot + SC.RING[i].Length
-        lengthSlippage = 299792458 * (
-                SC.RING[SC.ORD.RF[0]].HarmNumber / SC.RING[SC.ORD.RF[0]].Frequency - L0_tot / 299792458)
-        T3D[6, :, :] = T3D[6, :, :] - lengthSlippage * np.arange(1, nTurns + 1)
+        lengthSlippage = SPEED_OF_LIGHT * (SC.RING[SC.ORD.RF[0]].HarmNumber / SC.RING[SC.ORD.RF[0]].Frequency - L0_tot / SPEED_OF_LIGHT)
+        T[6, :, :, :] = T[6, :, :, :] - lengthSlippage * np.arange(nTurns)[np.newaxis, np.newaxis, :]
         labelStr[5] = '$\Delta S_{act}$ [m]'
     if plotCO:
-        CO = findorbit6(SC.RING, ord)
-        if np.isnan(CO[0]):
-            startPointGuess = np.nanmean(np.nanmean(T3D, 2), 2)
-            CO = findorbit6(SC.RING, ord, startPointGuess)
-            if np.isnan(CO[0]):
-                CO = np.nan * np.ones(6)
+        _, CO = findorbit6(SC.RING, ord)
+        if np.isnan(CO[0, 0]):
+            startPointGuess = np.nanmean(T, axis=(1, 2, 3))
+            _, CO = findorbit6(SC.RING, ord, startPointGuess)
+            if np.isnan(CO[0, 0]):
+                CO = np.full(6, np.nan)
     else:
-        CO = np.nan * np.ones(6)
-    T3D = T3D * np.array([1E6, 1E6, 1E6, 1E6, 1E2, 1])
-    SC.INJ.Z0 = SC.INJ.Z0 * np.array([1E6, 1E6, 1E6, 1E6, 1E2, 1])
+        CO = np.full(6, np.nan)
+    T = T * np.array([1E6, 1E6, 1E6, 1E6, 1E2, 1])[:, np.newaxis, np.newaxis, np.newaxis]
+    Z0 = SC.INJ.Z0 * np.array([1E6, 1E6, 1E6, 1E6, 1E2, 1])
     CO = CO * np.array([1E6, 1E6, 1E6, 1E6, 1E2, 1])
-    T3D[[5, 6], :, :] = T3D[[6, 5], :, :]
+    T[[5, 6], :, :, :] = T[[6, 5], :, :, :]
     CO[[5, 6], :] = CO[[6, 5], :]
-    SC.INJ.Z0[[5, 6]] = SC.INJ.Z0[[6, 5]]
-    plt.figure(100)
-    plt.clf()
+    Z0[[5, 6]] = Z0[[6, 5]]
+
+    fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(18.5, 10.5), dpi=100, facecolor="w")
     pVec = []
     legStr = []
     for nType in range(3):
-        plt.subplot(1, 3, nType + 1);
-        plt.hold(True)
-        for nP in range(SC.INJ.nParticles):
-            x = T3D[2 * nType, :, nP]
-            y = T3D[2 * nType + 1, :, nP]
-            plt.scatter(x, y, 10, np.arange(1, nTurns + 1))
-        pVec.append(plt.plot(SC.INJ.Z0[2 * nType], SC.INJ.Z0[2 * nType + 1], 'O', 'MarkerSize', 15, 'LineWidth', 3))
+        for nP in range(nParticles):
+            x = T[2 * nType, nP, :, :]
+            y = T[2 * nType + 1, nP, :, :]
+            ax[nType].scatter(x, y, 10, np.arange(nTurns))
+        pVec.append(ax[nType].plot(Z0[2 * nType], Z0[2 * nType + 1], 'O', MarkerSize=15, lw=3))
         legStr.append('Injection point')
         if plotCO:
-            pVec.append(plt.plot(CO[2 * nType], CO[2 * nType + 1], 'X', 'MarkerSize', 20, 'LineWidth', 3))
+            pVec.append(ax[nType].plot(CO[2 * nType], CO[2 * nType + 1], 'X', MarkerSize=20, LineWidth=3))
             legStr.append('Closed orbit')
-        plt.gca().set_box('on')
-        plt.xlabel(labelStr[2 * nType])
-        plt.ylabel(labelStr[2 * nType + 1])
+        ax[nType].set_box('on')
+        ax[nType].set_xlabel(labelStr[2 * nType])
+        ax[nType].set_ylabel(labelStr[2 * nType + 1])
         plt.title(titleStr[nType] + ' @Ord: ' + str(ord))
     plt.legend(pVec, legStr)
     c = plt.colorbar()
     c.set_label('Number of turns')
-    plt.gcf().set_size_inches(18.5, 10.5)
-    plt.gcf().set_dpi(100)
-    plt.gcf().set_facecolor('w')
     plt.show()
-    return

@@ -1,7 +1,8 @@
 from pySC.constants import RF_PROPERTIES
+from pySC.classes import SimulatedComissioning
+from at import Lattice
 
-
-def SCgetModelRING(SC,includeAperture=0):
+def SCgetModelRING(SC: SimulatedComissioning, includeAperture: bool =False) -> Lattice:
     ring = SC.IDEALRING.deepcopy()
     for ord in range(len(SC.RING)):
         if hasattr(SC.RING[ord], 'SetPointA') and hasattr(SC.RING[ord], 'SetPointB'):

@@ -2,8 +2,8 @@ import numpy as np
 from pySC.at_wrapper import findorbit6
 
 
-def SCgetModelDispersion(SC, BPMords, CAVords, rfStep=1E3, useIdealRing=0):
-    RING = SC.IDEALRING
+def SCgetModelDispersion(SC, BPMords, CAVords, rfStep=1E3, useIdealRing=False):
+    RING = SC.IDEALRING.deepcopy()
     if not useIdealRing:
         for ord in range(len(RING)):
             if 'SetPointA' in RING[ord] and 'SetPointB' in RING[ord]:
@@ -15,13 +15,13 @@ def SCgetModelDispersion(SC, BPMords, CAVords, rfStep=1E3, useIdealRing=0):
             for rmf in rmfs:
                 del RING[ord][rmf]
     nBPM = len(BPMords)
-    eta = np.nan * np.ones((2 * nBPM, 1))
+    eta = np.full((2 * nBPM, 1), np.nan)
     Bref = findorbit6(RING, BPMords)
     if np.any(np.isnan(Bref)):
         print('Initial orbit is NaN. Aborting. \n')
         return
     for ord in CAVords:
-        RING[ord]['Frequency'] = RING[ord]['Frequency'] + rfStep
+        RING[ord].Frequency += rfStep
     B = findorbit6(RING, BPMords)
     eta = np.reshape((B[0:2, :] - Bref[0:2, :]) / rfStep, [], 1)
     return eta

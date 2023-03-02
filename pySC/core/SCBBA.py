@@ -5,7 +5,6 @@ from pySC.at_wrapper import findspos
 from pySC.core.SCfeedbackRun import SCfeedbackRun
 from pySC.core.SCgetBPMreading import SCgetBPMreading
 from pySC.core.SCgetCMSetPoints import SCgetCMSetPoints
-from pySC.core.SCparticlesIn3D import SCparticlesIn3D
 from pySC.utils.sc_tools import SCrandnc
 from pySC.core.SCsetpoints import SCsetCMs2SetPoints, SCsetMags2SetPoints
 
@@ -315,7 +314,7 @@ def plotBBAstep(SC,BPMind,jBPM,nDim,nQ,mOrd,nKick,par):
         plt.figure(99)
         plt.clf()
     B,T=SCgetBPMreading(SC, plotFunctionFlag=True)
-    T=SCparticlesIn3D(T,SC.INJ.nParticles)
+    #T=SCparticlesIn3D(T,SC.INJ.nParticles)
     T=T[:,:,1]
     plt.figure(99)
     plt.subplot(len(par.magSPvec[nDim,jBPM]),1,nQ)
@@ -339,7 +338,6 @@ def plotBBAResults(SC,initOffsetErrors,errorFlags,jBPM,BPMords,magOrds):
     plt.clf()
     tmpCol=plt.gca().colororder
     plt.subplot(3,1,1)
-    plt.hold(True)
     for nDim in range(size(BPMords,1)):
         a,b = np.histogram(fom[nDim,:],nSteps)
         plt.plot(1E6*b,a,linewidth=2)

@@ -1,42 +1,34 @@
 import numpy as np
 import matplotlib.pyplot as plt
-
+from typing import Tuple
+from numpy import ndarray
 from pySC.core.SCgenBunches import SCgenBunches
-from pySC.core.SCparticlesIn3D import SCparticlesIn3D
 from pySC.at_wrapper import atpass
+from pySC.classes import SimulatedComissioning
 
-def SCgetBeamTransmission(SC, nParticles=None, nTurns=None, plotFlag=0, verbose=0):  # TODO Check if SC gets modified
-    if nParticles is not None:
-        SC.INJ.nParticles = nParticles
-    if nTurns is not None:
-        SC.INJ.nTurns = nTurns
+
+def SCgetBeamTransmission(SC: SimulatedComissioning, nParticles: int = None, nTurns: int = None, plotFlag: bool = False,
+                          verbose: bool = False) -> Tuple[int, ndarray]:
+    if nParticles is None:
+        nParticles = SC.INJ.nParticles
+    if nTurns is None:
+        nTurns = SC.INJ.nTurns
     if verbose:
-        print('Calculating maximum beam transmission for %d particles and %d turns: ' % (
-        SC.INJ.nParticles, SC.INJ.nTurns), end='')
-    Zin = SCgenBunches(SC)
-    T = atpass(SC.RING, Zin, 1, SC.INJ.nTurns, len(SC.RING) + 1)
-    if SC.INJ.nParticles > 1:
-        M = SCparticlesIn3D(T, SC.INJ.nParticles)
-        Tx = np.squeeze(M[0, :, :])
-        maxTurns = np.where(np.sum(np.isnan(Tx), 1) > (SC.INJ.nParticles * SC.INJ.beamLostAt))[0][0] - 1
-    else:
-        Tx = T[0, :]
-        maxTurns = np.where(np.isnan(Tx))[0][0] - 1
-    if not maxTurns:
-        maxTurns = SC.INJ.nTurns
-        ERROR = 0
-    lostCount = np.sum(np.isnan(Tx), 1) / SC.INJ.nParticles
+        print(f'Calculating maximum beam transmission for {nParticles} particles and {nTurns} turns: ')
+    T = atpass(SC.RING, SCgenBunches(SC, nParticles=nParticles), nTurns, np.array([len(SC.RING)]), keep_lattice=False)
+    fraction_lost = np.mean(np.isnan(T[0, :, :, :]), axis=(0, 1))
+    max_turns = np.sum(fraction_lost < SC.INJ.beamLostAt)
     if plotFlag:
-        plt.figure(12), plt.clf()
-        plt.plot(lostCount)
-        plt.plot([0, SC.INJ.nTurns], [SC.INJ.beamLostAt, SC.INJ.beamLostAt], 'k:')
-        plt.xlim([0, SC.INJ.nTurns])
-        plt.ylim([0, 1])
-        plt.xlabel('Number of turns')
-        plt.ylabel('EDF of lost count')
-        plt.show()
+        fig, ax = plt.subplots()
+        ax.plot(fraction_lost)
+        ax.plot([0, nTurns], [SC.INJ.beamLostAt, SC.INJ.beamLostAt], 'k:')
+        ax.set_xlim([0, nTurns])
+        ax.set_ylim([0, 1])
+        ax.set_xlabel('Number of turns')
+        ax.set_ylabel('EDF of lost count')
+        fig.show()
     if verbose:
-        print('%d turns and %.0f%% transmission.' % (maxTurns, 100 * (1 - lostCount[-1])))
-    return maxTurns, lostCount
+        print(f'{max_turns} turns and {100 * (1 - fraction_lost[-1]):.0f}% transmission.')
+    return int(max_turns), fraction_lost
 
-# SCgetBeamTransmission(SC,nParticles=1,nTurns=1000,plotFlag=1,verbose=1)
+

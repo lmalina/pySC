@@ -11,16 +11,10 @@ def SCgetRespMat(SC, Amp, BPMords, CMords, mode='fixedKick', nSteps=2, fit='line
         raise ValueError('RM amplitude must be defined as single value or cell array matching the number of used HCM and VCM.')
     if not isinstance(Amp, list):
         Amp = [np.ones(len(CMords[0])) * Amp, np.ones(len(CMords[1])) * Amp]
-    if SC.INJ.trackMode == 'ORB':
-        nTurns = 1
-        if verbose:
-            print('Calculate orbit response matrix for {:d} BPMs and {:d}|{:d} CMs with mode ''{}'' and amplitude {:.0e}|{:.0e} using {:d} steps ...'.format(len(BPMords), len(CMords[0]), len(CMords[1]), mode, np.mean(Amp[0]), np.mean(Amp[1]), nSteps))
-    else:
-        nTurns = SC.INJ.nTurns
-        if verbose:
-            print('Calculate {:d}-turn trajectory response matrix for {:d} BPMs and {:d}|{:d} CMs with mode ''{}'' and amplitude {:.0e}|{:.0e} using {:d} steps ...'.format(SC.INJ.nTurns, len(BPMords), len(CMords[0]), len(CMords[1]), mode, np.mean(Amp[0]), np.mean(Amp[1]), nSteps))
-    RM = np.nan * np.zeros((2 * nTurns * len(BPMords), len(CMords[0]) + len(CMords[1])))
-    Err = np.nan * np.zeros((2 * nTurns * len(BPMords), len(CMords[0]) + len(CMords[1])))
+    if verbose:
+        print('Calculate {:d}-turn trajectory response matrix for {:d} BPMs and {:d}|{:d} CMs with mode ''{}'' and amplitude {:.0e}|{:.0e} using {:d} steps ...'.format(SC.INJ.nTurns, len(BPMords), len(CMords[0]), len(CMords[1]), mode, np.mean(Amp[0]), np.mean(Amp[1]), nSteps))
+    RM = np.nan * np.zeros((2 * SC.INJ.nTurns * len(BPMords), len(CMords[0]) + len(CMords[1])))
+    Err = np.nan * np.zeros((2 * SC.INJ.nTurns * len(BPMords), len(CMords[0]) + len(CMords[1])))
     CMsteps = [np.zeros((nSteps, len(CMords[0]))), np.zeros((nSteps, len(CMords[1])))]
     Bref = np.reshape(SCgetBPMreading(SC, BPMords=BPMords), [], 1)
     if SC.INJ.trackMode == 'ORB' and np.any(np.isnan(Bref)):
@@ -29,7 +23,7 @@ def SCgetRespMat(SC, Amp, BPMords, CMords, mode='fixedKick', nSteps=2, fit='line
     for nDim in range(2):
         cmstart = SCgetCMSetPoints(SC, CMords[nDim], nDim)
         for nCM in range(len(CMords[nDim])):
-            MaxStep, dB = getKickAmplitude(SC, Bref, BPMords, CMords[nDim][nCM], Amp[nDim][nCM], nDim, nTurns, nSteps,
+            MaxStep, dB = getKickAmplitude(SC, Bref, BPMords, CMords[nDim][nCM], Amp[nDim][nCM], nDim, SC.INJ.nTurns, nSteps,
                                            mode, verbose)
             CMstepVec = np.linspace(-MaxStep, MaxStep, nSteps)
             if nSteps != 2:

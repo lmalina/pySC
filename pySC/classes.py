@@ -34,7 +34,7 @@ class DotDict(dict):
 class Injection(DotDict):
     def __init__(self):
         super(Injection, self).__init__()
-        self.beamLostAt: int = 1
+        self.beamLostAt: float = 1.0
         self.Z0ideal: ndarray = np.zeros(6)
         self.Z0: ndarray = np.zeros(6)
         self.beamSize: ndarray = np.zeros((6, 6))
@@ -43,12 +43,26 @@ class Injection(DotDict):
         self.nParticles: int = 1
         self.nTurns: int = 1
         self.nShots: int = 1
-        self.trackMode: str = 'TBT'
+        self._trackMode: str = 'TBT'
         self.postFun = self._dummy_func
 
     @staticmethod
     def _dummy_func(matrix: ndarray) -> ndarray:
         return matrix
+    @property
+    def trackMode(self):
+        return self._trackMode
+    @trackMode.setter
+    def trackMode(self, mode):
+        allowed_modes = ("TBT", "ORB", "PORB")
+        if mode not in allowed_modes:
+            raise AttributeError(f"trackMode property has to be one of {allowed_modes}")
+        self._trackMode = mode
+        if mode == 'ORB':
+            self.nTurns = 1
+            self.nParticles = 1
+
+
 
 
 class Indices(DotDict):
