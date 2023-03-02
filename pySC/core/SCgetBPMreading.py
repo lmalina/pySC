@@ -3,7 +3,7 @@ import numpy as np
 from pySC.core.SCgenBunches import SCgenBunches
 from pySC.core.SCparticlesIn3D import SCparticlesIn3D
 #from pySC.core.SCplotBPMreading import SCplotBPMreading
-from pySC.utils.sc_utils import SCrandnc
+from pySC.utils.sc_tools import SCrandnc
 from pySC.at_wrapper import atgetfieldvalues, atpass, findorbit6
 
 

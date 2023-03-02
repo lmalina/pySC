@@ -1,4 +1,119 @@
+import re
+
 import numpy as np
+from at import Lattice
+from matplotlib import pyplot as plt
+from numpy import ndarray
+
+from pySC.at_wrapper import findspos
+
+
+def SCrandnc(cut_off: float = 2, shape: tuple = (1, )) -> ndarray:
+    """
+    Generates an array of random number(s) from normal distribution with a cut-off.
+
+    Parameters
+    ----------
+    cut_off : float
+        The cut-off value.
+    shape : tuple
+        The shape of the output array.
+
+    Returns
+    -------
+    out : ndarray
+        The output array.
+    """
+    out_shape = (1,) if np.sum(shape) < 1 else shape
+    out = np.random.randn(np.prod(out_shape))
+    outindex = np.abs(out) > np.abs(cut_off)
+    while np.sum(outindex):
+        out[outindex] = np.random.randn(np.sum(outindex))
+        outindex = np.abs(out) > np.abs(cut_off)
+    return out.reshape(out_shape)
+
+
+def SCgetOrds(ring: Lattice, regex: str, verbose: bool = False) -> ndarray:
+    """
+    Returns the indices of the elements in the ring whose names match the regex.
+
+    Parameters
+    ----------
+    ring : Lattice
+        The ring to search.
+    regex : str
+        The regular expression to match.
+    verbose : bool, optional
+        If True, prints the names of matched elements.
+
+    Returns
+    -------
+    ndarray
+        The indices of the matched elements.
+    """
+    if verbose:
+        return np.array([_print_elem_get_index(ind, el) for ind, el in enumerate(ring) if re.search(regex, el.FamName)],
+                        dtype=int)
+    return np.array([ind for ind, el in enumerate(ring) if re.search(regex, el.FamName)], dtype=int)
+
+
+def _print_elem_get_index(ind, el):
+    print(f'Matched: {el.FamName}')
+    return ind
+
+
+def SCgetPinv(matrix: ndarray, num_removed: int = 0, alpha: float = 0, damping: float = 1, plot: bool = False) -> ndarray:
+    """
+    Computes the pseudo-inverse of a matrix using the Singular Value Decomposition (SVD) method.
+
+    Parameters
+    ----------
+    matrix : ndarray
+        The matrix to be inverted.
+    num_removed : int, optional
+        The number of singular values to be removed from the matrix.
+    alpha : float, optional
+        The regularization parameter.
+    damping : float, optional
+        The damping factor.
+    plot : bool, optional
+        If True, plots the singular values and the damping factor.
+
+    Returns
+    -------
+    matrix_inv : ndarray
+        The pseudo-inverse of the matrix.
+    """
+    u_mat, s_mat, vt_mat = np.linalg.svd(matrix, full_matrices=False)
+    num_singular_values = s_mat.shape[0] - num_removed if num_removed > 0 else s_mat.shape[0]
+    available = np.sum(s_mat > 0.)
+    keep = min(num_singular_values, available)
+    d_mat = np.zeros(s_mat.shape)
+    d_mat[:available] = s_mat[:available] / (np.square(s_mat[:available]) + alpha**2) if alpha else 1/s_mat[:available]
+    d_mat = damping * d_mat
+    matrix_inv = np.dot(np.dot(np.transpose(vt_mat[:keep, :]), np.diag(d_mat[:keep])), np.transpose(u_mat[:, :keep]))
+    if plot:
+        _plot_singular_values(s_mat, d_mat)
+    return matrix_inv
+
+
+def SCscaleCircumference(RING, circ, mode='abs'):  # TODO
+    allowed_modes = ("abs", "rel")
+    if mode not in allowed_modes:
+        raise ValueError(f'Unsupported circumference scaling mode: ``{mode}``. Allowed are {allowed_modes}.')
+    C = findspos(RING)[-1]
+    D = 0
+    for ord in range(len(RING)):
+        if RING[ord].PassMethod == 'DriftPass':
+            D += RING[ord].Length
+    if mode == 'rel':
+        Dscale = 1 - (1 - circ) * C / D
+    else:  # mode == 'abs'
+        Dscale = 1 - (C - circ) / D
+    for ord in range(len(RING)):
+        if RING[ord].PassMethod == 'DriftPass':
+            RING[ord].Length = RING[ord].Length * Dscale
+    return RING
 
 
 def SCgetTransformation(d0Vector, rolls, magTheta, magLength, refPoint='center'):
@@ -71,6 +186,19 @@ def SCgetTransformation(d0Vector, rolls, magTheta, magLength, refPoint='center')
     return T1, T2, R1, R2
 
 
+def _plot_singular_values(s_mat, d_mat):
+    fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(12, 4), dpi=100, facecolor="w")
+    ax[0].semilogy(np.diag(s_mat) / np.max(np.diag(s_mat)), 'o--')
+    ax[0].set_xlabel('Number of SV')
+    ax[0].set_ylabel('$\sigma/\sigma_0$')
+    ax[1].plot(s_mat * d_mat, 'o--')
+    ax[1].set_xlabel('Number of SV')
+    ax[1].set_ylabel('$\sigma * \sigma^+$')
+    ax[1].yaxis.tick_right()
+    ax[1].yaxis.set_label_position("right")
+    fig.show()
+
+
 def rotation(rolls):
     ax, ay, az = rolls
     # The order of extrinsic rotations (fixed frame) around ZYX, i.e. Roll, Yaw, Pitch
@@ -82,35 +210,18 @@ def rotation(rolls):
     return R0
 
 
-def sc_get_transformation(dx, dy, dz, ax, ay, az, magTheta, magLength, refPoint='center'):
+def sc_get_transformation(offsets, rolls, magTheta, magLength, refPoint='center'):
     if refPoint not in ('center', 'entrance'):
         raise ValueError('Unsupported reference point. Allowed are ''center'' or ''entrance''.')
-    d0Vector = np.array([dx, dy, dz])
     xAxis = np.array([1, 0, 0])
     yAxis = np.array([0, 1, 0])
     zAxis = np.array([0, 0, 1])
-
-    R0 = np.array([[np.cos(ay) * np.cos(az), -np.cos(ay) * np.sin(az), np.sin(ay)],
-                   [np.cos(az) * np.sin(ax) * np.sin(ay) + np.cos(ax) * np.sin(az),
-                    np.cos(ax) * np.cos(az) - np.sin(ax) * np.sin(ay) * np.sin(az), -np.cos(ay) * np.sin(ax)],
-                   [-np.cos(ax) * np.cos(az) * np.sin(ay) + np.sin(ax) * np.sin(az),
-                    np.cos(az) * np.sin(ax) + np.cos(ax) * np.sin(ay) * np.sin(az), np.cos(ax) * np.cos(ay)]])
+    RX = rotation(rolls)
+    OP = offsets[:]
     if refPoint == 'center':
-        RB2 = np.array([[np.cos(magTheta / 2), 0, -np.sin(magTheta / 2)],
-                        [0, 1, 0],
-                        [np.sin(magTheta / 2), 0, np.cos(magTheta / 2)]])
-        RX = np.dot(RB2, np.dot(R0, RB2.T))
-        if magTheta == 0:
-            OO0 = (magLength / 2) * zAxis
-            P0P = -(magLength / 2) * np.dot(RX, zAxis)
-        else:
-            Rc = magLength / magTheta
-            OO0 = Rc * np.sin(magTheta / 2) * np.dot(RB2, zAxis)
-            P0P = -Rc * np.sin(magTheta / 2) * np.dot(RX, np.dot(RB2, zAxis))
-        OP = OO0 + P0P + np.dot(RB2, d0Vector)
-    else:
-        RX = R0
-        OP = d0Vector
+        RB2 = rotation([0, -magTheta/2, 0])
+        RX = np.dot(RB2, np.dot(RX, RB2.T))
+        OP = np.dot(RB2, OP) + np.dot(np.eye(3)-RX, np.dot(RB2, zAxis)) * magLength * (1/2 if magTheta == 0 else np.sin(magTheta / 2) / magTheta)
 
     for face in range(2):
         if face == 0:
@@ -121,9 +232,7 @@ def sc_get_transformation(dx, dy, dz, ax, ay, az, magTheta, magLength, refPoint=
             LD = np.dot(ZaxiSxyz, OP)
             tmp = OP
         else:
-            RB = np.array([[np.cos(magTheta), 0, -np.sin(magTheta)],
-                           [0, 1, 0],
-                           [np.sin(magTheta), 0, np.cos(magTheta)]])
+            RB = rotation([0, -magTheta, 0])
             R = np.dot(RB.T, np.dot(RX.T, RB))
             XaxiSxyz = np.dot(RB, xAxis)
             YaxiSxyz = np.dot(RB, yAxis)

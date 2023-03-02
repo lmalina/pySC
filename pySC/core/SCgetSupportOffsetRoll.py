@@ -2,20 +2,19 @@ import numpy as np
 from pySC.constants import SUPPORT_TYPES
 from typing import Tuple
 from numpy import ndarray
-from pySC.classes import SimulatedComissioning
 
 
-def SCgetSupportOffset(SC: SimulatedComissioning, s: ndarray) -> ndarray:  # Just as reference, not used
+def SCgetSupportOffset(SC, s: ndarray) -> ndarray:  # Just as reference, not used
     offsets, rolls = support_offset_and_roll(SC, s)
     return offsets
 
 
-def SCgetSupportRoll(SC: SimulatedComissioning, s: ndarray) -> ndarray:  # Just as reference, not used
+def SCgetSupportRoll(SC, s: ndarray) -> ndarray:  # Just as reference, not used
     offsets, rolls = support_offset_and_roll(SC, s)
     return rolls
 
 
-def support_offset_and_roll(SC: SimulatedComissioning, s_locations: ndarray) -> Tuple[ndarray, ndarray]:
+def support_offset_and_roll(SC, s_locations: ndarray) -> Tuple[ndarray, ndarray]:
     lengths = np.array([SC.RING[i].Length for i in range(len(SC.RING))])
     ring_length = np.sum(lengths)
     s0 = np.cumsum(lengths)

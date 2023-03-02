@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from pySC.utils.sc_utils import SCgetPinv
+from pySC.utils.sc_tools import SCgetPinv
 
 
 def test_pinv(matrix):

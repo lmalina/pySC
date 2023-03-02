@@ -4,8 +4,7 @@ import at
 import numpy as np
 from at import Lattice
 from pySC.at_wrapper import atloco
-from pySC.classes import SimulatedComissioning
-from pySC.core.SCapplyErrors import SCapplyErrors
+#from pySC.classes import SimulatedComissioning
 from pySC.core.SCcronoff import SCcronoff
 from pySC.core.SCfeedbackBalance import SCfeedbackBalance
 from pySC.core.SCfeedbackFirstTurn import SCfeedbackFirstTurn
@@ -15,13 +14,13 @@ from pySC.core.SCgetBPMreading import SCgetBPMreading
 from pySC.core.SCgetBeamTransmission import SCgetBeamTransmission
 from pySC.core.SCgetModelDispersion import SCgetModelDispersion
 from pySC.core.SCgetModelRM import SCgetModelRM
-from pySC.utils.sc_utils import SCgetOrds, SCgetPinv
+from pySC.utils.sc_tools import SCgetOrds, SCgetPinv
 from pySC.core.SClocoLib import SClocoLib
 from pySC.core.SCplotLattice import SCplotLattice
 from pySC.core.SCplotPhaseSpace import SCplotPhaseSpace
 #from pySC.core.SCplotSupport import SCplotSupport
 from pySC.core.SCpseudoBBA import SCpseudoBBA
-from pySC.core.SCregisterUpdate import SCregisterBPMs, SCregisterCAVs, SCregisterMagnets, SCregisterSupport, SCinit
+from pySC.core.SCregisterUpdate import SCregisterBPMs, SCregisterCAVs, SCregisterMagnets, SCregisterSupport, SCinit, SCapplyErrors
 from pySC.core.SCsanityCheck import SCsanityCheck
 from pySC.core.SCsetpoints import SCsetCavs2SetPoints, SCsetMags2SetPoints
 from pySC.core.SCsynchEnergyCorrection import SCsynchEnergyCorrection
@@ -53,7 +52,7 @@ def create_at_lattice() -> Lattice:
 if __name__ == "__main__":
     ring = create_at_lattice()
     print(len(ring))
-    SC = SimulatedComissioning(ring)
+    SC = SCinit(ring)
     # at.summary(ring)
     #SC = SCinit(ring)
     ords = SCgetOrds(SC.RING, 'BPM')
