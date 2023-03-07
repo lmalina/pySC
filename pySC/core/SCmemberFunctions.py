@@ -47,3 +47,12 @@ def SCupdateSupport(SC: SimulatedComissioning, BPMstructOffset: bool = True, MAG
     SC.update_supports(offset_bpms=BPMstructOffset, offset_magnets=MAGstructOffset)
     return SC
 
+
+def SCgetSupportOffset(SC: SimulatedComissioning, s: ndarray) -> ndarray:
+    offsets, rolls = SC.support_offset_and_roll(s)
+    return offsets
+
+
+def SCgetSupportRoll(SC: SimulatedComissioning, s: ndarray) -> ndarray:
+    offsets, rolls = SC.support_offset_and_roll(s)
+    return rolls

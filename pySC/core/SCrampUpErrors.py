@@ -3,7 +3,7 @@ from pySC.constants import SUPPORT_TYPES, RF_PROPERTIES
 from pySC.core.SCfeedback import SCfeedbackRun
 from pySC.core.SCgetModelRM import SCgetModelRM
 from pySC.utils.sc_tools import SCgetPinv, SCscaleCircumference
-from pySC.core.SCregisterUpdate import SCupdateMagnets, SCupdateSupport
+from pySC.core.SCmemberFunctions import SCupdateMagnets, SCupdateSupport
 
 
 def SCrampUpErrors(SC, nStepsRamp=10, eps=1e-5, target=0, alpha=10, maxsteps=30, verbose=0):
@@ -24,7 +24,7 @@ def SCrampUpErrors(SC, nStepsRamp=10, eps=1e-5, target=0, alpha=10, maxsteps=30,
         SC = scaleInjection(SC, SC0, scale)
         SC = scaleCircumference(SC, SC0, scale)
         try:
-            SC = SCfeedbackRun(SC, Mplus, target=target, maxsteps=maxsteps, eps=eps, verbose=verbose, plotFunctionFlag=True)
+            SC = SCfeedbackRun(SC, Mplus, target=target, maxsteps=maxsteps, eps=eps, do_plot=True)
         except RuntimeError:
             if 2 * nStepsRamp > 100:
                 raise Exception(f'Ramping up failed at scaling {scale:.2f} with {nStepsRamp} ramping steps. '

@@ -7,7 +7,7 @@ from pySC.at_wrapper import atpass
 from pySC.classes import SimulatedComissioning
 
 
-def SCgetBeamTransmission(SC: SimulatedComissioning, nParticles: int = None, nTurns: int = None, plotFlag: bool = False,
+def SCgetBeamTransmission(SC: SimulatedComissioning, nParticles: int = None, nTurns: int = None, do_plot: bool = False,
                           verbose: bool = False) -> Tuple[int, ndarray]:
     if nParticles is None:
         nParticles = SC.INJ.nParticles
@@ -18,7 +18,7 @@ def SCgetBeamTransmission(SC: SimulatedComissioning, nParticles: int = None, nTu
     T = atpass(SC.RING, SCgenBunches(SC, nParticles=nParticles), nTurns, np.array([len(SC.RING)]), keep_lattice=False)
     fraction_lost = np.mean(np.isnan(T[0, :, :, :]), axis=(0, 1))
     max_turns = np.sum(fraction_lost < SC.INJ.beamLostAt)
-    if plotFlag:
+    if do_plot:
         fig, ax = plt.subplots()
         ax.plot(fraction_lost)
         ax.plot([0, nTurns], [SC.INJ.beamLostAt, SC.INJ.beamLostAt], 'k:')

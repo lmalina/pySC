@@ -114,6 +114,5 @@ def _get_ring_aperture(SC):
             ords.append(ord)
             aps.append(np.outer(getattr(SC.RING[ord], 'EApertures'), np.array([-1, 1]))
                        if hasattr(SC.RING[ord], 'EApertures')
-                       else np.reshape(getattr(SC.RING[ord], 'RApertures'), (2, 2)))
-    # ApertureForPLotting = [] if len(ap_ord) == 0 else {'apOrds': apOrds, 'apVals': apVals}
+                       else np.reshape(getattr(SC.RING[ord], 'RApertures'), (2, 2))) #  TODO is it [-x, +x, -y, +y] if not, has to be changed
     return np.array(ords), np.array(aps)

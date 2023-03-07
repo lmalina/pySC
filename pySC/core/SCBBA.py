@@ -4,9 +4,8 @@ import numpy as np
 from pySC.at_wrapper import findspos
 from pySC.core.SCfeedback import SCfeedbackRun
 from pySC.core.SCgetBPMreading import SCgetBPMreading
-from pySC.core.SCgetCMSetPoints import SCgetCMSetPoints
 from pySC.utils.sc_tools import SCrandnc
-from pySC.core.SCsetpoints import SCsetCMs2SetPoints, SCsetMags2SetPoints
+from pySC.core.SCsetpoints import SCsetCMs2SetPoints, SCsetMags2SetPoints, SCgetCMSetPoints
 
 
 def SCBBA(SC,BPMords,magOrds,**kwargs):
@@ -64,8 +63,8 @@ def SCBBA(SC,BPMords,magOrds,**kwargs):
             BPMind = np.where(BPMords[nDim,jBPM]==SC.ORD.BPM)[0][0]
             mOrd = magOrds[nDim,jBPM]
             if switchOffSext:
-                SC = SCsetMags2SetPoints(SC,mOrd,2,3,0,method='abs')
-                [SC,_] = SCfeedbackRun(SC,RMstruct.MinvCO,target=0,maxsteps=50,scaleDisp=RMstruct.scaleDisp,verbose=verbose,BPMords=RMstruct.BPMords,CMords=RMstruct.CMords,eps=1E-6)
+                SC = SCsetMags2SetPoints(SC,mOrd,skewness=False , order=2 ,setpoints=np.zeros(1) ,method='abs')
+                [SC,_] = SCfeedbackRun(SC,RMstruct.MinvCO,target=0,maxsteps=50,scaleDisp=RMstruct.scaleDisp,BPMords=RMstruct.BPMords,CMords=RMstruct.CMords,eps=1E-6)
             if mode == 'ORB':
                 [CMords,CMvec] = getOrbitBump(SC,mOrd,BPMords[nDim,jBPM],nDim,RMstruct,orbBumpWindow,useBPMreadingsForOrbBumpRef)
                 [BPMpos,tmpTra] = dataMeasurement(SC,mOrd,BPMind,jBPM,nDim,CMords,CMvec,magSPvec[jBPM],magSPflag,magOrder,dipCompensation,plotLines,verbose)
@@ -90,13 +89,13 @@ def SCBBA(SC,BPMords,magOrds,**kwargs):
 
 def dataMeasurement(SC,mOrd,BPMind,jBPM,nDim,par,varargin):
     if par.skewQuadrupole:
-        magType = 1
+        skewness = True
         if nDim==1:
-            measDim = 2
+            measDim = 2  # TODO why the swap?
         else:
             measDim = 1
     else:
-        magType = 2
+        skewness = False
         measDim = nDim
     if par.mode == 'ORB':
         CMords = varargin[0]
@@ -111,7 +110,8 @@ def dataMeasurement(SC,mOrd,BPMind,jBPM,nDim,par,varargin):
         tmpTra = np.nan((nMsteps,len(par.magSPvec[nDim,jBPM]),par.maxNumOfDownstreamBPMs))
         BPMpos = np.nan((nMsteps,len(par.magSPvec[nDim,jBPM])))
     for nQ in range(len(par.magSPvec[nDim,jBPM])):
-        SC = SCsetMags2SetPoints(SC,mOrd,magType,par.magOrder,par.magSPvec[nDim,jBPM][nQ],method=par.magSPflag,dipCompensation=par.dipCompensation)
+        SC = SCsetMags2SetPoints(SC,mOrd,skewness,par.magOrder -1,  #  TODO remove -1 once the correct order is passed
+                                 par.magSPvec[nDim,jBPM][nQ],method=par.magSPflag,dipCompensation=par.dipCompensation)
         for nKick in range(nMsteps):
             if par.mode == 'ORB':
                 for nD in range(2):
@@ -248,7 +248,7 @@ def scanPhaseAdvance(SC,BPMind,nDim,initialZ0,kickVec0,par):
     for nQ in range(len(qVec)):
         if par.verbose:
             print('BBA-BPM range to small, try to change phase advance with quad ord %d to %.2f of nom. SP.' % (par.quadOrdPhaseAdvance,qVec[nQ]))
-        SC = SCsetMags2SetPoints(SC,mOrd,2,2,qVec[nQ],method='rel', dipCompensation=True)
+        SC = SCsetMags2SetPoints(SC,mOrd,False,1,qVec[nQ],method='rel', dipCompensation=True)
         [kickVec, BPMrange] = scaleInjectionToReachBPM(SC,BPMind,nDim,initialZ0,kickVec0,par)
         allBPMRange[nQ] = BPMrange
         if par.verbose:
@@ -258,11 +258,11 @@ def scanPhaseAdvance(SC,BPMind,nDim,initialZ0,kickVec0,par):
     if BPMrange < par.BBABPMtarget:
         if BPMrange<max(allBPMRange):
             nBest = np.argmax(allBPMRange)
-            SC = SCsetMags2SetPoints(SC,mOrd,2,2,qVec[nBest], method='rel', dipCompensation=True)
+            SC = SCsetMags2SetPoints(SC,mOrd,False,1,qVec[nBest], method='rel', dipCompensation=True)
             if par.verbose:
                 print('Changing phase advance of quad with ord %d NOT succesfull, returning to best value with BBA-BPM range = %.0fum.' % (mOrd,1E6*max(allBPMRange)))
         else:
-            SC = SCsetMags2SetPoints(SC,mOrd,2,2,q0, method='abs',dipCompensation=True)
+            SC = SCsetMags2SetPoints(SC,mOrd,False,1,q0, method='abs',dipCompensation=True)
             if par.verbose:
                 print('Changing phase advance of quad with ord %d NOT succesfull, returning to initial setpoint.' % mOrd)
     else:
@@ -291,14 +291,13 @@ def getOrbitBump(SC,mOrd,BPMord,nDim,par):
                                     target=0,
                                     maxsteps=50,
                                     scaleDisp=par.RMstruct.scaleDisp,
-                                    verbose=par.verbose,
                                     BPMords=par.RMstruct.BPMords,
                                     CMords=par.RMstruct.CMords,
                                     eps=1E-6)
     for nDim in range(2):
         for nCM in range(len(par.RMstruct.CMords[nDim])):
-            CMvec0[nDim][nCM] = SCgetCMSetPoints(SC,par.RMstruct.CMords[nDim][nCM],nDim)
-            deltaCM[nDim][nCM] = SCgetCMSetPoints(SC,par.RMstruct.CMords[nDim][nCM],nDim) - SCgetCMSetPoints(CUR,par.RMstruct.CMords[nDim][nCM],nDim)
+            CMvec0[nDim][nCM] = SCgetCMSetPoints(SC,par.RMstruct.CMords[nDim][nCM],skewness=nDim)
+            deltaCM[nDim][nCM] = SCgetCMSetPoints(SC,par.RMstruct.CMords[nDim][nCM],skewness=nDim) - SCgetCMSetPoints(CUR,par.RMstruct.CMords[nDim][nCM],skewness=nDim)
     factor = np.linspace(-1,1,par.nSteps)
     for nDim in range(2):
         for nStep in range(par.nSteps):

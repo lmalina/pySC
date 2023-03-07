@@ -19,7 +19,7 @@ def SCfeedbackFirstTurn(SC, Mplus, R0=None, maxsteps=100, wiggleAfter=20, wiggle
         B = SCgetBPMreading(SC, BPMords=BPMords)  # Inject...
         if np.all(np.isnan(B)):
             raise RuntimeError('SCfeedbackFirstTurn: FAIL (no BPM reading to begin with)')
-        SC, BPMhist = _correction_step_firstturn(SC, BPMhist, BPMords, CMords, B, R0, Mplus)  # call correction subroutine.
+        SC, BPMhist = _correction_step_firstturn(SC, BPMhist, BPMords, CMords, B, R0, Mplus)
         if _is_repro(BPMhist, 5) and _is_transmit(BPMhist):
             LOGGER.debug('SCfeedbackFirstTurn: Success')
             return SC
@@ -35,8 +35,8 @@ def SCfeedbackFirstTurn(SC, Mplus, R0=None, maxsteps=100, wiggleAfter=20, wiggle
             for i in range(dpts.shape[1]):
                 SPH = dpts[0, i] * np.ones((len(CMordsH), 1))  # Horizontal setpoint change
                 SPV = dpts[1, i] * np.ones((len(CMordsV), 1))  # Vertical setpoint change
-                SC, _ = SCsetCMs2SetPoints(SC, CMordsH, SPH, 1, method='add')
-                SC, _ = SCsetCMs2SetPoints(SC, CMordsV, SPV, 2, method='add')
+                SC, _ = SCsetCMs2SetPoints(SC, CMordsH, SPH, skewness=False, method='add')
+                SC, _ = SCsetCMs2SetPoints(SC, CMordsV, SPV, skewness=True, method='add')
                 W = SCgetBPMreading(SC, BPMords=BPMords)
                 BPMhist = _log_last_bpm(BPMhist, W)
                 if _is_new(BPMhist):
@@ -70,8 +70,8 @@ def SCfeedbackStitch(SC, Mplus, R0=np.zeros((2, 1)), nBPMs=4, maxsteps=30, nRepr
             CMords = _get_last_cmords_stitch(B, nWiggleCM, BPMords, CMords)
             for i in range(len(dpts[0])):
                 for ord in CMords:
-                    SC, _ = SCsetCMs2SetPoints(SC, ord, dpts[0][i], 1, method='add')
-                    SC, _ = SCsetCMs2SetPoints(SC, ord, dpts[1][i], 2, method='add')
+                    SC, _ = SCsetCMs2SetPoints(SC, ord, dpts[0][i], skewness=False, method='add')
+                    SC, _ = SCsetCMs2SetPoints(SC, ord, dpts[1][i], skewness=True, method='add')
                 W = SCgetBPMreading(SC, BPMords=BPMords)
                 BPMhist = _log_last_bpm(BPMhist, W)
                 if _is_signal_stitch(W, nBPMs):
@@ -100,8 +100,8 @@ def SCfeedbackStitch(SC, Mplus, R0=np.zeros((2, 1)), nBPMs=4, maxsteps=30, nRepr
         R = [Bx1 - R0[0], DELTABx, By1 - R0[1], DELTABy]
         R[np.isnan(R)] = 0
         dphi = Mplus * R
-        SC, _ = SCsetCMs2SetPoints(SC, CMords[0], -dphi[:len(CMords[0])], 1, method='add')
-        SC, _ = SCsetCMs2SetPoints(SC, CMords[1], -dphi[len(CMords[0]):], 2, method='add')
+        SC, _ = SCsetCMs2SetPoints(SC, CMords[0], -dphi[:len(CMords[0])], skewness=False, method='add')
+        SC, _ = SCsetCMs2SetPoints(SC, CMords[1], -dphi[len(CMords[0]):], skewness=True, method='add')
         if _is_setback_stitch(BPMhist):
             RuntimeError('SCfeedbackStitch: FAIL Setback')
         if _is_repro(BPMhist, nRepro) and _is_transmit(BPMhist):
@@ -111,7 +111,7 @@ def SCfeedbackStitch(SC, Mplus, R0=np.zeros((2, 1)), nBPMs=4, maxsteps=30, nRepr
 
 
 def SCfeedbackRun(SC, Mplus, R0=None, eps=1e-5, target=0, maxsteps=30, scaleDisp=0, CMords=None, BPMords=None,
-                  weight=None, plotFunctionFlag=False):
+                  weight=None, do_plot=False):
     if R0 is None:
         R0 = np.zeros((Mplus.shape[1], 1))
     if weight is None:
@@ -119,15 +119,15 @@ def SCfeedbackRun(SC, Mplus, R0=None, eps=1e-5, target=0, maxsteps=30, scaleDisp
     BPMords, CMords = _check_ords(SC, BPMords, CMords, "Run")
     BPMhist = np.nan * np.ones((1, 100))
     for steps in range(maxsteps):
-        B = SCgetBPMreading(SC, BPMords=BPMords, do_plot=plotFunctionFlag)  # Inject ...
+        B = SCgetBPMreading(SC, BPMords=BPMords, do_plot=do_plot)  # Inject ...
         R = np.array([B[0, :], B[1, :]])
         R[np.isnan(R)] = 0
         dphi = Mplus @ ((R - R0) * weight)
         if scaleDisp != 0:
             SC = SCsetCavs2SetPoints(SC, SC.ORD.RF, "Frequency", -scaleDisp * dphi[-1], method="add")
             dphi = dphi[:-1]
-        SC, _ = SCsetCMs2SetPoints(SC, CMords[0], -dphi[:len(CMords[0])], 1, method="add")
-        SC, _ = SCsetCMs2SetPoints(SC, CMords[1], -dphi[len(CMords[0]):], 2, method="add")
+        SC, _ = SCsetCMs2SetPoints(SC, CMords[0], -dphi[:len(CMords[0])], skewness=False, method="add")
+        SC, _ = SCsetCMs2SetPoints(SC, CMords[1], -dphi[len(CMords[0]):], skewness=True, method="add")
         BPMhist = np.roll(BPMhist, 1)
         BPMhist[0] = np.sqrt(np.mean(R ** 2, 1))
         if np.any(np.isnan(B[0, :])):
@@ -165,8 +165,8 @@ def SCfeedbackBalance(SC, Mplus, eps=1e-5, R0=np.zeros((2, 1)), maxsteps=10, CMo
         dphi = Mplus @ R
         BRMShist = np.roll(BRMShist, 1)
         BRMShist[0] = np.sqrt(np.var(R, 1))
-        SC, _ = SCsetCMs2SetPoints(SC, CMords[0], -dphi[:len(CMords[0])], 1, method='add')
-        SC, _ = SCsetCMs2SetPoints(SC, CMords[1], -dphi[len(CMords[0]):], 2, method='add')
+        SC, _ = SCsetCMs2SetPoints(SC, CMords[0], -dphi[:len(CMords[0])], skewness=False, method='add')
+        SC, _ = SCsetCMs2SetPoints(SC, CMords[1], -dphi[len(CMords[0]):], skewness=True, method='add')
         if _is_setback_balance(BPMindHist):
             raise RuntimeError('SCfeedbackBalance: FAIL (setback)')
         if not _is_transmit(BPMindHist):
@@ -191,8 +191,8 @@ def _correction_step_firstturn(SC, BPMhist, BPMords, CMords, B, R0, Mplus):
     lastCMv = _get_last_cms_dim_firstturn(B, 1, BPMords, CMords[1])
     dphi[lastCMh + 1:len(CMords[0])] = 0
     dphi[len(CMords[0]) + lastCMv:len(CMords[0]) + len(CMords[1])] = 0
-    SC, _ = SCsetCMs2SetPoints(SC, CMords[0], -dphi[len(CMords[0])], 1, method='add')
-    SC, _ = SCsetCMs2SetPoints(SC, CMords[1], -dphi[len(CMords[0]):len(CMords[0]) + len(CMords[1])], 2, method='add')
+    SC, _ = SCsetCMs2SetPoints(SC, CMords[0], -dphi[len(CMords[0])], skewness=False, method='add')
+    SC, _ = SCsetCMs2SetPoints(SC, CMords[1], -dphi[len(CMords[0]):len(CMords[0]) + len(CMords[1])], skewness=True, method='add')
     return SC, BPMhist
 
 

@@ -8,7 +8,7 @@ from pySC.core.SCgetModelRM import SCgetModelRM
 from pySC.utils.sc_tools import SCgetPinv
 from pySC.core.SCgetRespMat import SCgetRespMat
 from pySC.core.SCsetpoints import SCsetMags2SetPoints
-from pySC.core.SCregisterUpdate import SCupdateMagnets
+from pySC.core.SCmemberFunctions import SCupdateMagnets
 
 
 def SClocoLib(funName, *varargin):  # TODO don't work on this, not realy needed and not present in pyAT
@@ -131,9 +131,9 @@ def applyLatticeCorrection(SC, FitParameters, dipCompensation=True, damping=1):
             setpoint = FitParameters.OrigValues[nGroup] + damping * (
                     FitParameters.IdealValues[nGroup] - FitParameters.Values[nGroup])
             if field == 'SetPointB':  # Normal quadrupole
-                SC = SCsetMags2SetPoints(SC, ord, 2, 2, setpoint, dipCompensation=dipCompensation)
+                SC = SCsetMags2SetPoints(SC, ord, False, 1, setpoint, dipCompensation=dipCompensation)
             elif field == 'SetPointA':  # Skew quadrupole
-                SC = SCsetMags2SetPoints(SC, ord, 1, 2, setpoint)
+                SC = SCsetMags2SetPoints(SC, ord, True, 1, setpoint)
     SC = SCupdateMagnets(SC, SC.ORD.Magnet)
     return SC
 
@@ -220,7 +220,7 @@ def fitChromaticity(SC, sOrds, targetChrom=[], verbose=0, InitStepSize=[2, 2], T
     SC0 = SC
     if len(sepTunesWithOrds) > 0 and len(sepTunesDeltaK) > 0:
         for nFam in range(len(sepTunesWithOrds)):
-            SC = SCsetMags2SetPoints(SC, sepTunesWithOrds[nFam], 2, 2, sepTunesDeltaK[nFam], method='add')
+            SC = SCsetMags2SetPoints(SC, sepTunesWithOrds[nFam], False, 1, sepTunesDeltaK[nFam], method='add')  # TODO quads here?
     if verbose:
         _, _, xi0 = atlinopt(SC.RING, 0, [])
         print('Fitting chromaticities from [%.3f,%.3f] to [%.3f,%.3f].' % (
@@ -280,5 +280,5 @@ def getLatProps(SC, FitInteger):
 
 def applySetpoints(SC, ords, setpoints, SP0):
     for nFam in range(len(ords)):
-        SC = SCsetMags2SetPoints(SC, ords[nFam], 2, 2, setpoints[nFam] + SP0[nFam], method='abs', dipCompensation=True)
+        SC = SCsetMags2SetPoints(SC, ords[nFam], False, 1, setpoints[nFam] + SP0[nFam], method='abs', dipCompensation=True)
     return SC

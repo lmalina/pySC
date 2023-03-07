@@ -5,7 +5,7 @@ from pySC.core.SCgetBeamTransmission import SCgetBeamTransmission
 from pySC.core.SCsetpoints import SCsetMags2SetPoints
 
 
-def SCtuneScan(SC, qOrds, qSPvec, verbose=0, plotFlag=0, nParticles=None, nTurns=None, target=1, fullScan=0):
+def SCtuneScan(SC, qOrds, qSPvec, verbose=False, plotFlag=False, nParticles=None, nTurns=None, target=1, fullScan=0):
     if nParticles is None:
         nParticles = SC.INJ.nParticles
     if nTurns is None:
@@ -27,9 +27,8 @@ def SCtuneScan(SC, qOrds, qSPvec, verbose=0, plotFlag=0, nParticles=None, nTurns
         q2 = q2Ind[i]
         ords = np.hstack(qOrds)
         setpoints = np.hstack((np.repeat(qSPvec[0][q1], len(qOrds[0])), np.repeat(qSPvec[1][q2], len(qOrds[1]))))
-        SC = SCsetMags2SetPoints(SC, ords, 2, 2, setpoints, method='rel')
-        maxTurns[q1, q2], lostCount, _ = SCgetBeamTransmission(SC, nParticles=nParticles, nTurns=nTurns,
-                                                               verbose=verbose)
+        SC = SCsetMags2SetPoints(SC, ords, False, 1, setpoints, method='rel')
+        maxTurns[q1, q2], lostCount = SCgetBeamTransmission(SC, nParticles=nParticles, nTurns=nTurns, verbose=verbose)
         finTrans[q1, q2, :] = 1 - lostCount
         allInd.append([q1, q2])
         if plotFlag:
@@ -106,5 +105,5 @@ def SCtuneScan(SC, qOrds, qSPvec, verbose=0, plotFlag=0, nParticles=None, nTurns
         ERROR = 1
     ords = np.hstack(qOrds)
     setpoints = np.hstack((np.repeat(qSP[0], len(qOrds[0])), np.repeat(qSP[1], len(qOrds[1]))))
-    SC = SCsetMags2SetPoints(SC, ords, 2, 2, setpoints, method='rel')
+    SC = SCsetMags2SetPoints(SC, ords, False, 1, setpoints, method='rel')
     return qSP, SC, maxTurns, finTrans, ERROR

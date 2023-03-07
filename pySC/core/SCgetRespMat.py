@@ -1,8 +1,7 @@
 import numpy as np
 
 from pySC.core.SCgetBPMreading import SCgetBPMreading
-from pySC.core.SCgetCMSetPoints import SCgetCMSetPoints
-from pySC.core.SCsetpoints import SCsetCMs2SetPoints
+from pySC.core.SCsetpoints import SCsetCMs2SetPoints, SCgetCMSetPoints
 
 
 def SCgetRespMat(SC, Amp, BPMords, CMords, mode='fixedKick', nSteps=2, fit='linear', verbose=0):
@@ -31,7 +30,7 @@ def SCgetRespMat(SC, Amp, BPMords, CMords, mode='fixedKick', nSteps=2, fit='line
                 dB = np.vstack((np.zeros((nSteps - 1, len(Bref))), dB.T))
                 for nStep in range(nSteps):
                     if CMstepVec[nStep] != 0 and CMstepVec[nStep] != MaxStep:
-                        SC, realCMsetPoint[nStep] = SCsetCMs2SetPoints(SC, CMords[nDim][nCM], cmstart[nCM] + CMstepVec[nStep], nDim)
+                        SC, realCMsetPoint[nStep] = SCsetCMs2SetPoints(SC, CMords[nDim][nCM], cmstart[nCM] + CMstepVec[nStep], skewness=nDim)
                         dB[nStep, :] = np.reshape(SCgetBPMreading(SC, BPMords=BPMords), [], 1) - Bref
                 dCM = realCMsetPoint - cmstart[nCM]
             else:
@@ -51,24 +50,24 @@ def SCgetRespMat(SC, Amp, BPMords, CMords, mode='fixedKick', nSteps=2, fit='line
                     Err[nBPM, i] = np.sqrt(
                         np.mean((RM[nBPM, i] * dCM[~np.isnan(dB[:, nBPM])] - dB[~np.isnan(dB[:, nBPM]), nBPM]).T ** 2))
             i = i + 1
-            SC, _ = SCsetCMs2SetPoints(SC, CMords[nDim][nCM], cmstart[nCM], nDim)
+            SC, _ = SCsetCMs2SetPoints(SC, CMords[nDim][nCM], cmstart[nCM], skewness=nDim)
     RM[np.isnan(RM)] = 0
     if verbose:
         print(' done.')
     return RM, Err, CMsteps
 
 
-def getKickAmplitude(SC, Bref, BPMords, CMord, Amp, nDim, nTurns, nSteps, mode, verbose):
-    cmstart = SCgetCMSetPoints(SC, CMord, nDim)
+def getKickAmplitude(SC, Bref, BPMords, CMord, Amp, skewness: bool, nTurns, nSteps, mode, verbose):
+    cmstart = SCgetCMSetPoints(SC, CMord, skewness)
     MaxStep = Amp
     if mode == 'fixedKick':
         for n in range(20):
-            SC, realCMsetPoint = SCsetCMs2SetPoints(SC, CMord, cmstart + MaxStep, nDim)
+            SC, realCMsetPoint = SCsetCMs2SetPoints(SC, CMord, cmstart + MaxStep, skewness)
             if realCMsetPoint != (cmstart + MaxStep):
                 if verbose:
                     print('CM  clipped. Using different CM direction.')
                 MaxStep = - MaxStep
-                SC, _ = SCsetCMs2SetPoints(SC, CMord, cmstart + MaxStep, nDim)
+                SC, _ = SCsetCMs2SetPoints(SC, CMord, cmstart + MaxStep, skewness)
             B = np.reshape(SCgetBPMreading(SC, BPMords=BPMords), [], 1)
             maxpos = min([np.where(np.isnan(B))[0][0] - 1, nTurns * len(BPMords)])
             maxposRef = min([np.where(np.isnan(Bref))[0][0] - 1, nTurns * len(BPMords)])
@@ -81,12 +80,12 @@ def getKickAmplitude(SC, Bref, BPMords, CMord, Amp, nDim, nTurns, nSteps, mode, 
                     print(f'Insufficient beam reach ({maxpos:d}/{maxposRef:d}). CMstep reduced to {1E6 * MaxStep:.1f}urad.')
     elif mode == 'fixedOffset':
         for n in range(4):
-            SC, realCMsetPoint = SCsetCMs2SetPoints(SC, CMord, cmstart + MaxStep, nDim)
+            SC, realCMsetPoint = SCsetCMs2SetPoints(SC, CMord, cmstart + MaxStep, skewness)
             if realCMsetPoint != (cmstart + MaxStep):
                 if verbose:
                     print('CM  clipped. Using different CM direction.')
                 MaxStep = - MaxStep
-                SC, _ = SCsetCMs2SetPoints(SC, CMord, cmstart + MaxStep, nDim)
+                SC, _ = SCsetCMs2SetPoints(SC, CMord, cmstart + MaxStep, skewness)
             B = np.reshape(SCgetBPMreading(SC, BPMords=BPMords), [], 1)
             maxpos = min([np.where(np.isnan(B))[0][0] - 1, nTurns * len(BPMords)])
             maxposRef = min([np.where(np.isnan(Bref))[0][0] - 1, nTurns * len(BPMords)])
