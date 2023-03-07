@@ -6,10 +6,7 @@ from at import Lattice
 from pySC.at_wrapper import atloco
 #from pySC.classes import SimulatedComissioning
 from pySC.core.SCcronoff import SCcronoff
-from pySC.core.SCfeedbackBalance import SCfeedbackBalance
-from pySC.core.SCfeedbackFirstTurn import SCfeedbackFirstTurn
-from pySC.core.SCfeedbackRun import SCfeedbackRun
-from pySC.core.SCfeedbackStitch import SCfeedbackStitch
+from pySC.core.SCfeedback import SCfeedbackFirstTurn, SCfeedbackStitch, SCfeedbackRun, SCfeedbackBalance
 from pySC.core.SCgetBPMreading import SCgetBPMreading
 from pySC.core.SCgetBeamTransmission import SCgetBeamTransmission
 from pySC.core.SCgetModelDispersion import SCgetModelDispersion
@@ -25,7 +22,9 @@ from pySC.core.SCsanityCheck import SCsanityCheck
 from pySC.core.SCsetpoints import SCsetCavs2SetPoints, SCsetMags2SetPoints
 from pySC.core.SCsynchEnergyCorrection import SCsynchEnergyCorrection
 from pySC.core.SCsynchPhaseCorrection import SCsynchPhaseCorrection
+from pySC.utils import logging_tools
 
+LOGGER = logging_tools.get_logger(__name__)
 
 def create_at_lattice() -> Lattice:
     def _marker(name):
@@ -125,16 +124,16 @@ if __name__ == "__main__":
     SC.INJ.trackMode = 'TBT'
     eps = 1E-4  # Noise level
     SCgetBPMreading(SC)
-    SC = SCfeedbackFirstTurn(SC, Minv1, verbose=True)
+    SC = SCfeedbackFirstTurn(SC, Minv1)
     SC.INJ.nTurns = 2
-    SC = SCfeedbackStitch(SC, Minv2, nBPMs=3, maxsteps=20, verbose=True)
-    SC = SCfeedbackRun(SC, Minv2, target=300E-6, maxsteps=30, eps=eps, verbose=True)
-    SC = SCfeedbackBalance(SC, Minv2, maxsteps=32, eps=eps, verbose=True)
+    SC = SCfeedbackStitch(SC, Minv2, nBPMs=3, maxsteps=20)
+    SC = SCfeedbackRun(SC, Minv2, target=300E-6, maxsteps=30, eps=eps)
+    SC = SCfeedbackBalance(SC, Minv2, maxsteps=32, eps=eps)
 
     for S in np.linspace(0.1, 1, 5):
         SC = SCsetMags2SetPoints(SC, sextOrds, 2, 3, S, method='rel')
         try:
-            SC = SCfeedbackBalance(SC, Minv2, maxsteps=32, eps=eps, verbose=True)
+            SC = SCfeedbackBalance(SC, Minv2, maxsteps=32, eps=eps)
         except RuntimeError:
             pass
 
@@ -174,7 +173,7 @@ if __name__ == "__main__":
     for alpha in range(10, 0, -1):
         MinvCO = SCgetPinv(np.concatenate((MCO, 1E8 * eta)), alpha=alpha)
         try:
-            CUR = SCfeedbackRun(SC, MinvCO, target=0, maxsteps=50, scaleDisp= 1E8, verbose=True)
+            CUR = SCfeedbackRun(SC, MinvCO, target=0, maxsteps=50, scaleDisp=1E8)
         except RuntimeError:
             break
         B0rms = np.sqrt(np.mean(np.square(SCgetBPMreading(SC)), 1))

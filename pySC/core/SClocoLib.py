@@ -2,7 +2,7 @@ import numpy as np
 
 from pySC.at_wrapper import atlinopt, atmatchchromdelta
 from pySC.classes import DotDict
-from pySC.core.SCfeedbackRun import SCfeedbackRun
+from pySC.core.SCfeedback import SCfeedbackRun
 from pySC.core.SCgetDispersion import SCgetDispersion
 from pySC.core.SCgetModelRM import SCgetModelRM
 from pySC.utils.sc_tools import SCgetPinv

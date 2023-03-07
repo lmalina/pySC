@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from pySC.at_wrapper import findspos
-from pySC.core.SCfeedbackRun import SCfeedbackRun
+from pySC.core.SCfeedback import SCfeedbackRun
 from pySC.core.SCgetBPMreading import SCgetBPMreading
 from pySC.core.SCgetCMSetPoints import SCgetCMSetPoints
 from pySC.utils.sc_tools import SCrandnc
