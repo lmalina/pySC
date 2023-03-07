@@ -18,12 +18,12 @@ def SCfeedbackRun(SC, Mplus, R0=None, eps=1e-5, target=0, maxsteps=30, scaleDisp
         print('SCfeedbackRun: Start')
     BPMhist = np.nan * np.ones((1, 100))
     for steps in range(maxsteps):
-        B = SCgetBPMreading(SC, BPMords=BPMords, plotFunctionFlag=plotFunctionFlag)  # Inject ...
+        B = SCgetBPMreading(SC, BPMords=BPMords, do_plot=plotFunctionFlag)  # Inject ...
         R = np.array([B[0, :], B[1, :]])
         R[np.isnan(R)] = 0
         dphi = Mplus @ ((R - R0) * weight)
         if scaleDisp != 0:
-            SC = SCsetCavs2SetPoints(SC, SC.ORD.RF, -scaleDisp * dphi[-1], method="add")
+            SC = SCsetCavs2SetPoints(SC, SC.ORD.RF, "Frequency", -scaleDisp * dphi[-1], method="add")
             dphi = dphi[:-1]
         SC, _ = SCsetCMs2SetPoints(SC, CMords[0], -dphi[:len(CMords[0])], 1, method="add")
         SC, _ = SCsetCMs2SetPoints(SC, CMords[1], -dphi[len(CMords[0]):], 2, method="add")

@@ -313,7 +313,7 @@ def plotBBAstep(SC,BPMind,jBPM,nDim,nQ,mOrd,nKick,par):
     if nQ==1 and nKick==1:
         plt.figure(99)
         plt.clf()
-    B,T=SCgetBPMreading(SC, plotFunctionFlag=True)
+    B,T=SCgetBPMreading(SC, do_plot=True)
     #T=SCparticlesIn3D(T,SC.INJ.nParticles)
     T=T[:,:,1]
     plt.figure(99)

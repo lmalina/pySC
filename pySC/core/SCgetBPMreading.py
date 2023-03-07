@@ -1,136 +1,105 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
-from pySC.classes import DotDict
 from pySC.core.SCgenBunches import SCgenBunches
 from pySC.utils.sc_tools import SCrandnc
 from pySC.at_wrapper import atgetfieldvalues, atpass, findorbit6, findspos
 
 
-def SCgetBPMreading(SC, BPMords=[], plotFunctionFlag=False):
-    """
-    lattice_pass
-        r_out: (6, N, R, T) array containing output coordinates of N particles
-          at R reference points for T turns.
-
-    findorbit6
-        orbit0:         (6,) closed orbit vector at the entrance of the
-                        1-st element (x,px,y,py,dp,0)
-        orbit:          (Nrefs, 6) closed orbit vector at each location
-                        specified in ``refpts``
-    """
-    B1 = np.full((2, SC.INJ.nTurns * len(SC.ORD.BPM), SC.INJ.nShots), np.nan)
+def SCgetBPMreading(SC, BPMords=None, do_plot=False):
+    #  lattice_pass output:            (6, N, R, T) coordinates of N particles at R reference points for T turns.
+    #  findorbit second output value:  (R, 6) closed orbit vector at each specified location
+    refs = np.arange(len(SC.RING)) if do_plot else SC.ORD.BPM[:]
+    n_refs = len(refs)
+    if do_plot:
+        all_readings_5d = np.full((2, SC.INJ.nParticles, n_refs, SC.INJ.nTurns, SC.INJ.nShots), np.nan)
+    all_bpm_orbits_4d = np.full((2, len(SC.ORD.BPM), SC.INJ.nTurns, SC.INJ.nShots), np.nan)
     for nShot in range(SC.INJ.nShots):
         if SC.INJ.trackMode == 'ORB':
-            _ , TT = findorbit6(SC.RING, SC.ORD.BPM, keep_lattice=False)
+            tracking_4d = np.transpose(findorbit6(SC.RING, refs, keep_lattice=False)[1])[[0, 2], :].reshape(2, 1, n_refs, 1)
         else:
-            T = atpass(SC.RING, SCgenBunches(SC), SC.INJ.nTurns, SC.ORD.BPM, keep_lattice=False)
-        B1[:, :, nShot] = calcBPMreading(SC, T, at_all_elements=plotFunctionFlag)
+            tracking_4d = atpass(SC.RING, SCgenBunches(SC), SC.INJ.nTurns, refs, keep_lattice=False)[[0, 2], :, :, :]
+        all_bpm_orbits_4d[:, :, :, nShot] = _real_bpm_reading(SC, tracking_4d[:, :, SC.ORD.BPM, :] if do_plot else tracking_4d)
+        tracking_4d[:, np.isnan(tracking_4d[0, :])] = np.nan
+        if do_plot:
+            all_readings_5d[:, :, :, :, nShot] = tracking_4d[:, :, :, :]
 
-    B = np.nanmean(B1, 2)
-    if plotFunctionFlag:
-        B1 = np.full((2, SC.INJ.nTurns * len(SC.ORD.BPM), SC.INJ.nShots), np.nan)
-        T1 = np.full((6, SC.INJ.nTurns * SC.INJ.nParticles * len(SC.RING), SC.INJ.nShots), np.nan)
-        refOrds = np.arange(len(SC.RING))
-        for nShot in range(SC.INJ.nShots):
-            if SC.INJ.trackMode == 'ORB':
-                T = findorbit6(SC.RING, refOrds)
-            else:
-                T = atpass(SC.RING, SCgenBunches(SC), SC.INJ.nTurns, refOrds, keep_lattice=False)
-            T[:, np.isnan(T[0, :])] = np.nan
-            B1[:, :, nShot] = calcBPMreading(SC, T, at_all_elements=plotFunctionFlag)
-            T1[:, :, nShot] = T
-        B = np.nanmean(B1, axis=2)
-        _plot_bpm_reading(SC, B, T1)
+    mean_bpm_orbits_3d = np.nanmean(all_bpm_orbits_4d, axis=3)  # mean_bpm_orbits_3d is 3D (dim, BPM, turn)
+    if do_plot:
+        _plot_bpm_reading(SC, mean_bpm_orbits_3d, all_readings_5d)
 
     if SC.INJ.trackMode == 'PORB':   # ORB averaged over low amount of turns
-        Bpseudo = np.full((2, len(SC.ORD.BPM)), np.nan)
-        for nBPM in range(len(SC.ORD.BPM)):
-            Bpseudo[:, nBPM] = np.nanmean(B[:, nBPM::len(SC.ORD.BPM)], 1)
-        B = Bpseudo
-    if len(BPMords) > 0:
+        mean_bpm_orbits_3d = np.nanmean(mean_bpm_orbits_3d, axis=2, keepdims=True)
+    if BPMords is not None:
         ind = np.where(np.isin(SC.ORD.BPM, BPMords))[0]
         if len(ind) != len(BPMords):
             print('Not all specified ordinates are registered BPMs.')
-        if SC.INJ.trackMode == 'TBT':
-            ind = np.arange(SC.INJ.nTurns) * len(SC.ORD.BPM) + ind
-        B = B[:, ind]
-    return B
+        mean_bpm_orbits_3d = mean_bpm_orbits_3d[:, ind, :]
+    if do_plot:
+        return mean_bpm_orbits_3d, all_readings_5d
+    return mean_bpm_orbits_3d
 
 
-def calcBPMreading(SC, T, nTurns, nParticles, at_all_elements=False):
-    bpm_noise = np.array(atgetfieldvalues(SC.RING, SC.ORD.BPM, ('NoiseCO' if SC.INJ.trackMode == 'ORB' else "Noise")))
-    # TODO for later 4D matrices and here no repetition
-    bpm_offset = atgetfieldvalues(SC.RING, SC.ORD.BPM, 'Offset') + atgetfieldvalues(SC.RING, SC.ORD.BPM, 'SupportOffset')
-    bpm_cal_error = atgetfieldvalues(SC.RING, SC.ORD.BPM, 'CalError')
-    bpm_roll = atgetfieldvalues(SC.RING, SC.ORD.BPM, 'Roll') + atgetfieldvalues(SC.RING, SC.ORD.BPM, 'SupportRoll')
-    bpm_noise = bpm_noise * SCrandnc(2, (nTurns * len(SC.ORD.BPM), 2))  #  TODO check the order of dimensions
-    bpm_sum_error = np.repeat(atgetfieldvalues(SC.RING, SC.ORD.BPM, 'SumError'), nTurns)
-    if at_all_elements:
-        Tx = T[0, :, SC.ORD.BPM, :]
-        Ty = T[2, :, SC.ORD.BPM, :]
-    else:
-        Tx = T[0, :, :, :]
-        Ty = T[2, :, :, :]
-    # averaging over particles
-    Bx1 = np.nanmean(Tx, axis=0)
-    By1 = np.nanmean(Ty, axis=0)  # here it should still be 3D matrix
-    beamLost = np.nonzero(np.sum(np.isnan(Tx), axis=1) * (1 + bpm_sum_error * SCrandnc(2, bpm_sum_error.shape)) > (
-                nParticles * SC.INJ.beamLostAt))
-    Bx1[beamLost] = np.nan
-    By1[beamLost] = np.nan
+def _real_bpm_reading(SC, track_mat):  # track_mat should be only x,y over all particles only at BPM positions
+    nBpms, nTurns = track_mat.shape[2:]
+    bpm_noise = np.transpose(atgetfieldvalues(SC.RING, SC.ORD.BPM, ('NoiseCO' if SC.INJ.trackMode == 'ORB' else "Noise")))
+    bpm_noise = bpm_noise[:, :, np.newaxis] * SCrandnc(2, (2, nBpms, nTurns))
+    bpm_offset = np.transpose(atgetfieldvalues(SC.RING, SC.ORD.BPM, 'Offset') + atgetfieldvalues(SC.RING, SC.ORD.BPM, 'SupportOffset'))
+    bpm_cal_error = np.transpose(atgetfieldvalues(SC.RING, SC.ORD.BPM, 'CalError'))
+    bpm_roll = np.squeeze(atgetfieldvalues(SC.RING, SC.ORD.BPM, 'Roll') + atgetfieldvalues(SC.RING, SC.ORD.BPM, 'SupportRoll'))
+    bpm_sum_error = np.transpose(atgetfieldvalues(SC.RING, SC.ORD.BPM, 'SumError'))[:, np.newaxis] * SCrandnc(2, (nBpms, nTurns))
+    # averaging the X and Y positions at BPMs over particles
+    mean_orbit = np.nanmean(track_mat, axis=1)
+    beam_lost = np.nonzero(np.mean(np.isnan(track_mat[0, :, :, :]), axis=0) * (1 + bpm_sum_error) > SC.INJ.beamLostAt)
+    mean_orbit[:, beam_lost[0], beam_lost[1]] = np.nan
 
-    Bx = np.cos(bpm_roll) * Bx1 - np.sin(bpm_roll) * By1
-    By = np.sin(bpm_roll) * Bx1 + np.cos(bpm_roll) * By1
-    Bx = (Bx - bpm_offset[:, 0]) * (1 + bpm_cal_error[:, 0])
-    By = (By - bpm_offset[:, 1]) * (1 + bpm_cal_error[:, 1])
-    Bx = Bx + bpm_noise[0, :]
-    By = By + bpm_noise[1, :]
-    B = np.array([Bx, By])
-    return B
+    rolled_mean_orbit = np.einsum("ijk,jkl->ikl", _rotation_matrix(bpm_roll), mean_orbit)
+    return (rolled_mean_orbit - bpm_offset[:, :, np.newaxis]) * (1 + bpm_cal_error[:, :, np.newaxis]) + bpm_noise
+
+
+def _rotation_matrix(a):
+    return np.array([[np.cos(a), -np.sin(a)], [np.sin(a), np.cos(a)]])
 
 
 def _plot_bpm_reading(SC, B, T):  # T is 5D matrix
-    ApertureForPLotting = getRingAperture(SC)
+    ap_ords, apers = _get_ring_aperture(SC)
     fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(12, 4), dpi=100, facecolor="w")
-
     tmpCol = plt.rcParams['axes.prop_cycle'].by_key()['color']
     ylabelStr = ['$\Delta x$ [mm]', '$\Delta y$ [mm]']
     legStr = ['Particle trajectories', 'BPM reading', 'Aperture']
-    sPos = findspos(SC.RING)
+    sPos = findspos(SC.RING, range(len(SC.RING)))
     sMax = sPos[-1]
     for nDim in range(2):
-        x = np.reshape(np.arange(SC.INJ.nTurns) * sMax + sPos, 1, [])  # TODO nturns x bpms array of s positions
-        x = np.repeat(x, SC.INJ.nParticles)
+        x = np.ravel(np.arange(SC.INJ.nTurns)[:, np.newaxis] * sMax + sPos)
         for nS in range(SC.INJ.nShots):
-            y = 1E3 * T[2 * nDim, :, :, :, nS]
+            y = 1E3 * T[nDim, :, :, :, nS]
+            y = np.reshape(np.transpose(y, axes=(2, 1, 0)), (np.prod(y.shape[1:]), y.shape[0]))
             legVec = ax[nDim].plot(x, y, 'k')
-        legVec = legVec[0]
-        x = np.reshape(np.arange(SC.INJ.nTurns) * sMax + sPos[SC.ORD.BPM.keys()], 1,
-                       [])  # TODO nturns x bpms array of s positions
-        y = 1E3 * (B[nDim, :])
-        legVec[1] = ax[nDim].plot(x, y, 'rO')
-        if ApertureForPLotting is not None:
-            apS = sPos[ApertureForPLotting.apOrds]
-            x = np.reshape(np.arange(SC.INJ.nTurns) * sMax + apS, 1, [])
-            y = 1E3 * np.repeat(ApertureForPLotting.apVals[nDim], SC.INJ.nTurns) # to mm
+        #legVec = legVec[0]
+        x = np.ravel(np.arange(SC.INJ.nTurns)[:, np.newaxis] * sMax + sPos[SC.ORD.BPM])
+        y = 1E3 * np.ravel(B[nDim, :, :].T)
+        legVec[1] = ax[nDim].plot(x, y, 'ro')
+        if len(ap_ords):
+            apS = sPos[ap_ords]
+            x = np.ravel(np.arange(SC.INJ.nTurns)[:, np.newaxis] * sMax + apS)
+            y = 1E3 * np.repeat(apers[:, nDim, :].T, SC.INJ.nTurns, axis=1)  # to mm
             legVec[2] = ax[nDim].plot(x, y[0, :], '-', color=tmpCol[0], linewidth=4)
             ax[nDim].plot(x, y[1, :], '-', color=tmpCol[0], linewidth=4)
-        x = np.reshape(np.arange(SC.INJ.nTurns) * sMax, 1, [])
+        x = np.arange(SC.INJ.nTurns) * sMax
+        y_lims = np.array([-0.5, 0.5])
         for nT in range(SC.INJ.nTurns):
-            ax[nDim].plot(x[nT] * [1, 1], 10 * [-1, 1], 'k:')
+            ax[nDim].plot(x[nT] * np.ones(2), y_lims, 'k:')
         ax[nDim].set_xlim([0, SC.INJ.nTurns * sPos[-1]])
-        ax[nDim].set_box('on')  # True?
-        ax[nDim].set_position(ax[nDim].get_position() + np.array([0, .07 * (nDim - 1), 0, 0]))
-        ax[nDim].set_ylim([-0.5, 0.5])  # TODO  to config
+        #ax[nDim].set_box('on')  # True?
+        ax[nDim].set_ylim([-5, 5])  # TODO  to config
         ax[nDim].set_ylabel(ylabelStr[nDim])
-        ax[nDim].legend(legVec, legStr[0:len(legVec)])
-    ax[nDim].set_xlabel('$s$ [m]')
-    for item in ([ax[nDim].title, ax[nDim].xaxis.label, ax[nDim].yaxis.label] +
+        #ax[nDim].legend(legVec, legStr[0:len(legVec)])
+        ax[nDim].set_xlabel('$s$ [m]')
+        #ax[nDim].set_position(ax[nDim].get_position() + np.array([0, .07 * (nDim - 1), 0, 0]))
+        for item in ([ax[nDim].title, ax[nDim].xaxis.label, ax[nDim].yaxis.label] +
                  ax[nDim].get_xticklabels() + ax[nDim].get_yticklabels()):
-        item.set_fontsize(18)
-        item.set_bbox(dict(facecolor='white', edgecolor='None', alpha=0.65))
-    fig.set_facecolor('w')
+            item.set_fontsize(18)
+            item.set_bbox(dict(facecolor='white', edgecolor='None', alpha=0.65))
     plt.show()
     # plt.pause(0.001)
     # plt.tight_layout()
@@ -138,14 +107,13 @@ def _plot_bpm_reading(SC, B, T):  # T is 5D matrix
     # plt.gcf().canvas.flush_events()
 
 
-def getRingAperture(SC):
-    ap_ord = DotDict()
+def _get_ring_aperture(SC):
+    ords, aps = [], []
     for ord in range(len(SC.RING)):
         if hasattr(SC.RING[ord], 'EApertures') or hasattr(SC.RING[ord], 'RApertures'):
-            ap_ord[ord] = (np.outer(getattr(SC.RING[ord], 'EApertures') * np.array([-1, 1]))
-                           if hasattr(SC.RING[ord], 'EApertures')
-                           else np.outer(
-                getattr(SC.RING[ord], 'RApertures') * np.array([-1, 1])))  # TODO RApertures[2 * (nDim - 1) + [1, 2]]
-
+            ords.append(ord)
+            aps.append(np.outer(getattr(SC.RING[ord], 'EApertures'), np.array([-1, 1]))
+                       if hasattr(SC.RING[ord], 'EApertures')
+                       else np.reshape(getattr(SC.RING[ord], 'RApertures'), (2, 2)))
     # ApertureForPLotting = [] if len(ap_ord) == 0 else {'apOrds': apOrds, 'apVals': apVals}
-    return ap_ord
+    return np.array(ords), np.array(aps)
