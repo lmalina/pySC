@@ -29,3 +29,21 @@ def add_padded(v1, v2):
     vsum[:np.max(v1.shape)] += v1
     vsum[:np.max(v2.shape)] += v2
     return vsum
+
+
+def s_interpolation(off, s, C, s1, ord1, f1, s2, ord2, f2):
+    for n in range(len(s1)):
+        if s1[n] == s2[n]:  # Sampling points have same s-position
+            if f1[n] != f2[n]:
+                raise ValueError('Something went wrong.')
+            ind = np.arange(ord1[n], ord2[n] + 1)
+            off[ind] = f1[n]
+        elif s1[n] < s2[n]:  # Standard interpolation
+            ind = np.arange(ord1[n], ord2[n] + 1)  # last point included
+            off[ind] = np.interp(s[ind], np.array([s1[n], s2[n]]), np.array([f1[n], f2[n]]))
+        else:  # Injection is within sampling points
+            ind1 = np.arange(ord2[n] + 1)
+            ind2 = np.arange(ord1[n], len(off) + 1)
+            off[ind1] = np.interp(C + s[ind1], np.array([s1[n], s2[n] + C]), np.array([f1[n], f2[n]]))
+            off[ord1[n]:] = np.interp(s[ord1[n]:], np.array([s1[n], s2[n] + C]), np.array([f1[n], f2[n]]))
+    return off

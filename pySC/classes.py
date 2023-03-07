@@ -1,13 +1,14 @@
 import copy
 import re
+from typing import Tuple
+
 import numpy as np
 from at import Lattice
 from numpy import ndarray
 from pySC.constants import RF_PROPERTIES, SUPPORT_TYPES
-from pySC.utils.classdef_tools import add_padded, randn_cutoff, update_double_ordinates, intersect
+from pySC.utils.classdef_tools import add_padded, randn_cutoff, update_double_ordinates, intersect, s_interpolation
 from pySC.utils.sc_tools import SCrandnc, SCscaleCircumference, SCgetTransformation
 from pySC.at_wrapper import findspos
-from pySC.core.SCgetSupportOffsetRoll import support_offset_and_roll  # TODO maybe move
 
 
 class DotDict(dict):
@@ -49,9 +50,11 @@ class Injection(DotDict):
     @staticmethod
     def _dummy_func(matrix: ndarray) -> ndarray:
         return matrix
+
     @property
     def trackMode(self):
         return self._trackMode
+
     @trackMode.setter
     def trackMode(self, mode):
         allowed_modes = ("TBT", "ORB", "PORB")
@@ -61,8 +64,6 @@ class Injection(DotDict):
         if mode == 'ORB':
             self.nTurns = 1
             self.nParticles = 1
-
-
 
 
 class Indices(DotDict):
@@ -287,7 +288,7 @@ class SimulatedComissioning(DotDict):
         if offset_magnets:
             if len(self.ORD.Magnet):
                 s = findspos(self.RING, self.ORD.Magnet)
-                offsets, rolls = support_offset_and_roll(self, s)
+                offsets, rolls = self.support_offset_and_roll(s)
                 for i, ord in enumerate(self.ORD.Magnet):
                     setattr(self.RING[ord], "SupportOffset", offsets[:, i])
                     setattr(self.RING[ord], "SupportRoll", rolls[:, i])
@@ -306,13 +307,63 @@ class SimulatedComissioning(DotDict):
         if offset_bpms:
             if len(self.ORD.BPM):
                 s = findspos(self.RING, self.ORD.BPM)
-                offsets, rolls = support_offset_and_roll(self, s)
+                offsets, rolls = self.support_offset_and_roll(s)
                 for i, ord in enumerate(self.ORD.BPM):
                     setattr(self.RING[ord], "SupportOffset", offsets[0:2, i])  # Longitudinal BPM offsets not implemented
                     setattr(self.RING[ord], "SupportRoll",
                             np.array([rolls[0, i]]))  # BPM pitch and yaw angles not  implemented
             else:
                 print('SC: No BPMs have been registered!')
+
+    def support_offset_and_roll(self, s_locations: ndarray) -> Tuple[ndarray, ndarray]:
+        lengths = np.array([self.RING[i].Length for i in range(len(self.RING))])
+        ring_length = np.sum(lengths)
+        s0 = np.cumsum(lengths)
+        sposMID = s0 - lengths / 2
+        off0 = np.zeros((3, len(s0)))
+        roll0 = np.zeros((3, len(s0)))
+
+        for suport_type in SUPPORT_TYPES:  # Order has to be Section, Plinth, Girder
+            if suport_type in self.ORD:
+                ord1 = self.ORD[suport_type][0, :]  # Beginning ordinates
+                ord2 = self.ORD[suport_type][1, :]  # End ordinates
+                s1 = sposMID[ord1]
+                s2 = sposMID[ord2]
+                tmpoff1 = np.zeros((3, len(ord1)))
+                tmpoff2 = np.zeros((3, len(ord2)))
+                for i in range(len(ord1)):
+                    tmpoff1[:, i] = off0[:, ord1[i]] + getattr(self.RING[ord1[i]], f"{suport_type}Offset")
+                    tmpoff2[:, i] = off0[:, ord2[i]] + getattr(self.RING[ord2[i]], f"{suport_type}Offset")
+                for i in range(3):
+                    off0[i, :] = s_interpolation(off0[i, :], s0, ring_length, s1, ord1, tmpoff1[i, :], s2, ord2,
+                                                tmpoff2[i, :])
+
+        for support_type in SUPPORT_TYPES:  # Order has to be Section, Plinth, Girder
+            for ords in self.ORD[support_type].T:
+                roll_start0 = getattr(self.RING[ords[0]], f"{support_type}Roll")[0]
+                struct_length = s0[ords[1]] - s0[ords[0]]
+                mask = np.zeros(len(s0), dtype=bool)
+                mask[ords[0]:ords[1]] = True
+                offset1 = off0[1, ords[1]] - off0[1, ords[0]]
+                offset2 = off0[0, ords[1]] - off0[0, ords[0]]
+                if ords[0] > ords[1]:
+                    struct_length = ring_length + struct_length
+                    mask[ords[0]] = False
+                    mask = ~mask
+                else:
+                    mask[ords[1]] = True
+                roll0[0, mask] += roll_start0
+                roll0[1, mask] = offset1 / struct_length
+                roll0[2, mask] = offset2 / struct_length
+
+        if not np.array_equal(s_locations, s0):
+            b = np.unique(s0, return_index=True)[1]
+            off, roll = np.empty((3, len(s_locations))), np.empty((3, len(s_locations)))
+            for i in range(3):
+                off[i, :] = np.interp(s_locations, s0[b], off0[i, b])
+                roll[i, :] = np.interp(s_locations, s0[b], roll0[i, b])
+            return off, roll
+        return off0, roll0
 
     def verify_structure(self):
         raise NotImplementedError

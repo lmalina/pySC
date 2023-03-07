@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from pySC.constants import SUPPORT_TYPES
-from pySC.core.SCgetSupportOffsetRoll import support_offset_and_roll
 from pySC.at_wrapper import atpass, atgetfieldvalues, findspos, findorbit6, findorbit4, atlinopt
 
 def SCplotSupport(SC,fontSize=12,shiftAxes=0.03,xLim=None):
@@ -14,7 +13,7 @@ def SCplotSupport(SC,fontSize=12,shiftAxes=0.03,xLim=None):
     C = findspos(SC.RING,len(SC.RING)+1)
     s = np.linspace(xLim[0],xLim[1],100*(xLim[1]-xLim[0]))
     sPos = findspos(SC.RING,range(1,len(SC.RING)+1))
-    offSupportLine, rollSupportLine  = support_offset_and_roll(SC,s)
+    offSupportLine, rollSupportLine  = SC.support_offset_and_roll(s)
 
     i=0
     for ord in SC.ORD.Magnet:

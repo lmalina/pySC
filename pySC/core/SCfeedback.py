@@ -1,6 +1,7 @@
 import numpy as np
 
-from pySC.core import SCgetBPMreading, SCsetCavs2SetPoints, SCsetCMs2SetPoints
+from pySC.core.SCgetBPMreading import SCgetBPMreading
+from pySC.core.SCsetpoints import SCsetCavs2SetPoints, SCsetCMs2SetPoints
 from pySC.utils import logging_tools
 
 
