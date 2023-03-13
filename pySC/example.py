@@ -26,6 +26,7 @@ from pySC.utils import logging_tools
 
 LOGGER = logging_tools.get_logger(__name__)
 
+
 def create_at_lattice() -> Lattice:
     def _marker(name):
         return at.Marker(name, PassMethod='IdentityPass')
@@ -40,12 +41,10 @@ def create_at_lattice() -> Lattice:
     cell = at.Lattice([d2, _marker('SectionStart'), _marker('GirderStart'), bend, d3, sf, d3, _marker('GirderEnd'),
                        _marker('GirderStart'), _marker('BPM'), qf, d2, d2, bend, d3, sd, d3, qd, d2, _marker('BPM'),
                        _marker('GirderEnd'), _marker('SectionEnd')], name='Simple FODO cell', energy=2.5E9)
-    ring = at.Lattice(cell * 20)
+    new_ring = at.Lattice(cell * 20)
     rfc = at.RFCavity('RFCav', energy=2.5E9, voltage=2e6, frequency=1, harmonic_number=50, length=0)
-    ring.insert(0, rfc)
-    #test = at.lattice_pass(rin,1e-6 * np.arange(24).reshape(6,4), nturns=3, refpts=[0,1])
-    #print(test)
-    return ring
+    new_ring.insert(0, rfc)
+    return new_ring
 
 
 if __name__ == "__main__":
@@ -103,8 +102,8 @@ if __name__ == "__main__":
     for ord in SCgetOrds(SC.RING, 'QF|QD|BEND|SF|SD'):
         SC.RING[ord].EApertures = 10E-3 * np.array([1, 1])  # [m]
     SC.RING[SC.ORD.Magnet[50]].EApertures = np.array([6E-3, 3E-3])  # [m]
-    SCsanityCheck(SC)
-    SCplotLattice(SC, 'nSectors', 10)
+    #SCsanityCheck(SC)
+    #SCplotLattice(SC, nSectors=10)  # TODO
     SC.apply_errors()
     #SCplotSupport(SC)  # TODO
     SC.RING = SCcronoff(SC.RING, 'cavityoff')
@@ -119,7 +118,7 @@ if __name__ == "__main__":
     SC.INJ.nShots = 1
     SC.INJ.trackMode = 'TBT'
     eps = 1E-4  # Noise level
-    SCgetBPMreading(SC)
+    SCgetBPMreading(SC, do_plot=False)
     SC = SCfeedbackFirstTurn(SC, Minv1)
     SC.INJ.nTurns = 2
     SC = SCfeedbackStitch(SC, Minv2, nBPMs=3, maxsteps=20)

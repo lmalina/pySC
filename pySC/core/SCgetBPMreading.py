@@ -35,9 +35,11 @@ def SCgetBPMreading(SC, BPMords=None, do_plot=False):
         if len(ind) != len(BPMords):
             print('Not all specified ordinates are registered BPMs.')
         mean_bpm_orbits_3d = mean_bpm_orbits_3d[:, ind, :]
+    # Organising the array the same way as in matlab version 2 x (nturns, nbpms) sorted by "arrival time"
+    mean_bpm_orbits_2d = np.transpose(mean_bpm_orbits_3d, axes=(0, 2, 1)).reshape((2, np.prod(mean_bpm_orbits_3d.shape[1:])))
     if do_plot:
-        return mean_bpm_orbits_3d, all_readings_5d
-    return mean_bpm_orbits_3d
+        return mean_bpm_orbits_2d, all_readings_5d
+    return mean_bpm_orbits_2d
 
 
 def _real_bpm_reading(SC, track_mat):  # track_mat should be only x,y over all particles only at BPM positions
@@ -91,7 +93,7 @@ def _plot_bpm_reading(SC, B, T):  # T is 5D matrix
             ax[nDim].plot(x[nT] * np.ones(2), y_lims, 'k:')
         ax[nDim].set_xlim([0, SC.INJ.nTurns * sPos[-1]])
         #ax[nDim].set_box('on')  # True?
-        ax[nDim].set_ylim([-5, 5])  # TODO  to config
+        ax[nDim].set_ylim([-5, 5])
         ax[nDim].set_ylabel(ylabelStr[nDim])
         #ax[nDim].legend(legVec, legStr[0:len(legVec)])
         ax[nDim].set_xlabel('$s$ [m]')

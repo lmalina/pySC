@@ -103,16 +103,16 @@ def SCscaleCircumference(RING, circ, mode='abs'):  # TODO
         raise ValueError(f'Unsupported circumference scaling mode: ``{mode}``. Allowed are {allowed_modes}.')
     C = findspos(RING)[-1]
     D = 0
-    for ord in range(len(RING)):
-        if RING[ord].PassMethod == 'DriftPass':
-            D += RING[ord].Length
+    for ind in range(len(RING)):
+        if RING[ind].PassMethod == 'DriftPass':
+            D += RING[ind].Length
     if mode == 'rel':
         Dscale = 1 - (1 - circ) * C / D
     else:  # mode == 'abs'
         Dscale = 1 - (C - circ) / D
-    for ord in range(len(RING)):
-        if RING[ord].PassMethod == 'DriftPass':
-            RING[ord].Length = RING[ord].Length * Dscale
+    for ind in range(len(RING)):
+        if RING[ind].PassMethod == 'DriftPass':
+            RING[ind].Length = RING[ind].Length * Dscale
     return RING
 
 

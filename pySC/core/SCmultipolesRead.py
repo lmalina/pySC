@@ -17,4 +17,4 @@ def SCmultipolesRead(fname):  # TODO sample of the input anywhere?
     if type > 2:
         print('Ill-defined magnet type.')
         return
-    return AB, order, type
+    return np.roll(AB, 1, axis=1), order, type  # swapping A and B

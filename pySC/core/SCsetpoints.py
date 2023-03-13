@@ -1,7 +1,10 @@
 import numpy as np
 from typing import Tuple
 from numpy import ndarray
-from pySC.classes import SimulatedComissioning
+from pySC.classes import SimulatedComissioning, DotDict
+from pySC.utils.classdef_tools import add_padded
+from pySC.utils.sc_tools import SCrandnc
+
 VALID_METHODS = ("abs", "rel", "add")
 
 
@@ -35,8 +38,7 @@ def SCgetCMSetPoints(SC: SimulatedComissioning, CMords: ndarray, skewness: bool)
     return setpoints
 
 def SCsetCMs2SetPoints(SC: SimulatedComissioning, CMords: ndarray, setpoints: ndarray, skewness: bool, method: str = 'abs') -> Tuple[SimulatedComissioning, ndarray]:
-    # TODO correct accessing SC.RING.attr.subattr/elements
-    # TODO skewness old 2 -> True, 1 -> False
+    # skewness: old 2 -> True, 1 -> False
     setpoints = _check_input_and_setpoints(method, CMords, setpoints)
     order = 0
     ndim = 1 if skewness else 0
@@ -62,8 +64,7 @@ def SCsetCMs2SetPoints(SC: SimulatedComissioning, CMords: ndarray, setpoints: nd
 
 
 def SCsetMags2SetPoints(SC: SimulatedComissioning, MAGords: ndarray, skewness: bool, order: int, setpoints: ndarray, method: str = 'abs', dipCompensation: bool = False) -> SimulatedComissioning:
-    # TODO skewness old 2 -> False, 1 -> True
-    # TODO order decreases by 1
+    # skewness: old 2 -> False, 1 -> True , order decresed by 1
     setpoints = _check_input_and_setpoints(method, MAGords, setpoints)
     for i, ord in enumerate(MAGords):
         if method == 'rel':
@@ -83,6 +84,36 @@ def SCsetMags2SetPoints(SC: SimulatedComissioning, MAGords: ndarray, skewness: b
             SC.RING[ord].SetPointB[order] = setpoints[i]
     SC.update_magnets(MAGords)
     return SC
+
+
+def SCsetMultipoles(RING, ords: ndarray, BA, method: str = 'rnd', order: int = None, skewness: bool = None):
+    allowed_methods = ("sys", "rnd")
+    if method not in allowed_methods:
+        raise ValueError(f'Unsupported multipole method {method}. Allowed are {allowed_methods}.')
+    if BA.ndim != 2 or BA.shape[1] != 2:
+        raise ValueError("BA has to  be numpy.array of shape N x 2.")
+    if method == 'rnd':
+        for ord in ords:
+            randBA = SCrandnc(2, BA.shape) * BA  # TODO this should be registered in SC.SIG
+            for ind, target in enumerate(("B", "A")):
+                attr_name = f"Polynom{target}Offset"
+                setattr(RING[ord], attr_name,
+                        add_padded(getattr(RING[ord], attr_name), randBA[:, ind])
+                        if hasattr(RING[ord], attr_name) else randBA[:, ind])
+        return RING
+    # Systematic multipole errors
+    if order is None or skewness is None:
+        raise ValueError(f'Order and skewness have to be defined with method "sys".')
+    ind, source = (1, "A") if skewness else (0, "B")
+    newBA = BA[:, :]
+    newBA[order, ind] = 0
+    for ord in ords:
+        for target in ("A", "B"):
+            attr_name = f'SysPol{target}From{source}'
+            syspol = getattr(RING[ord], attr_name) if hasattr(RING[ord], attr_name) else DotDict()
+            syspol[order] = newBA[:, ind]
+            setattr(RING[ord], attr_name, syspol)
+    return RING
 
 
 def _dipole_compensation(SC, ord, setpoint):

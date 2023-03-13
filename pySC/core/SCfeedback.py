@@ -183,7 +183,7 @@ def SCfeedbackBalance(SC, Mplus, eps=1e-5, R0=np.zeros((2, 1)), maxsteps=10, CMo
 
 def _correction_step_firstturn(SC, BPMhist, BPMords, CMords, B, R0, Mplus):
     BPMhist = _log_last_bpm(BPMhist, B)
-    R = B[:, :, 0].reshape(R0.shape)
+    R = B[:, :].reshape(R0.shape)  # TODO perhaps check the dimension, potentially more turns in
     dR = R - R0
     dR[np.isnan(dR)] = 0
     dphi = Mplus @ dR

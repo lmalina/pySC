@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt
 import numpy as np
 
 from pySC.core.SCgetBPMreading import SCgetBPMreading
@@ -25,17 +24,3 @@ def SCgetDispersion(SC,RFstep,BPMords=None,CAVords=None,nSteps=2):
             dB[nStep,:] = np.reshape(SCgetBPMreading(SC,BPMords=BPMords),[],1) - Bref
         eta = np.linalg.lstsq(np.linspace(-RFstep,RFstep,nSteps),dB)[0]
     return eta
-
-# Test
-# eta = SCgetDispersion(SC,0.1,nSteps=3)
-# print(eta)
-
-# Plot
-# plt.figure(figsize=(10,5))
-# plt.plot(SC.ORD.BPM,eta)
-# plt.xlabel('BPM ordinal')
-# plt.ylabel('Dispersion')
-# plt.show()
-
-# End
- 

@@ -108,30 +108,30 @@ class SimulatedComissioning(DotDict):
 
     def register_bpms(self, ords: ndarray, **kwargs):
         self.ORD.BPM = np.unique(np.concatenate((self.ORD.BPM, ords)))
-        for ord in np.unique(ords):
-            if ord not in self.SIG.BPM.keys():
-                self.SIG.BPM[ord] = DotDict()
-            self.SIG.BPM[ord].update(kwargs)
+        for ind in np.unique(ords):
+            if ind not in self.SIG.BPM.keys():
+                self.SIG.BPM[ind] = DotDict()
+            self.SIG.BPM[ind].update(kwargs)
 
-            self.RING[ord].Noise = np.zeros(2)
-            self.RING[ord].NoiseCO = np.zeros(2)
-            self.RING[ord].Offset = np.zeros(2)
-            self.RING[ord].SupportOffset = np.zeros(2)
-            self.RING[ord].Roll = 0
-            self.RING[ord].SupportRoll = 0
-            self.RING[ord].CalError = np.zeros(2)
-            self.RING[ord].SumError = 0
+            self.RING[ind].Noise = np.zeros(2)
+            self.RING[ind].NoiseCO = np.zeros(2)
+            self.RING[ind].Offset = np.zeros(2)
+            self.RING[ind].SupportOffset = np.zeros(2)
+            self.RING[ind].Roll = 0
+            self.RING[ind].SupportRoll = 0
+            self.RING[ind].CalError = np.zeros(2)
+            self.RING[ind].SumError = 0
 
     def register_cavities(self, ords: ndarray, **kwargs):
         self.ORD.RF = np.unique(np.concatenate((self.ORD.RF, ords)))
-        for ord in np.unique(ords):
-            if ord not in self.SIG.RF.keys():
-                self.SIG.RF[ord] = DotDict()
-            self.SIG.RF[ord].update(kwargs)
+        for ind in np.unique(ords):
+            if ind not in self.SIG.RF.keys():
+                self.SIG.RF[ind] = DotDict()
+            self.SIG.RF[ind].update(kwargs)
             for field in RF_PROPERTIES:
-                setattr(self.RING[ord], f"{field}SetPoint", getattr(self.RING[ord], field))
-                setattr(self.RING[ord], f"{field}Offset", 0)
-                setattr(self.RING[ord], f"{field}CalError", 0)
+                setattr(self.RING[ind], f"{field}SetPoint", getattr(self.RING[ind], field))
+                setattr(self.RING[ind], f"{field}Offset", 0)
+                setattr(self.RING[ind], f"{field}CalError", 0)
 
     def register_magnets(self, ords: ndarray, **kwargs):
         keywords = ['HCM', 'VCM', 'CF', 'SkewQuad', 'MasterOf']
@@ -143,36 +143,38 @@ class SimulatedComissioning(DotDict):
             self.ORD.HCM = np.unique(np.concatenate((self.ORD.HCM, ords)))
         if 'VCM' in kwargs.keys():
             self.ORD.VCM = np.unique(np.concatenate((self.ORD.VCM, ords)))
-        for ord in ords:
-            if ord not in self.SIG.Magnet.keys():
-                self.SIG.Magnet[ord] = DotDict()
-            self.SIG.Magnet[ord].update(nvpairs)
+        for ind in ords:
+            if ind not in self.SIG.Magnet.keys():
+                self.SIG.Magnet[ind] = DotDict()
+            self.SIG.Magnet[ind].update(nvpairs)
 
-            self.RING[ord].NomPolynomB = self.RING[ord].PolynomB[:]
-            self.RING[ord].NomPolynomA = self.RING[ord].PolynomA[:]
-            self.RING[ord].SetPointB = self.RING[ord].PolynomB[:]
-            self.RING[ord].SetPointA = self.RING[ord].PolynomA[:]
-            self.RING[ord].CalErrorB = np.zeros(len(self.RING[ord].PolynomB))
-            self.RING[ord].CalErrorA = np.zeros(len(self.RING[ord].PolynomA))
-            self.RING[ord].MagnetOffset = np.zeros(3)
-            self.RING[ord].SupportOffset = np.zeros(3)
-            self.RING[ord].MagnetRoll = np.zeros(3)
-            self.RING[ord].SupportRoll = np.zeros(3)
-            self.RING[ord].T1 = np.zeros(6)
-            self.RING[ord].T2 = np.zeros(6)
-            self._optional_magnet_fields(ord, ords, **kwargs)
+            self.RING[ind].NomPolynomB = self.RING[ind].PolynomB[:]
+            self.RING[ind].NomPolynomA = self.RING[ind].PolynomA[:]
+            self.RING[ind].SetPointB = self.RING[ind].PolynomB[:]
+            self.RING[ind].SetPointA = self.RING[ind].PolynomA[:]
+            self.RING[ind].CalErrorB = np.zeros(len(self.RING[ind].PolynomB))
+            self.RING[ind].CalErrorA = np.zeros(len(self.RING[ind].PolynomA))
+            self.RING[ind].MagnetOffset = np.zeros(3)
+            self.RING[ind].SupportOffset = np.zeros(3)
+            self.RING[ind].MagnetRoll = np.zeros(3)
+            self.RING[ind].SupportRoll = np.zeros(3)
+            self.RING[ind].T1 = np.zeros(6)
+            self.RING[ind].T2 = np.zeros(6)
+            self._optional_magnet_fields(ind, ords, **kwargs)
 
     def register_supports(self, support_ords: ndarray, support_type: str, **kwargs):
         if support_type not in SUPPORT_TYPES:
             raise ValueError(f'Unknown support type ``{support_type}`` found. Allowed are {SUPPORT_TYPES}.')
         if not len(support_ords) or support_ords.shape[0] != 2:
             raise ValueError('Ordinates must be a 2xn array of ordinates.')
-        # _checkInput(args)
+        if upstream := np.sum(np.diff(support_ords, axis=0) < 0):
+            print(f"{upstream} {support_type} endpoints(s) may be upstream of startpoint(s).")
+        # TODO check the dimensions of Roll and Offset values
         self.ORD[support_type] = update_double_ordinates(self.ORD[support_type], support_ords)
-        for ord in np.ravel(support_ords):
-            setattr(self.RING[ord], f"{support_type}Offset", np.zeros(3))  # [x,y,z]
-            setattr(self.RING[ord], f"{support_type}Roll", np.zeros(3))  # [az,ax,ay]
-            self.SIG.Support[ord] = DotDict()
+        for ind in np.ravel(support_ords):
+            setattr(self.RING[ind], f"{support_type}Offset", np.zeros(3))  # [x,y,z]
+            setattr(self.RING[ind], f"{support_type}Roll", np.zeros(3))  # [az,ax,ay]
+            self.SIG.Support[ind] = DotDict()
         for ord_pair in support_ords.T:
             for key, value in kwargs.items():
                 if isinstance(value, list):
@@ -191,21 +193,21 @@ class SimulatedComissioning(DotDict):
 
     def apply_errors(self, nsigmas: float = 2):
         # RF
-        for ord in intersect(self.ORD.RF, self.SIG.RF.keys()):
-            for field in self.SIG.RF[ord]:
-                setattr(self.RING[ord], field, randn_cutoff(self.SIG.RF[ord][field], nsigmas))
+        for ind in intersect(self.ORD.RF, self.SIG.RF.keys()):
+            for field in self.SIG.RF[ind]:
+                setattr(self.RING[ind], field, randn_cutoff(self.SIG.RF[ind][field], nsigmas))
         # BPM
-        for ord in intersect(self.ORD.BPM, self.SIG.BPM.keys()):
-            for field in self.SIG.BPM[ord]:
+        for ind in intersect(self.ORD.BPM, self.SIG.BPM.keys()):
+            for field in self.SIG.BPM[ind]:
                 if re.search('Noise', field):
-                    setattr(self.RING[ord], field, self.SIG.BPM[ord][field])
+                    setattr(self.RING[ind], field, self.SIG.BPM[ind][field])
                 else:
-                    setattr(self.RING[ord], field, randn_cutoff(self.SIG.BPM[ord][field], nsigmas))
+                    setattr(self.RING[ind], field, randn_cutoff(self.SIG.BPM[ind][field], nsigmas))
         # Magnet
-        for ord in intersect(self.ORD.Magnet, self.SIG.Magnet.keys()):
-            for field in self.SIG.Magnet[ord]:
-                setattr(self.RING[ord], 'BendingAngleError' if field == 'BendingAngle' else field,
-                        randn_cutoff(self.SIG.Magnet[ord][field], nsigmas))
+        for ind in intersect(self.ORD.Magnet, self.SIG.Magnet.keys()):
+            for field in self.SIG.Magnet[ind]:
+                setattr(self.RING[ind], 'BendingAngleError' if field == 'BendingAngle' else field,
+                        randn_cutoff(self.SIG.Magnet[ind][field], nsigmas))
         # Injection
         self.INJ.Z0 = self.INJ.Z0ideal + self.SIG.staticInjectionZ * SCrandnc(nsigmas, (6,))
         self.INJ.randomInjectionZ = self.SIG.randomInjectionZ[:]
@@ -222,7 +224,6 @@ class SimulatedComissioning(DotDict):
             self.update_magnets()
         if len(self.ORD.RF) and len(self.SIG.RF):
             self.update_cavities()
-
 
     def _apply_support_alignment_error(self, nsigmas):
         for support_type in SUPPORT_TYPES:
@@ -248,9 +249,8 @@ class SimulatedComissioning(DotDict):
 
                 if rolls0[1] != 0:
                     if f"{support_type}Offset" in self.SIG.Support[ordPair[1]].keys():
-                        raise Exception(
-                            f'Pitch angle errors can not be given explicitly if {support_type} start and endpoints '
-                            f'each have offset uncertainties.')
+                        raise Exception(f'Pitch angle errors can not be given explicitly if {support_type} '
+                                        f'start and endpoints each have offset uncertainties.')
                     offsets0[1] -= rolls0[1] * struct_length / 2
                     offsets1[1] += rolls0[1] * struct_length / 2
 
@@ -258,9 +258,8 @@ class SimulatedComissioning(DotDict):
                     rolls0[1] = (offsets1[1] - offsets0[1]) / struct_length
                 if rolls0[2] != 0:
                     if f"{support_type}Offset" in self.SIG.Support[ordPair[1]].keys():
-                        raise Exception(
-                            f'Yaw angle errors can not be given explicitly if {support_type} start and endpoints '
-                            f'each have offset uncertainties.')
+                        raise Exception(f'Yaw angle errors can not be given explicitly if {support_type} '
+                                        f'start and endpoints each have offset uncertainties.')
                     offsets0[0] -= rolls0[2] * struct_length / 2
                     offsets1[0] += rolls0[2] * struct_length / 2
                 else:
@@ -270,47 +269,47 @@ class SimulatedComissioning(DotDict):
                 setattr(self.RING[ordPair[1]], f"{support_type}Offset", offsets1)
 
     def update_cavities(self, ords: ndarray = None):
-        for ord in (self.ORD.RF if ords is None else ords):
+        for ind in (self.ORD.RF if ords is None else ords):
             for field in RF_PROPERTIES:
-                setattr(self.RING[ord], field,
-                        getattr(self.RING[ord], f"{field}SetPoint")
-                        * (1 + getattr(self.RING[ord], f"{field}CalError"))
-                        + getattr(self.RING[ord], f"{field}Offset"))
+                setattr(self.RING[ind], field,
+                        getattr(self.RING[ind], f"{field}SetPoint")
+                        * (1 + getattr(self.RING[ind], f"{field}CalError"))
+                        + getattr(self.RING[ind], f"{field}Offset"))
 
     def update_magnets(self, ords: ndarray = None):
-        for ord in (self.ORD.Magnet if ords is None else ords):
-            self._updateMagnets(ord, ord)
-            if hasattr(self.RING[ord], 'MasterOf'):
-                for childOrd in self.RING[ord].MasterOf:
-                    self._updateMagnets(ord, childOrd)
+        for ind in (self.ORD.Magnet if ords is None else ords):
+            self._update_magnets(ind, ind)
+            if hasattr(self.RING[ind], 'MasterOf'):
+                for child_ind in self.RING[ind].MasterOf:
+                    self._update_magnets(ind, child_ind)
 
     def update_supports(self, offset_bpms: bool = True, offset_magnets: bool = True):
         if offset_magnets:
             if len(self.ORD.Magnet):
                 s = findspos(self.RING, self.ORD.Magnet)
                 offsets, rolls = self.support_offset_and_roll(s)
-                for i, ord in enumerate(self.ORD.Magnet):
-                    setattr(self.RING[ord], "SupportOffset", offsets[:, i])
-                    setattr(self.RING[ord], "SupportRoll", rolls[:, i])
-                    magLength = self.RING[ord].Length
-                    magTheta = self.RING[ord].BendingAngle if hasattr(self.RING[ord], 'BendingAngle') else 0
-                    magnet_offsets = self.RING[ord].SupportOffset + self.RING[ord].MagnetOffset
-                    magnet_rolls = np.roll(self.RING[ord].MagnetRoll + self.RING[ord].SupportRoll, -1)  # z,x,y -> x,y,z
-                    self.RING[ord].T1, self.RING[ord].T2, self.RING[ord].R1, self.RING[ord].R2 = SCgetTransformation(
+                for i, ind in enumerate(self.ORD.Magnet):
+                    setattr(self.RING[ind], "SupportOffset", offsets[:, i])
+                    setattr(self.RING[ind], "SupportRoll", rolls[:, i])
+                    magLength = self.RING[ind].Length
+                    magTheta = self.RING[ind].BendingAngle if hasattr(self.RING[ind], 'BendingAngle') else 0
+                    magnet_offsets = self.RING[ind].SupportOffset + self.RING[ind].MagnetOffset
+                    magnet_rolls = np.roll(self.RING[ind].MagnetRoll + self.RING[ind].SupportRoll, -1)  # z,x,y -> x,y,z
+                    self.RING[ind].T1, self.RING[ind].T2, self.RING[ind].R1, self.RING[ind].R2 = SCgetTransformation(
                         magnet_offsets, magnet_rolls, magTheta, magLength)
-                    if hasattr(self.RING[ord], 'MasterOf'):
-                        for childOrd in self.RING[ord].MasterOf:
+                    if hasattr(self.RING[ind], 'MasterOf'):
+                        for child_ind in self.RING[ind].MasterOf:
                             for field in ("T1", "T2", "R1", "R2"):
-                                setattr(self.RING[childOrd], field, getattr(self.RING[ord], field))
+                                setattr(self.RING[child_ind], field, getattr(self.RING[ind], field))
             else:
                 print('SC: No magnets have been registered!')
         if offset_bpms:
             if len(self.ORD.BPM):
                 s = findspos(self.RING, self.ORD.BPM)
                 offsets, rolls = self.support_offset_and_roll(s)
-                for i, ord in enumerate(self.ORD.BPM):
-                    setattr(self.RING[ord], "SupportOffset", offsets[0:2, i])  # Longitudinal BPM offsets not implemented
-                    setattr(self.RING[ord], "SupportRoll",
+                for i, ind in enumerate(self.ORD.BPM):
+                    setattr(self.RING[ind], "SupportOffset", offsets[0:2, i])  # No longitudinal BPM offsets implemented
+                    setattr(self.RING[ind], "SupportRoll",
                             np.array([rolls[0, i]]))  # BPM pitch and yaw angles not  implemented
             else:
                 print('SC: No BPMs have been registered!')
@@ -368,68 +367,48 @@ class SimulatedComissioning(DotDict):
     def verify_structure(self):
         raise NotImplementedError
 
-    def _optional_magnet_fields(self, ord, MAGords, **kwargs):
+    def _optional_magnet_fields(self, ind, MAGords, **kwargs):
         if 'CF' in kwargs.keys():
-            self.RING[ord].CombinedFunction = 1
-        if "HCM" in kwargs.keys() or "VCM" in kwargs.keys():
-            self.RING[ord].CMlimit = np.zeros(2)
+            self.RING[ind].CombinedFunction = True
+        if intersect(("HCM", "VCM"), kwargs.keys()) and not hasattr(self.RING[ind], 'CMlimit'):
+            self.RING[ind].CMlimit = np.zeros(2)
         if 'HCM' in kwargs.keys():
-            self.RING[ord].CMlimit[0] = kwargs["HCM"]
+            self.RING[ind].CMlimit[0] = kwargs["HCM"]
         if 'VCM' in kwargs.keys():
-            self.RING[ord].CMlimit[1] = kwargs['VCM']
+            self.RING[ind].CMlimit[1] = kwargs['VCM']
         if 'SkewQuad' in kwargs.keys():
-            self.RING[ord].SkewQuadLimit = kwargs['SkewQuad']
+            self.RING[ind].SkewQuadLimit = kwargs['SkewQuad']
         if 'MasterOf' in kwargs.keys():
-            if np.count_nonzero(MAGords == ord) > 1:
-                raise ValueError(f"Non-unique element index {ord} found together with ``MasterOf``")
-            self.RING[ord].MasterOf = kwargs['MasterOf'][:, np.nonzero(MAGords == ord)].ravel()
+            if np.count_nonzero(MAGords == ind) > 1:
+                raise ValueError(f"Non-unique element index {ind} found together with ``MasterOf``")
+            self.RING[ind].MasterOf = kwargs['MasterOf'][:, np.nonzero(MAGords == ind)].ravel()
 
+    def _update_magnets(self, source_ord, target_ord):
+        setpoints_a, setpoints_b = self.RING[source_ord].SetPointA, self.RING[source_ord].SetPointB
+        polynoms = dict(A=setpoints_a * add_padded(np.ones(len(setpoints_a)), self.RING[source_ord].CalErrorA),
+                        B=setpoints_b * add_padded(np.ones(len(setpoints_b)), self.RING[source_ord].CalErrorB))
+        for target in ("A", "B"):
+            new_polynom = polynoms[target][:]
+            if hasattr(self.RING[target_ord], f'Polynom{target}Offset'):
+                new_polynom = add_padded(new_polynom, getattr(self.RING[target_ord], f'Polynom{target}Offset'))
+            for source in ("A", "B"):
+                if hasattr(self.RING[target_ord], f'SysPol{target}From{source}'):
+                    polynom_errors = getattr(self.RING[target_ord], f'SysPol{target}From{source}')
+                    for n in polynom_errors.keys():
+                        new_polynom = add_padded(new_polynom, polynoms[source][n] * polynom_errors[n])
+            setattr(self.RING[target_ord], f"Polynom{target}", new_polynom)
 
-    def _updateMagnets(self, source, target):  # TODO simplify AB calculated in place
-        self.RING[target].PolynomB = self.RING[source].SetPointB * add_padded(np.ones(len(self.RING[source].SetPointB)),
-                                                                              self.RING[source].CalErrorB)
-        self.RING[target].PolynomA = self.RING[source].SetPointA * add_padded(np.ones(len(self.RING[source].SetPointA)),
-                                                                              self.RING[source].CalErrorA)
-        sysPolynomB = []
-        sysPolynomA = []
-        if hasattr(self.RING[target], 'SysPolBFromB'):
-            for n in range(len(self.RING[target].SysPolBFromB)):
-                if self.RING[target].SysPolBFromB[n] is not None:
-                    sysPolynomB.append(self.RING[target].PolynomB[n] * self.RING[target].SysPolBFromB[n])
-        if hasattr(self.RING[target], 'SysPolBFromA'):
-            for n in range(len(self.RING[target].SysPolBFromA)):
-                if self.RING[target].SysPolBFromA[n] is not None:
-                    sysPolynomB.append(self.RING[target].PolynomA[n] * self.RING[target].SysPolBFromA[n])
-        if hasattr(self.RING[target], 'SysPolAFromB'):
-            for n in range(len(self.RING[target].SysPolAFromB)):
-                if self.RING[target].SysPolAFromB[n] is not None:
-                    sysPolynomA.append(self.RING[target].PolynomB[n] * self.RING[target].SysPolAFromB[n])
-        if hasattr(self.RING[target], 'SysPolAFromA'):
-            for n in range(len(self.RING[target].SysPolAFromA)):
-                if self.RING[target].SysPolAFromA[n] is not None:
-                    sysPolynomA.append(self.RING[target].PolynomA[n] * self.RING[target].SysPolAFromA[n])
-        if len(sysPolynomA) > 0:
-            for n in range(len(sysPolynomA) - 1):
-                sysPolynomA[n + 1] = add_padded(sysPolynomA[n + 1], sysPolynomA[n])
-            self.RING[target].PolynomA = add_padded(self.RING[target].PolynomA, sysPolynomA[-1])
-        if len(sysPolynomB) > 0:
-            for n in range(len(sysPolynomB) - 1):
-                sysPolynomB[n + 1] = add_padded(sysPolynomB[n + 1], sysPolynomB[n])
-            self.RING[target].PolynomB = add_padded(self.RING[target].PolynomB, sysPolynomB[-1])
-        if hasattr(self.RING[target], 'PolynomBOffset'):
-            self.RING[target].PolynomB = add_padded(self.RING[target].PolynomB, self.RING[target].PolynomBOffset)
-            self.RING[target].PolynomA = add_padded(self.RING[target].PolynomA, self.RING[target].PolynomAOffset)
-        if hasattr(self.RING[source], 'BendingAngleError'):
-            self.RING[target].PolynomB[0] = self.RING[target].PolynomB[0] + self.RING[source].BendingAngleError * self.RING[
-                target].BendingAngle / self.RING[target].Length
-        if hasattr(self.RING[source], 'BendingAngle'):
-            if hasattr(self.RING[source], 'CombinedFunction') and self.RING[source].CombinedFunction == 1:
-                alpha_act = self.RING[source].SetPointB[1] * (1 + self.RING[source].CalErrorB[1]) / self.RING[source].NomPolynomB[
-                    1]
-                effBendingAngle = alpha_act * self.RING[target].BendingAngle
-                self.RING[target].PolynomB[0] = self.RING[target].PolynomB[0] + (
-                        effBendingAngle - self.RING[target].BendingAngle) / self.RING[target].Length
-        if self.RING[source].PassMethod == 'CorrectorPass':
-            self.RING[target].KickAngle[0] = self.RING[target].PolynomB[0]
-            self.RING[target].KickAngle[1] = self.RING[target].PolynomA[0]
-        self.RING[target].MaxOrder = len(self.RING[target].PolynomB) - 1
+        if hasattr(self.RING[source_ord], 'BendingAngleError'):
+            self.RING[target_ord].PolynomB[0] += (self.RING[source_ord].BendingAngleError
+                                                  * self.RING[target_ord].BendingAngle / self.RING[target_ord].Length)
+        if hasattr(self.RING[source_ord], 'BendingAngle'):
+            if hasattr(self.RING[source_ord], 'CombinedFunction') and self.RING[source_ord].CombinedFunction:
+                alpha_act = (self.RING[source_ord].SetPointB[1] * (1 + self.RING[source_ord].CalErrorB[1])
+                             / self.RING[source_ord].NomPolynomB[1])
+                effBendingAngle = alpha_act * self.RING[target_ord].BendingAngle
+                self.RING[target_ord].PolynomB[0] += ((effBendingAngle - self.RING[target_ord].BendingAngle)
+                                                      / self.RING[target_ord].Length)
+        if self.RING[source_ord].PassMethod == 'CorrectorPass':
+            self.RING[target_ord].KickAngle = np.array([self.RING[target_ord].PolynomB[0],
+                                                        self.RING[target_ord].PolynomA[0]])
+        self.RING[target_ord].MaxOrder = len(self.RING[target_ord].PolynomB) - 1
