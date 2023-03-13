@@ -25,8 +25,8 @@ DEPENDENCIES = [
 # Extra dependencies
 EXTRA_DEPENDENCIES = {
     "test": [
-        "pytest>=5.2",
-        "pytest-cov>=2.6",
+        "pytest>=7.0",
+        "pytest-cov>=3.0",
 
 
     ],
@@ -59,6 +59,7 @@ setuptools.setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "Topic :: Scientific/Engineering :: Physics",
     ],
     install_requires=DEPENDENCIES,
