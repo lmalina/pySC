@@ -43,4 +43,4 @@ def SCgetModelRM(SC, BPMords, CMords, trackMode='TBT', Z0=np.zeros(6), nTurns=1,
 
 
 def orbpass(RING, Z0, newlat, nTurns, REFPTS):
-    return findorbit6(RING, REFPTS, Z0)
+    return np.transpose(findorbit6(RING, REFPTS, keep_lattice=False)[1])[[0, 2], :]

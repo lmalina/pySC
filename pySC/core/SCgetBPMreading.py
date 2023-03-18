@@ -37,8 +37,8 @@ def SCgetBPMreading(SC, BPMords=None, do_plot=False):
         mean_bpm_orbits_3d = mean_bpm_orbits_3d[:, ind, :]
     # Organising the array the same way as in matlab version 2 x (nturns, nbpms) sorted by "arrival time"
     mean_bpm_orbits_2d = np.transpose(mean_bpm_orbits_3d, axes=(0, 2, 1)).reshape((2, np.prod(mean_bpm_orbits_3d.shape[1:])))
-    if do_plot:
-        return mean_bpm_orbits_2d, all_readings_5d
+    # if do_plot:
+    #     return mean_bpm_orbits_2d, all_readings_5d
     return mean_bpm_orbits_2d
 
 
@@ -76,16 +76,16 @@ def _plot_bpm_reading(SC, B, T):  # T is 5D matrix
         for nS in range(SC.INJ.nShots):
             y = 1E3 * T[nDim, :, :, :, nS]
             y = np.reshape(np.transpose(y, axes=(2, 1, 0)), (np.prod(y.shape[1:]), y.shape[0]))
-            legVec = ax[nDim].plot(x, y, 'k')
+            ax[nDim].plot(x, y, 'k')
         #legVec = legVec[0]
         x = np.ravel(np.arange(SC.INJ.nTurns)[:, np.newaxis] * sMax + sPos[SC.ORD.BPM])
         y = 1E3 * np.ravel(B[nDim, :, :].T)
-        legVec[1] = ax[nDim].plot(x, y, 'ro')
+        ax[nDim].plot(x, y, 'ro')
         if len(ap_ords):
             apS = sPos[ap_ords]
             x = np.ravel(np.arange(SC.INJ.nTurns)[:, np.newaxis] * sMax + apS)
             y = 1E3 * np.repeat(apers[:, nDim, :].T, SC.INJ.nTurns, axis=1)  # to mm
-            legVec[2] = ax[nDim].plot(x, y[0, :], '-', color=tmpCol[0], linewidth=4)
+            ax[nDim].plot(x, y[0, :], '-', color=tmpCol[0], linewidth=4)
             ax[nDim].plot(x, y[1, :], '-', color=tmpCol[0], linewidth=4)
         x = np.arange(SC.INJ.nTurns) * sMax
         y_lims = np.array([-0.5, 0.5])
@@ -116,5 +116,5 @@ def _get_ring_aperture(SC):
             ords.append(ord)
             aps.append(np.outer(getattr(SC.RING[ord], 'EApertures'), np.array([-1, 1]))
                        if hasattr(SC.RING[ord], 'EApertures')
-                       else np.reshape(getattr(SC.RING[ord], 'RApertures'), (2, 2))) #  TODO is it [-x, +x, -y, +y] if not, has to be changed
+                       else np.reshape(getattr(SC.RING[ord], 'RApertures'), (2, 2))) #  TODO is it [-x, +x, -y, +y] if not, has to be changed # most likely swap sign
     return np.array(ords), np.array(aps)
