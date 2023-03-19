@@ -30,9 +30,9 @@ LOGGER = logging_tools.get_logger(__name__)
 def create_at_lattice() -> Lattice:
     def _marker(name):
         return at.Marker(name, PassMethod='IdentityPass')
-    qf = at.Quadrupole('QF', 0.5, 1.2, PassMethod='StrMPoleSymplectic4RadPass')
-    qd = at.Quadrupole('QD', 0.5, -1.2, PassMethod='StrMPoleSymplectic4RadPass')
-    sf = at.Sextupole('SF', 0.1, 6.0487, PassMethod='StrMPoleSymplectic4RadPass')
+    qf = at.Quadrupole('QF', 0.5, 1.2, PassMethod='StrMPoleSymplectic4RadPass', MaxOrder=1)
+    qd = at.Quadrupole('QD', 0.5, -1.2, PassMethod='StrMPoleSymplectic4RadPass', MaxOrder=1)
+    sf = at.Sextupole('SF', 0.1, 6.0487, PassMethod='StrMPoleSymplectic4RadPass', MaxOrder=2)
     sd = at.Sextupole('SD', 0.1, -9.5203, PassMethod='StrMPoleSymplectic4RadPass')
     bend = at.Bend('BEND', 1, 2 * np.pi / 40, PassMethod='StrMPoleSymplectic4RadPass')
     d2 = at.Drift('Drift', 0.25)
@@ -111,7 +111,7 @@ if __name__ == "__main__":
     SC = SCsetMags2SetPoints(SC, sextOrds, False, 2, np.array([0.0]), method='abs')
     RM1 = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, nTurns=1)
     RM2 = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, nTurns=2)
-    Minv1 = SCgetPinv(RM1, alpha=50)
+    Minv1 = SCgetPinv(RM1, alpha=50,plot=True)
     Minv2 = SCgetPinv(RM2, alpha=50)
     SC.INJ.nParticles = 1
     SC.INJ.nTurns = 1

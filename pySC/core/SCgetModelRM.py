@@ -2,6 +2,7 @@ import numpy as np
 from pySC.core.SCgetModelRING import SCgetModelRING
 from pySC.at_wrapper import atpass, findorbit6
 from pySC.constants import NUM_TO_AB
+import copy
 
 
 def SCgetModelRM(SC, BPMords, CMords, trackMode='TBT', Z0=np.zeros(6), nTurns=1, dkick=1e-5, useIdealRing=False):
@@ -31,8 +32,8 @@ def SCgetModelRM(SC, BPMords, CMords, trackMode='TBT', Z0=np.zeros(6), nTurns=1,
             else:
                 PolynomNominal = getattr(ring[CMord], f"Polynom{NUM_TO_AB[nDim]}")
                 delta = dkick / ring[CMord].Length
-                changed_polynom = PolynomNominal[:]
-                changed_polynom[0] += (-1) ** nDim * delta
+                changed_polynom = copy.deepcopy(PolynomNominal[:])
+                changed_polynom[0] += (-1) ** (nDim+1) * delta
                 setattr(ring[CMord], f"Polynom{NUM_TO_AB[nDim]}", changed_polynom[:])
                 TdB = trackmethod(ring, Z0, nTurns, BPMords, keep_lattice=False)
                 setattr(ring[CMord], f"Polynom{NUM_TO_AB[nDim]}", PolynomNominal[:])
