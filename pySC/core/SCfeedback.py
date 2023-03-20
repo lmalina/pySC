@@ -11,8 +11,9 @@ LOGGER = logging_tools.get_logger(__name__)
 def SCfeedbackFirstTurn(SC, Mplus, R0=None, CMords=None, BPMords=None, maxsteps=100, wiggleAfter=20, wiggleSteps=64, wiggleRange=np.array([50E-6, 200E-6]),):
     BPMords, CMords, R0 = _check_ords(SC, Mplus, R0, BPMords, CMords, "FirstTurn")
     nWiggleCM = 1
+    transmission_history, rms_orbit_history = [],[]
     for n in range(maxsteps):
-        B, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords, do_plot=True)  # Inject...
+        B, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history, do_plot=True)  # Inject...
         if transmission_history[-1] == 0:
             raise RuntimeError('SCfeedbackFirstTurn: FAIL (no BPM reading to begin with)')
         SC = _correction_step_firstturn(SC, transmission_history[-1]-1, BPMords, CMords, B, R0, Mplus)
@@ -49,6 +50,8 @@ def SCfeedbackFirstTurn(SC, Mplus, R0=None, CMords=None, BPMords=None, maxsteps=
 def SCfeedbackStitch(SC, Mplus, R0=None, CMords=None, BPMords=None, nBPMs=4, maxsteps=30, nRepro=3):
     BPMords, CMords, R0 = _check_ords(SC, Mplus, R0, BPMords, CMords, "Stitch")
     # assumes 2 turns
+    if SC.INJ.nTurns != 2:
+        raise ValueError("Stitching works only with two turns.")
     B, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords, do_plot=True)
     transmission_limit = int(B.shape[1] / 2 + nBPMs)
     if not transmission_history[-1] >= transmission_limit:
@@ -77,17 +80,15 @@ def SCfeedbackStitch(SC, Mplus, R0=None, CMords=None, BPMords=None, nBPMs=4, max
         B, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history, do_plot=True)
 
         lBPM = len(B[0])
-        Bx1 = B[0][0:lBPM / 2]
-        By1 = B[1][0:lBPM / 2]
-        Bx2 = B[0][(lBPM / 2 + 1):]
-        By2 = B[1][(lBPM / 2 + 1):]
-        DELTABx = Bx2 - Bx1
-        DELTABy = By2 - By1
-        DELTABx[(nBPMs + 1):] = 0
-        DELTABy[(nBPMs + 1):] = 0
-        R = [Bx1 - R0[0], DELTABx, By1 - R0[1], DELTABy]  # TODO Just cut it 1 turn + nBPMs
+        delta_b = np.squeeze(np.diff(B.reshape(2, lBPM // 2, 2), axis=2))
+        delta_b[:, nBPMs:] = 0
+        R=np.concatenate((B[:, :lBPM//2], delta_b), axis=1).ravel()
+        R0= R0.reshape(2,lBPM)
+        R0[:,lBPM//2:] = 0
+        R0=R0.reshape(Mplus.shape[1])
+
         R[np.isnan(R)] = 0
-        dphi = Mplus * R
+        dphi = np.dot(Mplus, (R-R0))
         SC, _ = SCsetCMs2SetPoints(SC, CMords[0], -dphi[:len(CMords[0])], skewness=False, method='add')
         SC, _ = SCsetCMs2SetPoints(SC, CMords[1], -dphi[len(CMords[0]):], skewness=True, method='add')
         if transmission_history[-1] < transmission_history[-2]:
@@ -105,10 +106,10 @@ def SCfeedbackRun(SC, Mplus, R0=None, CMords=None, BPMords=None, eps=1e-5, targe
     B, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords,
                                                                           do_plot=True)  # Inject ...
     for steps in range(maxsteps):
-        B, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords, do_plot=True) # Inject ...
-        R = np.array([B[0, :], B[1, :]])
+        B, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords,ind_history=transmission_history, orb_history=rms_orbit_history, do_plot=True) # Inject ...
+        R = B[:,:].reshape(R0.shape)
         R[np.isnan(R)] = 0
-        dphi = Mplus @ ((R - R0) * weight)
+        dphi = np.dot(Mplus, ((R - R0) * weight))
         if scaleDisp != 0:   # TODO this is weight
             SC = SCsetCavs2SetPoints(SC, SC.ORD.RF, "Frequency", -scaleDisp * dphi[-1], method="add")
             dphi = dphi[:-1]  # TODO the last setpoint is cavity frequency
@@ -116,7 +117,7 @@ def SCfeedbackRun(SC, Mplus, R0=None, CMords=None, BPMords=None, eps=1e-5, targe
         SC, _ = SCsetCMs2SetPoints(SC, CMords[1], -dphi[len(CMords[0]):], skewness=True, method="add")
         if np.any(np.isnan(B[0, :])):
             raise RuntimeError('SCfeedbackRun: FAIL (lost transmission)')
-        if rms_orbit_history[-1] < target and _is_stable_or_converged(min(10, maxsteps), eps, rms_orbit_history):
+        if max(rms_orbit_history[-1]) < target and _is_stable_or_converged(min(10, maxsteps), eps, rms_orbit_history):
             LOGGER.debug("SCfeedbackRun: Success (target reached)")
             return SC
         if _is_stable_or_converged(3, eps, rms_orbit_history):
@@ -135,6 +136,8 @@ def SCfeedbackBalance(SC, Mplus, R0=None, CMords=None, BPMords=None, eps=1e-5, m
     for steps in range(maxsteps):
         B, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords, do_plot=True)
         lBPM = B.shape[1]
+        delta_b = np.diff(B.reshape(2, lBPM // 2, 2), axis=2)
+
         Bx1 = B[0, 0:lBPM // 2]
         By1 = B[1, 0:lBPM // 2]
         Bx2 = B[0, lBPM // 2:]
@@ -170,9 +173,11 @@ def _check_ords(SC, Mplus, R0, BPMords, CMords, start_str):
     return BPMords, CMords, R0
 
 
-def _bpm_reading_and_logging(SC, BPMords, ind_history=[], orb_history=[], do_plot=False):
+def _bpm_reading_and_logging(SC, BPMords, ind_history=None, orb_history=None, do_plot=False):
     bpm_readings = SCgetBPMreading(SC, BPMords=BPMords, do_plot=do_plot)
     bpms_reached = ~np.isnan(bpm_readings[0])
+    if ind_history is None or orb_history is None:
+        return bpm_readings, [np.sum(bpms_reached)], [np.sqrt(np.mean(np.square(bpm_readings[:, bpms_reached]), axis=1))]
     ind_history.append(np.sum(bpms_reached))
     orb_history.append(np.sqrt(np.mean(np.square(bpm_readings[:, bpms_reached]), axis=1)))
     return bpm_readings, ind_history, orb_history  # assumes no bad BPMs
@@ -217,5 +222,5 @@ def _golden_donut(r0, r1, Npts):
 
 
 def _is_stable_or_converged(n, eps, hist):  # Balance and Run  # TODO rethink
-    cv = np.var(hist[:n]) / np.std(hist[:n])
+    cv = np.var(hist[-n:]) / np.std(hist[-n:])
     return cv < eps
