@@ -41,7 +41,7 @@ def create_at_lattice() -> Lattice:
     cell = at.Lattice([d2, _marker('SectionStart'), _marker('GirderStart'), bend, d3, sf, d3, _marker('GirderEnd'),
                        _marker('GirderStart'), _marker('BPM'), qf, d2, d2, bend, d3, sd, d3, qd, d2, _marker('BPM'),
                        _marker('GirderEnd'), _marker('SectionEnd')], name='Simple FODO cell', energy=2.5E9)
-    new_ring = at.Lattice(cell * 20)
+    new_ring = at.Lattice([el.deepcopy() for _ in range(20) for el in cell], name='Simple Ring', energy=2.5E9)
     rfc = at.RFCavity('RFCav', energy=2.5E9, voltage=2e6, frequency=1, harmonic_number=50, length=0)
     new_ring.insert(0, rfc)
     return new_ring
