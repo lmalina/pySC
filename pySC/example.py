@@ -120,16 +120,16 @@ if __name__ == "__main__":
     eps = 1E-4  # Noise level
     SCgetBPMreading(SC, do_plot=False)
     SC = SCfeedbackFirstTurn(SC, Minv1)
-    Minv1test = SCgetPinv(RM1, alpha=5,plot=False) # added 1turn feedback with low regularization to test feedback
-    SC = SCfeedbackRun(SC, Minv1test, target=50E-6, maxsteps=30, eps=eps)
+    #Minv1test = SCgetPinv(RM1, alpha=5,plot=False) # added 1turn feedback with low regularization to test feedback
+    #SC = SCfeedbackRun(SC, Minv1test, target=50E-6, maxsteps=30, eps=eps)
 
     SC.INJ.nTurns = 2
     SC = SCfeedbackStitch(SC, Minv2, nBPMs=3, maxsteps=20)
-    SC = SCfeedbackRun(SC, Minv2, target=300E-6, maxsteps=30, eps=eps)
+    #SC = SCfeedbackRun(SC, Minv2, target=300E-6, maxsteps=30, eps=eps)
     SC = SCfeedbackBalance(SC, Minv2, maxsteps=32, eps=eps)
 
     for S in np.linspace(0.1, 1, 5):
-        SC = SCsetMags2SetPoints(SC, sextOrds, False, 2, S, method='rel')
+        SC = SCsetMags2SetPoints(SC, sextOrds, False, 2, np.array([S]), method='rel')
         try:
             SC = SCfeedbackBalance(SC, Minv2, maxsteps=32, eps=eps)
         except RuntimeError:

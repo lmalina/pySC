@@ -148,10 +148,10 @@ class SimulatedComissioning(DotDict):
                 self.SIG.Magnet[ind] = DotDict()
             self.SIG.Magnet[ind].update(nvpairs)
 
-            self.RING[ind].NomPolynomB = self.RING[ind].PolynomB[:]
-            self.RING[ind].NomPolynomA = self.RING[ind].PolynomA[:]
-            self.RING[ind].SetPointB = self.RING[ind].PolynomB[:]
-            self.RING[ind].SetPointA = self.RING[ind].PolynomA[:]
+            self.RING[ind].NomPolynomB = copy.deepcopy(self.RING[ind].PolynomB[:])
+            self.RING[ind].NomPolynomA = copy.deepcopy(self.RING[ind].PolynomA[:])
+            self.RING[ind].SetPointB = copy.deepcopy(self.RING[ind].PolynomB[:])
+            self.RING[ind].SetPointA = copy.deepcopy(self.RING[ind].PolynomA[:])
             self.RING[ind].CalErrorB = np.zeros(len(self.RING[ind].PolynomB))
             self.RING[ind].CalErrorA = np.zeros(len(self.RING[ind].PolynomA))
             self.RING[ind].MagnetOffset = np.zeros(3)

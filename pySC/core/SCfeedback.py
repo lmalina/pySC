@@ -103,19 +103,13 @@ def SCfeedbackRun(SC, Mplus, R0=None, CMords=None, BPMords=None, eps=1e-5, targe
     if weight is None:
         weight = np.ones((Mplus.shape[1], 1))
     BPMords, CMords, R0 = _check_ords(SC, Mplus, R0, BPMords, CMords, "Run")
-    B, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords,
-                                                                          do_plot=True)  # Inject ...
+    transmission_history = None
+    rms_orbit_history = None
+
     for steps in range(maxsteps):
         B, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords,ind_history=transmission_history, orb_history=rms_orbit_history, do_plot=True) # Inject ...
 
-        if np.any(np.isnan(B[0, :])):
-            raise RuntimeError('SCfeedbackRun: FAIL (lost transmission)')
-        if max(rms_orbit_history[-1]) < target and _is_stable_or_converged(min(10, maxsteps), eps, rms_orbit_history):
-            LOGGER.debug("SCfeedbackRun: Success (target reached)")
-            return SC
-        if _is_stable_or_converged(3, eps, rms_orbit_history):
-            LOGGER.debug(f"SCfeedbackRun: Success (converged after {steps:d} steps)")
-            return SC
+
 
         R = B[:,:].reshape(R0.shape)
         R[np.isnan(R)] = 0
@@ -126,6 +120,14 @@ def SCfeedbackRun(SC, Mplus, R0=None, CMords=None, BPMords=None, eps=1e-5, targe
         SC, _ = SCsetCMs2SetPoints(SC, CMords[0], -dphi[:len(CMords[0])], skewness=False, method="add")
         SC, _ = SCsetCMs2SetPoints(SC, CMords[1], -dphi[len(CMords[0]):], skewness=True, method="add")
 
+    if np.any(np.isnan(B[0, :])):
+        raise RuntimeError('SCfeedbackRun: FAIL (lost transmission)')
+    if max(rms_orbit_history[-1]) < target and _is_stable_or_converged(min(10, maxsteps), eps, rms_orbit_history):
+        LOGGER.debug("SCfeedbackRun: Success (target reached)")
+        return SC
+    if _is_stable_or_converged(3, eps, rms_orbit_history):
+        LOGGER.debug(f"SCfeedbackRun: Success (converged after {steps:d} steps)")
+        return SC
     if _is_stable_or_converged(min(10, maxsteps), eps, rms_orbit_history) or maxsteps == 1:
         LOGGER.debug("SCfeedbackRun: Success (maxsteps reached)")
         return SC
@@ -134,30 +136,33 @@ def SCfeedbackRun(SC, Mplus, R0=None, CMords=None, BPMords=None, eps=1e-5, targe
 
 def SCfeedbackBalance(SC, Mplus, R0=None, CMords=None, BPMords=None, eps=1e-5, maxsteps=10):
     BPMords, CMords, R0 = _check_ords(SC, Mplus, R0, BPMords, CMords, "Balance")
-    B, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords, do_plot=True)
+    transmission_history = None
+    rms_orbit_history = None
     for steps in range(maxsteps):
-        B, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords, do_plot=True)
-        lBPM = B.shape[1]
-        delta_b = np.diff(B.reshape(2, lBPM // 2, 2), axis=2)
+        B, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history, do_plot=True)
 
-        Bx1 = B[0, 0:lBPM // 2]
-        By1 = B[1, 0:lBPM // 2]
-        Bx2 = B[0, lBPM // 2:]
-        By2 = B[1, lBPM // 2:]
-        DELTABx = Bx2 - Bx1
-        DELTABy = By2 - By1
-        R = np.vstack((Bx1 - R0[0, :], DELTABx, By1 - R0[1, :], DELTABy)).T
+
+
+        lBPM = len(B[0])
+        delta_b = np.squeeze(np.diff(B.reshape(2, lBPM // 2, 2), axis=2))
+
+        R=np.concatenate((B[:, :lBPM//2], delta_b), axis=1).ravel()
+        R0= R0.reshape(2,lBPM)
+        R0[:,lBPM//2:] = 0
+        R0=R0.reshape(Mplus.shape[1])
+
         R[np.isnan(R)] = 0
-        dphi = Mplus @ R
+        dphi = np.dot(Mplus, (R-R0))
+
         SC, _ = SCsetCMs2SetPoints(SC, CMords[0], -dphi[:len(CMords[0])], skewness=False, method='add')
         SC, _ = SCsetCMs2SetPoints(SC, CMords[1], -dphi[len(CMords[0]):], skewness=True, method='add')
-        if transmission_history[-1] < transmission_history[-2]:
-            raise RuntimeError('SCfeedbackBalance: FAIL (setback)')
-        if transmission_history[-1] < B.shape[1]:
-            raise RuntimeError('SCfeedbackBalance: FAIL (lost transmission)')
-        if _is_stable_or_converged(3, eps, rms_orbit_history):
-            LOGGER.debug(f'SCfeedbackBalance: Success (converged after {steps} steps)')
-            return SC
+    if transmission_history[-1] < transmission_history[-2]:
+        raise RuntimeError('SCfeedbackBalance: FAIL (setback)')
+    if transmission_history[-1] < B.shape[1]:
+        raise RuntimeError('SCfeedbackBalance: FAIL (lost transmission)')
+    if _is_stable_or_converged(3, eps, rms_orbit_history):
+        LOGGER.debug(f'SCfeedbackBalance: Success (converged after {steps} steps)')
+        return SC
     if _is_stable_or_converged(min(10, maxsteps), eps, rms_orbit_history):
         LOGGER.debug('SCfeedbackBalance: Success (maxsteps reached)')
         return SC

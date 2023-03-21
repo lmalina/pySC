@@ -65,7 +65,7 @@ def _rotation_matrix(a):
 
 def _plot_bpm_reading(SC, B, T):  # T is 5D matrix
     ap_ords, apers = _get_ring_aperture(SC)
-    fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(12, 4), dpi=100, facecolor="w")
+    fig, ax = plt.subplots(nrows=2, ncols=1, figsize=(8, 6), dpi=100, facecolor="w")
     tmpCol = plt.rcParams['axes.prop_cycle'].by_key()['color']
     ylabelStr = ['$\Delta x$ [mm]', '$\Delta y$ [mm]']
     legStr = ['Particle trajectories', 'BPM reading', 'Aperture']
