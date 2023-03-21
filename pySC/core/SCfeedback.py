@@ -107,14 +107,7 @@ def SCfeedbackRun(SC, Mplus, R0=None, CMords=None, BPMords=None, eps=1e-5, targe
                                                                           do_plot=True)  # Inject ...
     for steps in range(maxsteps):
         B, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords,ind_history=transmission_history, orb_history=rms_orbit_history, do_plot=True) # Inject ...
-        R = B[:,:].reshape(R0.shape)
-        R[np.isnan(R)] = 0
-        dphi = np.dot(Mplus, ((R - R0) * weight))
-        if scaleDisp != 0:   # TODO this is weight
-            SC = SCsetCavs2SetPoints(SC, SC.ORD.RF, "Frequency", -scaleDisp * dphi[-1], method="add")
-            dphi = dphi[:-1]  # TODO the last setpoint is cavity frequency
-        SC, _ = SCsetCMs2SetPoints(SC, CMords[0], -dphi[:len(CMords[0])], skewness=False, method="add")
-        SC, _ = SCsetCMs2SetPoints(SC, CMords[1], -dphi[len(CMords[0]):], skewness=True, method="add")
+
         if np.any(np.isnan(B[0, :])):
             raise RuntimeError('SCfeedbackRun: FAIL (lost transmission)')
         if max(rms_orbit_history[-1]) < target and _is_stable_or_converged(min(10, maxsteps), eps, rms_orbit_history):
@@ -123,6 +116,15 @@ def SCfeedbackRun(SC, Mplus, R0=None, CMords=None, BPMords=None, eps=1e-5, targe
         if _is_stable_or_converged(3, eps, rms_orbit_history):
             LOGGER.debug(f"SCfeedbackRun: Success (converged after {steps:d} steps)")
             return SC
+
+        R = B[:,:].reshape(R0.shape)
+        R[np.isnan(R)] = 0
+        dphi = np.dot(Mplus, ((R - R0) * weight))
+        if scaleDisp != 0:   # TODO this is weight
+            SC = SCsetCavs2SetPoints(SC, SC.ORD.RF, "Frequency", -scaleDisp * dphi[-1], method="add")
+            dphi = dphi[:-1]  # TODO the last setpoint is cavity frequency
+        SC, _ = SCsetCMs2SetPoints(SC, CMords[0], -dphi[:len(CMords[0])], skewness=False, method="add")
+        SC, _ = SCsetCMs2SetPoints(SC, CMords[1], -dphi[len(CMords[0]):], skewness=True, method="add")
 
     if _is_stable_or_converged(min(10, maxsteps), eps, rms_orbit_history) or maxsteps == 1:
         LOGGER.debug("SCfeedbackRun: Success (maxsteps reached)")

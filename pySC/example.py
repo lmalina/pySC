@@ -111,7 +111,7 @@ if __name__ == "__main__":
     SC = SCsetMags2SetPoints(SC, sextOrds, False, 2, np.array([0.0]), method='abs')
     RM1 = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, nTurns=1)
     RM2 = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, nTurns=2)
-    Minv1 = SCgetPinv(RM1, alpha=50,plot=True)
+    Minv1 = SCgetPinv(RM1, alpha=50,plot=False)
     Minv2 = SCgetPinv(RM2, alpha=50)
     SC.INJ.nParticles = 1
     SC.INJ.nTurns = 1
@@ -120,6 +120,9 @@ if __name__ == "__main__":
     eps = 1E-4  # Noise level
     SCgetBPMreading(SC, do_plot=False)
     SC = SCfeedbackFirstTurn(SC, Minv1)
+    Minv1test = SCgetPinv(RM1, alpha=5,plot=False) # added 1turn feedback with low regularization to test feedback
+    SC = SCfeedbackRun(SC, Minv1test, target=50E-6, maxsteps=30, eps=eps)
+
     SC.INJ.nTurns = 2
     SC = SCfeedbackStitch(SC, Minv2, nBPMs=3, maxsteps=20)
     SC = SCfeedbackRun(SC, Minv2, target=300E-6, maxsteps=30, eps=eps)
