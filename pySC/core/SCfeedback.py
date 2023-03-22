@@ -80,8 +80,12 @@ def SCfeedbackStitch(SC, Mplus, R0=None, CMords=None, BPMords=None, nBPMs=4, max
         B, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history, do_plot=True)
 
         lBPM = len(B[0])
-        delta_b = np.squeeze(np.diff(B.reshape(2, lBPM // 2, 2), axis=2))
-        delta_b[:, nBPMs:] = 0
+
+        delta_b = [B[0][lBPM // 2:] - B[0][:lBPM // 2], B[1][lBPM // 2:] - B[1][:lBPM // 2]]
+        delta_b[0][nBPMs:] = 0
+        delta_b[1][nBPMs:] = 0
+        #delta_b = np.squeeze(np.diff(B.reshape(2, 2, lBPM // 2), axis=1))
+        #delta_b[:, nBPMs:] = 0
         R=np.concatenate((B[:, :lBPM//2], delta_b), axis=1).ravel()
         R0= R0.reshape(2,lBPM)
         R0[:,lBPM//2:] = 0
@@ -144,7 +148,8 @@ def SCfeedbackBalance(SC, Mplus, R0=None, CMords=None, BPMords=None, eps=1e-5, m
 
 
         lBPM = len(B[0])
-        delta_b = np.squeeze(np.diff(B.reshape(2, lBPM // 2, 2), axis=2))
+        # delta_b = np.squeeze(np.diff(B.reshape(2, lBPM // 2, 2), axis=2))
+        delta_b = [B[0][lBPM // 2:] - B[0][:lBPM // 2], B[1][lBPM // 2:] - B[1][:lBPM // 2]]
 
         R=np.concatenate((B[:, :lBPM//2], delta_b), axis=1).ravel()
         R0= R0.reshape(2,lBPM)
@@ -156,13 +161,13 @@ def SCfeedbackBalance(SC, Mplus, R0=None, CMords=None, BPMords=None, eps=1e-5, m
 
         SC, _ = SCsetCMs2SetPoints(SC, CMords[0], -dphi[:len(CMords[0])], skewness=False, method='add')
         SC, _ = SCsetCMs2SetPoints(SC, CMords[1], -dphi[len(CMords[0]):], skewness=True, method='add')
-    if transmission_history[-1] < transmission_history[-2]:
-        raise RuntimeError('SCfeedbackBalance: FAIL (setback)')
-    if transmission_history[-1] < B.shape[1]:
-        raise RuntimeError('SCfeedbackBalance: FAIL (lost transmission)')
-    if _is_stable_or_converged(3, eps, rms_orbit_history):
-        LOGGER.debug(f'SCfeedbackBalance: Success (converged after {steps} steps)')
-        return SC
+        if len(transmission_history)>1 and transmission_history[-1] < transmission_history[-2]:
+            raise RuntimeError('SCfeedbackBalance: FAIL (setback)')
+        if transmission_history[-1] < B.shape[1]:
+            raise RuntimeError('SCfeedbackBalance: FAIL (lost transmission)')
+        if _is_stable_or_converged(3, eps, rms_orbit_history):
+            LOGGER.debug(f'SCfeedbackBalance: Success (converged after {steps} steps)')
+            return SC
     if _is_stable_or_converged(min(10, maxsteps), eps, rms_orbit_history):
         LOGGER.debug('SCfeedbackBalance: Success (maxsteps reached)')
         return SC
@@ -229,5 +234,7 @@ def _golden_donut(r0, r1, Npts):
 
 
 def _is_stable_or_converged(n, eps, hist):  # Balance and Run  # TODO rethink
+    if len(hist) < n:
+        return False
     cv = np.var(hist[-n:]) / np.std(hist[-n:])
     return cv < eps

@@ -38,7 +38,7 @@ def SCgetModelRM(SC, BPMords, CMords, trackMode='TBT', Z0=np.zeros(6), nTurns=1,
                 TdB = trackmethod(ring, Z0, nTurns, BPMords, keep_lattice=False)
                 setattr(ring[CMord], f"Polynom{NUM_TO_AB[nDim]}", PolynomNominal[:])
             dTdB = (TdB - Ta) / dkick
-            RM[:, cnt] = np.concatenate((np.ravel(dTdB[0, :, :, :]), np.ravel(dTdB[2, :, :, :])))
+            RM[:, cnt] = np.concatenate((np.ravel(np.transpose(dTdB[0, :, :, :], axes=(2, 1, 0))), np.ravel(np.transpose(dTdB[2, :, :, :], axes=(2, 1, 0)))))
             cnt = cnt + 1
     return RM
 

@@ -125,7 +125,7 @@ if __name__ == "__main__":
 
     SC.INJ.nTurns = 2
     SC = SCfeedbackStitch(SC, Minv2, nBPMs=3, maxsteps=20)
-    #SC = SCfeedbackRun(SC, Minv2, target=300E-6, maxsteps=30, eps=eps)
+    # SC = SCfeedbackRun(SC, Minv2, target=500E-6, maxsteps=30, eps=eps)
     SC = SCfeedbackBalance(SC, Minv2, maxsteps=32, eps=eps)
 
     for S in np.linspace(0.1, 1, 5):
