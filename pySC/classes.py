@@ -102,6 +102,10 @@ class SimulatedComissioning(DotDict):
         super(SimulatedComissioning, self).__init__()
         self.RING: Lattice = ring.deepcopy()
         self.IDEALRING: Lattice = ring.deepcopy()
+        for ind, element in enumerate(ring):
+            self.RING[ind] = element.deepcopy()
+            self.IDEALRING[ind] = element.deepcopy()
+
         self.INJ: Injection = Injection()
         self.SIG: Sigmas = Sigmas()
         self.ORD: Indices = Indices()
@@ -147,13 +151,14 @@ class SimulatedComissioning(DotDict):
             if ind not in self.SIG.Magnet.keys():
                 self.SIG.Magnet[ind] = DotDict()
             self.SIG.Magnet[ind].update(nvpairs)
-
-            self.RING[ind].NomPolynomB = self.RING[ind].PolynomB[:]
-            self.RING[ind].NomPolynomA = self.RING[ind].PolynomA[:]
-            self.RING[ind].SetPointB = self.RING[ind].PolynomB[:]
-            self.RING[ind].SetPointA = self.RING[ind].PolynomA[:]
-            self.RING[ind].CalErrorB = np.zeros(len(self.RING[ind].PolynomB))
-            self.RING[ind].CalErrorA = np.zeros(len(self.RING[ind].PolynomA))
+            for ab in ("A", "B"):
+                order = len(getattr(self.RING[ind], f"Polynom{ab}"))
+                for field in ("NomPolynom", "SetPoint", "CalError"):
+                    setattr(self.RING[ind], f"{field}{ab}", np.zeros(order))
+            self.RING[ind].NomPolynomB += self.RING[ind].PolynomB
+            self.RING[ind].NomPolynomA += self.RING[ind].PolynomA
+            self.RING[ind].SetPointB += self.RING[ind].PolynomB
+            self.RING[ind].SetPointA += self.RING[ind].PolynomA
             self.RING[ind].MagnetOffset = np.zeros(3)
             self.RING[ind].SupportOffset = np.zeros(3)
             self.RING[ind].MagnetRoll = np.zeros(3)
@@ -210,7 +215,7 @@ class SimulatedComissioning(DotDict):
                         randn_cutoff(self.SIG.Magnet[ind][field], nsigmas))
         # Injection
         self.INJ.Z0 = self.INJ.Z0ideal + self.SIG.staticInjectionZ * SCrandnc(nsigmas, (6,))
-        self.INJ.randomInjectionZ = self.SIG.randomInjectionZ[:]
+        self.INJ.randomInjectionZ = 1 * self.SIG.randomInjectionZ
         # Circumference
         if 'Circumference' in self.SIG.keys():
             circScaling = 1 + self.SIG.Circumference * SCrandnc(nsigmas, (1, 1))
@@ -243,9 +248,9 @@ class SimulatedComissioning(DotDict):
                 if ordPair[0] > ordPair[1]:
                     struct_length = findspos(self.RING, len(self.RING))[0] - struct_length
 
-                rolls0 = getattr(self.RING[ordPair[0]], f"{support_type}Roll")  # Twisted supports are not considered
-                offsets0 = getattr(self.RING[ordPair[0]], f"{support_type}Offset")
-                offsets1 = getattr(self.RING[ordPair[1]], f"{support_type}Offset")
+                rolls0 = copy.deepcopy(getattr(self.RING[ordPair[0]], f"{support_type}Roll"))  # Twisted supports are not considered
+                offsets0 = copy.deepcopy(getattr(self.RING[ordPair[0]], f"{support_type}Offset"))
+                offsets1 = copy.deepcopy(getattr(self.RING[ordPair[1]], f"{support_type}Offset"))
 
                 if rolls0[1] != 0:
                     if f"{support_type}Offset" in self.SIG.Support[ordPair[1]].keys():
