@@ -28,7 +28,7 @@ def SCplotPhaseSpace(SC, ord=np.zeros(1), customBunch=[], nParticles=None, nTurn
             L0_tot = L0_tot + SC.RING[i].Length
         lengthSlippage = SPEED_OF_LIGHT * (SC.RING[SC.ORD.RF[0]].HarmNumber / SC.RING[SC.ORD.RF[0]].Frequency - L0_tot / SPEED_OF_LIGHT)
         T[5, :, :, :] = T[5, :, :, :] - lengthSlippage * np.arange(nTurns)[np.newaxis, np.newaxis, :]
-        labelStr[5] = '$\Delta S_{act}$ [m]'
+        labelStr[4] = '$\Delta S_{act}$ [m]'
     if plotCO:
         _, CO = findorbit6(SC.RING, ord)
         if np.isnan(CO[0, 0]):

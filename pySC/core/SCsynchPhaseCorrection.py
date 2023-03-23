@@ -13,7 +13,7 @@ def SCsynchPhaseCorrection(SC, cavOrd=None, nSteps=15, nTurns=20, plotResults=0,
         cavOrd = SC.ORD.RF
     ERROR = 0
     deltaPhi = 0
-    BPMshift = np.nan(1, nSteps)
+    BPMshift = np.full((1,nSteps),np.nan)
     lamb = 299792458 / SC.RING[cavOrd].Frequency
     lambTestVec = 1 / 2 * lamb * np.linspace(-1, 1, nSteps)
     SC.INJ.nTurns = nTurns
