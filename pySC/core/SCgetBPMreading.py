@@ -84,16 +84,16 @@ def _plot_bpm_reading(SC, B, T):  # T is 5D matrix
         if len(ap_ords):
             apS = sPos[ap_ords]
             x = np.ravel(np.arange(SC.INJ.nTurns)[:, np.newaxis] * sMax + apS)
-            y = 1E3 * np.repeat(apers[:, nDim, :].T, SC.INJ.nTurns, axis=1)  # to mm
+            y = 1E3 * np.tile(apers[:, nDim, :].T, SC.INJ.nTurns)  # to mm
             ax[nDim].plot(x, y[0, :], '-', color=tmpCol[0], linewidth=4)
             ax[nDim].plot(x, y[1, :], '-', color=tmpCol[0], linewidth=4)
         x = np.arange(SC.INJ.nTurns) * sMax
-        y_lims = np.array([-0.5, 0.5])
+        y_lims = 3*np.array([-5, 5])
         for nT in range(SC.INJ.nTurns):
             ax[nDim].plot(x[nT] * np.ones(2), y_lims, 'k:')
         ax[nDim].set_xlim([0, SC.INJ.nTurns * sPos[-1]])
         #ax[nDim].set_box('on')  # True?
-        ax[nDim].set_ylim([-5, 5])
+        ax[nDim].set_ylim(y_lims)
         ax[nDim].set_ylabel(ylabelStr[nDim])
         #ax[nDim].legend(legVec, legStr[0:len(legVec)])
         ax[nDim].set_xlabel('$s$ [m]')

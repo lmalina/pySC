@@ -102,6 +102,9 @@ if __name__ == "__main__":
     for ord in SCgetOrds(SC.RING, 'QF|QD|BEND|SF|SD'):
         SC.RING[ord].EApertures = 10E-3 * np.array([1, 1])  # [m]
     SC.RING[SC.ORD.Magnet[50]].EApertures = np.array([6E-3, 3E-3])  # [m]
+
+    SC.plot = False  # TODO: replace with proper global-like variable
+
     #SCsanityCheck(SC)
     #SCplotLattice(SC, nSectors=10)  # TODO
     SC.apply_errors()

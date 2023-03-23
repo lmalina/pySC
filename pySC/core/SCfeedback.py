@@ -13,7 +13,7 @@ def SCfeedbackFirstTurn(SC, Mplus, R0=None, CMords=None, BPMords=None, maxsteps=
     nWiggleCM = 1
     transmission_history, rms_orbit_history = [],[]
     for n in range(maxsteps):
-        B, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history, do_plot=True)  # Inject...
+        B, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history, do_plot=SC.plot)  # Inject...
         if transmission_history[-1] == 0:
             raise RuntimeError('SCfeedbackFirstTurn: FAIL (no BPM reading to begin with)')
         SC = _correction_step_firstturn(SC, transmission_history[-1]-1, BPMords, CMords, B, R0, Mplus)
@@ -32,16 +32,16 @@ def SCfeedbackFirstTurn(SC, Mplus, R0=None, CMords=None, BPMords=None, maxsteps=
             for i in range(dpts.shape[1]):
                 SC, _ = SCsetCMs2SetPoints(SC, CMordsH, dpts[0, i], skewness=False, method='add')
                 SC, _ = SCsetCMs2SetPoints(SC, CMordsV, dpts[1, i], skewness=True, method='add')
-                W, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history, do_plot=True)
+                W, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history, do_plot=SC.plot)
                 if transmission_history[-1] != transmission_history[-2]:
                     for _ in range(3):
-                        B, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history, do_plot=True)
+                        B, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history, do_plot=SC.plot)
                     if _is_repro(transmission_history, 3):
                         transmission_history[0:3] = -1  # void last hist  # TODO list -> should  be last 3
                         nWiggleCM = 1  # Reset Wiggler CM number
                         break  # Continue with feedback
             for _ in range(3):
-                B, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history, do_plot=True)
+                B, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history, do_plot=SC.plot)
                 SC = _correction_step_firstturn(SC, transmission_history[-1]-1, BPMords, CMords, B, R0, Mplus)
             nWiggleCM = nWiggleCM + 1
     raise RuntimeError('SCfeedbackFirstTurn: FAIL (maxsteps reached)')
@@ -52,7 +52,7 @@ def SCfeedbackStitch(SC, Mplus, R0=None, CMords=None, BPMords=None, nBPMs=4, max
     # assumes 2 turns
     if SC.INJ.nTurns != 2:
         raise ValueError("Stitching works only with two turns.")
-    B, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords, do_plot=True)
+    B, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords, do_plot=SC.plot)
     transmission_limit = int(B.shape[1] / 2 + nBPMs)
     if not transmission_history[-1] >= transmission_limit:
         LOGGER.debug('SCfeedbackStitch: Wiggling')
@@ -65,19 +65,19 @@ def SCfeedbackStitch(SC, Mplus, R0=None, CMords=None, BPMords=None, nBPMs=4, max
                 for ord in CMords2:
                     SC, _ = SCsetCMs2SetPoints(SC, ord, dpts[0][i], skewness=False, method='add')
                     SC, _ = SCsetCMs2SetPoints(SC, ord, dpts[1][i], skewness=True, method='add')
-                W, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history, do_plot=True)
+                W, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history, do_plot=SC.plot)
                 if transmission_history[-1] >= transmission_limit:
                     for _ in range(3):
-                        W, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history, do_plot=True)
+                        W, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history, do_plot=SC.plot)
                     if _is_repro(transmission_history, 3):
                         transmission_history[0:3] = -1  # void last hist  # TODO list -> should  be last 3
                         break
-    B, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history, do_plot=True)
+    B, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history, do_plot=SC.plot)
     if not transmission_history[-1] >= transmission_limit:
         raise RuntimeError('SCfeedbackStitch: FAIL Wiggling failed')
 
     for steps in range(maxsteps):
-        B, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history, do_plot=True)
+        B, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history, do_plot=SC.plot)
 
         lBPM = len(B[0])
 
@@ -111,7 +111,7 @@ def SCfeedbackRun(SC, Mplus, R0=None, CMords=None, BPMords=None, eps=1e-5, targe
     rms_orbit_history = None
 
     for steps in range(maxsteps):
-        B, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords,ind_history=transmission_history, orb_history=rms_orbit_history, do_plot=True) # Inject ...
+        B, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords,ind_history=transmission_history, orb_history=rms_orbit_history, do_plot=SC.plot) # Inject ...
 
 
 
@@ -143,7 +143,7 @@ def SCfeedbackBalance(SC, Mplus, R0=None, CMords=None, BPMords=None, eps=1e-5, m
     transmission_history = None
     rms_orbit_history = None
     for steps in range(maxsteps):
-        B, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history, do_plot=True)
+        B, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history, do_plot=SC.plot)
 
 
 
