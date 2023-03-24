@@ -34,7 +34,7 @@ def create_at_lattice() -> Lattice:
     qd = at.Quadrupole('QD', 0.5, -1.2, PassMethod='StrMPoleSymplectic4RadPass', MaxOrder=1)
     sf = at.Sextupole('SF', 0.1, 6.0487, PassMethod='StrMPoleSymplectic4RadPass', MaxOrder=2)
     sd = at.Sextupole('SD', 0.1, -9.5203, PassMethod='StrMPoleSymplectic4RadPass')
-    bend = at.Bend('BEND', 1, 2 * np.pi / 40, PassMethod='StrMPoleSymplectic4RadPass')
+    bend = at.Bend('BEND', 1, 2 * np.pi / 40, PassMethod='BndMPoleSymplectic4RadPass')
     d2 = at.Drift('Drift', 0.25)
     d3 = at.Drift('Drift', 0.2)
 
@@ -42,7 +42,7 @@ def create_at_lattice() -> Lattice:
                        _marker('GirderStart'), _marker('BPM'), qf, d2, d2, bend, d3, sd, d3, qd, d2, _marker('BPM'),
                        _marker('GirderEnd'), _marker('SectionEnd')], name='Simple FODO cell', energy=2.5E9)
     new_ring = at.Lattice([el.deepcopy() for _ in range(20) for el in cell], name='Simple Ring', energy=2.5E9)
-    rfc = at.RFCavity('RFCav', energy=2.5E9, voltage=2e6, frequency=1.498972612095445e+08, harmonic_number=50, length=0)
+    rfc = at.RFCavity('RFCav', energy=2.5E9, voltage=2e6, frequency=149896228.99999985, harmonic_number=50, length=0)
     new_ring.insert(0, rfc)
     return new_ring
 
