@@ -1,127 +1,113 @@
+import copy
+
 import numpy as np
-from scipy.optimize import root, minimize
+import matplotlib.pyplot as plt
+
+from scipy.optimize import curve_fit, root, minimize
+from scipy.optimize import fsolve
 
 from pySC.at_wrapper import findorbit6
 from pySC.core.SCgetBPMreading import SCgetBPMreading
 from pySC.core.SCsetpoints import SCsetCavs2SetPoints
-
-
-# TODO maybe translate again, currently not needed
 
 def SCsynchPhaseCorrection(SC, cavOrd=None, nSteps=15, nTurns=20, plotResults=0, plotProgress=0, verbose=0):
     if cavOrd is None:
         cavOrd = SC.ORD.RF
     ERROR = 0
     deltaPhi = 0
-    BPMshift = np.full((1,nSteps),np.nan)
-    lamb = 299792458 / SC.RING[cavOrd].Frequency
-    lambTestVec = 1 / 2 * lamb * np.linspace(-1, 1, nSteps)
+    BPMshift = np.full((nSteps), np.nan)
+    lamb = 299792458 / SC.RING[cavOrd[0]].Frequency
+    timeLagVec = 1 / 2 * lamb * np.linspace(-1, 1, nSteps)
     SC.INJ.nTurns = nTurns
     if verbose:
         print('Calibrate RF phase with: \n %d Particles \n %d Turns \n %d Shots \n %d Phase steps.\n\n' % (
             SC.INJ.nParticles, SC.INJ.nTurns, SC.INJ.nShots, nSteps))
-    for nL in range(len(lambTestVec)):
-        tmpSC = SCsetCavs2SetPoints(SC, cavOrd, 'TimeLag', lambTestVec[nL], 'add')
-        BPMshift[nL], TBTdE = getTbTEnergyShift(tmpSC)
+    for nL in range(len(timeLagVec)):
+        SC = SCsetCavs2SetPoints(SC, cavOrd, 'TimeLag', np.array([timeLagVec[nL]]), 'add')
+        BPMshift[nL], TBTdE = getTbTEnergyShift(SC)
+        SC = SCsetCavs2SetPoints(SC, cavOrd, 'TimeLag', -np.array([timeLagVec[nL]]), 'add')
         if plotProgress:
-            pass  # plotProgress(TBTdE, BPMshift, lambTestVec, nL)
+            funPlotProgress(TBTdE, BPMshift, timeLagVec, nL)
     if not (max(BPMshift) > 0 > min(BPMshift)):
         print('Zero crossing not within data set.\n')
         ERROR = 1
         return deltaPhi, ERROR
 
-    def sinFun(par, s):
-        return par[0] * np.sin(2 * np.pi * (par[3] * s + par[1])) + par[2]
+    def fit_fun(x, a, b, c):
+        return a * np.sin(np.pi * x + b) + c
 
-    def fomFun(par):
-        return sum((sinFun(par, lambTestVec) - BPMshift) ** 2)
+    x = timeLagVec
+    y = BPMshift
+    p0 = [max(BPMshift)-np.mean(BPMshift), 3.14, np.mean(BPMshift)]
+    param, param_cov = curve_fit(fit_fun, x, y, p0=p0)
+    sol = lambda x: fit_fun(x, param[0], param[1], param[2])
 
-    for startPhase in [-np.pi, -np.pi / 2, -np.pi / 4, 0]:
-        sol = minimize(fomFun, np.array(
-            [max(BPMshift) - np.mean(BPMshift), startPhase, np.mean(BPMshift), 0.5 / max(lambTestVec)]))
-
-        def solFun(x):
-            return sinFun(sol, x)
-
-        xp = np.linspace(lambTestVec[0], lambTestVec[-1], 100)
-        if not (max(solFun(xp)) > 0 > min(solFun(xp))):
-            print('Zero crossing not within fit function, trying different start point guess.\n')
-        else:
-            break
-    if not (max(solFun(xp)) > 0 > min(solFun(xp))):
+    if not (max(sol(x)) > 0 > min(sol(x))):
         print('Zero crossing not within fit function\n')
-        ERROR = 2
-    maxValInd = np.argmax(solFun(xp))
-    deltaPhi = root(solFun, xp[maxValInd] - abs(lambTestVec[0]) / 2)  # TODO root
+        ERROR = 2 # TODO: proper error raise
+
+    deltaPhi = fsolve(sol, x[np.argmax(sol(x))] - abs(timeLagVec[0]) / 2)
+
     if deltaPhi > lamb / 2:
         deltaPhi = deltaPhi - lamb
     elif deltaPhi < - lamb / 2:
         deltaPhi = deltaPhi + lamb
     if plotResults:
-        pass  # plotFunction() TODO
+        plt.plot(x / lamb * 360, y, 'o', color='red', label="data")
+        plt.plot(x / lamb * 360, sol(x), '--', color='blue', label="fit")
+        plt.plot(SC.INJ.Z0[5] / lamb * 360, sol(SC.INJ.Z0[5]), 'rD', markersize=12, label="Initial time lag")
+        plt.plot((deltaPhi) / lamb * 360, 0, 'kX', markersize=12, label="Final time lag")
+        plt.xlabel("RF phase [deg]")
+        plt.ylabel("BPM change [m]")
+        plt.legend()
+        plt.show()
     if np.isnan(deltaPhi):
         ERROR = 3
         print('SCrfCommissioning: ERROR (NaN phase)\n')
         return deltaPhi, ERROR
     if verbose:
-        XCO = findorbit6(SC.RING)
-        tmpSC = SCsetCavs2SetPoints(SC, cavOrd, 'TimeLag', deltaPhi, 'add')
-        XCOfinal = findorbit6(tmpSC.RING)
-        initial = np.remainder((XCO[5] - SC.INJ.Z0[5]) / lamb * 360, 360)
-        final = np.remainder((XCOfinal[5] - SC.INJ.Z0[5]) / lamb * 360, 360)
-        print(f'Phase correction step: {deltaPhi}.3f\n')
-        print('>> Static phase error corrected from %.0fdeg to %.1fdeg\n' % (initial, final))
+        XCO = findorbit6(SC.RING)[0]
+        tmpSC = copy.deepcopy(SC)
+        tmpSC = SCsetCavs2SetPoints(tmpSC, cavOrd, 'TimeLag', deltaPhi, 'add')
+        XCOfinal = findorbit6(tmpSC.RING)[0]
+        initial = np.fmod((XCO[5] - SC.INJ.Z0[5]) / lamb * 360, 360)
+        final = np.fmod((XCOfinal[5] - SC.INJ.Z0[5]) / lamb * 360, 360)
+        print('>> Time lag correction step: %.3fm' % deltaPhi[0])
+        print('>> Static phase error corrected from %.0fdeg to %.1fdeg' % (initial, final))
         return deltaPhi, ERROR
 
 
 def getTbTEnergyShift(SC):
     B = SCgetBPMreading(SC)
-    BB = np.reshape(B[0, :], [], SC.INJ.nTurns)
-    dE = np.mean(BB - np.repmat(BB[:, 0], 1, SC.INJ.nTurns))
-    x = np.arange(SC.INJ.nTurns)
+    BB = np.transpose(np.reshape(B[0, :], (SC.INJ.nTurns, len(SC.ORD.BPM))))
+    dE = np.mean(BB - np.transpose(np.tile(BB[:, 0], (SC.INJ.nTurns, 1))), axis=0)
+    x = np.linspace(1, SC.INJ.nTurns-1, SC.INJ.nTurns-1)
     y = dE[1:]
     x = x[~np.isnan(y)]
     y = y[~np.isnan(y)]
-    BPMshift = np.linalg.lstsq(x, y)[0]
+    A = np.vstack([x, np.zeros(len(x))]).T
+    m, c = np.linalg.lstsq(A, y, rcond=None)[0]
+    BPMshift = m
     return BPMshift, dE
 
-# def plotProgress(TBTdE, BPMshift, fTestVec, nE):
-#     plt.figure(2);
-#     plt.clf()
-#     plt.subplot(2, 1, 1);
-#     plt.hold(True)
-#     plt.plot(TBTdE, 'o')
-#     plt.plot(np.arange(len(TBTdE)) *BPMshift[nE], '--')
-#     plt.xlabel('Number of turns');
-#     plt.ylabel('$<\Delta x_\mathrm{TBT}>$ [m]');
-#     plt.subplot(2, 1, 2);
-#     plt.plot(fTestVec[0:nE], BPMshift[0:nE], 'o')
-#     plt.xlabel('$\Delta \phi$ [m]');
-#     plt.ylabel('$<\Delta x>$ [m/turn]');
-#     plt.setp(plt.findall(plt.gcf(), '-property', 'FontSize'), 'FontSize', 18);
-#     plt.setp(plt.findall(plt.gcf(), '-property', 'Interpreter'), 'Interpreter', 'latex');
-#     plt.setp(plt.findall(plt.gcf(), '-property', 'TickLabelInterpreter'), 'TickLabelInterpreter', 'latex');
-#     plt.gcf().set_color('w');
-#     plt.draw()
-#     plt.draw()
-#
-#
-# def plotFunction():
-#     plt.figure(87)
-#     plt.clf()
-#     plt.hold(True)
-#     plt.plot((lambTestVec + SC.INJ.Z0[5]) / lamb * 360, 1E6 * BPMshift, 'o')
-#     plt.plot((xp+SC.INJ.Z0[5]) / lamb * 360, 1E6 * solFun(xp))
-#     plt.plot((SC.INJ.Z0[5]) / lamb * 2 * 180, 1E6 * (sol[0] * np.sin(2 * np.pi * (sol[3] * 0 + sol[1])) +sol[2]), 'rD', 'MarkerSize', 16)
-#     plt.plot((deltaPhi) / lamb * 2 * 180, 0, 'kX', 'MarkerSize', 16)
-#     plt.setp(plt.gca(), 'XLim', 180 *[-1 1], 'box', 'on');
-#     plt.legend({'Measurement', 'Fit', 'Initial phase', 'Phase correction'})
-#     plt.xlabel('RF phase [$^\circ$]');plt.ylabel('$<\Delta x>$ [$\mu$m/turn]');
-#     plt.setp(plt.findall(plt.gcf(), '-property', 'FontSize'), 'FontSize', 18);
-#     plt.setp(plt.findall(plt.gcf(), '-property', 'Interpreter'), 'Interpreter', 'latex');
-#     plt.setp(plt.findall(plt.gcf(), '-property', 'TickLabelInterpreter'), 'TickLabelInterpreter', 'latex');
-#     plt.gcf().set_color('w');plt.draw()
-#
+def funPlotProgress(TBTdE, BPMshift, fTestVec, nE):
+    plt.figure(2)
+    plt.clf()
+    plt.subplot(2, 1, 1)
+    # plt.hold(True)
+    plt.plot(TBTdE, 'o')
+    plt.plot(np.arange(len(TBTdE)) *BPMshift[nE], '--')
+    plt.xlabel('Number of turns')
+    plt.ylabel('$<\Delta x_\mathrm{TBT}>$ [m]')
+    plt.subplot(2, 1, 2)
+    plt.plot(fTestVec[0:nE], BPMshift[0:nE], 'o')
+    plt.xlabel('$\Delta \phi$ [m]')
+    plt.ylabel('$<\Delta x>$ [m/turn]')
+    plt.show()
+
+
+# TODO: implement input check
+
 #            def inputCheck(SC, par):
 #     if SC.INJ.trackMode != 'TBT':
 #         raise ValueError('Trackmode should be turn-by-turn (''SC.INJ.trackmode=TBT'').')

@@ -120,7 +120,7 @@ if __name__ == "__main__":
     SC.INJ.nTurns = 1
     SC.INJ.nShots = 1
     SC.INJ.trackMode = 'TBT'
-    eps = 1E-4  # Noise level
+    eps = 5E-4  # Noise level
     SCgetBPMreading(SC, do_plot=False)
     SC = SCfeedbackFirstTurn(SC, Minv1)
     #Minv1test = SCgetPinv(RM1, alpha=5,plot=False) # added 1turn feedback with low regularization to test feedback
@@ -141,7 +141,7 @@ if __name__ == "__main__":
     SC.RING = SCcronoff(SC.RING, 'cavityon')
     SCplotPhaseSpace(SC, nParticles=10, nTurns=100)
     for nIter in range(2):
-        [deltaPhi, ERROR] = SCsynchPhaseCorrection(SC, nTurns=5, nSteps=25, plotResults=True, verbose=True)
+        [deltaPhi, ERROR] = SCsynchPhaseCorrection(SC, nTurns=5, nSteps=25, plotResults=True, verbose=True, plotProgress=False)
         if ERROR:
             sys.exit('Phase correction crashed')
         SC = SCsetCavs2SetPoints(SC, SC.ORD.RF, 'TimeLag', deltaPhi, method='add')
