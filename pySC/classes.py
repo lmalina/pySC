@@ -5,7 +5,8 @@ from typing import Tuple
 import numpy as np
 from at import Lattice
 from numpy import ndarray
-from pySC.constants import RF_PROPERTIES, SUPPORT_TYPES, AB, BPM_ERROR_FIELDS, MAGNET_ERROR_FIELDS, MAGNET_TYPE_FIELDS, RF_ERROR_FIELDS, TRACKING_MODES
+from pySC.constants import (RF_PROPERTIES, SUPPORT_TYPES, AB, BPM_ERROR_FIELDS, MAGNET_ERROR_FIELDS, MAGNET_TYPE_FIELDS,
+                            RF_ERROR_FIELDS, SUPPORT_ERROR_FIELDS, TRACKING_MODES)
 from pySC.utils.classdef_tools import add_padded, randn_cutoff, update_double_ordinates, intersect, s_interpolation
 from pySC.utils.sc_tools import SCrandnc, SCscaleCircumference, SCgetTransformation
 from pySC.at_wrapper import findspos
@@ -176,6 +177,8 @@ class SimulatedComissioning(DotDict):
     def register_supports(self, support_ords: ndarray, support_type: str, **kwargs):
         if support_type not in SUPPORT_TYPES:
             raise ValueError(f'Unknown support type ``{support_type}`` found. Allowed are {SUPPORT_TYPES}.')
+        if len(unknown_keys := [key for key in kwargs.keys() if key not in SUPPORT_ERROR_FIELDS]):
+            raise ValueError(f"Unknown keywords {unknown_keys}. Allowed keywords are {SUPPORT_ERROR_FIELDS}")
         if not len(support_ords) or support_ords.shape[0] != 2:
             raise ValueError('Ordinates must be a 2xn array of ordinates.')
         if upstream := np.sum(np.diff(support_ords, axis=0) < 0):

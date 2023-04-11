@@ -91,10 +91,10 @@ def test_register_bad_keywords(at_cell):
         sc.register_magnets(np.array([0]), BadKeyword=5E-2 * np.ones(2), )
     assert "BadKeyword" in str(e_info.value)
     with pytest.raises(ValueError) as e_info:
-        sc.register_supports(np.array([0]), "Girder", BadKeyword=5E-2 * np.ones(2),)
+        sc.register_supports(np.ones((2, 3)), "Girder", BadKeyword=5E-2 * np.ones(2),)
     assert "BadKeyword" in str(e_info.value)
     with pytest.raises(ValueError) as e_info:
-        sc.register_supports(np.array([0]), "BadKeyword", Offset=5E-2 * np.ones(2,6),)
+        sc.register_supports(np.ones((2, 3)), "BadKeyword", Offset=5E-2 * np.ones((2,3)),)
     assert "BadKeyword" in str(e_info.value)
 
 
