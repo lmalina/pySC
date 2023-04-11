@@ -5,7 +5,7 @@ from typing import Tuple
 import numpy as np
 from at import Lattice
 from numpy import ndarray
-from pySC.constants import RF_PROPERTIES, SUPPORT_TYPES
+from pySC.constants import RF_PROPERTIES, SUPPORT_TYPES, AB, BPM_ERROR_FIELDS, MAGNET_ERROR_FIELDS, MAGNET_TYPE_FIELDS, RF_ERROR_FIELDS, TRACKING_MODES
 from pySC.utils.classdef_tools import add_padded, randn_cutoff, update_double_ordinates, intersect, s_interpolation
 from pySC.utils.sc_tools import SCrandnc, SCscaleCircumference, SCgetTransformation
 from pySC.at_wrapper import findspos
@@ -58,8 +58,8 @@ class Injection(DotDict):
     @trackMode.setter
     def trackMode(self, mode):
         allowed_modes = ("TBT", "ORB", "PORB")
-        if mode not in allowed_modes:
-            raise AttributeError(f"trackMode property has to be one of {allowed_modes}")
+        if mode not in TRACKING_MODES:
+            raise AttributeError(f"trackMode property has to be one of {TRACKING_MODES}")
         self._trackMode = mode
         if mode == 'ORB':
             self.nTurns = 1
@@ -97,6 +97,7 @@ class Sigmas(DotDict):
         self.staticInjectionZ: ndarray = np.zeros(6)
         self.Circumference: float = 0.0  # Circumference error reletive / or absolute
 
+
 class SimulatedComissioning(DotDict):
     def __init__(self, ring: Lattice):
         super(SimulatedComissioning, self).__init__()
@@ -111,6 +112,8 @@ class SimulatedComissioning(DotDict):
         self.ORD: Indices = Indices()
 
     def register_bpms(self, ords: ndarray, **kwargs):
+        if len(unknown_keys := [key for key in kwargs.keys() if key not in BPM_ERROR_FIELDS]):
+            raise ValueError(f"Unknown keywords {unknown_keys}. Allowed keywords are {BPM_ERROR_FIELDS}")
         self.ORD.BPM = np.unique(np.concatenate((self.ORD.BPM, ords)))
         for ind in np.unique(ords):
             if ind not in self.SIG.BPM.keys():
@@ -127,6 +130,8 @@ class SimulatedComissioning(DotDict):
             self.RING[ind].SumError = 0
 
     def register_cavities(self, ords: ndarray, **kwargs):
+        if len(unknown_keys := [key for key in kwargs.keys() if key not in RF_ERROR_FIELDS]):
+            raise ValueError(f"Unknown keywords {unknown_keys}. Allowed keywords are {RF_ERROR_FIELDS}")
         self.ORD.RF = np.unique(np.concatenate((self.ORD.RF, ords)))
         for ind in np.unique(ords):
             if ind not in self.SIG.RF.keys():
@@ -138,8 +143,9 @@ class SimulatedComissioning(DotDict):
                 setattr(self.RING[ind], f"{field}CalError", 0)
 
     def register_magnets(self, ords: ndarray, **kwargs):
-        keywords = ['HCM', 'VCM', 'CF', 'SkewQuad', 'MasterOf']
-        nvpairs = {key: value for key, value in kwargs.items() if key not in keywords}
+        if len(unknown_keys := [key for key in kwargs.keys() if key not in MAGNET_TYPE_FIELDS + MAGNET_ERROR_FIELDS]):
+            raise ValueError(f"Unknown keywords {unknown_keys}. Allowed keywords are {MAGNET_TYPE_FIELDS + MAGNET_ERROR_FIELDS}")
+        nvpairs = {key: value for key, value in kwargs.items() if key not in MAGNET_TYPE_FIELDS}
         self.ORD.Magnet = np.unique(np.concatenate((self.ORD.Magnet, ords)))
         if 'SkewQuad' in kwargs.keys():
             self.ORD.SkewQuad = np.unique(np.concatenate((self.ORD.SkewQuad, ords)))
@@ -151,7 +157,7 @@ class SimulatedComissioning(DotDict):
             if ind not in self.SIG.Magnet.keys():
                 self.SIG.Magnet[ind] = DotDict()
             self.SIG.Magnet[ind].update(nvpairs)
-            for ab in ("A", "B"):
+            for ab in AB:
                 order = len(getattr(self.RING[ind], f"Polynom{ab}"))
                 for field in ("NomPolynom", "SetPoint", "CalError"):
                     setattr(self.RING[ind], f"{field}{ab}", np.zeros(order))
@@ -392,11 +398,11 @@ class SimulatedComissioning(DotDict):
         setpoints_a, setpoints_b = self.RING[source_ord].SetPointA, self.RING[source_ord].SetPointB
         polynoms = dict(A=setpoints_a * add_padded(np.ones(len(setpoints_a)), self.RING[source_ord].CalErrorA),
                         B=setpoints_b * add_padded(np.ones(len(setpoints_b)), self.RING[source_ord].CalErrorB))
-        for target in ("A", "B"):
+        for target in AB:
             new_polynom = polynoms[target][:]
             if hasattr(self.RING[target_ord], f'Polynom{target}Offset'):
                 new_polynom = add_padded(new_polynom, getattr(self.RING[target_ord], f'Polynom{target}Offset'))
-            for source in ("A", "B"):
+            for source in AB:
                 if hasattr(self.RING[target_ord], f'SysPol{target}From{source}'):
                     polynom_errors = getattr(self.RING[target_ord], f'SysPol{target}From{source}')
                     for n in polynom_errors.keys():
