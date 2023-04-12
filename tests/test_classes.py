@@ -98,6 +98,61 @@ def test_register_bad_keywords(at_cell):
     assert "BadKeyword" in str(e_info.value)
 
 
+def test_apply_errors(at_cell):
+    np.random.seed(123)
+    sc = SimulatedComissioning(at_cell)
+    sc.register_bpms(np.array([8, 21]), CalError=5E-2 * np.ones(2), Offset=500E-6 * np.ones(2),
+                     Noise=10E-6 * np.ones(2), NoiseCO=1E-6 * np.ones(2), Roll=1E-3)
+    sc.register_cavities(np.array([0]), FrequencyOffset=5E3, VoltageOffset=5E3, TimeLagOffset=0.5)
+    sc.register_magnets(SCgetOrds(sc.RING, "Q"), CalErrorB=np.array([5E-2, 1E-3]),
+                        MagnetOffset=200E-6 * np.array([1, 1, 0]), )
+    indices = np.vstack((SCgetOrds(sc.RING, 'SectionStart'), SCgetOrds(sc.RING, 'SectionEnd')))
+    sc.register_supports(indices, "Section", Offset=200E-6 * np.array([1, 1, 0]), Roll=20E-6 * np.array([1, 0, 0]))
+    sc.apply_errors()
+    # BPM at index 8
+    for attr, value in dict(CalError=np.array([-0.07531474, -0.02893001]),
+                            Offset=np.array([0.00082572, -0.00021446]),
+                            Roll=np.array([0.00126594]),
+                            SupportOffset=np.array([6.77178102e-05, -2.36609890e-06]),
+                            SupportRoll=np.array([1.95747201e-05])).items():
+        assert_allclose(getattr(sc.RING[8], attr), value, rtol=2e-5)
+        assert not hasattr(sc.IDEALRING[8], attr)
+    # BPM at index 21
+    for attr, value in dict(CalError=np.array([-0.04333702, -0.03394431]),
+                            Offset=np.array([-4.73544845e-05, 7.45694813e-04]),
+                            Roll=np.array([-0.0006389]),
+                            SupportOffset=np.array([6.77178102e-05, -2.36609890e-06]),
+                            SupportRoll=np.array([1.95747201e-05])).items():
+        assert_allclose(getattr(sc.RING[21], attr), value, rtol=2e-5)
+        assert not hasattr(sc.IDEALRING[21], attr)
+    # RF cavity
+    for attr, value in dict(FrequencyOffset=-5428.1530165,
+                            VoltageOffset=4986.72723292,
+                            TimeLagOffset=0.14148925).items():
+        assert_allclose(getattr(sc.RING[0], attr), value, rtol=2e-5)
+        assert not hasattr(sc.IDEALRING[0], attr)
+    # Magnet at index 9
+    for attr, value in dict(CalErrorB=np.array([-0.0221991, -0.00043435]),
+                            MagnetOffset=np.array([7.72372798e-05, 1.47473715e-04, 0.0]),
+                            MagnetRoll=np.array([0.0, 0.0, 0.0]),
+                            SupportOffset=np.array([6.77178102e-05, -2.36609890e-06, 0.0]),
+                            SupportRoll=np.array([1.95747201e-05, 0.0, 0.0])).items():
+
+        assert_allclose(getattr(sc.RING[9], attr), value, rtol=2e-5)
+        assert not hasattr(sc.IDEALRING[9], attr)
+    # Magnet at index 10
+    for attr, value in dict(CalErrorB=np.array([0.0745366, -0.00093583]),
+                            MagnetOffset=np.array([0.00023517, -0.00025078, 0.0]),
+                            MagnetRoll=np.array([0.0, 0.0, 0.0]),
+                            SupportOffset=np.array([6.77178102e-05, -2.36609890e-06, 0.0]),
+                            SupportRoll=np.array([1.95747201e-05, 0.0, 0.0])).items():
+
+        assert_allclose(getattr(sc.RING[10], attr), value, rtol=2e-5)
+        assert not hasattr(sc.IDEALRING[10], attr)
+
+
+
+
 @pytest.fixture
 def at_cell():
     def _marker(name):
