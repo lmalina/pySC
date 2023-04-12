@@ -33,7 +33,7 @@ EXTRA_DEPENDENCIES = {
     "doc": [
         "sphinx",
         "travis-sphinx",
-        "sphinx_rtd_theme"
+        "sphinx-rtd-theme"
     ]}
 
 EXTRA_DEPENDENCIES.update(
