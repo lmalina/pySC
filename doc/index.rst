@@ -1,7 +1,8 @@
 Welcome to pySC's documentation!
 ================================
 
-``pySC`` is a Python version of Simulated Commissioning toolkit for synchrotrons `SC <https://github.com/ThorstenHellert/SC>`_ written in Matlab.
+`pySC <https://github.com/lmalina/pySC>`_ is a Python version of Simulated Commissioning toolkit for synchrotrons
+`SC <https://github.com/ThorstenHellert/SC>`_, which has been written in Matlab.
 Currently, it is in the development stage and it is not yet intended for users.
 
 
