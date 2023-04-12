@@ -6,7 +6,7 @@ from pySC.utils.sc_tools import SCrandnc
 def update_double_ordinates(ords1, ords2):
     con = np.concatenate((ords1, ords2), axis=1)
     con = con[:, np.lexsort((con[0, :], con[1, :]))]
-    return con[:, np.where(np.sum(np.abs(np.diff(con, axis=1)), axis=0))[0]]
+    return con[:, np.concatenate((np.array([1]), np.sum(np.abs(np.diff(con, axis=1)), axis=0))) != 0]
 
 
 def intersect(primary, secondary):
