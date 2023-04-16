@@ -130,11 +130,11 @@ def SCplotLattice(SC,
 
 
     # plot BPMs and correctors
-    hcor = HCORRECTOR
+    hcor = HCORRECTOR.copy()
     hcor['refpts'] = sc.ORD.CM
-    vcor = VCORRECTOR
+    vcor = VCORRECTOR.copy()
     vcor['refpts'] = sc.ORD.CM
-    scor = SkewQUAD
+    scor = SkewQUAD.copy()
     scor['refpts'] = sc.ORD.SkewQuad
 
     axsynbottom=plot_synopt(ring, axes=axbottom,
@@ -178,15 +178,8 @@ if __name__=='__main__':
     # test simple input
     # SCplotLattice(sc)
 
-    # # test sRange (OK)
-    # SCplotLattice(sc, sRange=[0, 56])
-
-    # # test transferline mode
-    # sc.RING.disable_6d()
-    # opt_in, _, _ = at.linopt4(sc.RING, 0)
-    # opt_in.beta=np.array([1.0, 1.0])  # change input beta to see different optics
-    # sc.RING[0].TD = opt_in
-    # SCplotLattice(sc, transferLine=True, sRange=[0, 26.76])
+    # # test sRange
+    SCplotLattice(sc, sRange=[0, 56])
 
     # # test oList
     # SCplotLattice(sc, oList=[1230, 2345, 2780, 3456])
@@ -195,33 +188,28 @@ if __name__=='__main__':
     # SCplotLattice(sc, nSectors=16)
 
     # test plot names
-    SCplotLattice(sc, nSectors=32, plotMagNames=True)
+    # SCplotLattice(sc, nSectors=32, plotMagNames=True)
 
     # test fontSize
-    SCplotLattice(sc, nSectors=32, fontSize=22)
+    # SCplotLattice(sc, nSectors=32, fontSize=22)
+
+    # # test transferline mode
+    sc.RING.disable_6d()
+    opt_in, _, _ = at.linopt4(sc.RING, 0)
+    opt_in.beta=np.array([1.0, 1.0])  # change input beta to see different optics
+    sc.RING[0].TD = opt_in
+
+    # SCplotLattice(sc, transferLine=True)
+
+    # # test sRange+transferline
+    SCplotLattice(sc, transferLine=True, sRange=[0, 52.0], plotMagNames=True, fontSize=14)
 
     # # test nSectors+transferline
     # SCplotLattice(sc, transferLine=True, nSectors=16)
+
     # # test oList+transferline
     # SCplotLattice(sc, transferLine=True, oList=[0, 2345, 2780, 3456])
-    """ errors with this output
-     File "<input>", line 1, in <module>
-  File "/machfs/liuzzo/EBS/emittance_at_Pinholes/ebs_py38/lib/python3.8/site-packages/at/plot/specific.py", line 68, in plot_beta
-    return baseplot(ring, pldata_beta_disp, **kwargs)
-  File "/machfs/liuzzo/EBS/emittance_at_Pinholes/ebs_py38/lib/python3.8/site-packages/at/plot/generic.py", line 106, in baseplot
-    pout = plot_function(rg, rg.i_range, *args, **kwargs)
-  File "/machfs/liuzzo/EBS/emittance_at_Pinholes/ebs_py38/lib/python3.8/site-packages/at/plot/specific.py", line 19, in pldata_beta_disp
-    data0, _, data = get_optics(ring, refpts=refpts, get_chrom=True, **kwargs)
-  File "/machfs/liuzzo/EBS/emittance_at_Pinholes/ebs_py38/lib/python3.8/site-packages/at/physics/linear.py", line 843, in get_optics
-    return method(ring, refpts=refpts, dp=dp, **kwargs)
-  File "/machfs/liuzzo/EBS/emittance_at_Pinholes/ebs_py38/lib/python3.8/site-packages/at/physics/linear.py", line 739, in linopt6
-    return _linopt(ring, _analyze6, *args, **kwargs)
-  File "/machfs/liuzzo/EBS/emittance_at_Pinholes/ebs_py38/lib/python3.8/site-packages/at/physics/linear.py", line 340, in _linopt
-    orbit, sigma, d0 = build_sigma(twiss_in, orbit)
-  File "/machfs/liuzzo/EBS/emittance_at_Pinholes/ebs_py38/lib/python3.8/site-packages/at/physics/linear.py", line 262, in build_sigma
-    sigm = twin['R'][0, ...]+10.0*twin['R'][1, ...]
-IndexError: index 1 is out of bounds for axis 0 with size 1
-    """
+
     plt.show()
 
     pass
