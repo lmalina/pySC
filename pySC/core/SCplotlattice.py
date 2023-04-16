@@ -12,7 +12,7 @@ def SCplotLattice(SC,
                   nSectors: int = 1,
                   plotIdealRing: bool = False,
                   plotMagNames: bool = False,
-                  fontSize: int = 16):
+                  fontSize: int = 12):
     """
     py:func:'SCplotLattice' display lattice optics and correctors locations
 
@@ -49,6 +49,11 @@ def SCplotLattice(SC,
     SCplotLattice(SC,nSectors=12);
     ------------------------------------------------------------------
     """
+
+    if fontSize:
+        # adjust font size
+        plt.rcParams.update({'font.size': fontSize})
+
     if plotIdealRing:
         ring = SC.IDEALRING
     else:
@@ -117,7 +122,7 @@ def SCplotLattice(SC,
 
     # plot apertures
     at.plot.generic.baseplot(ring, plot_apertures, axes=(axcent, axcent.twinx()), s_range=sRange)
-    axsyncent=plot_synopt(ring, axes=axcent)
+    axsyncent=plot_synopt(ring, axes=axcent, famnames=plotMagNames)
     axsyncent.legend(loc='upper center', ncol=6) #, ncol=len(axsynbottom.get_children()))
     # axsyncent.set_ylim([0, 0.3])
     axsyncent.set_xlim(sRange)
@@ -140,6 +145,8 @@ def SCplotLattice(SC,
     axsynbottom.set_ylim([-5, 5])
     axsynbottom.set_xlim(sRange)
     axbottom.set_xlim(sRange)
+
+
     pass
 
 class ord:
@@ -185,14 +192,18 @@ if __name__=='__main__':
     # SCplotLattice(sc, oList=[1230, 2345, 2780, 3456])
 
     # test nSectors
-    SCplotLattice(sc, nSectors=16)
+    # SCplotLattice(sc, nSectors=16)
+
+    # test plot names
+    SCplotLattice(sc, nSectors=32, plotMagNames=True)
+
+    # test fontSize
+    SCplotLattice(sc, nSectors=32, fontSize=22)
 
     # # test nSectors+transferline
     # SCplotLattice(sc, transferLine=True, nSectors=16)
-
     # # test oList+transferline
     # SCplotLattice(sc, transferLine=True, oList=[0, 2345, 2780, 3456])
-
     """ errors with this output
      File "<input>", line 1, in <module>
   File "/machfs/liuzzo/EBS/emittance_at_Pinholes/ebs_py38/lib/python3.8/site-packages/at/plot/specific.py", line 68, in plot_beta

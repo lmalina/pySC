@@ -23,6 +23,7 @@ SkewQUAD = dict(label='Skew Quad.', facecolor=(0.0, 0.0, 0.0, 0.0), edgecolor=(7
 
 
 def plot_synopt(ring: Lattice,
+                famnames: bool = False,
                 axes: matplotlib.axes.Axes = None,
                 dipole=DIPOLE,
                 quadrupole=QUADRUPOLE,
@@ -136,6 +137,18 @@ def plot_synopt(ring: Lattice,
         axsyn.set_zorder(-0.2)       # Put synoptic in the background
 
     s_pos = ring.get_s_pos(range(len(ring)))
+
+    if famnames:
+        #  get fam name of each main multipole
+        for count, el in enumerate(ring):
+            s = s_pos[count]
+            if hasattr(el, 'PolynomB'):
+                axsyn.annotate(" " + el.FamName[0:10], xy=[s+el.Length/4, 0],
+                               xycoords='data',
+                               xytext=(1.5, 1.5),
+                               textcoords='offset points',
+                               rotation=90)
+
 
     if dipole is not None:
         # print('plot dipoles')

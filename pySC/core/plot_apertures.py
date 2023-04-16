@@ -25,7 +25,7 @@ def plot_apertures(ring: Lattice, refpts: Refpts, **kwargs):
 
     # Left axis definition
     left = (r'Elliptic [mm]', s_pos, [elApa, elApb],
-            [r'a', r'b'])
+            [r'$a_{ellip}$', r'$b_{ellip}$'])
     # Right axis definition
     right = ('Rectangular [mm]', s_pos, [recApxmin, recApxmax, recApymin, recApymax], ['$x_{min}$', '$x_{max}$', '$y_{min}$', '$y_{max}$'])
     return 'Apertures', left, right
