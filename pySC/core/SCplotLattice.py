@@ -1,127 +1,217 @@
-import numpy as np
+import at
+import at.plot
 import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-from pySC.at_wrapper import twissline, atlinopt
+import numpy as np
+from pySC.core.plot_synopt import plot_synopt, HCORRECTOR, VCORRECTOR, SkewQUAD
+from pySC.core.plot_apertures import plot_apertures
 
-def SCplotLattice(SC, transferLine=0, nSectors=1, oList=[], plotIdealRing=1, sRange=[], plotMagNames=0, fontSize=16):
-    sPos = np.cumsum(np.array([el.Length for el in SC.RING]))
-    if len(oList) == 0:
-        oList = np.where(sPos <= (sPos[-1] / nSectors))[0]
-    if len(sRange) > 0:
-        oList = np.intersect1d(np.where(sPos >= sRange[0]), np.where(sPos <= sRange[1]))
-    if transferLine:
-        if not hasattr(SC.RING[0], 'TD'):
-            print('Transfer line lattice did not contain initial parameters needed for beta function calculation!')
-            beta = np.nan * np.ones((2, len(oList)))
-            disp = np.nan * np.ones((1, len(oList)))
-        else:
-            TD = twissline(SC.IDEALRING, 0, SC.IDEALRING[0].TD, oList, 'chrom', 1E-8)
-            beta = np.reshape([TD.beta], (2, len(oList)))
-            disp = np.reshape([TD.Dispersion], (4, len(oList)))
+
+def SCplotLattice(SC,
+                  transferLine: bool = False,
+                  sRange: list = [],
+                  oList: list = [],
+                  nSectors: int = 1,
+                  plotIdealRing: bool = False,
+                  plotMagNames: bool = False,
+                  fontSize: int = 8):
+    """
+    py:func:'SCplotLattice' display lattice optics and correctors locations
+
+    Parameters:
+        :param SC:
+
+    Keyword Args:
+        transferLine: If true the function 'twissline' is used to calculate the lattice functions
+        sRange: Array ['sMin','sMax'] defining the plot range [m].
+        oList: If `'sRange'` is empty, `'oList'`  can be used to specify a list of ordinates at which the lattice should
+         be plotted
+        nSectors: If `'oList'` is empty, `'nSectors'` can be used to plot only the first fraction of the lattice
+        plotIdealRing:  Specify if 'SC.IDEALRING' should be used to plot twiss functions, otherwise 'SC.RING'.
+        plotMagNames: Specify if magnet names should be printed next to the magnets. Note: since Matlab is not able to
+        find the best placement of text annotations automatically, it is likely required that the corresponding lines in
+         the code are adjusted to the users discretion
+        fontSize: Figure font size.
+
+    Returns:
+
+
+    Examples:
+    Plots the complete lattice for a ring
+    ------------------------------------------------------------------
+    SCplotLattice(SC);
+    -----------------------------------------------------------------
+    Plots the lattice from ordinate 30 to 130 for a transfer line
+    ------------------------------------------------------------------
+    SCplotLattice(SC,transferLine=true,oList=range(30,120));
+    ------------------------------------------------------------------
+
+    Plots the lattice of one arc for a twelve-fold symmetric ring lattice
+    ------------------------------------------------------------------
+    SCplotLattice(SC,nSectors=12);
+    ------------------------------------------------------------------
+    """
+
+    if fontSize:
+        # adjust font size
+        plt.rcParams.update({'font.size': fontSize})
+
+    if plotIdealRing:
+        ring = SC.IDEALRING
     else:
-        if plotIdealRing:
-            ld, _, _ = atlinopt(SC.IDEALRING, 1e-3, oList)
-        else:
-            ld, _, _ = atlinopt(SC.RING, 1e-3, oList)
-        beta = np.reshape([ld.beta], (2, len(oList)))
-        disp = np.reshape([ld.Dispersion], (4, len(oList)))
-    DIP = []
-    QUAD = []
-    SEXT = []
-    OCT = []
-    SKEW = []
-    for ord in oList:
-        if hasattr(SC.RING[ord], 'BendingAngle') and SC.RING[ord].BendingAngle != 0:
-            DIP.append(ord)
-        if hasattr(SC.RING[ord], 'NomPolynomB'):
-            if any(np.where(SC.RING[ord].NomPolynomB == 2)):
-                QUAD.append(ord)
-            if any(np.where(SC.RING[ord].NomPolynomB == 3)):
-                SEXT.append(ord)
-            if any(np.where(SC.RING[ord].NomPolynomB == 4)):
-                OCT.append(ord)
-    if hasattr(SC, 'ORD') and hasattr(SC.ORD, 'SkewQuad'):
-        SKEW = np.intersect1d(SC.ORD.SkewQuad, oList)
-    ApertureForPlotting = {'apOrds': [], 'apVals': {0: [], 1: []}}
-    for nEl in oList:
-        if hasattr(SC.RING[nEl], 'EApertures') or hasattr(SC.RING[nEl], 'RApertures'):
-            ApertureForPlotting['apOrds'].append(nEl)
-            for nDim in range(2):
-                if hasattr(SC.RING[nEl], 'EApertures'):
-                    ApertureForPlotting['apVals'][nDim].append(SC.RING[nEl].EApertures[nDim] * np.array([-1, 1]))
-                else:
-                    ApertureForPlotting['apVals'][nDim].append(SC.RING[nEl].RApertures[2 * (nDim - 1) + [1, 2]])
-    fig, ax = plt.subplots(3, 1, figsize=(10, 10))
-    ax[0].plot(sPos[oList], 1E2 * disp[1, :], color='k', linewidth=2)
-    ax[0].set_ylabel('$\eta_x$ [cm]')
-    ax[0].set_ylim(ax[0].get_ylim() * np.array([1, 1.5]))
-    ax[0].set_xlim([sPos[min(oList)], sPos[max(oList)]])
-    ax[0].set_box(True)
-    ax[0].set_title('Beta Functions and Dispersion')
-    ax[0].legend(['Hor. Beta', 'Ver. Beta', 'Hor. Disp.'], loc='N', bbox_to_anchor=(0.5, 1.05), ncol=3, frameon=False)
-    ax[1].set_title('Aperture and Magnets')
-    ax[1].set_ylabel('Aperture [mm]')
-    ax[1].set_xlim([sPos[min(oList)], sPos[max(oList)]])
-    ax[1].set_box(True)
-    if len(ApertureForPlotting['apOrds']) > 0:
-        apS = sPos[ApertureForPlotting['apOrds']]
-        lStyle = ['-', ':']
-        for nDim in range(2):
-            ax[1].plot(apS, 1E3 * np.array(ApertureForPlotting['apVals'][nDim])[0, :],
-                       color=ax[0].get_lines()[nDim].get_color(), linewidth=4, linestyle=lStyle[nDim])
-            ax[1].plot(apS, 1E3 * np.array(ApertureForPlotting['apVals'][nDim])[1, :],
-                       color=ax[0].get_lines()[nDim].get_color(), linewidth=4, linestyle=lStyle[nDim])
-    scale = 1E3 * max([max(np.abs(np.array(ApertureForPlotting['apVals'][0]).flatten())),
-                       max(np.abs(np.array(ApertureForPlotting['apVals'][1]).flatten()))])
-    if len(scale) == 0:
-        scale = 10
-    for nM in range(len(OCT)):
-        ax[1].add_patch(patches.Rectangle((sPos[OCT[nM]], -scale), sPos[OCT[nM] + 1] - sPos[OCT[nM]], scale,
-                                          facecolor=ax[0].get_lines()[5].get_color()))
-        if plotMagNames:
-            ax[1].text(sPos[OCT[nM]], -(1.2 + 0.1 * (-1) ** (nM)) * scale, SC.RING[OCT[nM]].FamName)
-    for nM in range(len(SEXT)):
-        ax[1].add_patch(patches.Rectangle((sPos[SEXT[nM]], 0), sPos[SEXT[nM] + 1] - sPos[SEXT[nM]], scale,
-                                          facecolor=ax[0].get_lines()[4].get_color()))
-        if plotMagNames:
-            ax[1].text(sPos[SEXT[nM]], (1.2 + 0.1 * (-1) ** (nM)) * scale, SC.RING[SEXT[nM]].FamName)
-    for nM in range(len(DIP)):
-        ax[1].add_patch(
-            patches.Rectangle((sPos[DIP[nM]], 0), sPos[DIP[nM] + 1] - sPos[DIP[nM]], scale / 2, facecolor='k'))
-    for nM in range(len(QUAD)):
-        ax[1].add_patch(patches.Rectangle((sPos[QUAD[nM]], -scale / 2), sPos[QUAD[nM] + 1] - sPos[QUAD[nM]], scale / 2,
-                                          facecolor=ax[0].get_lines()[2].get_color()))
-        if plotMagNames:
-            ax[1].text(sPos[QUAD[nM]], (-.7 + 0.1 * (-1) ** (nM)) * scale, SC.RING[QUAD[nM]].FamName)
-    ax[1].set_ylim(ax[1].get_ylim() * np.array([1, 1.3]))
-    ax[1].legend(['Hor. Ap.', 'Ver. Ap.', 'Oct', 'Sext', 'Dip', 'Quad'], loc='N', bbox_to_anchor=(0.5, 1.05), ncol=6,
-                 frameon=False)
-    if hasattr(SC, 'ORD') and hasattr(SC.ORD, 'CM'):
-        for nDim in range(2):
-            for ord in np.intersect1d(SC.ORD.CM[nDim], oList):
-                if SC.RING[ord].PassMethod == 'CorrectorPass':
-                    ax[2].bar(sPos[ord], (-1) ** (nDim - 1) * 4, color=ax[0].get_lines()[nDim].get_color(),
-                              width=(max(sPos[oList]) - min(sPos[oList])) / 100)
-                else:
-                    ax[2].add_patch(patches.Rectangle((sPos[ord], 0 - 4 * (nDim - 1)), sPos[ord + 1] - sPos[ord], 4,
-                                                      facecolor=ax[0].get_lines()[nDim].get_color()))
-    for nM in range(len(SKEW)):
-        ax[2].add_patch(patches.Rectangle((sPos[SKEW[nM]], -2), sPos[SKEW[nM] + 1] - sPos[SKEW[nM]], 4,
-                                          facecolor=ax[0].get_lines()[4].get_color()))
-    if hasattr(SC, 'ORD') and hasattr(SC.ORD, 'BPM'):
-        for ord in np.intersect1d(SC.ORD.BPM, oList):
-            ax[2].add_patch(
-                patches.Rectangle((sPos[ord] - np.diff(sPos[oList]) / 300, -3), np.diff(sPos[oList]) / 150, 6,
-                                  facecolor='k'))
-    ax[2].set_ylim(ax[2].get_ylim() * np.array([1, 1.3]))
-    ax[2].legend(['HCM', 'VCM', 'SKEW', 'BPM'], loc='N', bbox_to_anchor=(0.5, 1.05), ncol=4, frameon=False)
-    ax[2].set_title('BPMs and CMs')
-    ax[2].set_xlabel('$s$ [m]')
-    ax[2].set_xlim([sPos[min(oList)], sPos[max(oList)]])
-    ax[2].set_box(True)
-    ax[2].set_yticklabels([])
-    plt.tight_layout()
-    plt.show()
-    return
+        ring = SC.RING
 
-# SCplotLattice(SC,transferLine=1,nSectors=4,oList=range(0,len(SC.RING),2),plotIdealRing=0,sRange=[0,100],plotMagNames=1,fontSize=16)
+    # define figure
+    fig, (axtop, axcent, axbottom) = plt.subplots(3, 1, figsize=(8, 8))
+    axtopr = axtop.twinx()
+
+    axtop.set_alpha(0.0)
+    axtopr.set_alpha(0.0)
+    axcent.set_alpha(0.0)
+    axbottom.set_alpha(0.0)
+
+    # Get s - positions along the lattice
+    allind = np.array(range(len(ring)+1))
+    sPos = at.get_s_pos(ring, allind)
+    C = sPos[-1]
+
+    # define s range based on input. sRange has priority, then olist, then nSectors,
+    # Check if oList is given explicitly
+    # if nSectors is provided, plot only one cell
+    if not sRange:
+
+        if nSectors != 1:
+            sRange = [0, C/nSectors]
+
+        elif oList != []:
+            sRange = [sPos[min(oList)], sPos[max(oList)]]
+
+        else: # use whole lattice
+            sRange = ring.s_range
+
+    # assign s_range in lattice, to be used by plot_beta and plot_synopt
+    ring.s_range = sRange
+
+    # get input twiss for transferline mode
+    if transferLine:
+        if hasattr(ring[0], 'TD'):
+            inputtwiss = ring[0].TD  # input optics of TL plot
+        else:
+            inputtwiss = np.recarray(1,
+                                 dtype=[('alpha', '<f8', (2,)),
+                                         ('beta', '<f8', (2,)),
+                                         ('mu', '<f8', (3,)),
+                                         ('R', '<f8', (3, 6, 6)),
+                                         ('A', '<f8', (6, 6)),
+                                         ('dispersion', '<f8', (4,)),
+                                         ('closed_orbit', '<f8', (6,)),
+                                         ('M', '<f8', (6, 6)),
+                                         ('s_pos', '<f8')])
+
+    if transferLine:
+
+        ring.plot_beta(axes=(axtop, axtopr), s_range=sRange, twiss_in=inputtwiss)
+        plot_synopt(ring, axes=axtop)
+    else:
+        ring.plot_beta(axes=(axtop, axtopr), s_range=sRange)
+        axsyn = plot_synopt(ring, axes=axtop)  # pending solution from LF and SW
+
+    axtopleg = axtop.get_legend()
+    axtopleg.set_ncols(3)
+
+    axtop.set_xlim(sRange)
+    axtopr.set_xlim(sRange)
+
+    # plot apertures
+    at.plot.generic.baseplot(ring, plot_apertures, axes=(axcent, axcent.twinx()), s_range=sRange)
+    axsyncent=plot_synopt(ring, axes=axcent, famnames=plotMagNames)
+    axsyncent.legend(loc='upper center', ncol=6) #, ncol=len(axsynbottom.get_children()))
+    # axsyncent.set_ylim([0, 0.3])
+    axsyncent.set_xlim(sRange)
+    axcent.set_xlim(sRange)
+
+
+    # plot BPMs and correctors
+    hcor = HCORRECTOR.copy()
+    hcor['refpts'] = SC.ORD.CM[0]
+    vcor = VCORRECTOR.copy()
+    vcor['refpts'] = SC.ORD.CM[1]
+    scor = SkewQUAD.copy()
+    scor['refpts'] = SC.ORD.SkewQuad
+
+    axsynbottom=plot_synopt(ring, axes=axbottom,
+                dipole=None, quadrupole=None, sextupole=None, multipole=None,
+                # monitor=None,
+                hcorrector=hcor, vcorrector=vcor, skewquadrupole=scor)
+    axsynbottom.legend(loc='upper center', ncol=4)
+    axsynbottom.set_ylim([-5, 5])
+    axsynbottom.set_xlim(sRange)
+    axbottom.set_xlim(sRange)
+
+
+    pass
+
+class ord:
+    CM=[]
+    BPM=[]
+    SkewQuad=[]
+
+class SC:
+    IDEALRING=None
+    RING=None
+    ORD = ord()
+
+
+if __name__=='__main__':
+
+    file='/machfs/liuzzo/EBS/beamdyn/matlab/optics/sr/S28F_all_BM_27Mar2022/betamodel.mat'
+    lattice_variable_name = 'betamodel'
+    # file = '../scfodo.mat'
+    # lattice_variable_name = 'r'
+
+    sc = SC()
+
+    sc.RING = at.load_lattice(file, mat_key=lattice_variable_name)
+    sc.IDEALRING = at.load_lattice(file, mat_key=lattice_variable_name)
+    sc.ORD.BPM = sc.IDEALRING.get_refpts(at.Monitor)
+    sc.ORD.CM.append(np.array(sc.IDEALRING.get_refpts('S[HFDJI]*')))
+    sc.ORD.CM.append(np.array(sc.IDEALRING.get_refpts('S[HFDJI]*')))
+    sc.ORD.SkewQuad = sc.IDEALRING.get_refpts(at.Quadrupole)
+
+    # test simple input
+    # SCplotLattice(sc)
+
+    # # test sRange
+    SCplotLattice(sc, sRange=[0, 56])
+
+    # # test oList
+    # SCplotLattice(sc, oList=[1230, 2345, 2780, 3456])
+
+    # test nSectors
+    # SCplotLattice(sc, nSectors=16)
+
+    # test plot names
+    # SCplotLattice(sc, nSectors=32, plotMagNames=True)
+
+    # test fontSize
+    # SCplotLattice(sc, nSectors=32, fontSize=22)
+
+    # # test transferline mode
+    sc.RING.disable_6d()
+    opt_in, _, _ = at.linopt4(sc.RING, 0)
+    opt_in.beta=np.array([1.0, 1.0])  # change input beta to see different optics
+    sc.RING[0].TD = opt_in
+
+    # SCplotLattice(sc, transferLine=True)
+
+    # # test sRange+transferline
+    SCplotLattice(sc, transferLine=True, sRange=[0, 52.0], plotMagNames=True, fontSize=14)
+
+    # # test nSectors+transferline
+    # SCplotLattice(sc, transferLine=True, nSectors=16)
+
+    # # test oList+transferline
+    # SCplotLattice(sc, transferLine=True, oList=[0, 2345, 2780, 3456])
+
+    plt.show()
+
+    pass

@@ -3,6 +3,8 @@ import sys
 import at
 import numpy as np
 from at import Lattice
+from at.plot import plot_beta
+import matplotlib.pyplot as plt
 from pySC.at_wrapper import atloco
 from pySC.classes import SimulatedComissioning
 from pySC.core.SCcronoff import SCcronoff
@@ -34,22 +36,30 @@ def create_at_lattice() -> Lattice:
     qd = at.Quadrupole('QD', 0.5, -1.2, PassMethod='StrMPoleSymplectic4RadPass')
     sf = at.Sextupole('SF', 0.1, 6.0487, PassMethod='StrMPoleSymplectic4RadPass')
     sd = at.Sextupole('SD', 0.1, -9.5203, PassMethod='StrMPoleSymplectic4RadPass')
-    bend = at.Bend('BEND', 1, 2 * np.pi / 40, PassMethod='StrMPoleSymplectic4RadPass')
+    bend = at.Bend('BEND', 1, 2 * np.pi / 40, PassMethod='BndMPoleSymplectic4RadPass')
     d2 = at.Drift('Drift', 0.25)
     d3 = at.Drift('Drift', 0.2)
+    BPM= at.Monitor('BPM')
 
     cell = at.Lattice([d2, _marker('SectionStart'), _marker('GirderStart'), bend, d3, sf, d3, _marker('GirderEnd'),
-                       _marker('GirderStart'), _marker('BPM'), qf, d2, d2, bend, d3, sd, d3, qd, d2, _marker('BPM'),
+                       _marker('GirderStart'), BPM, qf, d2, d2, bend, d3, sd, d3, qd, d2, _marker('BPM'),
                        _marker('GirderEnd'), _marker('SectionEnd')], name='Simple FODO cell', energy=2.5E9)
     new_ring = at.Lattice(cell * 20)
     rfc = at.RFCavity('RFCav', energy=2.5E9, voltage=2e6, frequency=1, harmonic_number=50, length=0)
     new_ring.insert(0, rfc)
+    new_ring.enable_6d()
+    new_ring.set_cavity_phase()
+    new_ring.set_rf_frequency()
+
     return new_ring
 
 
 if __name__ == "__main__":
-    ring = create_at_lattice()
+    ring = at.Lattice(create_at_lattice())
     print(len(ring))
+    # at.save_lattice(ring,'pysc_test_lattice.mat')
+    # ring.plot_beta()
+    # plt.show()
     SC = SimulatedComissioning(ring)
     # at.summary(ring)
     ords = SCgetOrds(SC.RING, 'BPM')
@@ -103,7 +113,8 @@ if __name__ == "__main__":
         SC.RING[ord].EApertures = 10E-3 * np.array([1, 1])  # [m]
     SC.RING[SC.ORD.Magnet[50]].EApertures = np.array([6E-3, 3E-3])  # [m]
     #SCsanityCheck(SC)
-    #SCplotLattice(SC, nSectors=10)  # TODO
+    SCplotLattice(SC, nSectors=10)  # TODO
+
     SC.apply_errors()
     #SCplotSupport(SC)  # TODO
     SC.RING = SCcronoff(SC.RING, 'cavityoff')

@@ -9,7 +9,7 @@ def plot_apertures(ring: Lattice, refpts: Refpts, **kwargs):
         refpts = refpts[:-2]
         
     # compute linear optics at the required locations
-    data = get_apertures(ring, refpts=refpts, **kwargs)
+    data = _get_apertures(ring, refpts=refpts, **kwargs)
     ea=np.array(data['EAp'])
     ra = np.array(data['RAp'])
 
@@ -31,7 +31,7 @@ def plot_apertures(ring: Lattice, refpts: Refpts, **kwargs):
     return 'Apertures', left, right
 
 
-def get_apertures(ring, refpts):
+def _get_apertures(ring, refpts):
 
     data = {'EAp': [], 'RAp': []}
 
