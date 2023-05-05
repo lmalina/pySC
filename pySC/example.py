@@ -139,23 +139,27 @@ if __name__ == "__main__":
             pass
 
     SC.RING = SCcronoff(SC.RING, 'cavityon')
+
     SCplotPhaseSpace(SC, nParticles=10, nTurns=100)
+
     for nIter in range(2):
         [deltaPhi, ERROR] = SCsynchPhaseCorrection(SC, nTurns=5, nSteps=25, plotResults=True, verbose=True, plotProgress=False)
         if ERROR:
             sys.exit('Phase correction crashed')
         SC = SCsetCavs2SetPoints(SC, SC.ORD.RF, 'TimeLag', deltaPhi, method='add')
-        [deltaF, ERROR] = SCsynchEnergyCorrection(SC, range=40E3 * np.array([-1, 1]),  # Frequency range [kHz]
+        
+        [deltaF, ERROR] = SCsynchEnergyCorrection(SC, f_range=40E3 * np.array([-1, 1]),  # Frequency range [kHz]
                                                   nTurns=20, nSteps=15,  # Number of frequency steps
-                                                  plotResults=True, verbose=True)
+                                                  plotResults=True, plotProgress=False, verbose=True)
+        
         if not ERROR:
-            SC = SCsetCavs2SetPoints(SC, SC.ORD.RF, 'Frequency', deltaF, method='add')
+            SC = SCsetCavs2SetPoints(SC, SC.ORD.RF, 'Frequency', np.array([deltaF]), method='add')
         else:
             sys.exit()
     SCplotPhaseSpace(SC, nParticles=10, nTurns=1000)
-    [maxTurns, lostCount, ERROR] = SCgetBeamTransmission(SC, nParticles=100, nTurns=10, verbose=True)
-    if ERROR:
-        sys.exit()
+    [maxTurns, lostCount] = SCgetBeamTransmission(SC, nParticles=100, nTurns=10, verbose=True)
+
+
     SC.INJ.trackMode = 'ORB'
     MCO = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, trackMode='ORB')
     eta = SCgetModelDispersion(SC, SC.ORD.BPM, SC.ORD.RF)

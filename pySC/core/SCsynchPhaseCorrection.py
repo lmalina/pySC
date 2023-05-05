@@ -13,21 +13,25 @@ from pySC.core.SCsetpoints import SCsetCavs2SetPoints
 def SCsynchPhaseCorrection(SC, cavOrd=None, nSteps=15, nTurns=20, plotResults=0, plotProgress=0, verbose=0):
     if cavOrd is None:
         cavOrd = SC.ORD.RF
+    
     ERROR = 0
     deltaPhi = 0
     BPMshift = np.full((nSteps), np.nan)
     lamb = 299792458 / SC.RING[cavOrd[0]].Frequency
     timeLagVec = 1 / 2 * lamb * np.linspace(-1, 1, nSteps)
     SC.INJ.nTurns = nTurns
+    
     if verbose:
         print('Calibrate RF phase with: \n %d Particles \n %d Turns \n %d Shots \n %d Phase steps.\n\n' % (
             SC.INJ.nParticles, SC.INJ.nTurns, SC.INJ.nShots, nSteps))
+    
     for nL in range(len(timeLagVec)):
         SC = SCsetCavs2SetPoints(SC, cavOrd, 'TimeLag', np.array([timeLagVec[nL]]), 'add')
         BPMshift[nL], TBTdE = getTbTEnergyShift(SC)
         SC = SCsetCavs2SetPoints(SC, cavOrd, 'TimeLag', -np.array([timeLagVec[nL]]), 'add')
         if plotProgress:
             funPlotProgress(TBTdE, BPMshift, timeLagVec, nL)
+    
     if not (max(BPMshift) > 0 > min(BPMshift)):
         print('Zero crossing not within data set.\n')
         ERROR = 1
@@ -52,6 +56,7 @@ def SCsynchPhaseCorrection(SC, cavOrd=None, nSteps=15, nTurns=20, plotResults=0,
         deltaPhi = deltaPhi - lamb
     elif deltaPhi < - lamb / 2:
         deltaPhi = deltaPhi + lamb
+    
     if plotResults:
         plt.plot(x / lamb * 360, y, 'o', color='red', label="data")
         plt.plot(x / lamb * 360, sol(x), '--', color='blue', label="fit")
@@ -61,10 +66,12 @@ def SCsynchPhaseCorrection(SC, cavOrd=None, nSteps=15, nTurns=20, plotResults=0,
         plt.ylabel("BPM change [m]")
         plt.legend()
         plt.show()
+    
     if np.isnan(deltaPhi):
         ERROR = 3
         print('SCrfCommissioning: ERROR (NaN phase)\n')
         return deltaPhi, ERROR
+    
     if verbose:
         XCO = findorbit6(SC.RING)[0]
         tmpSC = copy.deepcopy(SC)
