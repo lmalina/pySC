@@ -27,9 +27,7 @@ def SCplotLattice(SC,
          be plotted
         nSectors: If `'oList'` is empty, `'nSectors'` can be used to plot only the first fraction of the lattice
         plotIdealRing:  Specify if 'SC.IDEALRING' should be used to plot twiss functions, otherwise 'SC.RING'.
-        plotMagNames: Specify if magnet names should be printed next to the magnets. Note: since Matlab is not able to
-        find the best placement of text annotations automatically, it is likely required that the corresponding lines in
-         the code are adjusted to the users discretion
+        plotMagNames: Specify if magnet names should be printed next to the magnets.
         fontSize: Figure font size.
 
     Returns:
@@ -89,6 +87,7 @@ def SCplotLattice(SC,
             sRange = ring.s_range
 
     # assign s_range in lattice, to be used by plot_beta and plot_synopt
+    initial_s_range = ring.s_range
     ring.s_range = sRange
 
     # get input twiss for transferline mode
@@ -129,7 +128,6 @@ def SCplotLattice(SC,
     axsyncent.set_xlim(sRange)
     axcent.set_xlim(sRange)
 
-
     # plot BPMs and correctors
     hcor = HCORRECTOR.copy()
     hcor['refpts'] = SC.ORD.CM[0]
@@ -139,21 +137,25 @@ def SCplotLattice(SC,
     scor['refpts'] = SC.ORD.SkewQuad
 
     axsynbottom=plot_synopt(ring, axes=axbottom,
-                dipole=None, quadrupole=None, sextupole=None, multipole=None,
-                # monitor=None,
+                dipole=None, quadrupole=None, sextupole=None, multipole=None,  # monitor=None,
                 hcorrector=hcor, vcorrector=vcor, skewquadrupole=scor)
     axsynbottom.legend(loc='upper center', ncol=4)
     axsynbottom.set_ylim([-5, 5])
     axsynbottom.set_xlim(sRange)
     axbottom.set_xlim(sRange)
 
+    # restore initial s_range
+    ring.s_range = initial_s_range
 
-    pass
+    plt.pause(1)  # MUST BE 1 second! less does not show figure
+    plt.show(block=False)
+
 
 class ord:
     CM=[]
     BPM=[]
     SkewQuad=[]
+
 
 class SC:
     IDEALRING=None

@@ -26,6 +26,7 @@ from pySC.core.SCsynchEnergyCorrection import SCsynchEnergyCorrection
 from pySC.core.SCsynchPhaseCorrection import SCsynchPhaseCorrection
 from pySC.utils import logging_tools
 
+import time
 LOGGER = logging_tools.get_logger(__name__)
 
 
@@ -114,7 +115,6 @@ if __name__ == "__main__":
     SC.RING[SC.ORD.Magnet[50]].EApertures = np.array([6E-3, 3E-3])  # [m]
     #SCsanityCheck(SC)
     SCplotLattice(SC, nSectors=10)  # TODO
-
     SC.apply_errors()
     #SCplotSupport(SC)  # TODO
     SC.RING = SCcronoff(SC.RING, 'cavityoff')
