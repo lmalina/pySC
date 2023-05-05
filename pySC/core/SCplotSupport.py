@@ -277,7 +277,8 @@ def SCplotSupport(SC,
         if nDim == 2:
             presax.set_xlabel('$s$ [m]')
 
-    plt.show()
+    plt.pause(1)  # pause needed or grey figure
+    plt.show(block=False)
     return
 
 
