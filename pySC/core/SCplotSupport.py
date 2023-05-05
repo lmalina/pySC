@@ -2,11 +2,11 @@ import at
 import at.plot
 import matplotlib.pyplot as plt
 import numpy as np
+import copy
 
 
 def SCplotSupport(SC,
                   fontSize: int = 8,
-                  shiftAxis: float = 0.03,
                   xLim=None):
     """
     SCplotSupport
@@ -25,7 +25,7 @@ def SCplotSupport(SC,
     This function plots the overall offsets [dx,dy,dz] and rolls [az,ax,ay] of all magnets and BPMs,
     as well as the individual contributions from different support structures (if registered).
     Please note that the apperance of the figure significanlty depends on the lattice (magnitude of
-    errors or lattice size) and the used computer (screen size, Matlab version). The user might have
+    errors or lattice size) and the used computer (screen size). The user might have
     to adjust plot apperance properties.
 
     INPUTS
@@ -35,12 +35,11 @@ def SCplotSupport(SC,
 
     OPTIONS
     -------
-    The following options can be given as name/value-pairs:
+    The following keyword arguments:
 
     `'fontSize'` (12)::
       Figure font size.
-    `'shiftAxes'` (0.03)::
-      Axes are reanranged for grouping. Depending on screen resolution this value may be adjusted.
+      Axes are rearranged for grouping. Depending on screen resolution this value may be adjusted.
     `'xLim'` ([0 findspos(SC.RING,length(SC.RING)+1)])::
       Plot limits.
 
@@ -48,12 +47,6 @@ def SCplotSupport(SC,
     --------
     *SCregisterSupport*, *SCgetSupportOffset*, *SCgetSupportRoll*, *SCupdateSupport*
     """
-
-    if not hasattr(SC.ORD, 'Magnet'):
-        raise IndexError('Magnets must be registered. Use ''SCregisterMagnets''.')
-
-    if not hasattr(SC.ORD, 'BPM'):
-        raise IndexError('BPM must be registered. Use ''SCregisterBPMs''.')
 
     if fontSize:
         # adjust font size
@@ -106,7 +99,7 @@ def SCplotSupport(SC,
 
     # Loop over individual support structure types
     datadict = {'Ords': [], 'Off': {'a': [], 'b': []}, 'Roll': []}
-    supdict = {'Section': datadict, 'Plinth': datadict, 'Girder': datadict}
+    supdict = {'Section': copy.deepcopy(datadict), 'Plinth': copy.deepcopy(datadict), 'Girder': copy.deepcopy(datadict)}
     for sup_type in supdict.keys():
         if hasattr(SC.ORD, sup_type):  # Check if support structure is registered
             for ordPair in SC.ORD[sup_type].transpose():
@@ -250,7 +243,7 @@ def SCplotSupport(SC,
                             sint = -splot[-1] + [splot[-1]]
                         offInt = np.interp(sint, [supdict[sup_type]['Roll'][i][nDim],
                                                   supdict[sup_type]['Roll'][i][nDim]], splot)
-                        presax.plot(splot, 1e6(offInt), lineSpec[sup_type])
+                        presax.plot(splot, 1e6*(offInt), lineSpec[sup_type])
                 else:
                     splot = at.get_s_pos(SC.RING, val)
                     presax.plot(splot, [1e6 * supdict[sup_type]['Roll'][i][nDim],
@@ -284,11 +277,9 @@ def SCplotSupport(SC,
         if nDim == 2:
             presax.set_xlabel('$s$ [m]')
 
+    plt.show()
     return
 
-
-
-    pass
 
 class ord:
     CM=[]
