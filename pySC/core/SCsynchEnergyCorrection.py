@@ -55,11 +55,13 @@ def SCsynchEnergyCorrection(SC, cavOrd=None, f_range=(-1E3, 1E3), nSteps=15, nTu
         return deltaF, ERROR
     if verbose:
         XCO = findorbit6(SC.RING)[0]
-        tmpSC = SCsetCavs2SetPoints(SC, cavOrd, 'Frequency', np.array([deltaF]), 'add')
-        XCOfinal = findorbit6(tmpSC.RING)[0]
+        SC = SCsetCavs2SetPoints(SC, cavOrd, 'Frequency', np.array([deltaF]), 'add')
+        XCOfinal = findorbit6(SC.RING)[0]
+        SC = SCsetCavs2SetPoints(SC, cavOrd, 'Frequency', -np.array([deltaF]), 'add')
+
         print('Frequency correction step: %.2fkHz' % (1E-3 * deltaF))
         print('>> Energy error corrected from %.2f%% to %.2f%%' % (
-        1E2 * (SC.INJ.Z0[5] - XCO[5]), 1E2 * (SC.INJ.Z0[5] - XCOfinal[5])))
+        1E2 * (SC.INJ.Z0[4] - XCO[4]), 1E2 * (SC.INJ.Z0[4] - XCOfinal[4])))
     return deltaF, ERROR
 
 
