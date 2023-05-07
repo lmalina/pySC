@@ -5,7 +5,7 @@ from pySC.constants import NUM_TO_AB
 import copy
 
 
-def SCgetModelRM(SC, BPMords, CMords, trackMode='TBT', Z0=np.zeros(6), nTurns=1, dkick=1e-5, useIdealRing=False):
+def SCgetModelRM(SC, BPMords, CMords, trackMode='TBT', Z0=np.zeros(6), nTurns=1, dkick=1e-5, useIdealRing=True):
     print('Calculating model response matrix')
     track_methods = dict(TBT=atpass, ORB=orbpass)
     if trackMode not in track_methods.keys():
@@ -43,5 +43,5 @@ def SCgetModelRM(SC, BPMords, CMords, trackMode='TBT', Z0=np.zeros(6), nTurns=1,
     return RM
 
 
-def orbpass(RING, Z0, newlat, nTurns, REFPTS):
-    return np.transpose(findorbit6(RING, REFPTS, keep_lattice=False)[1])[[0, 2], :]
+def orbpass(RING, Z0,  nTurns, REFPTS, keep_lattice):
+    return np.transpose(findorbit6(RING, REFPTS, keep_lattice=keep_lattice)[1])[[0,1,2,3], :].reshape(4, 1, len(REFPTS), 1)
