@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 from pySC.core.SCgenBunches import SCgenBunches
 from pySC.utils.sc_tools import SCrandnc
 from pySC.at_wrapper import atgetfieldvalues, atpass, findorbit6, findspos
-
+import warnings
 
 def SCgetBPMreading(SC, BPMords=None, do_plot=False):
     #  lattice_pass output:            (6, N, R, T) coordinates of N particles at R reference points for T turns.
@@ -24,12 +24,12 @@ def SCgetBPMreading(SC, BPMords=None, do_plot=False):
         if do_plot:
             all_readings_5d[:, :, :, :, nShot] = tracking_4d[:, :, :, :]
 
-    mean_bpm_orbits_3d = np.nanmean(all_bpm_orbits_4d, axis=3)  # mean_bpm_orbits_3d is 3D (dim, BPM, turn)
+    mean_bpm_orbits_3d = _loc_nan_mean(all_bpm_orbits_4d, axis=3)  # mean_bpm_orbits_3d is 3D (dim, BPM, turn)
     if do_plot:
         _plot_bpm_reading(SC, mean_bpm_orbits_3d, all_readings_5d)
 
     if SC.INJ.trackMode == 'PORB':   # ORB averaged over low amount of turns
-        mean_bpm_orbits_3d = np.nanmean(mean_bpm_orbits_3d, axis=2, keepdims=True)
+        mean_bpm_orbits_3d = _loc_nan_mean(mean_bpm_orbits_3d, axis=2, keepdims=True)
     if BPMords is not None:
         ind = np.where(np.isin(SC.ORD.BPM, BPMords))[0]
         if len(ind) != len(BPMords):
@@ -41,6 +41,11 @@ def SCgetBPMreading(SC, BPMords=None, do_plot=False):
     #     return mean_bpm_orbits_2d, all_readings_5d
     return mean_bpm_orbits_2d
 
+def _loc_nan_mean(a, axis=0, keepdims=False):
+    # Workaround to avoid runtime warnings when all entries are nan, TODO: find better solution
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=RuntimeWarning)
+        return np.nanmean(a, axis=axis, keepdims=keepdims)    
 
 def _real_bpm_reading(SC, track_mat):  # track_mat should be only x,y over all particles only at BPM positions
     nBpms, nTurns = track_mat.shape[2:]
@@ -51,7 +56,7 @@ def _real_bpm_reading(SC, track_mat):  # track_mat should be only x,y over all p
     bpm_roll = np.squeeze(atgetfieldvalues(SC.RING, SC.ORD.BPM, 'Roll') + atgetfieldvalues(SC.RING, SC.ORD.BPM, 'SupportRoll'))
     bpm_sum_error = np.transpose(atgetfieldvalues(SC.RING, SC.ORD.BPM, 'SumError'))[:, np.newaxis] * SCrandnc(2, (nBpms, nTurns))
     # averaging the X and Y positions at BPMs over particles
-    mean_orbit = np.nanmean(track_mat, axis=1)
+    mean_orbit = _loc_nan_mean(track_mat, axis=1)
     beam_lost = np.nonzero(np.mean(np.isnan(track_mat[0, :, :, :]), axis=0) * (1 + bpm_sum_error) > SC.INJ.beamLostAt)
     mean_orbit[:, beam_lost[0], beam_lost[1]] = np.nan
 
