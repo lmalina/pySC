@@ -15,6 +15,7 @@ from pySC.utils.sc_tools import SCgetOrds, SCgetPinv
 from pySC.core.SClocoLib import SClocoLib
 from pySC.core.SCplotLattice import SCplotLattice
 from pySC.core.SCplotPhaseSpace import SCplotPhaseSpace
+from pySC.core.SCplotCMstrengths import SCplotCMstrengths
 #from pySC.core.SCplotSupport import SCplotSupport
 from pySC.core.SCpseudoBBA import SCpseudoBBA
 from pySC.core.SCmemberFunctions import SCregisterBPMs, SCregisterCAVs, SCregisterMagnets, SCregisterSupport, SCinit, SCapplyErrors
@@ -123,14 +124,12 @@ if __name__ == "__main__":
     eps = 5E-4  # Noise level
     SCgetBPMreading(SC, do_plot=False)
     SC = SCfeedbackFirstTurn(SC, Minv1)
-    #Minv1test = SCgetPinv(RM1, alpha=5,plot=False) # added 1turn feedback with low regularization to test feedback
-    #SC = SCfeedbackRun(SC, Minv1test, target=50E-6, maxsteps=30, eps=eps)
 
     SC.INJ.nTurns = 2
     SC = SCfeedbackStitch(SC, Minv2, nBPMs=3, maxsteps=20)
-    # SC = SCfeedbackRun(SC, Minv2, target=500E-6, maxsteps=30, eps=eps)
     SC = SCfeedbackBalance(SC, Minv2, maxsteps=32, eps=eps)
 
+    # Turning on the sextupoles
     for S in np.linspace(0.1, 1, 5):
         SC = SCsetMags2SetPoints(SC, sextOrds, False, 2, np.array([S]), method='rel')
         try:
@@ -140,36 +139,47 @@ if __name__ == "__main__":
 
     SC.RING = SCcronoff(SC.RING, 'cavityon')
 
+    # Plot initial phasespace
     SCplotPhaseSpace(SC, nParticles=10, nTurns=100)
 
+    # RF cavity correction
     for nIter in range(2):
-        [deltaPhi, ERROR] = SCsynchPhaseCorrection(SC, nTurns=5, nSteps=25, plotResults=True, verbose=True, plotProgress=False)
+        [deltaPhi, ERROR] = SCsynchPhaseCorrection(SC, nTurns=5, nSteps=25, plotResults=False, verbose=True, plotProgress=False)
         if ERROR:
             sys.exit('Phase correction crashed')
         SC = SCsetCavs2SetPoints(SC, SC.ORD.RF, 'TimeLag', deltaPhi, method='add')
         
         [deltaF, ERROR] = SCsynchEnergyCorrection(SC, f_range=40E3 * np.array([-1, 1]),  # Frequency range [kHz]
                                                   nTurns=20, nSteps=15,  # Number of frequency steps
-                                                  plotResults=True, plotProgress=False, verbose=True)
+                                                  plotResults=False, plotProgress=False, verbose=True)
         
         if not ERROR:
             SC = SCsetCavs2SetPoints(SC, SC.ORD.RF, 'Frequency', np.array([deltaF]), method='add')
         else:
             sys.exit()
-    SCplotPhaseSpace(SC, nParticles=10, nTurns=1000)
+    
+    # Plot phasespace after RF correction
+    SCplotPhaseSpace(SC, nParticles=10, nTurns=100)
     [maxTurns, lostCount] = SCgetBeamTransmission(SC, nParticles=100, nTurns=10, verbose=True)
 
 
-    SC.INJ.trackMode = 'ORB'
+    # Performing pseudo-BBA
+    quadOrds = np.tile(SCgetOrds(SC.RING, 'QF|QD'), (2,1))
+    BPMords = np.tile(SC.ORD.BPM, (2,1))
+    SC = SCpseudoBBA(SC, BPMords, quadOrds, np.array([50E-6]))
+
+
+    # Orbit correction
+    SC.INJ._trackMode = 'ORB' # TODO: how to set this correctly?
+    SC.INJ.trackMode = 'ORB' 
+    SC.INJ.nTurns = 1
     MCO = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, trackMode='ORB')
     eta = SCgetModelDispersion(SC, SC.ORD.BPM, SC.ORD.RF)
-    quadOrds = np.tile(SCgetOrds(SC.RING, 'QF|QD'), 2)
-    BPMords = np.tile(SC.ORD.BPM, 2)
-    SC = SCpseudoBBA(SC, BPMords, quadOrds, 50E-6)
+
     for alpha in range(10, 0, -1):
-        MinvCO = SCgetPinv(np.concatenate((MCO, 1E8 * eta)), alpha=alpha)
+        MinvCO = SCgetPinv(np.column_stack((MCO, 1E8 * eta)), alpha=alpha)
         try:
-            CUR = SCfeedbackRun(SC, MinvCO, target=0, maxsteps=50, scaleDisp=1E8)
+            CUR = SCfeedbackRun(SC, MinvCO, target=0, maxsteps=50, scaleDisp=1*1E8)
         except RuntimeError:
             break
         B0rms = np.sqrt(np.mean(np.square(SCgetBPMreading(SC)), 1))
@@ -177,34 +187,38 @@ if __name__ == "__main__":
         if np.mean(B0rms) < np.mean(Brms):
             break
         SC = CUR
-    SC.RING = SCcronoff(SC.RING, 'cavityon')
+
     SCplotPhaseSpace(SC, nParticles=10, nTurns=1000)
-    [maxTurns, lostCount, ERROR] = SCgetBeamTransmission(SC, nParticles=100, nTurns=10, verbose=True)
-    if ERROR:
-        sys.exit()
-    CMstep = 1E-4  # [rad]
-    RFstep = 1E3  # [Hz]
-    [RINGdata, LOCOflags, Init] = SClocoLib('setupLOCOmodel', SC,
-                                            'Dispersion', 'Yes',
-                                            'HorizontalDispersionWeight', .1E2,
-                                            'VerticalDispersionWeight', .1E2)
-    [BPMData, CMData] = SClocoLib('getBPMCMstructure', SC, CMstep,
-                                  {'BPM', 'FitGains', 'Yes'},
-                                  {'CM', 'FitKicks', 'Yes'})
-    LOCOmeasData = SClocoLib('getMeasurement', SC, CMstep, RFstep, SC.ORD.BPM, SC.ORD.CM)
-    FitParameters = SClocoLib('setupFitparameters', SC, Init.SC.RING, RINGdata, RFstep,
-                              {SCgetOrds(SC.RING, 'QF'), 'normal', 'individual', 1E-3},
-                              # {Ords, normal/skew, ind/fam, deltaK}
-                              {SCgetOrds(SC.RING, 'QD'), 'normal', 'individual',
-                               1E-4})  # {Ords, normal/skew, ind/fam, deltaK}
-    for n in range(6):
-        _, BPMData, CMData, FitParameters, LOCOflags, RINGdata = atloco(LOCOmeasData,  BPMData,  CMData,  FitParameters,  LOCOflags,  RINGdata)
-        SC = SClocoLib('applyLatticeCorrection', SC, FitParameters)
-        SC = SClocoLib('applyOrbitCorrection', SC)
-        SClocoLib('plotStatus', SC, Init, BPMData, CMData)
-        if n == 3:
-            LOCOflags.Coupling = 'Yes'
-            FitParameters = SClocoLib('setupFitparameters', SC, Init.SC.RING, RINGdata, RFstep,
-                                      {SCgetOrds(SC.RING, 'QF'), 'normal', 'individual', 1E-3},
-                                      {SCgetOrds(SC.RING, 'QD'), 'normal', 'individual', 1E-4},
-                                      {SC.ORD.SkewQuad, 'skew', 'individual', 1E-3})
+    [maxTurns, lostCount] = SCgetBeamTransmission(SC, nParticles=100, nTurns=200, verbose=True,do_plot=True)
+
+
+
+
+
+
+    # CMstep = 1E-4  # [rad]
+    # RFstep = 1E3  # [Hz]
+    # [RINGdata, LOCOflags, Init] = SClocoLib('setupLOCOmodel', SC,
+    #                                         'Dispersion', 'Yes',
+    #                                         'HorizontalDispersionWeight', .1E2,
+    #                                         'VerticalDispersionWeight', .1E2)
+    # [BPMData, CMData] = SClocoLib('getBPMCMstructure', SC, CMstep,
+    #                               {'BPM', 'FitGains', 'Yes'},
+    #                               {'CM', 'FitKicks', 'Yes'})
+    # LOCOmeasData = SClocoLib('getMeasurement', SC, CMstep, RFstep, SC.ORD.BPM, SC.ORD.CM)
+    # FitParameters = SClocoLib('setupFitparameters', SC, Init.SC.RING, RINGdata, RFstep,
+    #                           {SCgetOrds(SC.RING, 'QF'), 'normal', 'individual', 1E-3},
+    #                           # {Ords, normal/skew, ind/fam, deltaK}
+    #                           {SCgetOrds(SC.RING, 'QD'), 'normal', 'individual',
+    #                            1E-4})  # {Ords, normal/skew, ind/fam, deltaK}
+    # for n in range(6):
+    #     _, BPMData, CMData, FitParameters, LOCOflags, RINGdata = atloco(LOCOmeasData,  BPMData,  CMData,  FitParameters,  LOCOflags,  RINGdata)
+    #     SC = SClocoLib('applyLatticeCorrection', SC, FitParameters)
+    #     SC = SClocoLib('applyOrbitCorrection', SC)
+    #     SClocoLib('plotStatus', SC, Init, BPMData, CMData)
+    #     if n == 3:
+    #         LOCOflags.Coupling = 'Yes'
+    #         FitParameters = SClocoLib('setupFitparameters', SC, Init.SC.RING, RINGdata, RFstep,
+    #                                   {SCgetOrds(SC.RING, 'QF'), 'normal', 'individual', 1E-3},
+    #                                   {SCgetOrds(SC.RING, 'QD'), 'normal', 'individual', 1E-4},
+    #                                   {SC.ORD.SkewQuad, 'skew', 'individual', 1E-3})
