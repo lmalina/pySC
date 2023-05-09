@@ -3,8 +3,6 @@ import sys
 import at
 import numpy as np
 from at import Lattice
-from at.plot import plot_beta
-import matplotlib.pyplot as plt
 from pySC.at_wrapper import atloco
 from pySC.classes import SimulatedComissioning
 from pySC.core.SCcronoff import SCcronoff
@@ -57,9 +55,6 @@ def create_at_lattice() -> Lattice:
 if __name__ == "__main__":
     ring = at.Lattice(create_at_lattice())
     print(len(ring))
-    # at.save_lattice(ring,'pysc_test_lattice.mat')
-    # ring.plot_beta()
-    # plt.show()
     SC = SimulatedComissioning(ring)
     # at.summary(ring)
     ords = SCgetOrds(SC.RING, 'BPM')
