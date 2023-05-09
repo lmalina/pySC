@@ -15,8 +15,8 @@ from pySC.utils.sc_tools import SCgetOrds, SCgetPinv
 from pySC.core.SClocoLib import SClocoLib
 from pySC.core.SCplotLattice import SCplotLattice
 from pySC.core.SCplotPhaseSpace import SCplotPhaseSpace
+from pySC.core.SCplotSupport import SCplotSupport
 from pySC.core.SCplotCMstrengths import SCplotCMstrengths
-#from pySC.core.SCplotSupport import SCplotSupport
 from pySC.core.SCpseudoBBA import SCpseudoBBA
 from pySC.core.SCmemberFunctions import SCregisterBPMs, SCregisterCAVs, SCregisterMagnets, SCregisterSupport, SCinit, SCapplyErrors
 from pySC.core.SCsanityCheck import SCsanityCheck
@@ -38,18 +38,23 @@ def create_at_lattice() -> Lattice:
     bend = at.Bend('BEND', 1, 2 * np.pi / 40, PassMethod='BndMPoleSymplectic4RadPass')
     d2 = at.Drift('Drift', 0.25)
     d3 = at.Drift('Drift', 0.2)
+    BPM= at.Monitor('BPM')
 
     cell = at.Lattice([d2, _marker('SectionStart'), _marker('GirderStart'), bend, d3, sf, d3, _marker('GirderEnd'),
-                       _marker('GirderStart'), _marker('BPM'), qf, d2, d2, bend, d3, sd, d3, qd, d2, _marker('BPM'),
+                       _marker('GirderStart'), BPM, qf, d2, d2, bend, d3, sd, d3, qd, d2, _marker('BPM'),
                        _marker('GirderEnd'), _marker('SectionEnd')], name='Simple FODO cell', energy=2.5E9)
-    new_ring = at.Lattice([el.deepcopy() for _ in range(20) for el in cell], name='Simple Ring', energy=2.5E9)
+    new_ring = at.Lattice(cell * 20)
     rfc = at.RFCavity('RFCav', energy=2.5E9, voltage=2e6, frequency=149896228.99999985, harmonic_number=50, length=0)
     new_ring.insert(0, rfc)
+    new_ring.enable_6d()
+    new_ring.set_cavity_phase()
+    new_ring.set_rf_frequency()
+
     return new_ring
 
 
 if __name__ == "__main__":
-    ring = create_at_lattice()
+    ring = at.Lattice(create_at_lattice())
     print(len(ring))
     SC = SimulatedComissioning(ring)
     # at.summary(ring)
@@ -107,9 +112,10 @@ if __name__ == "__main__":
     SC.plot = False  # TODO: replace with proper global-like variable
 
     #SCsanityCheck(SC)
-    #SCplotLattice(SC, nSectors=10)  # TODO
+    # SCplotLattice(SC, nSectors=10)
     SC.apply_errors()
-    #SCplotSupport(SC)  # TODO
+    SCplotSupport(SC)
+
     SC.RING = SCcronoff(SC.RING, 'cavityoff')
     sextOrds = SCgetOrds(SC.RING, 'SF|SD')
     SC = SCsetMags2SetPoints(SC, sextOrds, False, 2, np.array([0.0]), method='abs')
@@ -127,6 +133,7 @@ if __name__ == "__main__":
 
     SC.INJ.nTurns = 2
     SC = SCfeedbackStitch(SC, Minv2, nBPMs=3, maxsteps=20)
+    # SC = SCfeedbackRun(SC, Minv2, target=300E-6, maxsteps=30, eps=eps)
     SC = SCfeedbackBalance(SC, Minv2, maxsteps=32, eps=eps)
 
     # Turning on the sextupoles
@@ -148,16 +155,16 @@ if __name__ == "__main__":
         if ERROR:
             sys.exit('Phase correction crashed')
         SC = SCsetCavs2SetPoints(SC, SC.ORD.RF, 'TimeLag', deltaPhi, method='add')
-        
+
         [deltaF, ERROR] = SCsynchEnergyCorrection(SC, f_range=40E3 * np.array([-1, 1]),  # Frequency range [kHz]
                                                   nTurns=20, nSteps=15,  # Number of frequency steps
                                                   plotResults=False, plotProgress=False, verbose=True)
-        
+
         if not ERROR:
             SC = SCsetCavs2SetPoints(SC, SC.ORD.RF, 'Frequency', np.array([deltaF]), method='add')
         else:
             sys.exit()
-    
+
     # Plot phasespace after RF correction
     SCplotPhaseSpace(SC, nParticles=10, nTurns=100)
     [maxTurns, lostCount] = SCgetBeamTransmission(SC, nParticles=100, nTurns=10, verbose=True)
@@ -171,7 +178,7 @@ if __name__ == "__main__":
 
     # Orbit correction
     SC.INJ._trackMode = 'ORB' # TODO: how to set this correctly?
-    SC.INJ.trackMode = 'ORB' 
+    SC.INJ.trackMode = 'ORB'
     SC.INJ.nTurns = 1
     MCO = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, trackMode='ORB')
     eta = SCgetModelDispersion(SC, SC.ORD.BPM, SC.ORD.RF)
@@ -179,7 +186,7 @@ if __name__ == "__main__":
     for alpha in range(10, 0, -1):
         MinvCO = SCgetPinv(np.column_stack((MCO, 1E8 * eta)), alpha=alpha)
         try:
-            CUR = SCfeedbackRun(SC, MinvCO, target=0, maxsteps=50, scaleDisp=1*1E8)
+            CUR = SCfeedbackRun(SC, MinvCO, target=0, maxsteps=50, scaleDisp=1E8)
         except RuntimeError:
             break
         B0rms = np.sqrt(np.mean(np.square(SCgetBPMreading(SC)), 1))
@@ -187,38 +194,33 @@ if __name__ == "__main__":
         if np.mean(B0rms) < np.mean(Brms):
             break
         SC = CUR
-
+    SC.RING = SCcronoff(SC.RING, 'cavityon')
     SCplotPhaseSpace(SC, nParticles=10, nTurns=1000)
-    [maxTurns, lostCount] = SCgetBeamTransmission(SC, nParticles=100, nTurns=200, verbose=True,do_plot=True)
+    [maxTurns, lostCount] = SCgetBeamTransmission(SC, nParticles=100, nTurns=200, verbose=True, do_plot=True)
 
-
-
-
-
-
-    # CMstep = 1E-4  # [rad]
-    # RFstep = 1E3  # [Hz]
-    # [RINGdata, LOCOflags, Init] = SClocoLib('setupLOCOmodel', SC,
-    #                                         'Dispersion', 'Yes',
-    #                                         'HorizontalDispersionWeight', .1E2,
-    #                                         'VerticalDispersionWeight', .1E2)
-    # [BPMData, CMData] = SClocoLib('getBPMCMstructure', SC, CMstep,
-    #                               {'BPM', 'FitGains', 'Yes'},
-    #                               {'CM', 'FitKicks', 'Yes'})
-    # LOCOmeasData = SClocoLib('getMeasurement', SC, CMstep, RFstep, SC.ORD.BPM, SC.ORD.CM)
-    # FitParameters = SClocoLib('setupFitparameters', SC, Init.SC.RING, RINGdata, RFstep,
-    #                           {SCgetOrds(SC.RING, 'QF'), 'normal', 'individual', 1E-3},
-    #                           # {Ords, normal/skew, ind/fam, deltaK}
-    #                           {SCgetOrds(SC.RING, 'QD'), 'normal', 'individual',
-    #                            1E-4})  # {Ords, normal/skew, ind/fam, deltaK}
-    # for n in range(6):
-    #     _, BPMData, CMData, FitParameters, LOCOflags, RINGdata = atloco(LOCOmeasData,  BPMData,  CMData,  FitParameters,  LOCOflags,  RINGdata)
-    #     SC = SClocoLib('applyLatticeCorrection', SC, FitParameters)
-    #     SC = SClocoLib('applyOrbitCorrection', SC)
-    #     SClocoLib('plotStatus', SC, Init, BPMData, CMData)
-    #     if n == 3:
-    #         LOCOflags.Coupling = 'Yes'
-    #         FitParameters = SClocoLib('setupFitparameters', SC, Init.SC.RING, RINGdata, RFstep,
-    #                                   {SCgetOrds(SC.RING, 'QF'), 'normal', 'individual', 1E-3},
-    #                                   {SCgetOrds(SC.RING, 'QD'), 'normal', 'individual', 1E-4},
-    #                                   {SC.ORD.SkewQuad, 'skew', 'individual', 1E-3})
+    CMstep = 1E-4  # [rad]
+    RFstep = 1E3  # [Hz]
+    [RINGdata, LOCOflags, Init] = SClocoLib('setupLOCOmodel', SC,
+                                            'Dispersion', 'Yes',
+                                            'HorizontalDispersionWeight', .1E2,
+                                            'VerticalDispersionWeight', .1E2)
+    [BPMData, CMData] = SClocoLib('getBPMCMstructure', SC, CMstep,
+                                  {'BPM', 'FitGains', 'Yes'},
+                                  {'CM', 'FitKicks', 'Yes'})
+    LOCOmeasData = SClocoLib('getMeasurement', SC, CMstep, RFstep, SC.ORD.BPM, SC.ORD.CM)
+    FitParameters = SClocoLib('setupFitparameters', SC, Init.SC.RING, RINGdata, RFstep,
+                              {SCgetOrds(SC.RING, 'QF'), 'normal', 'individual', 1E-3},
+                              # {Ords, normal/skew, ind/fam, deltaK}
+                              {SCgetOrds(SC.RING, 'QD'), 'normal', 'individual',
+                               1E-4})  # {Ords, normal/skew, ind/fam, deltaK}
+    for n in range(6):
+        _, BPMData, CMData, FitParameters, LOCOflags, RINGdata = atloco(LOCOmeasData,  BPMData,  CMData,  FitParameters,  LOCOflags,  RINGdata)
+        SC = SClocoLib('applyLatticeCorrection', SC, FitParameters)
+        SC = SClocoLib('applyOrbitCorrection', SC)
+        SClocoLib('plotStatus', SC, Init, BPMData, CMData)
+        if n == 3:
+            LOCOflags.Coupling = 'Yes'
+            FitParameters = SClocoLib('setupFitparameters', SC, Init.SC.RING, RINGdata, RFstep,
+                                      {SCgetOrds(SC.RING, 'QF'), 'normal', 'individual', 1E-3},
+                                      {SCgetOrds(SC.RING, 'QD'), 'normal', 'individual', 1E-4},
+                                      {SC.ORD.SkewQuad, 'skew', 'individual', 1E-3})

@@ -1,155 +1,145 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import copy
+from pySC.at_wrapper import findspos, atgetfieldvalues
 from pySC.constants import SUPPORT_TYPES
-from pySC.at_wrapper import atpass, atgetfieldvalues, findspos, findorbit6, findorbit4, atlinopt
+from typing import Tuple
+from pySC.classes import SimulatedComissioning
 
-def SCplotSupport(SC,fontSize=12,shiftAxes=0.03,xLim=None):
+
+def SCplotSupport(SC: SimulatedComissioning, fontSize: int = 8, xLim: Tuple[float, float] = None):
+    """
+    Plots the offset and rolls of magnets, the support structure and BPMs.
+    Specifically, this function plots the overall offsets [dx,dy,dz] and rolls [az,ax,ay] of all magnets and BPMs,
+    as well as the individual contributions from different support structures (if registered).
+
+    Args:
+        `'SC'`:  :py:class: SimulatedCommissioning
+            A base structure.
+        `'fontSize'`: int
+            Figure font size.
+            Axes are rearranged for grouping. Depending on screen resolution this value may be adjusted.
+        `'xLim'`: Tuple[float, float]
+            Plot limits in terms of longitudinal location
+
+    Returns:
+
+    """
+
+    if fontSize:
+        plt.rcParams.update({'font.size': fontSize})
+    # Get s - positions along the lattice
+    s_pos = findspos(SC.RING, np.arange(len(SC.RING) + 1, dtype=int))
+    circumference = s_pos[-1]
     if xLim is None:
-        xLim=[0, findspos(SC.RING,len(SC.RING)+1)]
-    if not hasattr(SC.ORD,'Magnet'):
-        raise Exception('Magnets must be registered. Use SCregisterMagnets.')
-    elif not hasattr(SC.ORD,'BPM'):
-        raise Exception('BPMs must be registered. Use SCregisterBPMs.')
-    C = findspos(SC.RING,len(SC.RING)+1)
-    s = np.linspace(xLim[0],xLim[1],100*(xLim[1]-xLim[0]))
-    sPos = findspos(SC.RING,range(1,len(SC.RING)+1))
-    offSupportLine, rollSupportLine  = SC.support_offset_and_roll(s)
+        xLim = (0, circumference)
 
-    i=0
-    for ord in SC.ORD.Magnet:
-        if sPos[ord-1]>=xLim[0] and sPos[ord-1]<=xLim[1]:
-            i=i+1
-            magOrds[i] = ord
-            offMagSupport[:,i]=SC.RING[ord-1].SupportOffset
-            rollMagSupport[:,i]=SC.RING[ord-1].SupportRoll
-            offMagInd[:,i]=SC.RING[ord-1].MagnetOffset
-            rollMagInd[:,i]=SC.RING[ord-1].MagnetRoll
-            offMagTot[:,i]=SC.RING[ord-1].T2([1, 3, 6])
-            rollMagTot[:,i]=SC.RING[ord-1].MagnetRoll + SC.RING[ord-1].SupportRoll
-    for type in SUPPORT_TYPES:
-        if hasattr(SC.ORD,type):
-            i=1
-            for ordPair in SC.ORD.(type):
-                if (sPos[ordPair[0]-1]>=xLim[0] and sPos[ordPair[0]-1]<=xLim[1]) or (sPos[ordPair[1]-1]>=xLim[0] and sPos[ordPair[1]-1]<=xLim[1]):
-                    SuppOrds.(type)[:,i] = ordPair
-                    SuppOff.(type).a[:,i]=SC.RING[ordPair[0]-1].(type+'Offset')
-                    SuppOff.(type).b[:,i]=SC.RING[ordPair[1]-1].(type+'Offset')
-                    SuppRoll.(type)[:,i]=SC.RING[ordPair[0]-1].(type+'Roll')
-                    i = i+1
-    i=0
-    for ord in SC.ORD.BPM:
-        if sPos[ord-1]>=xLim[0] and sPos[ord-1]<=xLim[1]:
-            i=i+1
-            BPMords[i] = ord
-    sBPM         = findspos(SC.RING,BPMords)
-    offBPM       = np.array(atgetfieldvalues(SC.RING[BPMords-1],'Offset'))
-    offBPMStruct = np.array(atgetfieldvalues(SC.RING[BPMords-1],'SupportOffset'))
-    offBPM[      :,2] = 0 # Longitudinal offsets not supported for BPMs
-    offBPMStruct[:,2] = 0 # Longitudinal offsets not supported for BPMs
-    rollBPM       = np.array(atgetfieldvalues(SC.RING[BPMords-1],'Roll',{1,1}))
-    rollBPMStruct = np.array(atgetfieldvalues(SC.RING[BPMords-1],'SupportRoll',{1,1}))
-    rollBPM[      :,1:2] = 0 # Pitch and yaw not supported for BPMs
-    rollBPMStruct[:,1:2] = 0 # Pitch and yaw not supported for BPMs
-    plt.figure(1213);plt.clf();tmpCol=plt.gca().get_color_cycle();ax=[]
-    yLabOffStr  = ['$\Delta x$ [$\mu$m]','$\Delta y$ [$\mu$m]','$\Delta z$ [$\mu$m]']
-    yLabRollStr = ['$a_z$ [$\mu$rad]','$a_x$ [$\mu$rad]','$a_y$ [$\mu$rad]']
-    titlteOffStr = ['Horizontal Offsets','Vertical Offsets','Longitudinal Offsets']
-    titlteRollStr  = ['Roll (roll around z-axis)','Pitch (roll around x-axis)','Yaw (roll around y-axis)']
-    lineSpec.Plinth  = {'Color','r','LineWidth',4}
-    lineSpec.Section = {'Color',tmpCol[7,:], 'LineWidth',2, 'LineStyle',':'}
-    lineSpec.Girder  = {'Color',tmpCol[5,:], 'LineWidth',4}
+    s = np.linspace(xLim[0], xLim[1], 100 * int((xLim[1]-xLim[0])/2))  # s locations to compute
+    s_mag = s_pos[SC.ORD.Magnet]
+    s_bpm = s_pos[SC.ORD.BPM]
+
+    # Loop over individual support structure types
+    datadict = {'Ords': [], 'Off': {'a': [], 'b': []}, 'Roll': []}
+    supdict = {'Section': copy.deepcopy(datadict), 'Plinth': copy.deepcopy(datadict), 'Girder': copy.deepcopy(datadict)}
+    for sup_type in supdict.keys():
+        for ordPair in SC.ORD[sup_type].transpose():
+            if (xLim[0] <= s_pos[ordPair[0]] <= xLim[1]) or (xLim[0] <= s_pos[ordPair[1]] <= xLim[1]):
+                # Structures in range
+                supdict[sup_type]['Ords'].append(ordPair)
+                # Get girder start and ending offsets
+                supdict[sup_type]['Off']['a'].append(SC.RING[ordPair[0]].__dict__[sup_type + 'Offset'])
+                supdict[sup_type]['Off']['b'].append(SC.RING[ordPair[1]].__dict__[sup_type + 'Offset'])
+                # Get girder rolls
+                supdict[sup_type]['Roll'].append(SC.RING[ordPair[0]].__dict__[sup_type + 'Roll'])
+
+    # Magnet offsets and rolls
+    offSupportLine, rollSupportLine = SC.support_offset_and_roll(s)
+    offMagSupport = atgetfieldvalues(SC.RING, SC.ORD.Magnet, "SupportOffset")
+    rollMagSupport = atgetfieldvalues(SC.RING, SC.ORD.Magnet, "SupportRoll")
+    offMagInd = atgetfieldvalues(SC.RING, SC.ORD.Magnet, "MagnetOffset")
+    rollMagInd = atgetfieldvalues(SC.RING, SC.ORD.Magnet, "MagnetRoll")
+    offMagTot = atgetfieldvalues(SC.RING, SC.ORD.Magnet, "T2")[:, [0, 2, 5]]
+    rollMagTot = rollMagSupport + rollMagInd
+
+    # BPM offsets and rolls
+    # Longitudinal offsets and Pitch and Yaw angles not supported for BPMs
+    pad_off, pad_roll = ((0, 0), (0, 1)), ((0, 0), (0, 2))
+    offBPM = np.pad(atgetfieldvalues(SC.RING, SC.ORD.BPM, "Offset"), pad_off)
+    rollBPM = np.pad(atgetfieldvalues(SC.RING, SC.ORD.BPM, "Roll"), pad_roll)
+    offBPMSupport = np.pad(atgetfieldvalues(SC.RING, SC.ORD.BPM, "SupportOffset"), pad_off)
+    rollBPMSupport = np.pad(atgetfieldvalues(SC.RING, SC.ORD.BPM, "SupportRoll"), pad_roll)
+
+    # create figure
+    fig, ax = plt.subplots(nrows=9, ncols=2, num=1213, sharex="all", figsize=(10, 15))
+    plt.subplots_adjust(hspace=0.3, wspace=0.3)
+    blu, ora = '#1f77b4', '#ff7f0e'
+    lineSpec = {'Plinth': {'color': 'r', 'linewidth': 4},
+                'Section': {'color': '#e377c2', 'linewidth': 2, 'linestyle': ':'},
+                'Girder': {'color': '#9467bd', 'linewidth': 4}}
+
     for nDim in range(3):
-        ax[3*(nDim-1)+1,1]=plt.subplot(12,2,2*4*(nDim-1)+ [1 3]);plt.hold(True)
-        pVec=[];legStr=[]
-        plt.plot(s,1E6*offSupportLine[nDim,:])
-        plt.plot(sPos[magOrds-1],1E6*offMagSupport[nDim,:],'D',Color=tmpCol[1,:])
-        pVec.append(plt.plot([-2, -1],[0, 0],'-D',Color=tmpCol[1,:]))
-        legStr.append('Overall support structure')
-        pVec.append(plt.plot(sPos[magOrds-1],1E6*offMagInd[nDim,:],'kx',MarkerSize=8))
-        legStr.append('Individual Magnet')
-        for type in ['Section','Plinth','Girder']:
-            if hasattr(SuppOrds,type):
-                for i in range(SuppOrds.(type).shape[1]):
-                    if np.diff(findspos(SC.RING,SuppOrds.(type)[:,i]))<0:
-                        for nCase in range(2):
-                            if nCase==1:
-                                splot  = findspos(SC.RING,[SuppOrds.(type)[0,i], len(SC.RING)])
-                                sint   = [findspos(SC.RING,SuppOrds.(type)[0,i]),findspos(SC.RING,SuppOrds.(type)[1,i])+C]
-                            else:
-                                splot  = findspos(SC.RING,[1, SuppOrds.(type)[1,i]])
-                                sint   = [-findspos(SC.RING,SuppOrds.(type)[1,i]),findspos(SC.RING,SuppOrds.(type)[1,i])]
-                            offInt = np.interp(splot,[sint[0], sint[1]],[SuppOff.(type).a[nDim,i], SuppOff.(type).b[nDim,i]])
-                            plt.plot(splot,1E6*offInt,lineSpec.(type){:})
-                    else:
-                        plt.plot(findspos(SC.RING,SuppOrds.(type)[:,i]),1E6*[SuppOff.(type).a[nDim,i], SuppOff.(type).b[nDim,i]],lineSpec.(type){:})
-                pVec.append(plt.plot([-2, -1],[0, 0],lineSpec.(type){:}))
-                legStr.append('Individual '+type)
-        plt.legend(pVec,legStr)
-        plt.set(gca,'xlim',xLim,'box','on')
-        plt.ylabel(yLabOffStr[nDim])
-        plt.title(titlteOffStr[nDim])
-        ax[3*(nDim-1)+2,1]=plt.subplot(12,2,2*4*(nDim-1)+ 5);plt.hold(True)
-        plt.plot(sPos[magOrds-1],1E6*offMagTot[nDim,:],'kO-')
-        plt.legend('Overall magnet offset')
-        plt.set(gca,'xlim',xLim,'box','on')
-        plt.ylabel(yLabOffStr[nDim])
-        ax[3*(nDim-1)+3,1]=plt.subplot(12,2,2*4*(nDim-1)+ 7);plt.hold(True)
-        plt.plot(sBPM,1E6*offBPM[:,nDim],'O',Color=tmpCol[2,:],MarkerSize=6)
-        plt.plot(sBPM,1E6*offBPMStruct[:,nDim],'-',Color=tmpCol[2,:])
-        plt.legend({'Random BPM offset','BPM support offset'})
-        plt.set(gca,'xlim',xLim,'box','on')
-        plt.ylabel(yLabOffStr[nDim])
-        if nDim==3:
-            plt.xlabel('$s$ [m]')
-        ax[3*(nDim-1)+1,2]=plt.subplot(12,2,2*4*(nDim-1)+ [2 4]);plt.hold(True)
-        pVec=[];legStr=[]
-        plt.plot(s,1E6*rollSupportLine[nDim,:],Color=tmpCol[1,:])
-        plt.plot(sPos[magOrds-1],1E6*rollMagSupport[nDim,:],'D',Color=tmpCol[1,:])
-        pVec.append(plt.plot([-2, -1],[0, 0],'-D',Color=tmpCol[1,:]))
-        legStr.append('Overall support structure')
-        pVec.append(plt.plot(sPos[magOrds-1],1E6*rollMagInd[nDim,:],'kx',MarkerSize=8))
-        legStr.append('Individual Magnet')
-        for type in ['Section','Plinth','Girder']:
-            if hasattr(SuppOrds,type):
-                for i in range(SuppOrds.(type).shape[1]):
-                    if np.diff(findspos(SC.RING,SuppOrds.(type)[:,i]))<0:
-                        for nCase in range(2):
-                            if nCase==1:
-                                splot  = findspos(SC.RING,[SuppOrds.(type)[0,i], len(SC.RING)])
-                                sint   = [findspos(SC.RING,SuppOrds.(type)[0,i]),findspos(SC.RING,SuppOrds.(type)[1,i])+C]
-                            else:
-                                splot  = findspos(SC.RING,[1, SuppOrds.(type)[1,i]])
-                                sint   = [-findspos(SC.RING,SuppOrds.(type)[1,i]),findspos(SC.RING,SuppOrds.(type)[1,i])]
-                            rollInt = np.interp(splot,[sint[0], sint[1]],SuppRoll.(type)[nDim,i]*[1, 1])
-                            plt.plot(splot,1E6*rollInt,lineSpec.(type){:})
-                    else:
-                        plt.plot(findspos(SC.RING,SuppOrds.(type)[:,i]),1E6*SuppRoll.(type)[nDim,i]*[1, 1],lineSpec.(type){:})
-                pVec.append(plt.plot([-2, -1],[0, 0],lineSpec.(type){:}))
-                legStr.append('Individual '+type)
-        plt.legend(pVec,legStr)
-        plt.set(gca,'xlim',xLim,'box','on','YAxisLocation','right')#,'XTickLabel',''
-        plt.ylabel(yLabRollStr[nDim])
-        plt.title(titlteRollStr[nDim])
-        ax[3*(nDim-1)+2,2]=plt.subplot(12,2,2*4*(nDim-1)+ 6);plt.hold(True)
-        plt.plot(sPos[magOrds-1],1E6*rollMagTot[nDim,:],'kO-')
-        plt.legend('Overall magnet roll')
-        plt.set(gca,'xlim',xLim,'box','on','YAxisLocation','right')#,'XTickLabel',''
-        plt.ylabel(yLabRollStr[nDim])
-        ax[3*(nDim-1)+3,2]=plt.subplot(12,2,2*4*(nDim-1)+ 8);plt.hold(True)
-        plt.plot(sBPM,1E6*rollBPM[:,nDim],'O',Color=tmpCol[2,:],MarkerSize=6)
-        plt.plot(sBPM,1E6*rollBPMStruct[:,nDim],'-',Color=tmpCol[2,:])
-        plt.legend({'Random BPM roll','BPM support roll'})
-        plt.set(gca,'xlim',xLim,'box','on','YAxisLocation','right')
-        plt.ylabel(yLabRollStr[nDim])
-        if nDim==3:
-            plt.xlabel('$s$ [m]')
-    plt.linkaxes(ax,'x')
-    for nDim in range(3):
-        for nAx in range(3):
-            for n in range(2):
-                plt.set(ax[nAx+3*(nDim-1),n],'Position',plt.get(ax[nAx+3*(nDim-1),n],'Position') - ((nDim-1)-0.4*(nAx-1))*[0, shiftAxes, 0, 0])
-    plt.set(findall(gcf,'-property','TickLabelInterpreter'),'TickLabelInterpreter','latex')
-    plt.set(findall(gcf,'-property','Interpreter'),'Interpreter','latex')
-    plt.set(findall(gcf,'-property','FontSize'),'FontSize',fontSize)
-    plt.set(gcf,'color','w')
-    plt.draw()
+        # plot overall support offsets and rolls
+        ax[3*nDim, 0].stairs(1e6*offSupportLine[nDim, :-1], s, color=blu)
+        ax[3*nDim, 0].plot(s_mag, 1e6 * offMagSupport[:, nDim], 'D', color=blu, label='Overall supports')
+        ax[3*nDim, 1].stairs(1e6 * rollSupportLine[nDim, :-1], s, color=blu)
+        ax[3*nDim, 1].plot(s_mag, 1e6 * rollMagSupport[:, nDim], 'D', color=blu, label='Overall supports')
+        # plot individual support and roll contributions
+        for sup_type in SUPPORT_TYPES:
+            for i, val in enumerate(SC.ORD[sup_type].T):  # loop supports
+                ax[3*nDim, 0] = _plot_support(ax[3 * nDim, 0], s_pos[val],
+                                              [1e6 * supdict[sup_type]['Off']['a'][i][nDim],
+                                               1e6 * supdict[sup_type]['Off']['b'][i][nDim]],
+                                              circumference,
+                                              **lineSpec[sup_type])
+                ax[3*nDim, 1] = _plot_support(ax[3 * nDim, 1], s_pos[val],
+                                              1e6 * supdict[sup_type]['Roll'][i][nDim] * np.ones(2),
+                                              circumference,
+                                              **lineSpec[sup_type])
+
+            # plot outside to get correct legend
+            ax[3*nDim, 0].plot([-2, -1], [0, 0], **lineSpec[sup_type], label=f'Individual {sup_type}')
+            ax[3*nDim, 1].plot([-2, -1], [0, 0], **lineSpec[sup_type], label=f'Individual {sup_type}')
+
+        # plot magnet offset and roll
+        ax[3*nDim+1, 0].plot(s_mag, 1e6 * offMagInd[:, nDim], 'kx', ms=8, label='Individual Magnet')
+        ax[3*nDim+1, 0].plot(s_mag, 1e6 * offMagTot[:, nDim], 'ko-', label='Overall magnet offset')
+        ax[3*nDim+1, 1].plot(s_mag, 1e6 * rollMagInd[:, nDim], 'kx', ms=8, label='Individual Magnet')
+        ax[3*nDim+1, 1].plot(s_mag, 1e6 * rollMagTot[:, nDim], 'ko-', label='Overall magnet roll')
+        # plot BPM offset and roll
+        ax[3*nDim+2, 0].plot(s_bpm, 1e6 * offBPM[:, nDim], 'o', color=ora, ms=6, label='Random BPM offset')
+        ax[3*nDim+2, 0].plot(s_bpm, 1e6 * offBPMSupport[:, nDim], '-', color=ora, label='BPM support offset')
+        ax[3*nDim+2, 1].plot(s_bpm, 1e6 * rollBPM[:, nDim], 'o', color=ora, ms=6, label='Random BPM roll')
+        ax[3*nDim+2, 1].plot(s_bpm, 1e6 * rollBPMSupport[:, nDim], '-', color=ora, label='BPM support roll')
+
+    ax = _plot_annotations_and_limits(ax, xLim)
+    plt.pause(1)  # pause needed or grey figure
+    plt.show(block=False)
+
+
+def _plot_support(axes, s_locs, vals, circ=None, **plot_kwargs):
+    if s_locs[1] >= s_locs[0]:
+        axes.plot(s_locs, vals, **plot_kwargs)
+        return axes
+    val_ring_end = vals[1] - s_locs[1] * (vals[1] - vals[0]) / (s_locs[1] - s_locs[0] + circ)
+    axes.plot([s_locs[0], circ], [vals[0], val_ring_end], **plot_kwargs)
+    axes.plot([0, s_locs[1]], [val_ring_end, vals[1]], **plot_kwargs)
+    return axes
+
+
+def _plot_annotations_and_limits(ax, x_lims):
+    y_labels_per_dim = [[r'$\Delta x$ [$\mu$m]', r'$a_z$ [$\mu$rad]'],
+                        [r'$\Delta y$ [$\mu$m]', r'$a_x$ [$\mu$rad]'],
+                        [r'$\Delta z$ [$\mu$m]', r'$a_y$ [$\mu$rad]']]
+    titles_per_dim = [['Horizontal Offsets', 'Roll (roll around z-axis)'],
+                      ['Vertical Offsets', 'Pitch (roll around x-axis)'],
+                      ['Longitudinal Offsets', 'Yaw (roll around y-axis)']]
+    for row in range(9):
+        for column in range(2):
+            ax[row, column].legend(loc="upper right")
+            ax[row, column].set_xlim(x_lims)
+            ax[row, column].set_ylabel(y_labels_per_dim[row // 3][column])
+            if row % 3 == 0:
+                ax[row, column].set_title(titles_per_dim[row // 3][column])
+    ax[8, 0].set_xlabel('$s$ [m]')
+    ax[8, 1].set_xlabel('$s$ [m]')
+    return ax

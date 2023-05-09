@@ -5,7 +5,8 @@ from typing import Tuple
 import numpy as np
 from at import Lattice
 from numpy import ndarray
-from pySC.constants import RF_PROPERTIES, SUPPORT_TYPES
+from pySC.constants import (RF_PROPERTIES, SUPPORT_TYPES, AB, BPM_ERROR_FIELDS, MAGNET_ERROR_FIELDS, MAGNET_TYPE_FIELDS,
+                            RF_ERROR_FIELDS, SUPPORT_ERROR_FIELDS, TRACKING_MODES)
 from pySC.utils.classdef_tools import add_padded, randn_cutoff, update_double_ordinates, intersect, s_interpolation
 from pySC.utils.sc_tools import SCrandnc, SCscaleCircumference, SCgetTransformation
 from pySC.at_wrapper import findspos
@@ -58,8 +59,8 @@ class Injection(DotDict):
     @trackMode.setter
     def trackMode(self, mode):
         allowed_modes = ("TBT", "ORB", "PORB")
-        if mode not in allowed_modes:
-            raise AttributeError(f"trackMode property has to be one of {allowed_modes}")
+        if mode not in TRACKING_MODES:
+            raise AttributeError(f"trackMode property has to be one of {TRACKING_MODES}")
         self._trackMode = mode
         if mode == 'ORB':
             self.nTurns = 1
@@ -97,16 +98,23 @@ class Sigmas(DotDict):
         self.staticInjectionZ: ndarray = np.zeros(6)
         self.Circumference: float = 0.0  # Circumference error reletive / or absolute
 
+
 class SimulatedComissioning(DotDict):
     def __init__(self, ring: Lattice):
         super(SimulatedComissioning, self).__init__()
         self.RING: Lattice = ring.deepcopy()
         self.IDEALRING: Lattice = ring.deepcopy()
+        for ind, element in enumerate(ring):
+            self.RING[ind] = element.deepcopy()
+            self.IDEALRING[ind] = element.deepcopy()
+
         self.INJ: Injection = Injection()
         self.SIG: Sigmas = Sigmas()
         self.ORD: Indices = Indices()
 
     def register_bpms(self, ords: ndarray, **kwargs):
+        if len(unknown_keys := [key for key in kwargs.keys() if key not in BPM_ERROR_FIELDS]):
+            raise ValueError(f"Unknown keywords {unknown_keys}. Allowed keywords are {BPM_ERROR_FIELDS}")
         self.ORD.BPM = np.unique(np.concatenate((self.ORD.BPM, ords)))
         for ind in np.unique(ords):
             if ind not in self.SIG.BPM.keys():
@@ -123,6 +131,8 @@ class SimulatedComissioning(DotDict):
             self.RING[ind].SumError = 0
 
     def register_cavities(self, ords: ndarray, **kwargs):
+        if len(unknown_keys := [key for key in kwargs.keys() if key not in RF_ERROR_FIELDS]):
+            raise ValueError(f"Unknown keywords {unknown_keys}. Allowed keywords are {RF_ERROR_FIELDS}")
         self.ORD.RF = np.unique(np.concatenate((self.ORD.RF, ords)))
         for ind in np.unique(ords):
             if ind not in self.SIG.RF.keys():
@@ -134,8 +144,9 @@ class SimulatedComissioning(DotDict):
                 setattr(self.RING[ind], f"{field}CalError", 0)
 
     def register_magnets(self, ords: ndarray, **kwargs):
-        keywords = ['HCM', 'VCM', 'CF', 'SkewQuad', 'MasterOf']
-        nvpairs = {key: value for key, value in kwargs.items() if key not in keywords}
+        if len(unknown_keys := [key for key in kwargs.keys() if key not in MAGNET_TYPE_FIELDS + MAGNET_ERROR_FIELDS]):
+            raise ValueError(f"Unknown keywords {unknown_keys}. Allowed keywords are {MAGNET_TYPE_FIELDS + MAGNET_ERROR_FIELDS}")
+        nvpairs = {key: value for key, value in kwargs.items() if key not in MAGNET_TYPE_FIELDS}
         self.ORD.Magnet = np.unique(np.concatenate((self.ORD.Magnet, ords)))
         if 'SkewQuad' in kwargs.keys():
             self.ORD.SkewQuad = np.unique(np.concatenate((self.ORD.SkewQuad, ords)))
@@ -147,13 +158,14 @@ class SimulatedComissioning(DotDict):
             if ind not in self.SIG.Magnet.keys():
                 self.SIG.Magnet[ind] = DotDict()
             self.SIG.Magnet[ind].update(nvpairs)
-
-            self.RING[ind].NomPolynomB = copy.deepcopy(self.RING[ind].PolynomB[:])
-            self.RING[ind].NomPolynomA = copy.deepcopy(self.RING[ind].PolynomA[:])
-            self.RING[ind].SetPointB = copy.deepcopy(self.RING[ind].PolynomB[:])
-            self.RING[ind].SetPointA = copy.deepcopy(self.RING[ind].PolynomA[:])
-            self.RING[ind].CalErrorB = np.zeros(len(self.RING[ind].PolynomB))
-            self.RING[ind].CalErrorA = np.zeros(len(self.RING[ind].PolynomA))
+            for ab in AB:
+                order = len(getattr(self.RING[ind], f"Polynom{ab}"))
+                for field in ("NomPolynom", "SetPoint", "CalError"):
+                    setattr(self.RING[ind], f"{field}{ab}", np.zeros(order))
+            self.RING[ind].NomPolynomB += self.RING[ind].PolynomB
+            self.RING[ind].NomPolynomA += self.RING[ind].PolynomA
+            self.RING[ind].SetPointB += self.RING[ind].PolynomB
+            self.RING[ind].SetPointA += self.RING[ind].PolynomA
             self.RING[ind].MagnetOffset = np.zeros(3)
             self.RING[ind].SupportOffset = np.zeros(3)
             self.RING[ind].MagnetRoll = np.zeros(3)
@@ -165,6 +177,8 @@ class SimulatedComissioning(DotDict):
     def register_supports(self, support_ords: ndarray, support_type: str, **kwargs):
         if support_type not in SUPPORT_TYPES:
             raise ValueError(f'Unknown support type ``{support_type}`` found. Allowed are {SUPPORT_TYPES}.')
+        if len(unknown_keys := [key for key in kwargs.keys() if key not in SUPPORT_ERROR_FIELDS]):
+            raise ValueError(f"Unknown keywords {unknown_keys}. Allowed keywords are {SUPPORT_ERROR_FIELDS}")
         if not len(support_ords) or support_ords.shape[0] != 2:
             raise ValueError('Ordinates must be a 2xn array of ordinates.')
         if upstream := np.sum(np.diff(support_ords, axis=0) < 0):
@@ -210,7 +224,7 @@ class SimulatedComissioning(DotDict):
                         randn_cutoff(self.SIG.Magnet[ind][field], nsigmas))
         # Injection
         self.INJ.Z0 = self.INJ.Z0ideal + self.SIG.staticInjectionZ * SCrandnc(nsigmas, (6,))
-        self.INJ.randomInjectionZ = self.SIG.randomInjectionZ[:]
+        self.INJ.randomInjectionZ = 1 * self.SIG.randomInjectionZ
         # Circumference
         if 'Circumference' in self.SIG.keys():
             circScaling = 1 + self.SIG.Circumference * SCrandnc(nsigmas, (1, 1))
@@ -243,9 +257,9 @@ class SimulatedComissioning(DotDict):
                 if ordPair[0] > ordPair[1]:
                     struct_length = findspos(self.RING, len(self.RING))[0] - struct_length
 
-                rolls0 = getattr(self.RING[ordPair[0]], f"{support_type}Roll")  # Twisted supports are not considered
-                offsets0 = getattr(self.RING[ordPair[0]], f"{support_type}Offset")
-                offsets1 = getattr(self.RING[ordPair[1]], f"{support_type}Offset")
+                rolls0 = copy.deepcopy(getattr(self.RING[ordPair[0]], f"{support_type}Roll"))  # Twisted supports are not considered
+                offsets0 = copy.deepcopy(getattr(self.RING[ordPair[0]], f"{support_type}Offset"))
+                offsets1 = copy.deepcopy(getattr(self.RING[ordPair[1]], f"{support_type}Offset"))
 
                 if rolls0[1] != 0:
                     if f"{support_type}Offset" in self.SIG.Support[ordPair[1]].keys():
@@ -387,11 +401,11 @@ class SimulatedComissioning(DotDict):
         setpoints_a, setpoints_b = self.RING[source_ord].SetPointA, self.RING[source_ord].SetPointB
         polynoms = dict(A=setpoints_a * add_padded(np.ones(len(setpoints_a)), self.RING[source_ord].CalErrorA),
                         B=setpoints_b * add_padded(np.ones(len(setpoints_b)), self.RING[source_ord].CalErrorB))
-        for target in ("A", "B"):
+        for target in AB:
             new_polynom = polynoms[target][:]
             if hasattr(self.RING[target_ord], f'Polynom{target}Offset'):
                 new_polynom = add_padded(new_polynom, getattr(self.RING[target_ord], f'Polynom{target}Offset'))
-            for source in ("A", "B"):
+            for source in AB:
                 if hasattr(self.RING[target_ord], f'SysPol{target}From{source}'):
                     polynom_errors = getattr(self.RING[target_ord], f'SysPol{target}From{source}')
                     for n in polynom_errors.keys():
