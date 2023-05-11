@@ -21,8 +21,7 @@ from pySC.core.SCpseudoBBA import SCpseudoBBA
 from pySC.core.SCmemberFunctions import SCregisterBPMs, SCregisterCAVs, SCregisterMagnets, SCregisterSupport, SCinit, SCapplyErrors
 from pySC.core.SCsanityCheck import SCsanityCheck
 from pySC.core.SCsetpoints import SCsetCavs2SetPoints, SCsetMags2SetPoints
-from pySC.core.SCsynchEnergyCorrection import SCsynchEnergyCorrection
-from pySC.core.SCsynchPhaseCorrection import SCsynchPhaseCorrection
+from core.SCsynchCorrection import SCsynchPhaseCorrection, SCsynchEnergyCorrection
 from pySC.utils import logging_tools
 
 LOGGER = logging_tools.get_logger(__name__)
@@ -109,8 +108,6 @@ if __name__ == "__main__":
         SC.RING[ord].EApertures = 10E-3 * np.array([1, 1])  # [m]
     SC.RING[SC.ORD.Magnet[50]].EApertures = np.array([6E-3, 3E-3])  # [m]
 
-    SC.plot = False  # TODO: replace with proper global-like variable
-
     #SCsanityCheck(SC)
     # SCplotLattice(SC, nSectors=10)
     SC.apply_errors()
@@ -151,19 +148,13 @@ if __name__ == "__main__":
 
     # RF cavity correction
     for nIter in range(2):
-        [deltaPhi, ERROR] = SCsynchPhaseCorrection(SC, nTurns=5, nSteps=25, plotResults=False, verbose=True, plotProgress=False)
-        if ERROR:
-            sys.exit('Phase correction crashed')
+        deltaPhi = SCsynchPhaseCorrection(SC, nTurns=5, nSteps=25, plotResults=False, verbose=True, plotProgress=False)
         SC = SCsetCavs2SetPoints(SC, SC.ORD.RF, 'TimeLag', deltaPhi, method='add')
 
-        [deltaF, ERROR] = SCsynchEnergyCorrection(SC, f_range=40E3 * np.array([-1, 1]),  # Frequency range [kHz]
-                                                  nTurns=20, nSteps=15,  # Number of frequency steps
-                                                  plotResults=False, plotProgress=False, verbose=True)
-
-        if not ERROR:
-            SC = SCsetCavs2SetPoints(SC, SC.ORD.RF, 'Frequency', np.array([deltaF]), method='add')
-        else:
-            sys.exit()
+        deltaF = SCsynchEnergyCorrection(SC, f_range=40E3 * np.array([-1, 1]),  # Frequency range [kHz]
+                                         nTurns=20, nSteps=15,  # Number of frequency steps
+                                         plotResults=False, plotProgress=False, verbose=True)
+        SC = SCsetCavs2SetPoints(SC, SC.ORD.RF, 'Frequency', np.array([deltaF]), method='add')
 
     # Plot phasespace after RF correction
     SCplotPhaseSpace(SC, nParticles=10, nTurns=100)
@@ -177,9 +168,7 @@ if __name__ == "__main__":
 
 
     # Orbit correction
-    SC.INJ._trackMode = 'ORB' # TODO: how to set this correctly?
     SC.INJ.trackMode = 'ORB'
-    SC.INJ.nTurns = 1
     MCO = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, trackMode='ORB')
     eta = SCgetModelDispersion(SC, SC.ORD.BPM, SC.ORD.RF)
 

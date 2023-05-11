@@ -58,7 +58,6 @@ class Injection(DotDict):
 
     @trackMode.setter
     def trackMode(self, mode):
-        allowed_modes = ("TBT", "ORB", "PORB")
         if mode not in TRACKING_MODES:
             raise AttributeError(f"trackMode property has to be one of {TRACKING_MODES}")
         self._trackMode = mode
@@ -111,6 +110,7 @@ class SimulatedComissioning(DotDict):
         self.INJ: Injection = Injection()
         self.SIG: Sigmas = Sigmas()
         self.ORD: Indices = Indices()
+        self.plot: bool = False
 
     def register_bpms(self, ords: ndarray, **kwargs):
         if len(unknown_keys := [key for key in kwargs.keys() if key not in BPM_ERROR_FIELDS]):
