@@ -6,12 +6,12 @@ from pySC.utils.sc_tools import SCrandnc
 from pySC.at_wrapper import atgetfieldvalues, atpass, findorbit6, findspos
 import warnings
 
-def SCgetBPMreading(SC, BPMords=None, do_plot=False):
+def SCgetBPMreading(SC, BPMords=None):
     #  lattice_pass output:            (6, N, R, T) coordinates of N particles at R reference points for T turns.
     #  findorbit second output value:  (R, 6) closed orbit vector at each specified location
-    refs = np.arange(len(SC.RING)) if do_plot else SC.ORD.BPM[:]
+    refs = np.arange(len(SC.RING)) if SC.plot else SC.ORD.BPM[:]
     n_refs = len(refs)
-    if do_plot:
+    if SC.plot:
         all_readings_5d = np.full((2, SC.INJ.nParticles, n_refs, SC.INJ.nTurns, SC.INJ.nShots), np.nan)
     all_bpm_orbits_4d = np.full((2, len(SC.ORD.BPM), SC.INJ.nTurns, SC.INJ.nShots), np.nan)
     for nShot in range(SC.INJ.nShots):
@@ -19,13 +19,13 @@ def SCgetBPMreading(SC, BPMords=None, do_plot=False):
             tracking_4d = np.transpose(findorbit6(SC.RING, refs, keep_lattice=False)[1])[[0, 2], :].reshape(2, 1, n_refs, 1)
         else:
             tracking_4d = atpass(SC.RING, SCgenBunches(SC), SC.INJ.nTurns, refs, keep_lattice=False)[[0, 2], :, :, :]
-        all_bpm_orbits_4d[:, :, :, nShot] = _real_bpm_reading(SC, tracking_4d[:, :, SC.ORD.BPM, :] if do_plot else tracking_4d)
+        all_bpm_orbits_4d[:, :, :, nShot] = _real_bpm_reading(SC, tracking_4d[:, :, SC.ORD.BPM, :] if SC.plot else tracking_4d)
         tracking_4d[:, np.isnan(tracking_4d[0, :])] = np.nan
-        if do_plot:
+        if SC.plot:
             all_readings_5d[:, :, :, :, nShot] = tracking_4d[:, :, :, :]
 
     mean_bpm_orbits_3d = _loc_nan_mean(all_bpm_orbits_4d, axis=3)  # mean_bpm_orbits_3d is 3D (dim, BPM, turn)
-    if do_plot:
+    if SC.plot:
         _plot_bpm_reading(SC, mean_bpm_orbits_3d, all_readings_5d)
 
     if SC.INJ.trackMode == 'PORB':   # ORB averaged over low amount of turns
@@ -37,7 +37,7 @@ def SCgetBPMreading(SC, BPMords=None, do_plot=False):
         mean_bpm_orbits_3d = mean_bpm_orbits_3d[:, ind, :]
     # Organising the array the same way as in matlab version 2 x (nturns, nbpms) sorted by "arrival time"
     mean_bpm_orbits_2d = np.transpose(mean_bpm_orbits_3d, axes=(0, 2, 1)).reshape((2, np.prod(mean_bpm_orbits_3d.shape[1:])))
-    # if do_plot:
+    # if SC.plot:
     #     return mean_bpm_orbits_2d, all_readings_5d
     return mean_bpm_orbits_2d
 
