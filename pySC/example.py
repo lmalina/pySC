@@ -125,7 +125,7 @@ if __name__ == "__main__":
     SC.INJ.nShots = 1
     SC.INJ.trackMode = 'TBT'
     eps = 5E-4  # Noise level
-    SCgetBPMreading(SC, do_plot=False)
+    SCgetBPMreading(SC)
     SC = SCfeedbackFirstTurn(SC, Minv1)
 
     SC.INJ.nTurns = 2
