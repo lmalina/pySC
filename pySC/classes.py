@@ -33,9 +33,8 @@ class DotDict(dict):
         return copy.deepcopy(self)
 
 
-class Injection(DotDict):
+class Injection:
     def __init__(self):
-        super(Injection, self).__init__()
         self.beamLostAt: float = 1.0
         self.Z0ideal: ndarray = np.zeros(6)
         self.Z0: ndarray = np.zeros(6)
