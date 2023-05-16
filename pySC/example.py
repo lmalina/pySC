@@ -30,9 +30,9 @@ LOGGER = logging_tools.get_logger(__name__)
 def create_at_lattice() -> Lattice:
     def _marker(name):
         return at.Marker(name, PassMethod='IdentityPass')
-    qf = at.Quadrupole('QF', 0.5, 1.2, PassMethod='StrMPoleSymplectic4RadPass', MaxOrder=1)
-    qd = at.Quadrupole('QD', 0.5, -1.2, PassMethod='StrMPoleSymplectic4RadPass', MaxOrder=1)
-    sf = at.Sextupole('SF', 0.1, 6.0487, PassMethod='StrMPoleSymplectic4RadPass', MaxOrder=2)
+    qf = at.Quadrupole('QF', 0.5, 1.2, PassMethod='StrMPoleSymplectic4RadPass')
+    qd = at.Quadrupole('QD', 0.5, -1.2, PassMethod='StrMPoleSymplectic4RadPass')
+    sf = at.Sextupole('SF', 0.1, 6.0487, PassMethod='StrMPoleSymplectic4RadPass')
     sd = at.Sextupole('SD', 0.1, -9.5203, PassMethod='StrMPoleSymplectic4RadPass')
     bend = at.Bend('BEND', 1, 2 * np.pi / 40, PassMethod='BndMPoleSymplectic4RadPass')
     d2 = at.Drift('Drift', 0.25)
@@ -108,7 +108,7 @@ if __name__ == "__main__":
         SC.RING[ord].EApertures = 10E-3 * np.array([1, 1])  # [m]
     SC.RING[SC.ORD.Magnet[50]].EApertures = np.array([6E-3, 3E-3])  # [m]
 
-    #SCsanityCheck(SC)
+    # SCsanityCheck(SC)
     # SCplotLattice(SC, nSectors=10)
     SC.apply_errors()
     SCplotSupport(SC)
@@ -118,7 +118,7 @@ if __name__ == "__main__":
     SC = SCsetMags2SetPoints(SC, sextOrds, False, 2, np.array([0.0]), method='abs')
     RM1 = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, nTurns=1)
     RM2 = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, nTurns=2)
-    Minv1 = SCgetPinv(RM1, alpha=50,plot=False)
+    Minv1 = SCgetPinv(RM1, alpha=50)
     Minv2 = SCgetPinv(RM2, alpha=50)
     SC.INJ.nParticles = 1
     SC.INJ.nTurns = 1
@@ -160,12 +160,10 @@ if __name__ == "__main__":
     SCplotPhaseSpace(SC, nParticles=10, nTurns=100)
     [maxTurns, lostCount] = SCgetBeamTransmission(SC, nParticles=100, nTurns=10, verbose=True)
 
-
     # Performing pseudo-BBA
     quadOrds = np.tile(SCgetOrds(SC.RING, 'QF|QD'), (2,1))
     BPMords = np.tile(SC.ORD.BPM, (2,1))
     SC = SCpseudoBBA(SC, BPMords, quadOrds, np.array([50E-6]))
-
 
     # Orbit correction
     SC.INJ.trackMode = 'ORB'

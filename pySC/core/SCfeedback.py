@@ -29,7 +29,6 @@ def SCfeedbackFirstTurn(SC, Mplus, R0=None, CMords=None, BPMords=None, maxsteps=
         if _is_repro(transmission_history, wiggle_after):
             SC = _wiggling(SC,BPMords,CMords,transmission_history[-1]+1,wiggle_range=wiggle_range,wiggle_steps=wiggle_steps) # TODO: find more elegant solution for parsing fine tuning parameters. Maybe something like 'SC.config.feedbackFirstTurn.wiggle'?
 
-            
     raise RuntimeError('SCfeedbackFirstTurn: FAIL (maxsteps reached)')
 
 
@@ -68,7 +67,7 @@ def SCfeedbackStitch(SC, Mplus, R0=None, CMords=None, BPMords=None, nBPMs=4, max
         R[np.isnan(R)] = 0
 
         # Correction step
-        dphi = np.split(Mplus @ (R - R0),2)
+        dphi = np.split(Mplus @ (R - R0),2)  # TODO what if unequal lengths?
         SC, _ = SCsetCMs2SetPoints(SC, CMords[0], -dphi[0], skewness=False, method='add')
         SC, _ = SCsetCMs2SetPoints(SC, CMords[1], -dphi[1], skewness=True, method='add')      
         B, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history)
@@ -107,7 +106,7 @@ def SCfeedbackBalance(SC, Mplus, R0=None, CMords=None, BPMords=None, eps=1e-4, m
         R=np.concatenate((B[:, :len(BPMords)], delta_b), axis=1).ravel()
  
         # Correction step
-        dphi = np.split(np.dot(Mplus,(R - R0)),2)
+        dphi = np.split(np.dot(Mplus,(R - R0)),2)  # TODO what if unequal lengths?
         SC, _ = SCsetCMs2SetPoints(SC, CMords[0], -dphi[0], skewness=False, method='add')
         SC, _ = SCsetCMs2SetPoints(SC, CMords[1], -dphi[1], skewness=True, method='add')  
         B, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history)
@@ -161,8 +160,6 @@ def SCfeedbackRun(SC, Mplus, R0=None, CMords=None, BPMords=None, eps=1e-4, targe
     raise RuntimeError("SCfeedbackRun: FAIL (maxsteps reached, unstable)")
 
 
-
-
 def _check_ords(SC, Mplus, R0, BPMords, CMords):
     if CMords is None:
         CMords = SC.ORD.CM.copy()
@@ -187,7 +184,7 @@ def _correction_step_firstturn(SC, bpm_ind, BPMords, CMords, B, R0, Mplus):
     dR = B[:, :].reshape(R0.shape) - R0  # TODO perhaps check the dimension, potentially more turns in
     dR[np.isnan(dR)] = 0
 
-    dphi = np.split(Mplus @ dR,2)
+    dphi = np.split(Mplus @ dR,2)  # TODO same as somewhere above
 
     lastCMh = _get_last_cm(bpm_ind, 1, BPMords, CMords[0])[1][0]
     lastCMv = _get_last_cm(bpm_ind, 1, BPMords, CMords[1])[1][0]
@@ -199,8 +196,8 @@ def _correction_step_firstturn(SC, bpm_ind, BPMords, CMords, B, R0, Mplus):
 def _get_last_cm(lastBPMidx, n, BPMords, CMords):  # Refactored
     # Returns last CM ords and index of last CMs
     if lastBPMidx >= len(BPMords):  # If there is no beam loss in the first turn
-        return CMords[-n:], range(len(CMords)-n,len(CMords)) # ... just return the last n CMs
-    if len(CMords[np.where(CMords <= BPMords[lastBPMidx])])==0:
+        return CMords[-n:], range(len(CMords)-n, len(CMords))  # ... just return the last n CMs
+    if len(CMords[np.where(CMords <= BPMords[lastBPMidx])]) == 0:
         raise RuntimeError('No CM upstream of BPMs')
     return CMords[np.where(CMords <= BPMords[lastBPMidx])[0][-n:]], np.where(CMords <= BPMords[lastBPMidx])[0][-n:]
 
@@ -225,16 +222,14 @@ def _is_stable_or_converged(n, eps, hist):  # Balance and Run  # TODO rethink
     return (np.var(hist[-n:]) / np.std(hist[-n:])) < eps
 
 def _wiggling(SC,BPMords,CMords,transmission_limit,wiggle_range=[50E-6,200E-6],wiggle_steps=32,nCM_for_wiggling=range(1, 9)):
-
     LOGGER.debug('Wiggling')
     dpts = _golden_donut_diffs(wiggle_range[0], wiggle_range[1], wiggle_steps)
-    transmission_history, rms_orbit_history = None, None
-    B, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history)  # Inject...
+    B, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords, ind_history=None, orb_history=None)  # Inject...
 
-    for nWiggleCM in nCM_for_wiggling:  # TODO basicalyy the sme as First turn
+    for nWiggleCM in nCM_for_wiggling:
         LOGGER.debug(f'Number of magnets used for wiggling: {nWiggleCM}. \n')
-        tmpCMordsH = _get_last_cm(transmission_history[-1] - 1, nWiggleCM, BPMords, CMords[0])[0] # Last CMs in horz
-        tmpCMordsV = _get_last_cm(transmission_history[-1] - 1, nWiggleCM, BPMords, CMords[1])[0] # Last CMs in vert
+        tmpCMordsH = _get_last_cm(transmission_history[-1] - 1, nWiggleCM, BPMords, CMords[0])[0]  # Last CMs in horz
+        tmpCMordsV = _get_last_cm(transmission_history[-1] - 1, nWiggleCM, BPMords, CMords[1])[0]  # Last CMs in vert
 
         for i in range(dpts.shape[1]):
             SC, _ = SCsetCMs2SetPoints(SC, tmpCMordsH, np.array([dpts[0, i]]), skewness=False, method='add')
@@ -245,7 +240,8 @@ def _wiggling(SC,BPMords,CMords,transmission_limit,wiggle_range=[50E-6,200E-6],w
                     B, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history)
                 if _is_repro(transmission_history, 3):
                     LOGGER.debug('...completed')
-                    return SC # Continue with feedback
+                    return SC  # Continue with feedback
                 
     if not transmission_history[-1] >= transmission_limit:
         raise RuntimeError('Wiggling failed')
+    return SC

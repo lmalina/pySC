@@ -16,7 +16,7 @@ LOGGER = logging_tools.get_logger(__name__)
 def SCsynchPhaseCorrection(SC, cavOrd=None, nSteps=15, nTurns=20, plotResults=False, plotProgress=False, verbose=False):
     if cavOrd is None:
         cavOrd = SC.ORD.RF
-    
+
     SC.INJ.nTurns = nTurns  # TODO this is not nice
     BPMshift = np.full(nSteps, np.nan)
     lamb = 299792458 / SC.RING[cavOrd[0]].Frequency
@@ -24,14 +24,14 @@ def SCsynchPhaseCorrection(SC, cavOrd=None, nSteps=15, nTurns=20, plotResults=Fa
 
     LOGGER.debug(f'Calibrate RF phase with: \n {SC.INJ.nParticles} Particles \n {SC.INJ.nTurns} Turns '
                  f'\n {SC.INJ.nShots} Shots \n {nSteps} Phase steps.\n\n')
-    
+
     for nL in range(len(timeLagVec)):
         SC = SCsetCavs2SetPoints(SC, cavOrd, 'TimeLag', np.array([timeLagVec[nL]]), 'add')
         BPMshift[nL], TBTdE = _get_tbt_energy_shift(SC)
         SC = SCsetCavs2SetPoints(SC, cavOrd, 'TimeLag', -np.array([timeLagVec[nL]]), 'add')
         if plotProgress:
             _fun_plot_progress(TBTdE, BPMshift, timeLagVec, nL, phase=True)
-    
+
     if not (max(BPMshift) > 0 > min(BPMshift)):
         raise RuntimeError('Zero crossing not within data set.\n')
 
@@ -47,7 +47,9 @@ def SCsynchPhaseCorrection(SC, cavOrd=None, nSteps=15, nTurns=20, plotResults=Fa
 
     deltaPhi = fsolve(sol, timeLagVec[np.argmax(sol(timeLagVec))] - abs(timeLagVec[0]) / 2)
     deltaPhi = _fold_phase(deltaPhi, lamb)
-    
+    if np.isnan(deltaPhi):
+        raise RuntimeError('SCrfCommissioning: ERROR (NaN phase)\n')
+
     if plotResults:
         plt.plot(timeLagVec / lamb * 360, BPMshift, 'o', color='red', label="data")
         plt.plot(timeLagVec / lamb * 360, sol(timeLagVec), '--', color='blue', label="fit")
@@ -57,10 +59,7 @@ def SCsynchPhaseCorrection(SC, cavOrd=None, nSteps=15, nTurns=20, plotResults=Fa
         plt.ylabel("BPM change [m]")
         plt.legend()
         plt.show()
-    
-    if np.isnan(deltaPhi):
-        raise RuntimeError('SCrfCommissioning: ERROR (NaN phase)\n')
-    
+
     if verbose:
         XCO = findorbit6(SC.RING)[0]
         tmpSC = copy.deepcopy(SC)
@@ -79,7 +78,7 @@ def SCsynchEnergyCorrection(SC, cavOrd=None, f_range=(-1E3, 1E3), nSteps=15, nTu
     if cavOrd is None:
         cavOrd = SC.ORD.RF
 
-    SC.INJ.nTurns = nTurns
+    SC.INJ.nTurns = nTurns  # TODO this is not nice
     BPMshift = np.full(nSteps, np.nan)
     fTestVec = np.linspace(f_range[0], f_range[1], nSteps)
     LOGGER.debug(f'Correct energy error with: \n '
@@ -95,11 +94,14 @@ def SCsynchEnergyCorrection(SC, cavOrd=None, f_range=(-1E3, 1E3), nSteps=15, nTu
 
     fTestVec = fTestVec[~np.isnan(BPMshift)]
     BPMshift = BPMshift[~np.isnan(BPMshift)]
-    if len(BPMshift) == 0:
+    if len(BPMshift) < 2:
         raise RuntimeError('No transmission.')
 
     p = np.polyfit(fTestVec, BPMshift, 1)
     deltaF = -p[1] / p[0]
+    if np.isnan(deltaF):
+        raise RuntimeError('NaN energy correction step.')
+
     if plotResults:
         plt.plot(1E-3 * fTestVec, 1E6 * BPMshift, 'o')
         plt.plot(1E-3 * fTestVec, 1E6 * (fTestVec * p[0] + p[1]), '--')
@@ -109,15 +111,11 @@ def SCsynchEnergyCorrection(SC, cavOrd=None, f_range=(-1E3, 1E3), nSteps=15, nTu
         plt.legend({'Measurement', 'Fit', 'dE correction'})  # ,'Closed orbit'})
         plt.show()
 
-    if np.isnan(deltaF):   # TODO do we want to plot results even if NaN?
-        raise RuntimeError('NaN energy correction step.')
-
     if verbose:
         XCO = findorbit6(SC.RING)[0]
         SC = SCsetCavs2SetPoints(SC, cavOrd, 'Frequency', np.array([deltaF]), 'add')
         XCOfinal = findorbit6(SC.RING)[0]
         SC = SCsetCavs2SetPoints(SC, cavOrd, 'Frequency', -np.array([deltaF]), 'add')
-
         LOGGER.debug(f'Frequency correction step: {1E-3 * deltaF:.2f} kHz')
         LOGGER.debug(f'Energy error corrected from {1E2 * (SC.INJ.Z0[4] - XCO[4]):.2f}% '
                      f'to {1E2 * (SC.INJ.Z0[4] - XCOfinal[4]):.2f}%')
@@ -126,8 +124,10 @@ def SCsynchEnergyCorrection(SC, cavOrd=None, f_range=(-1E3, 1E3), nSteps=15, nTu
 
 def _get_tbt_energy_shift(SC, min_turns=0):  # TODO should be simplified
     B = SCgetBPMreading(SC)
-    BB = np.transpose(np.reshape(B[0, :], (SC.INJ.nTurns, len(SC.ORD.BPM))))
-    dE = np.mean(BB - np.transpose(np.tile(BB[:, 0], (SC.INJ.nTurns, 1))), axis=0)
+    x_reading = np.reshape(B[0, :], (SC.INJ.nTurns, len(SC.ORD.BPM)))
+    dE = np.mean(x_reading - x_reading[0, :], axis=1)
+    # TODO technically the first point should remain in for the fit, the subtraction only makes `c` invalid,
+    #  but does not decrease the number of degrees of freedom
     x = np.linspace(1, SC.INJ.nTurns-1, SC.INJ.nTurns-1)
     y = dE[1:]
     x = x[~np.isnan(y)]
