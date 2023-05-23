@@ -11,6 +11,8 @@
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
         <script src="../../_static/doctools.js"></script>
         <script src="../../_static/sphinx_highlight.js"></script>
@@ -125,9 +127,8 @@
         <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="Injection"><a class="viewcode-back" href="../../modules/classes.html#pySC.classes.Injection">[docs]</a><span class="k">class</span> <span class="nc">Injection</span><span class="p">(</span><span class="n">DotDict</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">Injection</span><span class="p">:</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">Injection</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">beamLostAt</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">Z0ideal</span><span class="p">:</span> <span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">Z0</span><span class="p">:</span> <span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span>
@@ -150,13 +151,12 @@
 
     <span class="nd">@trackMode</span><span class="o">.</span><span class="n">setter</span>
     <span class="k">def</span> <span class="nf">trackMode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="p">):</span>
-        <span class="n">allowed_modes</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;TBT&quot;</span><span class="p">,</span> <span class="s2">&quot;ORB&quot;</span><span class="p">,</span> <span class="s2">&quot;PORB&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">TRACKING_MODES</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;trackMode property has to be one of </span><span class="si">{</span><span class="n">TRACKING_MODES</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_trackMode</span> <span class="o">=</span> <span class="n">mode</span>
         <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;ORB&#39;</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">nTurns</span> <span class="o">=</span> <span class="mi">1</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">nParticles</span> <span class="o">=</span> <span class="mi">1</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">nParticles</span> <span class="o">=</span> <span class="mi">1</span>
 
 
 <div class="viewcode-block" id="Indices"><a class="viewcode-back" href="../../modules/classes.html#pySC.classes.Indices">[docs]</a><span class="k">class</span> <span class="nc">Indices</span><span class="p">(</span><span class="n">DotDict</span><span class="p">):</span>
@@ -203,6 +203,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">INJ</span><span class="p">:</span> <span class="n">Injection</span> <span class="o">=</span> <span class="n">Injection</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">SIG</span><span class="p">:</span> <span class="n">Sigmas</span> <span class="o">=</span> <span class="n">Sigmas</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ORD</span><span class="p">:</span> <span class="n">Indices</span> <span class="o">=</span> <span class="n">Indices</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 
     <span class="k">def</span> <span class="nf">register_bpms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ords</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">unknown_keys</span> <span class="o">:=</span> <span class="p">[</span><span class="n">key</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">BPM_ERROR_FIELDS</span><span class="p">]):</span>
