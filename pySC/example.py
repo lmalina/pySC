@@ -18,9 +18,7 @@ from pySC.core.SCplotPhaseSpace import SCplotPhaseSpace
 from pySC.core.SCplotSupport import SCplotSupport
 from pySC.core.SCplotCMstrengths import SCplotCMstrengths
 from pySC.core.SCpseudoBBA import SCpseudoBBA
-from pySC.core.SCmemberFunctions import SCregisterBPMs, SCregisterCAVs, SCregisterMagnets, SCregisterSupport, SCinit, SCapplyErrors
-from pySC.core.SCsanityCheck import SCsanityCheck
-from pySC.core.SCsetpoints import SCsetCavs2SetPoints, SCsetMags2SetPoints
+from pySC.core.SCsetpoints import SCsetMags2SetPoints
 from core.SCsynchCorrection import SCsynchPhaseCorrection, SCsynchEnergyCorrection
 from pySC.utils import logging_tools
 
@@ -108,10 +106,10 @@ if __name__ == "__main__":
         SC.RING[ord].EApertures = 10E-3 * np.array([1, 1])  # [m]
     SC.RING[SC.ORD.Magnet[50]].EApertures = np.array([6E-3, 3E-3])  # [m]
 
-    # SCsanityCheck(SC)
     # SCplotLattice(SC, nSectors=10)
     SC.apply_errors()
-    #SCplotSupport(SC)
+    # SC.verify_structure()
+    SCplotSupport(SC)
 
     SC.RING = SCcronoff(SC.RING, 'cavityoff')
     sextOrds = SCgetOrds(SC.RING, 'SF|SD')
@@ -144,7 +142,7 @@ if __name__ == "__main__":
     SC.RING = SCcronoff(SC.RING, 'cavityon')
 
     # Plot initial phasespace
-    #SCplotPhaseSpace(SC, nParticles=10, nTurns=100)
+    SCplotPhaseSpace(SC, nParticles=10, nTurns=100)
 
     # RF cavity correction
     SC.INJ.nTurns = 20
