@@ -147,14 +147,13 @@ if __name__ == "__main__":
     #SCplotPhaseSpace(SC, nParticles=10, nTurns=100)
 
     # RF cavity correction
+    SC.INJ.nTurns = 20
     for nIter in range(2):
-        deltaPhi = SCsynchPhaseCorrection(SC, nTurns=5, nSteps=25, plotResults=False, verbose=True, plotProgress=False)
-        SC = SCsetCavs2SetPoints(SC, SC.ORD.RF, 'TimeLag', deltaPhi, method='add')
+        SC = SCsynchPhaseCorrection(SC, nSteps=25, plotResults=False, plotProgress=False)
 
-        deltaF = SCsynchEnergyCorrection(SC, f_range=40E3 * np.array([-1, 1]),  # Frequency range [kHz]
-                                         nTurns=20, nSteps=15,  # Number of frequency steps
-                                         plotResults=False, plotProgress=False, verbose=True)
-        SC = SCsetCavs2SetPoints(SC, SC.ORD.RF, 'Frequency', np.array([deltaF]), method='add')
+        SC = SCsynchEnergyCorrection(SC, f_range=40E3 * np.array([-1, 1]),  # Frequency range [kHz]
+                                         nSteps=15,  # Number of frequency steps
+                                         plotResults=False, plotProgress=False)
 
     # Plot phasespace after RF correction
     SCplotPhaseSpace(SC, nParticles=10, nTurns=100)
