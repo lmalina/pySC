@@ -16,12 +16,10 @@ from pySC.core.SClocoLib import SClocoLib
 from pySC.core.SCplotLattice import SCplotLattice
 from pySC.core.SCplotPhaseSpace import SCplotPhaseSpace
 from pySC.core.SCplotSupport import SCplotSupport
+from pySC.core.SCplotCMstrengths import SCplotCMstrengths
 from pySC.core.SCpseudoBBA import SCpseudoBBA
-from pySC.core.SCmemberFunctions import SCregisterBPMs, SCregisterCAVs, SCregisterMagnets, SCregisterSupport, SCinit, SCapplyErrors
-from pySC.core.SCsanityCheck import SCsanityCheck
-from pySC.core.SCsetpoints import SCsetCavs2SetPoints, SCsetMags2SetPoints
-from pySC.core.SCsynchEnergyCorrection import SCsynchEnergyCorrection
-from pySC.core.SCsynchPhaseCorrection import SCsynchPhaseCorrection
+from pySC.core.SCsetpoints import SCsetMags2SetPoints
+from core.SCsynchCorrection import SCsynchPhaseCorrection, SCsynchEnergyCorrection
 from pySC.utils import logging_tools
 
 LOGGER = logging_tools.get_logger(__name__)
@@ -43,7 +41,7 @@ def create_at_lattice() -> Lattice:
                        _marker('GirderStart'), BPM, qf, d2, d2, bend, d3, sd, d3, qd, d2, _marker('BPM'),
                        _marker('GirderEnd'), _marker('SectionEnd')], name='Simple FODO cell', energy=2.5E9)
     new_ring = at.Lattice(cell * 20)
-    rfc = at.RFCavity('RFCav', energy=2.5E9, voltage=2e6, frequency=1, harmonic_number=50, length=0)
+    rfc = at.RFCavity('RFCav', energy=2.5E9, voltage=2e6, frequency=149896228.99999985, harmonic_number=50, length=0)
     new_ring.insert(0, rfc)
     new_ring.enable_6d()
     new_ring.set_cavity_phase()
@@ -107,9 +105,10 @@ if __name__ == "__main__":
     for ord in SCgetOrds(SC.RING, 'QF|QD|BEND|SF|SD'):
         SC.RING[ord].EApertures = 10E-3 * np.array([1, 1])  # [m]
     SC.RING[SC.ORD.Magnet[50]].EApertures = np.array([6E-3, 3E-3])  # [m]
-    #SCsanityCheck(SC)
+
     # SCplotLattice(SC, nSectors=10)
     SC.apply_errors()
+    # SC.verify_structure()
     SCplotSupport(SC)
 
     SC.RING = SCcronoff(SC.RING, 'cavityoff')
@@ -123,61 +122,66 @@ if __name__ == "__main__":
     SC.INJ.nTurns = 1
     SC.INJ.nShots = 1
     SC.INJ.trackMode = 'TBT'
-    eps = 1E-4  # Noise level
-    SCgetBPMreading(SC, do_plot=False)
+    eps = 5E-4  # Noise level
+    SCgetBPMreading(SC)
     SC = SCfeedbackFirstTurn(SC, Minv1)
+
     SC.INJ.nTurns = 2
     SC = SCfeedbackStitch(SC, Minv2, nBPMs=3, maxsteps=20)
-    SC = SCfeedbackRun(SC, Minv2, target=300E-6, maxsteps=30, eps=eps)
+    # SC = SCfeedbackRun(SC, Minv2, target=300E-6, maxsteps=30, eps=eps)
     SC = SCfeedbackBalance(SC, Minv2, maxsteps=32, eps=eps)
 
+    # Turning on the sextupoles
     for S in np.linspace(0.1, 1, 5):
-        SC = SCsetMags2SetPoints(SC, sextOrds, False, 2, S, method='rel')
+        SC = SCsetMags2SetPoints(SC, sextOrds, False, 2, np.array([S]), method='rel')
         try:
             SC = SCfeedbackBalance(SC, Minv2, maxsteps=32, eps=eps)
         except RuntimeError:
             pass
 
     SC.RING = SCcronoff(SC.RING, 'cavityon')
+
+    # Plot initial phasespace
     SCplotPhaseSpace(SC, nParticles=10, nTurns=100)
+
+    # RF cavity correction
+    SC.INJ.nTurns = 20
     for nIter in range(2):
-        [deltaPhi, ERROR] = SCsynchPhaseCorrection(SC, nTurns=5, nSteps=25, plotResults=True, verbose=True)
-        if ERROR:
-            sys.exit('Phase correction crashed')
-        SC = SCsetCavs2SetPoints(SC, SC.ORD.RF, 'TimeLag', deltaPhi, method='add')
-        [deltaF, ERROR] = SCsynchEnergyCorrection(SC, range=40E3 * np.array([-1, 1]),  # Frequency range [kHz]
-                                                  nTurns=20, nSteps=15,  # Number of frequency steps
-                                                  plotResults=True, verbose=True)
-        if not ERROR:
-            SC = SCsetCavs2SetPoints(SC, SC.ORD.RF, 'Frequency', deltaF, method='add')
-        else:
-            sys.exit()
-    SCplotPhaseSpace(SC, nParticles=10, nTurns=1000)
-    [maxTurns, lostCount, ERROR] = SCgetBeamTransmission(SC, nParticles=100, nTurns=10, verbose=True)
-    if ERROR:
-        sys.exit()
+        SC = SCsynchPhaseCorrection(SC, nSteps=25, plotResults=False, plotProgress=False)
+
+        SC = SCsynchEnergyCorrection(SC, f_range=40E3 * np.array([-1, 1]),  # Frequency range [kHz]
+                                         nSteps=15,  # Number of frequency steps
+                                         plotResults=False, plotProgress=False)
+
+    # Plot phasespace after RF correction
+    SCplotPhaseSpace(SC, nParticles=10, nTurns=100)
+    [maxTurns, lostCount] = SCgetBeamTransmission(SC, nParticles=100, nTurns=10, verbose=True)
+
+    # Performing pseudo-BBA
+    quadOrds = np.tile(SCgetOrds(SC.RING, 'QF|QD'), (2,1))
+    BPMords = np.tile(SC.ORD.BPM, (2,1))
+    SC = SCpseudoBBA(SC, BPMords, quadOrds, np.array([50E-6]))
+
+    # Orbit correction
     SC.INJ.trackMode = 'ORB'
     MCO = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, trackMode='ORB')
     eta = SCgetModelDispersion(SC, SC.ORD.BPM, SC.ORD.RF)
-    quadOrds = np.tile(SCgetOrds(SC.RING, 'QF|QD'), 2)
-    BPMords = np.tile(SC.ORD.BPM, 2)
-    SC = SCpseudoBBA(SC, BPMords, quadOrds, 50E-6)
+
     for alpha in range(10, 0, -1):
-        MinvCO = SCgetPinv(np.concatenate((MCO, 1E8 * eta)), alpha=alpha)
+        MinvCO = SCgetPinv(np.column_stack((MCO, 1E8 * eta)), alpha=alpha)
         try:
             CUR = SCfeedbackRun(SC, MinvCO, target=0, maxsteps=50, scaleDisp=1E8)
         except RuntimeError:
             break
-        B0rms = np.sqrt(np.mean(np.square(SCgetBPMreading(SC)), 1))
-        Brms = np.sqrt(np.mean(np.square(SCgetBPMreading(CUR)), 1))
+        B0rms = np.sqrt(np.mean(np.square(SCgetBPMreading(SC)), axis=1))
+        Brms = np.sqrt(np.mean(np.square(SCgetBPMreading(CUR)), axis=1))
         if np.mean(B0rms) < np.mean(Brms):
             break
         SC = CUR
     SC.RING = SCcronoff(SC.RING, 'cavityon')
     SCplotPhaseSpace(SC, nParticles=10, nTurns=1000)
-    [maxTurns, lostCount, ERROR] = SCgetBeamTransmission(SC, nParticles=100, nTurns=10, verbose=True)
-    if ERROR:
-        sys.exit()
+    [maxTurns, lostCount] = SCgetBeamTransmission(SC, nParticles=100, nTurns=200, verbose=True, do_plot=True)
+
     CMstep = 1E-4  # [rad]
     RFstep = 1E3  # [Hz]
     [RINGdata, LOCOflags, Init] = SClocoLib('setupLOCOmodel', SC,

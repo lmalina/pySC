@@ -39,7 +39,7 @@ def SCgetCMSetPoints(SC: SimulatedComissioning, CMords: ndarray, skewness: bool)
 
 def SCsetCMs2SetPoints(SC: SimulatedComissioning, CMords: ndarray, setpoints: ndarray, skewness: bool, method: str = 'abs') -> Tuple[SimulatedComissioning, ndarray]:
     # skewness: old 2 -> True, 1 -> False
-    setpoints = _check_input_and_setpoints(method, CMords, setpoints)
+    new_setpoints = _check_input_and_setpoints(method, CMords, setpoints)
     order = 0
     ndim = 1 if skewness else 0
     for i, ord in enumerate(CMords):
@@ -48,19 +48,19 @@ def SCsetCMs2SetPoints(SC: SimulatedComissioning, CMords: ndarray, setpoints: nd
         else:
             normBy = np.array([-1, 1]) * SC.RING[ord].Length  # positive setpoint -> positive kick -> negative horizontal field
         if method == 'rel':
-            setpoints[i] *= (SC.RING[ord].SetPointA[order] if skewness else SC.RING[ord].SetPointB[order]) * normBy[ndim]
+            new_setpoints[i] *= (SC.RING[ord].SetPointA[order] if skewness else SC.RING[ord].SetPointB[order]) * normBy[ndim]
         if method == 'add':
-            setpoints[i] += (SC.RING[ord].SetPointA[order] if skewness else SC.RING[ord].SetPointB[order]) * normBy[ndim]
+            new_setpoints[i] += (SC.RING[ord].SetPointA[order] if skewness else SC.RING[ord].SetPointB[order]) * normBy[ndim]
 
-        if hasattr(SC.RING[ord], 'CMlimit') and abs(setpoints[i]) > abs(SC.RING[ord].CMlimit[ndim]):
+        if hasattr(SC.RING[ord], 'CMlimit') and abs(new_setpoints[i]) > abs(SC.RING[ord].CMlimit[ndim]):
             print(f'CM (ord: {ord} / dim: {ndim}) is clipping')
-            setpoints[i] = np.sign(setpoints[i]) * SC.RING[ord].CMlimit[ndim]
+            new_setpoints[i] = np.sign(new_setpoints[i]) * SC.RING[ord].CMlimit[ndim]
         if skewness:
-            SC.RING[ord].SetPointA[order] = setpoints[i] / normBy[ndim]
+            SC.RING[ord].SetPointA[order] = new_setpoints[i] / normBy[ndim]
         else:
-            SC.RING[ord].SetPointB[order] = setpoints[i] / normBy[ndim]
+            SC.RING[ord].SetPointB[order] = new_setpoints[i] / normBy[ndim]
     SC.update_magnets(CMords)
-    return SC, setpoints
+    return SC, new_setpoints
 
 
 def SCsetMags2SetPoints(SC: SimulatedComissioning, MAGords: ndarray, skewness: bool, order: int, setpoints: ndarray, method: str = 'abs', dipCompensation: bool = False) -> SimulatedComissioning:
@@ -128,8 +128,8 @@ def _dipole_compensation(SC, ord, setpoint):
 def _check_input_and_setpoints(method, ords, setpoints):
     if method not in VALID_METHODS:
         raise ValueError(f'Unsupported setpoint method: {method}. Allowed options are: {VALID_METHODS}.')
-    if len(setpoints) not in (1, len(ords)):
+    if len(setpoints) not in (1, len(ords)) or np.prod(setpoints.shape) > len(ords):
         raise ValueError(f'Setpoints have to have length of 1 or matching to the length or ordinates.')
     if len(setpoints) == 1:
         return np.repeat(setpoints, len(ords))
-    return setpoints
+    return setpoints[:]

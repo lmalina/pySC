@@ -27,8 +27,8 @@ def SCplotPhaseSpace(SC, ord=np.zeros(1), customBunch=[], nParticles=None, nTurn
         for i in range(len(SC.RING)):
             L0_tot = L0_tot + SC.RING[i].Length
         lengthSlippage = SPEED_OF_LIGHT * (SC.RING[SC.ORD.RF[0]].HarmNumber / SC.RING[SC.ORD.RF[0]].Frequency - L0_tot / SPEED_OF_LIGHT)
-        T[6, :, :, :] = T[6, :, :, :] - lengthSlippage * np.arange(nTurns)[np.newaxis, np.newaxis, :]
-        labelStr[5] = '$\Delta S_{act}$ [m]'
+        T[5, :, :, :] = T[5, :, :, :] - lengthSlippage * np.arange(nTurns)[np.newaxis, np.newaxis, :]
+        labelStr[4] = '$\Delta S_{act}$ [m]'
     if plotCO:
         _, CO = findorbit6(SC.RING, ord)
         if np.isnan(CO[0, 0]):
@@ -41,9 +41,9 @@ def SCplotPhaseSpace(SC, ord=np.zeros(1), customBunch=[], nParticles=None, nTurn
     T = T * np.array([1E6, 1E6, 1E6, 1E6, 1E2, 1])[:, np.newaxis, np.newaxis, np.newaxis]
     Z0 = SC.INJ.Z0 * np.array([1E6, 1E6, 1E6, 1E6, 1E2, 1])
     CO = CO * np.array([1E6, 1E6, 1E6, 1E6, 1E2, 1])
-    T[[5, 6], :, :, :] = T[[6, 5], :, :, :]
-    CO[[5, 6], :] = CO[[6, 5], :]
-    Z0[[5, 6]] = Z0[[6, 5]]
+    T[[4, 5], :, :, :] = T[[5, 4], :, :, :]
+    CO[[4, 5]] = CO[[5, 4]]
+    Z0[[4, 5]] = Z0[[5, 4]]
 
     fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(18.5, 10.5), dpi=100, facecolor="w")
     pVec = []
@@ -53,16 +53,17 @@ def SCplotPhaseSpace(SC, ord=np.zeros(1), customBunch=[], nParticles=None, nTurn
             x = T[2 * nType, nP, :, :]
             y = T[2 * nType + 1, nP, :, :]
             ax[nType].scatter(x, y, 10, np.arange(nTurns))
-        pVec.append(ax[nType].plot(Z0[2 * nType], Z0[2 * nType + 1], 'O', MarkerSize=15, lw=3))
+        pVec.append(ax[nType].plot(Z0[2 * nType], Z0[2 * nType + 1], 'o'))
         legStr.append('Injection point')
         if plotCO:
-            pVec.append(ax[nType].plot(CO[2 * nType], CO[2 * nType + 1], 'X', MarkerSize=20, LineWidth=3))
+            pVec.append(ax[nType].plot(CO[2 * nType], CO[2 * nType + 1], 'x', MarkerSize=20, LineWidth=3))
             legStr.append('Closed orbit')
-        ax[nType].set_box('on')
+        # ax[nType].set_box('on')
         ax[nType].set_xlabel(labelStr[2 * nType])
         ax[nType].set_ylabel(labelStr[2 * nType + 1])
         plt.title(titleStr[nType] + ' @Ord: ' + str(ord))
-    plt.legend(pVec, legStr)
-    c = plt.colorbar()
-    c.set_label('Number of turns')
+
+    # plt.legend(pVec, legStr)
+    # plt.colorbar()
+    # c.set_label('Number of turns')
     plt.show()
