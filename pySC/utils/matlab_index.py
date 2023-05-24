@@ -43,9 +43,9 @@ from pySC.utils.sc_tools import SCgetOrds as get_ords, SCgetPinv as get_pinv, SC
     SCscaleCircumference as scale_circumference, SCgetTransformation as transform, SCmultipolesRead as read_multipoles
 
 LOGGER = logging_tools.get_logger(__name__)
-LOGGER.warn("Matlab_index imported: "
-            "             This module is intended only to aid translation between SC and pySC"
-            "             For any important use cases, please consider using pySC methods directly.")
+LOGGER.warn("Matlab_index imported: \n"
+            "             This module is intended only to aid translation between SC and pySC.\n"
+            "             For any important use cases, please consider using pySC methods directly.\n")
 
 
 def SCapplyErrors(SC: SimulatedComissioning, nsigmas: float = 2) -> SimulatedComissioning:
