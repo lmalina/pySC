@@ -2,9 +2,9 @@ import numpy as np
 
 from pySC.utils.at_wrapper import atlinopt, atmatchchromdelta
 from pySC.core.classes import DotDict
-from pySC.correction.SCfeedback import SCfeedbackRun
+from pySC.correction.orbit_trajectory import SCfeedbackRun
 from pySC.lattice_properties.SCgetDispersion import SCgetDispersion
-from pySC.lattice_properties.SCgetModelRM import SCgetModelRM
+from pySC.lattice_properties.model import SCgetModelRM
 from pySC.utils.sc_tools import SCgetPinv
 from pySC.lattice_properties.SCgetRespMat import SCgetRespMat
 from pySC.core.lattice_setting import SCsetMags2SetPoints

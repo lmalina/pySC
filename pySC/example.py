@@ -3,17 +3,16 @@ import numpy as np
 from at import Lattice
 from pySC.utils.at_wrapper import atloco
 from pySC.core.classes import SimulatedComissioning
-from pySC.correction.SCfeedback import SCfeedbackFirstTurn, SCfeedbackStitch, SCfeedbackRun, SCfeedbackBalance
+from pySC.correction.orbit_trajectory import SCfeedbackFirstTurn, SCfeedbackStitch, SCfeedbackRun, SCfeedbackBalance, \
+    SCpseudoBBA
 from pySC.core.beam import SCgetBPMreading, SCgetBeamTransmission
-from pySC.lattice_properties.SCgetModelDispersion import SCgetModelDispersion
-from pySC.lattice_properties.SCgetModelRM import SCgetModelRM
+from pySC.lattice_properties.model import SCgetModelRM, SCgetModelDispersion
 from pySC.utils.sc_tools import SCgetOrds, SCgetPinv
-from pySC.correction.SClocoLib import SClocoLib
+from pySC.correction.loco_lib import SClocoLib
 from pySC.plotting.SCplotPhaseSpace import SCplotPhaseSpace
 from pySC.plotting.SCplotSupport import SCplotSupport
-from pySC.correction.SCpseudoBBA import SCpseudoBBA
 from pySC.core.lattice_setting import SCsetMags2SetPoints, SCcronoff
-from pySC.correction.SCsynchCorrection import SCsynchPhaseCorrection, SCsynchEnergyCorrection
+from pySC.correction.rf import SCsynchPhaseCorrection, SCsynchEnergyCorrection
 from pySC.utils import logging_tools
 
 LOGGER = logging_tools.get_logger(__name__)

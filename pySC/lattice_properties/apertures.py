@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from pySC.utils.at_wrapper import atpass, findorbit6, findorbit4
+from pySC.utils.at_wrapper import atpass, findorbit6, findorbit4, findspos
 
 
 def SCdynamicAperture(RING, dE, bounds=np.array([0, 1e-3]), nturns=1000, thetas=np.linspace(0, 2 * np.pi, 16), accuracy=1e-6,
@@ -25,12 +25,12 @@ def SCdynamicAperture(RING, dE, bounds=np.array([0, 1e-3]), nturns=1000, thetas=
     for cntt in range(len(thetas)):  # Loop over angles
         theta = thetas[cntt]
         limits = inibounds
-        _fatpass(RING, np.full(6, np.nan), 1, 1, [1])  # Fake Track to initialize lattice
+        atpass(RING, np.full(6, np.nan), 1, 1, [1])  # Fake Track to initialize lattice
         scales = 0
         while scales < 16:
             if _check_bounds(RING, ZCO, nturns, theta, limits):
                 break
-            limits = _scale_bounds(limits, 10)
+            limits = scale_bounds(limits, 10)
             scales = scales + 1
             if verbose:
                 print('Scaled: %e %e' % (limits[0], limits[1]))
@@ -61,6 +61,41 @@ def SCdynamicAperture(RING, dE, bounds=np.array([0, 1e-3]), nturns=1000, thetas=
     return DA, RMAXs, thetas
 
 
+def SCmomentumAperture(RING, REFPTS, inibounds, nturns=1000, accuracy=1e-4, stepsize=1e-3, plot=0, debug=0):
+    dboundHI = np.zeros(len(REFPTS))
+    dboundLO = np.zeros(len(REFPTS))
+    ZCOs = findorbit6(RING, REFPTS)
+    if any(~np.isfinite(ZCOs.flatten())):
+        dbounds = np.array([dboundHI, dboundLO]).T
+        print('Closed Orbit could not be determined during MA evaluation. MA set to zero.')
+        return dbounds
+    for i in range(len(REFPTS)):
+        ord = REFPTS[i]
+        local_bounds = inibounds
+        SHIFTRING = RING.rotate(-ord)  # TODO +/-
+        ZCO = ZCOs[:, i]
+        while not check_bounds(local_bounds, SHIFTRING, ZCO, nturns):
+            local_bounds = increment_bounds(local_bounds, stepsize)
+            if debug: print('ord: %d; Incremented: %+0.5e %+0.5e' % (ord, local_bounds[0], local_bounds[1]))
+        while abs((local_bounds[1] - local_bounds[0]) / max(local_bounds)) > accuracy:
+            local_bounds = refine_bounds(local_bounds, SHIFTRING, ZCO, nturns)
+            if debug: print('ord: %d; Refined: %e %e' % (ord, local_bounds[0], local_bounds[1]))
+        dboundHI[i] = local_bounds[0]
+        dboundLO[i] = local_bounds[1]
+        if debug: print('ord: %d; Found: %+0.5e %+0.5e' % (ord, local_bounds[0], local_bounds[1]))
+    dbounds = np.array([dboundHI, dboundLO]).T
+    if plot:
+        spos = findspos(RING, REFPTS)
+        plt.figure(81222)
+        plt.clf()
+        plt.plot(spos, dboundHI, 'kx-')
+        plt.plot(spos, dboundLO, 'rx-')
+        plt.xlabel('s [m]')
+        plt.ylabel('MA')
+        plt.show()
+    return dbounds
+
+
 def _check_bounds(RING, ZCO, nturns, theta, boundsIn):
     Zmin = ZCO[:]
     Zmin[0] = boundsIn[0] * np.cos(theta)
@@ -68,7 +103,7 @@ def _check_bounds(RING, ZCO, nturns, theta, boundsIn):
     Zmax = ZCO[:]
     Zmax[0] = boundsIn[1] * np.cos(theta)
     Zmax[2] = boundsIn[1] * np.sin(theta)
-    ROUT = _fatpass(RING, [Zmin, Zmax], 0, nturns, [1])  # Track
+    ROUT = atpass(RING, [Zmin, Zmax], 0, nturns, [1])  # Track
     RLAST = ROUT[:, len(ROUT) - 1:len(ROUT)]  # Get positions after last turn
     return ~np.isnan(RLAST[0, 0]) and np.isnan(RLAST[0, 1])
 
@@ -80,24 +115,9 @@ def _refine_bounds(RING, ZCO, nturns, theta, boundsIn):
     Z = ZCO[:]
     Z[0] = rmid * np.cos(theta)
     Z[2] = rmid * np.sin(theta)
-    ROUT = _fatpass(RING, Z, 0, nturns, [1])  # Track
+    ROUT = atpass(RING, Z, 0, nturns, [1])  # Track
     RLAST = ROUT[:, len(ROUT) - 1]  # Get positions after last turn
     return [rmin, rmid] if np.isnan(RLAST[0]) else [rmid, rmax]  # Midpoint is outside or inside DA
-
-
-def _scale_bounds(limits, alpha):
-    lower = np.mean(limits) - (np.mean(limits) - limits[0]) * alpha
-    upper = np.mean(limits) - (np.mean(limits) - limits[1]) * alpha
-    if np.sign(lower) != np.sign(limits[0]):
-        lower = 0.0
-    if np.sign(upper) != np.sign(limits[1]):
-        upper = 0.0
-    out = [lower, upper]
-    return out
-
-
-def _fatpass(*args):
-    return atpass(*args)
 
 
 def _autothetas(RING, dE, nt):
@@ -121,3 +141,45 @@ def pol2cart(rho, phi):
     x = rho * np.cos(phi)
     y = rho * np.sin(phi)
     return x, y
+
+
+def refine_bounds(local_bounds, RING, ZCO, nturns):
+    dmean = np.mean(local_bounds)
+    Z0 = ZCO
+    Z0[4] = Z0[4] + dmean
+    ROUT = atpass(RING, Z0, 1, nturns, [])
+    if np.isnan(ROUT[0]):  # Particle dead :(
+        local_bounds[1] = dmean  # Set abs-upper bound to midpoint
+    else:  # Particle alive :)
+        local_bounds[0] = dmean  # Set abs-lower bound to midpoint
+    return local_bounds
+
+
+def check_bounds(local_bounds, RING, ZCO, nturns):
+    Z = np.array([ZCO, ZCO])
+    Z[4, :] = Z[4, :] + local_bounds[:]
+    ROUT = atpass(RING, Z, 1, nturns, [])
+    if np.isnan(ROUT[0, 0]) and not np.isnan(ROUT[0, 1]):
+        print('Closer-to-momentum particle is unstable. This shouldnt be!')
+    return not np.isnan(ROUT[0, 0]) and np.isnan(ROUT[0, 1])
+
+
+def increment_bounds(local_bounds, stepsize):
+    local_bounds = local_bounds + np.array([-1, 1]) * mysign(local_bounds) * stepsize
+    return local_bounds
+
+
+def mysign(v):
+    s = 1 - 2 * (v < 0)
+    return s
+
+
+def scale_bounds(limits, alpha):
+    lower = np.mean(limits) - (np.mean(limits) - limits[0]) * alpha
+    upper = np.mean(limits) - (np.mean(limits) - limits[1]) * alpha
+    if np.sign(lower) != np.sign(limits[0]):
+        lower = 0.0
+    if np.sign(upper) != np.sign(limits[1]):
+        upper = 0.0
+    out = [lower, upper]
+    return out

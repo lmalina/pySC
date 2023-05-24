@@ -3,7 +3,7 @@ import numpy as np
 from pySC.core.beam import SCgetBPMreading
 from pySC.core.lattice_setting import SCsetCavs2SetPoints, SCsetCMs2SetPoints
 from pySC.utils import logging_tools
-
+from pySC.utils.sc_tools import SCrandnc
 
 LOGGER = logging_tools.get_logger(__name__)
 
@@ -135,7 +135,7 @@ def SCfeedbackRun(SC, Mplus, reference=None, CMords=None, BPMords=None, eps=1e-4
     for steps in range(maxsteps):
         # Set BPM readings
         measurement = bpm_readings[:, :].reshape(reference.shape)
-        
+
         # Correction step
         dphi = np.dot(Mplus, (measurement - reference))
         if scaleDisp != 0:   # TODO this is weight
@@ -159,6 +159,20 @@ def SCfeedbackRun(SC, Mplus, reference=None, CMords=None, BPMords=None, eps=1e-4
         LOGGER.debug("SCfeedbackRun: Success (maxsteps reached)")
         return SC
     raise RuntimeError("SCfeedbackRun: FAIL (maxsteps reached, unstable)")
+
+
+def SCpseudoBBA(SC, BPMords, MagOrds, postBBAoffset, sigma=2):
+    # TODO this looks fishy ... assumes BPMs attached to quads?
+    #  at the same time two separate 2D arrays?
+    if len(postBBAoffset) == 1:
+        postBBAoffset = np.tile(postBBAoffset, (2,np.size(BPMords, axis=1)))
+    for nBPM in range(np.size(BPMords, axis=1)):
+        for nDim in range(2):
+            SC.RING[BPMords[nDim][nBPM]].Offset[nDim] = (SC.RING[MagOrds[nDim][nBPM]].MagnetOffset[nDim]
+                                                         + SC.RING[MagOrds[nDim][nBPM]].SupportOffset[nDim]
+                                                         - SC.RING[BPMords[nDim][nBPM]].SupportOffset[nDim]
+                                                         + postBBAoffset[nDim][nBPM] * SCrandnc(sigma))
+    return SC
 
 
 def _check_ords(SC, Mplus, reference, BPMords, CMords):
@@ -232,7 +246,7 @@ def _wiggling(SC, BPMords, CMords, transmission_limit, angle_range=(50E-6, 200E-
                 if _is_repro(transmission_history, nRepro):
                     LOGGER.debug('...completed')
                     return SC  # Continue with feedback
-                
+
     if not transmission_history[-1] >= transmission_limit:
         raise RuntimeError('Wiggling failed')
     return SC

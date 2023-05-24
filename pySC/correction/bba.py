@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from pySC.utils.at_wrapper import findspos
-from pySC.correction.SCfeedback import SCfeedbackRun
+from pySC.correction.orbit_trajectory import SCfeedbackRun
 from pySC.core.beam import SCgetBPMreading
 from pySC.utils.sc_tools import SCrandnc
 from pySC.core.lattice_setting import SCsetCMs2SetPoints, SCsetMags2SetPoints, SCgetCMSetPoints

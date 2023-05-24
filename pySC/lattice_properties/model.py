@@ -1,7 +1,9 @@
 import numpy as np
-from pySC.lattice_properties.SCgetModelRING import SCgetModelRING
+from at import Lattice
+
+from pySC.core.classes import SimulatedComissioning
 from pySC.utils.at_wrapper import atpass, findorbit6
-from pySC.core.constants import NUM_TO_AB
+from pySC.core.constants import NUM_TO_AB, RF_PROPERTIES
 import copy
 
 
@@ -46,3 +48,45 @@ def SCgetModelRM(SC, BPMords, CMords, trackMode='TBT', Z0=np.zeros(6), nTurns=1,
 
 def orbpass(RING, Z0,  nTurns, REFPTS, keep_lattice):
     return np.transpose(findorbit6(RING, REFPTS, keep_lattice=keep_lattice)[1])[[0,1,2,3], :].reshape(4, 1, len(REFPTS), 1)
+
+
+def SCgetModelDispersion(SC, BPMords, CAVords, trackMode='ORB', Z0=np.zeros(6), nTurns=1, rfStep=1E3, useIdealRing=True):
+    print('Calculating model dispersion')
+    track_methods = dict(TBT=atpass, ORB=orbpass)
+    if trackMode not in track_methods.keys():
+        ValueError(f'Unknown track mode {trackMode}. Valid values are {track_methods.keys()}')
+    ring = SC.IDEALRING.deepcopy() if useIdealRing else SCgetModelRING(SC)
+    trackmethod = track_methods[trackMode]
+    if trackMode == 'ORB':
+        nTurns = 1
+
+    Ta = trackmethod(ring, Z0,  nTurns, BPMords, keep_lattice=False)
+    if np.any(np.isnan(Ta)):
+        raise ValueError('Initial trajectory/orbit is NaN. Aborting. ')
+
+    for ord in CAVords:  # Single point with all cavities with the same frequency shift
+        ring[ord].Frequency += rfStep
+    TdB = trackmethod(ring, Z0,  nTurns, BPMords, keep_lattice=False)
+    dTdB = (TdB - Ta) / rfStep
+    eta = np.concatenate((np.ravel(np.transpose(dTdB[0, :, :, :], axes=(2, 1, 0))),
+                          np.ravel(np.transpose(dTdB[2, :, :, :], axes=(2, 1, 0)))))
+    return eta
+
+
+def SCgetModelRING(SC: SimulatedComissioning, includeAperture: bool =False) -> Lattice:
+    ring = SC.IDEALRING.deepcopy()
+    for ord in range(len(SC.RING)):
+        if hasattr(SC.RING[ord], 'SetPointA') and hasattr(SC.RING[ord], 'SetPointB'):
+            ring[ord].PolynomA = SC.RING[ord].SetPointA
+            ring[ord].PolynomB = SC.RING[ord].SetPointB
+            ring[ord].PolynomA[0] = 0.0
+            ring[ord].PolynomB[0] = 0.0
+        if includeAperture:
+            if 'EApertures' in SC.RING[ord]:
+                ring[ord].EApertures = SC.RING[ord].EApertures
+            if 'RApertures' in SC.RING[ord]:
+                ring[ord].RApertures = SC.RING[ord].RApertures
+        if len(SC.ORD.RF) and hasattr(SC.RING[ord], 'Frequency'):
+            for field in RF_PROPERTIES:
+                setattr(ring[ord], field, getattr(SC.RING[ord], f"{field}SetPoint"))
+    return ring
