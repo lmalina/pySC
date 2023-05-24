@@ -1,9 +1,12 @@
+from typing import Tuple
+
 import numpy as np
 from matplotlib import pyplot as plt
+from numpy import ndarray
 
-from pySC.core.SCgenBunches import SCgenBunches
+from pySC.core.classes import SimulatedComissioning
 from pySC.utils.sc_tools import SCrandnc
-from pySC.at_wrapper import atgetfieldvalues, atpass, findorbit6, findspos
+from pySC.utils.at_wrapper import atgetfieldvalues, atpass, findorbit6, findspos
 import warnings
 
 warnings.filterwarnings("ignore", message='Mean of empty slice')
@@ -41,6 +44,41 @@ def SCgetBPMreading(SC, BPMords=None):
     # Organising the array the same way as in matlab version 2 x (nturns, nbpms) sorted by "arrival time"
     mean_bpm_orbits_2d = np.transpose(mean_bpm_orbits_3d, axes=(0, 2, 1)).reshape((2, np.prod(mean_bpm_orbits_3d.shape[1:])))
     return mean_bpm_orbits_2d
+
+
+def SCgetBeamTransmission(SC: SimulatedComissioning, nParticles: int = None, nTurns: int = None, do_plot: bool = False,
+                          verbose: bool = False) -> Tuple[int, ndarray]:
+    if nParticles is None:
+        nParticles = SC.INJ.nParticles
+    if nTurns is None:
+        nTurns = SC.INJ.nTurns
+    if verbose:
+        print(f'Calculating maximum beam transmission for {nParticles} particles and {nTurns} turns: ')
+    T = atpass(SC.RING, SCgenBunches(SC, nParticles=nParticles), nTurns, np.array([len(SC.RING)]), keep_lattice=False)
+    fraction_lost = np.mean(np.isnan(T[0, :, :, :]), axis=(0, 1))
+    max_turns = np.sum(fraction_lost < SC.INJ.beamLostAt)
+    if do_plot:
+        fig, ax = plt.subplots()
+        ax.plot(fraction_lost)
+        ax.plot([0, nTurns], [SC.INJ.beamLostAt, SC.INJ.beamLostAt], 'k:')
+        ax.set_xlim([0, nTurns])
+        ax.set_ylim([0, 1])
+        ax.set_xlabel('Number of turns')
+        ax.set_ylabel('EDF of lost count')
+        fig.show()
+    if verbose:
+        print(f'{max_turns} turns and {100 * (1 - fraction_lost[-1]):.0f}% transmission.')
+    return int(max_turns), fraction_lost
+
+
+def SCgenBunches(SC: SimulatedComissioning, nParticles=None) -> ndarray:
+    if nParticles is None:
+        nParticles = SC.INJ.nParticles
+    Z = np.tile(np.transpose(SC.INJ.randomInjectionZ * SCrandnc(2, (1, 6)) + SC.INJ.Z0), nParticles)  # TODO every particle should be random
+    if nParticles != 1:
+        V, L = np.linalg.eig(SC.INJ.beamSize)
+        Z += np.diag(np.sqrt(V)) @ L @ SCrandnc(3, (6, nParticles))
+    return SC.INJ.postFun(Z)
 
 
 def _real_bpm_reading(SC, track_mat):  # track_mat should be only x,y over all particles only at BPM positions

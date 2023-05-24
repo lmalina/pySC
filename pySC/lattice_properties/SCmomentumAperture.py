@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from pySC.at_wrapper import atpass, findspos, findorbit6
+from pySC.utils.at_wrapper import atpass, findspos, findorbit6
 
 def SCmomentumAperture(RING, REFPTS, inibounds, nturns=1000, accuracy=1e-4, stepsize=1e-3, plot=0, debug=0):
     dboundHI = np.zeros(len(REFPTS))

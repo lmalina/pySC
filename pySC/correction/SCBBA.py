@@ -1,11 +1,11 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from pySC.at_wrapper import findspos
-from pySC.core.SCfeedback import SCfeedbackRun
-from pySC.core.SCgetBPMreading import SCgetBPMreading
+from pySC.utils.at_wrapper import findspos
+from pySC.correction.SCfeedback import SCfeedbackRun
+from pySC.core.beam import SCgetBPMreading
 from pySC.utils.sc_tools import SCrandnc
-from pySC.core.SCsetpoints import SCsetCMs2SetPoints, SCsetMags2SetPoints, SCgetCMSetPoints
+from pySC.core.lattice_setting import SCsetCMs2SetPoints, SCsetMags2SetPoints, SCgetCMSetPoints
 
 
 def SCBBA(SC,BPMords,magOrds,**kwargs):

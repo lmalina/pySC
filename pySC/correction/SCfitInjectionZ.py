@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from pySC.core.SCgetBPMreading import SCgetBPMreading
-from pySC.at_wrapper import atpass, findspos
+from pySC.core.beam import SCgetBPMreading
+from pySC.utils.at_wrapper import atpass, findspos
 
 def SCfitInjectionZ(SC, mode, nDims=np.array([0,1]), nBPMs=np.array([0,1,2]), nShots=None, verbose=0, plotFlag=False):
     if nShots is None:

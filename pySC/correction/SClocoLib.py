@@ -1,14 +1,13 @@
 import numpy as np
 
-from pySC.at_wrapper import atlinopt, atmatchchromdelta
-from pySC.classes import DotDict
-from pySC.core.SCfeedback import SCfeedbackRun
-from pySC.core.SCgetDispersion import SCgetDispersion
-from pySC.core.SCgetModelRM import SCgetModelRM
+from pySC.utils.at_wrapper import atlinopt, atmatchchromdelta
+from pySC.core.classes import DotDict
+from pySC.correction.SCfeedback import SCfeedbackRun
+from pySC.lattice_properties.SCgetDispersion import SCgetDispersion
+from pySC.lattice_properties.SCgetModelRM import SCgetModelRM
 from pySC.utils.sc_tools import SCgetPinv
-from pySC.core.SCgetRespMat import SCgetRespMat
-from pySC.core.SCsetpoints import SCsetMags2SetPoints
-from pySC.core.SCmemberFunctions import SCupdateMagnets
+from pySC.lattice_properties.SCgetRespMat import SCgetRespMat
+from pySC.core.lattice_setting import SCsetMags2SetPoints
 
 
 def SClocoLib(funName, *varargin):  # TODO don't work on this, not realy needed and not present in pyAT
@@ -134,7 +133,7 @@ def applyLatticeCorrection(SC, FitParameters, dipCompensation=True, damping=1):
                 SC = SCsetMags2SetPoints(SC, ord, False, 1, setpoint, dipCompensation=dipCompensation)
             elif field == 'SetPointA':  # Skew quadrupole
                 SC = SCsetMags2SetPoints(SC, ord, True, 1, setpoint)
-    SC = SCupdateMagnets(SC, SC.ORD.Magnet)
+    SC = SC.update_magnets(SC.ORD.Magnet)
     return SC
 
 
@@ -206,7 +205,7 @@ def matchChromaticity(SC, sFamOrds, chromTarget):
         factor = tmp[sFamOrds[nFam][0]].PolynomB[2] / SC.RING[sFamOrds[nFam][0]].PolynomB[2]
         for ord in sFamOrds[nFam]:
             SC.RING[ord].SetPointB[2] = SC.RING[ord].SetPointB[2] * factor
-    SC = SCupdateMagnets(SC, SC.ORD.Magnet)
+    SC = SC.update_magnets(SC.ORD.Magnet)
     return SC
 
 

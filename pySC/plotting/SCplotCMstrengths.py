@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from pySC.at_wrapper import findspos
+from pySC.utils.at_wrapper import findspos
 
 
 def SCplotCMstrengths(SC):

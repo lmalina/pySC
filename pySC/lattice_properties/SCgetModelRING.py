@@ -1,5 +1,5 @@
-from pySC.constants import RF_PROPERTIES
-from pySC.classes import SimulatedComissioning
+from pySC.core.constants import RF_PROPERTIES
+from pySC.core.classes import SimulatedComissioning
 from at import Lattice
 
 def SCgetModelRING(SC: SimulatedComissioning, includeAperture: bool =False) -> Lattice:

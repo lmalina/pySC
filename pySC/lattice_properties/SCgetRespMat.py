@@ -1,7 +1,7 @@
 import numpy as np
 
-from pySC.core.SCgetBPMreading import SCgetBPMreading
-from pySC.core.SCsetpoints import SCsetCMs2SetPoints, SCgetCMSetPoints
+from pySC.core.beam import SCgetBPMreading
+from pySC.core.lattice_setting import SCsetCMs2SetPoints, SCgetCMSetPoints
 
 
 def SCgetRespMat(SC, Amp, BPMords, CMords, mode='fixedKick', nSteps=2, fit='linear', verbose=0):

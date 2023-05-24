@@ -5,7 +5,7 @@ from at import Lattice
 from matplotlib import pyplot as plt
 from numpy import ndarray
 
-from pySC.at_wrapper import findspos
+from pySC.utils.at_wrapper import findspos
 
 
 def SCrandnc(cut_off: float = 2, shape: tuple = (1, )) -> ndarray:

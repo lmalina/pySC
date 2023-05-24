@@ -1,7 +1,7 @@
 import numpy as np
-from pySC.core.SCgetModelRING import SCgetModelRING
-from pySC.at_wrapper import atpass, findorbit6
-from pySC.constants import NUM_TO_AB
+from pySC.lattice_properties.SCgetModelRING import SCgetModelRING
+from pySC.utils.at_wrapper import atpass, findorbit6
+from pySC.core.constants import NUM_TO_AB
 import copy
 
 

@@ -1,25 +1,19 @@
-import sys
-
 import at
 import numpy as np
 from at import Lattice
-from pySC.at_wrapper import atloco
-from pySC.classes import SimulatedComissioning
-from pySC.core.SCcronoff import SCcronoff
-from pySC.core.SCfeedback import SCfeedbackFirstTurn, SCfeedbackStitch, SCfeedbackRun, SCfeedbackBalance
-from pySC.core.SCgetBPMreading import SCgetBPMreading
-from pySC.core.SCgetBeamTransmission import SCgetBeamTransmission
-from pySC.core.SCgetModelDispersion import SCgetModelDispersion
-from pySC.core.SCgetModelRM import SCgetModelRM
+from pySC.utils.at_wrapper import atloco
+from pySC.core.classes import SimulatedComissioning
+from pySC.correction.SCfeedback import SCfeedbackFirstTurn, SCfeedbackStitch, SCfeedbackRun, SCfeedbackBalance
+from pySC.core.beam import SCgetBPMreading, SCgetBeamTransmission
+from pySC.lattice_properties.SCgetModelDispersion import SCgetModelDispersion
+from pySC.lattice_properties.SCgetModelRM import SCgetModelRM
 from pySC.utils.sc_tools import SCgetOrds, SCgetPinv
-from pySC.core.SClocoLib import SClocoLib
-from pySC.core.SCplotLattice import SCplotLattice
-from pySC.core.SCplotPhaseSpace import SCplotPhaseSpace
-from pySC.core.SCplotSupport import SCplotSupport
-from pySC.core.SCplotCMstrengths import SCplotCMstrengths
-from pySC.core.SCpseudoBBA import SCpseudoBBA
-from pySC.core.SCsetpoints import SCsetMags2SetPoints
-from core.SCsynchCorrection import SCsynchPhaseCorrection, SCsynchEnergyCorrection
+from pySC.correction.SClocoLib import SClocoLib
+from pySC.plotting.SCplotPhaseSpace import SCplotPhaseSpace
+from pySC.plotting.SCplotSupport import SCplotSupport
+from pySC.correction.SCpseudoBBA import SCpseudoBBA
+from pySC.core.lattice_setting import SCsetMags2SetPoints, SCcronoff
+from pySC.correction.SCsynchCorrection import SCsynchPhaseCorrection, SCsynchEnergyCorrection
 from pySC.utils import logging_tools
 
 LOGGER = logging_tools.get_logger(__name__)

@@ -1,6 +1,6 @@
 import numpy as np
-from pySC.at_wrapper import atpass, findorbit6
-from pySC.core.SCgetModelRING import SCgetModelRING
+from pySC.utils.at_wrapper import atpass, findorbit6
+from pySC.lattice_properties.SCgetModelRING import SCgetModelRING
 
 
 def SCgetModelDispersion(SC, BPMords, CAVords, trackMode='ORB', Z0=np.zeros(6), nTurns=1, rfStep=1E3, useIdealRing=True):
