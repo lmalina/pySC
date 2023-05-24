@@ -50,10 +50,18 @@
               <p class="caption" role="heading"><span class="caption-text">Modules</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Data Structures</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#module-pySC.classes">SimulatedCommissioning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#simulatedcommissioning">SimulatedCommissioning</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="core.html">Core functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="core.html">Core functions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="core.html#pySC.core.classes.DotDict"><code class="docutils literal notranslate"><span class="pre">DotDict</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#pySC.core.classes.Indices"><code class="docutils literal notranslate"><span class="pre">Indices</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#pySC.core.classes.Sigmas"><code class="docutils literal notranslate"><span class="pre">Sigmas</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#pySC.core.classes.SimulatedComissioning"><code class="docutils literal notranslate"><span class="pre">SimulatedComissioning</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="correction.html">Correction algorithms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lattice_properties.html">Lattice properties</a></li>
 <li class="toctree-l1"><a class="reference internal" href="logging.html">Logging</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="logging.html#pySC.utils.logging_tools.DebugMode"><code class="docutils literal notranslate"><span class="pre">DebugMode</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="logging.html#pySC.utils.logging_tools.MaxFilter"><code class="docutils literal notranslate"><span class="pre">MaxFilter</span></code></a></li>
@@ -97,34 +105,8 @@
              
   <section id="data-structures">
 <h1>Data Structures<a class="headerlink" href="#data-structures" title="Permalink to this heading"></a></h1>
-<section id="module-pySC.classes">
-<span id="simulatedcommissioning"></span><h2>SimulatedCommissioning<a class="headerlink" href="#module-pySC.classes" title="Permalink to this heading"></a></h2>
-<dl class="py class">
-<dt class="sig sig-object py" id="pySC.classes.DotDict">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pySC.classes.</span></span><span class="sig-name descname"><span class="pre">DotDict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pySC/classes.html#DotDict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pySC.classes.DotDict" title="Permalink to this definition"></a></dt>
-<dd><dl class="py method">
-<dt class="sig sig-object py" id="pySC.classes.DotDict.deepcopy">
-<span class="sig-name descname"><span class="pre">deepcopy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#pySC.classes.DotDict" title="pySC.classes.DotDict"><span class="pre">DotDict</span></a></span></span><a class="reference internal" href="../_modules/pySC/classes.html#DotDict.deepcopy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pySC.classes.DotDict.deepcopy" title="Permalink to this definition"></a></dt>
-<dd><p>Returns a deep copy</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="pySC.classes.Indices">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pySC.classes.</span></span><span class="sig-name descname"><span class="pre">Indices</span></span><a class="reference internal" href="../_modules/pySC/classes.html#Indices"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pySC.classes.Indices" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="pySC.classes.Sigmas">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pySC.classes.</span></span><span class="sig-name descname"><span class="pre">Sigmas</span></span><a class="reference internal" href="../_modules/pySC/classes.html#Sigmas"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pySC.classes.Sigmas" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="pySC.classes.SimulatedComissioning">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pySC.classes.</span></span><span class="sig-name descname"><span class="pre">SimulatedComissioning</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ring</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Lattice</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pySC/classes.html#SimulatedComissioning"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pySC.classes.SimulatedComissioning" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
+<section id="simulatedcommissioning">
+<h2>SimulatedCommissioning<a class="headerlink" href="#simulatedcommissioning" title="Permalink to this heading"></a></h2>
 </section>
 </section>
 

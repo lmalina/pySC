@@ -1,15 +1,15 @@
 Core functions
 **************************
 
-.. automodule:: pySC.core.SCcronoff
+.. automodule:: pySC.core.beam
     :members:
 
 
-.. automodule:: pySC.core.SCmemberFunctions
+.. automodule:: pySC.core.classes
     :members:
 
 
-.. automodule:: pySC.core.SCsetpoints
+.. automodule:: pySC.core.lattice_setting
     :members:
 
 

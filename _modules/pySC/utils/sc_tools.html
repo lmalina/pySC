@@ -47,10 +47,18 @@
               <p class="caption" role="heading"><span class="caption-text">Modules</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/classes.html">Data Structures</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../../modules/classes.html#module-pySC.classes">SimulatedCommissioning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/classes.html#simulatedcommissioning">SimulatedCommissioning</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../../../modules/core.html">Core functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/core.html">Core functions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core.html#pySC.core.classes.DotDict"><code class="docutils literal notranslate"><span class="pre">DotDict</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core.html#pySC.core.classes.Indices"><code class="docutils literal notranslate"><span class="pre">Indices</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core.html#pySC.core.classes.Sigmas"><code class="docutils literal notranslate"><span class="pre">Sigmas</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core.html#pySC.core.classes.SimulatedComissioning"><code class="docutils literal notranslate"><span class="pre">SimulatedComissioning</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/correction.html">Correction algorithms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/lattice_properties.html">Lattice properties</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/logging.html">Logging</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/logging.html#pySC.utils.logging_tools.DebugMode"><code class="docutils literal notranslate"><span class="pre">DebugMode</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/logging.html#pySC.utils.logging_tools.MaxFilter"><code class="docutils literal notranslate"><span class="pre">MaxFilter</span></code></a></li>
@@ -99,7 +107,7 @@
 <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
 <span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">ndarray</span>
 
-<span class="kn">from</span> <span class="nn">pySC.at_wrapper</span> <span class="kn">import</span> <span class="n">findspos</span>
+<span class="kn">from</span> <span class="nn">pySC.utils.at_wrapper</span> <span class="kn">import</span> <span class="n">findspos</span>
 
 
 <div class="viewcode-block" id="SCrandnc"><a class="viewcode-back" href="../../../modules/utils.html#pySC.utils.sc_tools.SCrandnc">[docs]</a><span class="k">def</span> <span class="nf">SCrandnc</span><span class="p">(</span><span class="n">cut_off</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n">shape</span><span class="p">:</span> <span class="nb">tuple</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="p">))</span> <span class="o">-&gt;</span> <span class="n">ndarray</span><span class="p">:</span>
@@ -278,6 +286,25 @@
             <span class="n">R2</span> <span class="o">=</span> <span class="n">LinMat</span>
             <span class="n">T2</span> <span class="o">=</span> <span class="n">T</span>
     <span class="k">return</span> <span class="n">T1</span><span class="p">,</span> <span class="n">T2</span><span class="p">,</span> <span class="n">R1</span><span class="p">,</span> <span class="n">R2</span>
+
+
+<span class="k">def</span> <span class="nf">SCmultipolesRead</span><span class="p">(</span><span class="n">fname</span><span class="p">):</span>  <span class="c1"># TODO sample of the input anywhere?</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+    <span class="n">tab</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">())</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tab</span><span class="p">)</span> <span class="o">%</span> <span class="mi">3</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Incorrect table size.&#39;</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="n">AB</span> <span class="o">=</span> <span class="n">tab</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">))[:,</span> <span class="mi">1</span><span class="p">:]</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">AB</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">idx</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Nominal order could not be (uniquely) determined. Continuing with idx=1.&#39;</span><span class="p">)</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">order</span><span class="p">,</span> <span class="nb">type</span> <span class="o">=</span> <span class="n">idx</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">idx</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">type</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Ill-defined magnet type.&#39;</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">AB</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="n">order</span><span class="p">,</span> <span class="nb">type</span>  <span class="c1"># swapping A and B</span>
 
 
 <span class="k">def</span> <span class="nf">_plot_singular_values</span><span class="p">(</span><span class="n">s_mat</span><span class="p">,</span> <span class="n">d_mat</span><span class="p">):</span>
