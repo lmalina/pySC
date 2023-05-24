@@ -2,9 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit, fsolve
 
-from pySC.at_wrapper import findorbit6
-from pySC.core.SCgetBPMreading import SCgetBPMreading
-from pySC.core.SCsetpoints import SCsetCavs2SetPoints
+from pySC.utils.at_wrapper import findorbit6
+from pySC.core.beam import SCgetBPMreading
+from pySC.core.lattice_setting import SCsetCavs2SetPoints
 from pySC.utils import logging_tools
 
 LOGGER = logging_tools.get_logger(__name__)

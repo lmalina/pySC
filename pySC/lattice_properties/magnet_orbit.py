@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from pySC.at_wrapper import findorbit6, findspos
+from pySC.utils.at_wrapper import findorbit6, findspos
 
 
 def SCgetCOD(SC, ords=None, plot=False):

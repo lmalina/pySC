@@ -1,9 +1,9 @@
 import numpy as np
-from pySC.constants import SUPPORT_TYPES, RF_PROPERTIES
-from pySC.core.SCfeedback import SCfeedbackRun
-from pySC.core.SCgetModelRM import SCgetModelRM
+from pySC.core.constants import SUPPORT_TYPES, RF_PROPERTIES
+from pySC.correction.orbit_trajectory import SCfeedbackRun
+from pySC.lattice_properties.response_model import SCgetModelRM
 from pySC.utils.sc_tools import SCgetPinv, SCscaleCircumference
-from pySC.core.SCmemberFunctions import SCupdateMagnets, SCupdateSupport
+
 
 
 def SCrampUpErrors(SC, nStepsRamp=10, eps=1e-5, target=0, alpha=10, maxsteps=30, verbose=0):
@@ -53,8 +53,8 @@ def scaleMagnets(SC, SC0, fields, scale):
         for field in fields:
             if field in SC.RING[ord]:
                 SC.RING[ord][field] = scale * SC0.RING[ord][field]
-    SC = SCupdateSupport(SC)
-    SC = SCupdateMagnets(SC)
+    SC = SC.update_supports()
+    SC = SC.update_magnets()
     return SC
 
 

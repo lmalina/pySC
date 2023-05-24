@@ -1,10 +1,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import copy
-from pySC.at_wrapper import findspos, atgetfieldvalues
-from pySC.constants import SUPPORT_TYPES
+from pySC.utils.at_wrapper import findspos, atgetfieldvalues
+from pySC.core.constants import SUPPORT_TYPES
 from typing import Tuple
-from pySC.classes import SimulatedComissioning
+from pySC.core.classes import SimulatedComissioning
 
 
 def SCplotSupport(SC: SimulatedComissioning, fontSize: int = 8, xLim: Tuple[float, float] = None):

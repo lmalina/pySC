@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from pySC.at_wrapper import atpass, findorbit6
-from pySC.core.SCgenBunches import SCgenBunches
+from pySC.utils.at_wrapper import atpass, findorbit6
+from pySC.core.beam import SCgenBunches
 
 SPEED_OF_LIGHT = 299792458
 

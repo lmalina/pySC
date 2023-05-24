@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-from pySC.at_wrapper import twissline, atlinopt
+from pySC.utils.at_wrapper import twissline, atlinopt
 
 def SCplotLattice(SC, transferLine=0, nSectors=1, oList=[], plotIdealRing=1, sRange=[], plotMagNames=0, fontSize=16):
     sPos = np.cumsum(np.array([el.Length for el in SC.RING]))

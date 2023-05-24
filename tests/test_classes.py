@@ -4,7 +4,7 @@ import pytest
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal
 import at
-from pySC.classes import SimulatedComissioning
+from pySC.core.classes import SimulatedComissioning
 from pySC.utils.sc_tools import SCgetOrds
 
 
