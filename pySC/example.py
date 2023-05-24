@@ -6,7 +6,7 @@ from pySC.core.classes import SimulatedComissioning
 from pySC.correction.orbit_trajectory import SCfeedbackFirstTurn, SCfeedbackStitch, SCfeedbackRun, SCfeedbackBalance, \
     SCpseudoBBA
 from pySC.core.beam import SCgetBPMreading, SCgetBeamTransmission
-from pySC.lattice_properties.model import SCgetModelRM, SCgetModelDispersion
+from pySC.lattice_properties.response_model import SCgetModelRM, SCgetModelDispersion
 from pySC.utils.sc_tools import SCgetOrds, SCgetPinv
 from pySC.correction.loco_lib import SClocoLib
 from pySC.plotting.SCplotPhaseSpace import SCplotPhaseSpace

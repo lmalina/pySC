@@ -1,7 +1,7 @@
 import numpy as np
 from pySC.core.constants import SUPPORT_TYPES, RF_PROPERTIES
 from pySC.correction.orbit_trajectory import SCfeedbackRun
-from pySC.lattice_properties.model import SCgetModelRM
+from pySC.lattice_properties.response_model import SCgetModelRM
 from pySC.utils.sc_tools import SCgetPinv, SCscaleCircumference
 
 
