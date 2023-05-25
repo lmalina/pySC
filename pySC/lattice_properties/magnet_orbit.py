@@ -1,14 +1,16 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from pySC.utils.at_wrapper import findorbit6, findspos
+from pySC.utils import logging_tools
 
+LOGGER = logging_tools.get_logger(__name__)
 
 def SCgetCOD(SC, ords=None, plot=False):
     if ords is None:
         ords = SC.ORD.Magnet
     T = findorbit6(SC.RING, ords)
     if any(np.isnan(T)):
-        print('Closed orbit could not be found.')
+        LOGGER.error('Closed orbit could not be found.')
         COD = np.nan(2, len(ords))
         return COD
     magOffset = np.zeros((2, len(ords)))
