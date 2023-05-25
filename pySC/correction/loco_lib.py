@@ -7,8 +7,9 @@ from pySC.lattice_properties.response_model import SCgetModelRM
 from pySC.utils.sc_tools import SCgetPinv
 from pySC.lattice_properties.response_measurement import SCgetRespMat, SCgetDispersion
 from pySC.core.lattice_setting import SCsetMags2SetPoints
+from pySC.utils import logging_tools
 
-
+LOGGER = logging_tools.get_logger(__name__)
 def SClocoLib(funName, *varargin):  # TODO don't work on this, not realy needed and not present in pyAT
     eval(funName + '(*varargin)')
 
@@ -82,8 +83,7 @@ def getMeasurement(SC, CMstep, deltaRF, BPMords, CMords, *varargin):
     RM, Err, CMsteps = SCgetRespMat(SC, CMstep, BPMords, CMords, *varargin)
     CMsteps = [np.max(np.abs(CMsteps[0]), axis=1), np.max(np.abs(CMsteps[1]), axis=1)]
     LocoMeasData.M = 2 * 1000 * np.concatenate((CMsteps[0], CMsteps[1])) * RM
-    LocoMeasData.Eta = LocoMeasData.DeltaRF * 1000 * SCgetDispersion(SC, LocoMeasData.DeltaRF, 'BPMords', BPMords,
-                                                                     'nSteps', 3)
+    LocoMeasData.Eta = LocoMeasData.DeltaRF * 1000 * SCgetDispersion(SC, RFstep=LocoMeasData.DeltaRF, BPMords=BPMords, nSteps=3)
     return LocoMeasData, CMsteps
 
 
@@ -176,7 +176,7 @@ def applyDiagnosticCorrection(SC, CMstep, CMData, BPMData, CMcalOffsets=[], mean
     return SC
 
 
-def applyOrbitCorrection(SC, Minv=[], alpha=50, CMords=None, BPMords=None, verbose=0):
+def applyOrbitCorrection(SC, Minv=[], alpha=50, CMords=None, BPMords=None):
     if CMords is None:
         CMords = SC.ORD.CM
     if BPMords is None:
@@ -186,43 +186,26 @@ def applyOrbitCorrection(SC, Minv=[], alpha=50, CMords=None, BPMords=None, verbo
         if np.any(np.isnan(M)):
             raise ValueError('NaN in model response, aborting.')
         Minv = SCgetPinv(M, alpha=alpha)
-    CUR, ERROR = SCfeedbackRun(SC, Minv, target=0, maxsteps=30, BPMords=BPMords, CMords=CMords, verbose=verbose)
+    CUR, ERROR = SCfeedbackRun(SC, Minv, target=0, maxsteps=30, BPMords=BPMords, CMords=CMords)
     if ERROR:
-        print('Feedback crashed.')
+        LOGGER.error('Feedback crashed.')
     else:
         SC = CUR
     return SC
 
 
-def matchChromaticity(SC, sFamOrds, chromTarget):
-    """
-    This function will be removed in a future release. Use 'fitChromaticity' within this library instead
-    """
-    print('This function will be removed in a future release. Use ''fitChromaticity'' within this library instead')
-    tmp, _ = atmatchchromdelta(SC.RING, chromTarget, sFamOrds)
-    for nFam in range(len(sFamOrds)):
-        factor = tmp[sFamOrds[nFam][0]].PolynomB[2] / SC.RING[sFamOrds[nFam][0]].PolynomB[2]
-        for ord in sFamOrds[nFam]:
-            SC.RING[ord].SetPointB[2] = SC.RING[ord].SetPointB[2] * factor
-    SC = SC.update_magnets(SC.ORD.Magnet)
-    return SC
-
-
-def fitChromaticity(SC, sOrds, targetChrom=[], verbose=0, InitStepSize=[2, 2], TolX=1E-4, TolFun=1E-3,
+def fitChromaticity(SC, sOrds, targetChrom=[], InitStepSize=[2, 2], TolX=1E-4, TolFun=1E-3,
                     sepTunesWithOrds=[], sepTunesDeltaK=[]):
     if len(targetChrom) == 0:
         _, _, targetChrom = atlinopt(SC.IDEALRING, 0, [])
     if np.any(np.isnan(targetChrom)):
-        print('Target chromaticity must not contain NaN. Aborting.')
+        LOGGER.error('Target chromaticity must not contain NaN. Aborting.')
         return SC
     SC0 = SC
     if len(sepTunesWithOrds) > 0 and len(sepTunesDeltaK) > 0:
         for nFam in range(len(sepTunesWithOrds)):
             SC = SCsetMags2SetPoints(SC, sepTunesWithOrds[nFam], False, 1, sepTunesDeltaK[nFam], method='add')  # TODO quads here?
-    if verbose:
-        _, _, xi0 = atlinopt(SC.RING, 0, [])
-        print('Fitting chromaticities from [%.3f,%.3f] to [%.3f,%.3f].' % (
-            xi0[0], xi0[1], targetChrom[0], targetChrom[1]))
+    LOGGER.debug(f'Fitting chromaticities from {atlinopt(SC.RING, 0, [])[2]} to {targetChrom}.')  # first two elements
     SP0 = np.zeros((len(sOrds), len(sOrds[0])))  # TODO can the lengts vary
     for nFam in range(len(sOrds)):
         for n in range(len(sOrds[nFam])):
@@ -230,23 +213,18 @@ def fitChromaticity(SC, sOrds, targetChrom=[], verbose=0, InitStepSize=[2, 2], T
     fun = lambda x: fitFunction(SC, sOrds, x, SP0, targetChrom)
     sol = fminsearch(fun, InitStepSize, optimset('TolX', TolX, 'TolFun', TolFun))
     SC = applySetpoints(SC0, sOrds, sol, SP0)
-    if verbose:
-        _, _, xi1 = atlinopt(SC.RING, 0, [])
-        print('        Final chromaticity: [%.3f,%.3f]\n          Setpoints change: [%.2f,%.2f]' % (
-            xi1[0], xi1[1], sol[0], sol[1]))
+    LOGGER.debug(f'        Final chromaticity: {atlinopt(SC.RING, 0, [])[2]}\n          Setpoints change: {sol}.')  # first two elements
     return SC
 
 
-def fitTune(SC, qOrds, targetTune=[], verbose=0, TolX=1E-4, TolFun=1E-3, InitStepSize=[.01, .01], FitInteger=1):
+def fitTune(SC, qOrds, targetTune=[], TolX=1E-4, TolFun=1E-3, InitStepSize=[.01, .01], FitInteger=1):
     if len(targetTune) == 0:
         if FitInteger:
             ld, _, _ = atlinopt(SC.IDEALRING, 0, range(len(SC.IDEALRING) + 1))
             targetTune = ld[-1].mu / 2 / np.pi
         else:
             _, targetTune, _ = atlinopt(SC.IDEALRING, 0)
-    if verbose:
-        nu0 = getLatProps(SC, FitInteger)
-        print('Fitting tunes from [%.4f,%.4f] to [%.4f,%.4f].' % (nu0[0], nu0[1], targetTune[0], targetTune[1]))
+    LOGGER.debug(f'Fitting tunes from [{getLatProps(SC, FitInteger)}] to [{targetTune}].')
     SP0 = np.zeros((len(qOrds), len(qOrds[0])))  # TODO can the lengts vary
     for nFam in range(len(qOrds)):
         for n in range(len(qOrds[nFam])):
@@ -254,9 +232,7 @@ def fitTune(SC, qOrds, targetTune=[], verbose=0, TolX=1E-4, TolFun=1E-3, InitSte
     fun = lambda x: fitFunction(SC, qOrds, x, SP0, targetTune, FitInteger)
     sol = fminsearch(fun, InitStepSize, optimset('TolX', TolX, 'TolFun', TolFun))
     SC = applySetpoints(SC, qOrds, sol, SP0)
-    if verbose:
-        nu1 = getLatProps(SC, FitInteger)
-        print('       Final tune: [%.4f,%.4f]\n  Setpoints change: [%.3f,%.3f]' % (nu1[0], nu1[1], sol[0], sol[1]))
+    LOGGER.debug(f'       Final tune: [{getLatProps(SC, FitInteger)}]\n  Setpoints change: [{sol}]')
     return SC
 
 

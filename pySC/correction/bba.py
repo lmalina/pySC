@@ -6,7 +6,9 @@ from pySC.correction.orbit_trajectory import SCfeedbackRun
 from pySC.core.beam import SCgetBPMreading
 from pySC.utils.sc_tools import SCrandnc
 from pySC.core.lattice_setting import SCsetCMs2SetPoints, SCsetMags2SetPoints, SCgetCMSetPoints
+from pySC.utils import logging_tools
 
+LOGGER = logging_tools.get_logger(__name__)
 
 def SCBBA(SC,BPMords,magOrds,**kwargs):
     """
@@ -43,7 +45,6 @@ def SCBBA(SC,BPMords,magOrds,**kwargs):
     quadStrengthPhaseAdvance = kwargs.get('quadStrengthPhaseAdvance', [0.95, 1.05])
     plotLines = kwargs.get('plotLines', 0)
     plotResults = kwargs.get('plotResults', 0)
-    verbose = kwargs.get('verbose', 0)
     # Check input
     if BPMords.shape != magOrds.shape:
         raise ValueError('Input arrays for BPMs and magnets must be same size.')
@@ -54,11 +55,11 @@ def SCBBA(SC,BPMords,magOrds,**kwargs):
     kickVec0  = maxTrajChangeAtInjection.reshape(2,1) * np.linspace(-1,1,nSteps)
     initialZ0 = SC.INJ.Z0
     if mode == 'TBT' and SC.INJ.nTurns != 2:
-        print('Setting number of turns to 2.')
+        LOGGER.info('Setting number of turns to 2.')
         SC.INJ.nTurns = 2
     for jBPM in range(BPMords.shape[1]): # jBPM: Index of BPM adjacent to magnet for BBA
         for nDim in range(BPMords.shape[0]):
-            if verbose: print('BBA-BPM %d/%d, nDim = %d' % (jBPM+1,BPMords.shape[1],nDim+1))
+            LOGGER.debug(f'BBA-BPM {jBPM}/{BPMords.shape[1]}, nDim = {nDim}')
             SC0 = SC
             BPMind = np.where(BPMords[nDim,jBPM]==SC.ORD.BPM)[0][0]
             mOrd = magOrds[nDim,jBPM]
@@ -67,13 +68,13 @@ def SCBBA(SC,BPMords,magOrds,**kwargs):
                 [SC,_] = SCfeedbackRun(SC,RMstruct.MinvCO,target=0,maxsteps=50,scaleDisp=RMstruct.scaleDisp,BPMords=RMstruct.BPMords,CMords=RMstruct.CMords,eps=1E-6)
             if mode == 'ORB':
                 [CMords,CMvec] = getOrbitBump(SC,mOrd,BPMords[nDim,jBPM],nDim,RMstruct,orbBumpWindow,useBPMreadingsForOrbBumpRef)
-                [BPMpos,tmpTra] = dataMeasurement(SC,mOrd,BPMind,jBPM,nDim,CMords,CMvec,magSPvec[jBPM],magSPflag,magOrder,dipCompensation,plotLines,verbose)
+                [BPMpos,tmpTra] = dataMeasurement(SC,mOrd,BPMind,jBPM,nDim,CMords,CMvec,magSPvec[jBPM],magSPflag,magOrder,dipCompensation,plotLines)
             elif mode == 'TBT':
-                [kickVec, BPMrange] = scaleInjectionToReachBPM(SC,BPMind,nDim,initialZ0,kickVec0,BBABPMtarget,minBPMrangeAtBBABBPM,minBPMrangeOtherBPM,verbose)
+                [kickVec, BPMrange] = scaleInjectionToReachBPM(SC,BPMind,nDim,initialZ0,kickVec0,BBABPMtarget,minBPMrangeAtBBABBPM,minBPMrangeOtherBPM)
                 if quadOrdPhaseAdvance and BPMrange < BBABPMtarget:
-                    [SC,kickVec] = scanPhaseAdvance(SC,BPMind,nDim,initialZ0,kickVec0,quadOrdPhaseAdvance,quadStrengthPhaseAdvance,verbose)
-                [BPMpos,tmpTra] = dataMeasurement(SC,mOrd,BPMind,jBPM,nDim,initialZ0,kickVec,magSPvec[jBPM],magSPflag,magOrder,dipCompensation,plotLines,verbose)
-            [OffsetChange,errorFlags[nDim,jBPM]] = dataEvaluation(BPMpos,tmpTra,nDim,mOrd,fitOrder,maxStdForFittedCenters,nXPointsNeededAtMeasBPM,maxNumOfDownstreamBPMs,minSlopeForFit,verbose)
+                    [SC,kickVec] = scanPhaseAdvance(SC,BPMind,nDim,initialZ0,kickVec0,quadOrdPhaseAdvance,quadStrengthPhaseAdvance)
+                [BPMpos,tmpTra] = dataMeasurement(SC,mOrd,BPMind,jBPM,nDim,initialZ0,kickVec,magSPvec[jBPM],magSPflag,magOrder,dipCompensation,plotLines)
+            [OffsetChange,errorFlags[nDim,jBPM]] = dataEvaluation(BPMpos,tmpTra,nDim,mOrd,fitOrder,maxStdForFittedCenters,nXPointsNeededAtMeasBPM,maxNumOfDownstreamBPMs,minSlopeForFit)
             SC = SC0
             if  OffsetChange > outlierRejectionAt:
                 OffsetChange          = np.nan
@@ -233,10 +234,9 @@ def scaleInjectionToReachBPM(SC,BPMind,nDim,initialZ0,kickVec0,par):
             BPMrange  = abs(max(tmpBPMpos)-min(tmpBPMpos))
     if scalingFactor<1E-6:
         scalingFactor = 1
-        print('Something went wrong. No beam transmission at all(?)')
+        LOGGER.warning('Something went wrong. No beam transmission at all(?)')
     kickVec       = scalingFactor * kickVec0
-    if par.verbose:
-        print('Initial trajectory variation scaled to [%.0f|%.0f]%% of its initial value, BBA-BPM range %.0fum.' % (100*(kickVec([1 end])./kickVec0([1 end])),1E6*BPMrange))
+    LOGGER.debug('Initial trajectory variation scaled to [%.0f|%.0f]%% of its initial value, BBA-BPM range %.0fum.' % (100*(kickVec([1 end])./kickVec0([1 end])),1E6*BPMrange))
     return kickVec, BPMrange
 
 
@@ -246,28 +246,28 @@ def scanPhaseAdvance(SC,BPMind,nDim,initialZ0,kickVec0,par):
     q0   = SC.RING[mOrd].SetPointB[1]
     allBPMRange = np.zeros(len(qVec))
     for nQ in range(len(qVec)):
-        if par.verbose:
-            print('BBA-BPM range to small, try to change phase advance with quad ord %d to %.2f of nom. SP.' % (par.quadOrdPhaseAdvance,qVec[nQ]))
+        LOGGER.debug(f'BBA-BPM range to small, try to change phase advance with quad ord {par.quadOrdPhaseAdvance} to {qVec[nQ]:.2f} of nom. SP.')
         SC = SCsetMags2SetPoints(SC,mOrd,False,1,qVec[nQ],method='rel', dipCompensation=True)
         [kickVec, BPMrange] = scaleInjectionToReachBPM(SC,BPMind,nDim,initialZ0,kickVec0,par)
         allBPMRange[nQ] = BPMrange
-        if par.verbose:
-            print('Initial trajectory variation scaled to [%.0f|%.0f]%% of its initial value, BBA-BPM range %.0fum.' % (100*(kickVec[0]/kickVec0[0]),100*(kickVec[-1]/kickVec0[-1]),1E6*BPMrange))
+        LOGGER.debug(f'Initial trajectory variation scaled to '
+                     f'[{100 * (kickVec[0] / kickVec0[0]):.0f}|{100 * (kickVec[-1] / kickVec0[-1]):.0f}]% '
+                     f'of its initial value, BBA-BPM range {1E6 * BPMrange:.0f}um.')
         if not ( BPMrange < par.BBABPMtarget ):
             break
     if BPMrange < par.BBABPMtarget:
         if BPMrange<max(allBPMRange):
             nBest = np.argmax(allBPMRange)
             SC = SCsetMags2SetPoints(SC,mOrd,False,1,qVec[nBest], method='rel', dipCompensation=True)
-            if par.verbose:
-                print('Changing phase advance of quad with ord %d NOT succesfull, returning to best value with BBA-BPM range = %.0fum.' % (mOrd,1E6*max(allBPMRange)))
+            LOGGER.debug(
+                f'Changing phase advance of quad with ord {mOrd} NOT succesfull, returning to best value with BBA-BPM range = {1E6 * max(allBPMRange):.0f}um.')
         else:
             SC = SCsetMags2SetPoints(SC,mOrd,False,1,q0, method='abs',dipCompensation=True)
-            if par.verbose:
-                print('Changing phase advance of quad with ord %d NOT succesfull, returning to initial setpoint.' % mOrd)
+            LOGGER.debug(
+                f'Changing phase advance of quad with ord {mOrd} NOT succesfull, returning to initial setpoint.')
     else:
-        if par.verbose:
-            print('Change phase advance of quad with ord %d successful. BBA-BPM range = %.0fum.' % (mOrd,1E6*BPMrange))
+        LOGGER.debug(
+            f'Change phase advance of quad with ord {mOrd} successful. BBA-BPM range = {1E6 * BPMrange:.0f}um.')
     return SC,kickVec
 
 def getOrbitBump(SC,mOrd,BPMord,nDim,par):
@@ -286,8 +286,7 @@ def getOrbitBump(SC,mOrd,BPMord,nDim,par):
     W0[nDim,max(1,tmpBPMind-par.orbBumpWindow):(tmpBPMind-1)] = 0
     W0[nDim,(tmpBPMind+1):min(len(par.RMstruct.BPMords),tmpBPMind+par.orbBumpWindow)] = 0
     CUR,_ = SCfeedbackRun(SC,par.RMstruct.MinvCO,
-                                    weight=np.vstack((W0[0,:],W0[1,:])),
-                                    R0=np.vstack((R0[0,:],R0[1,:])),
+                                    reference=np.vstack((R0[0,:],R0[1,:])),
                                     target=0,
                                     maxsteps=50,
                                     scaleDisp=par.RMstruct.scaleDisp,
@@ -312,7 +311,7 @@ def plotBBAstep(SC,BPMind,jBPM,nDim,nQ,mOrd,nKick,par):
     if nQ==1 and nKick==1:
         plt.figure(99)
         plt.clf()
-    B,T=SCgetBPMreading(SC, do_plot=True)
+    B,T=SCgetBPMreading(SC)
     #T=SCparticlesIn3D(T,SC.INJ.nParticles)
     T=T[:,:,1]
     plt.figure(99)
@@ -387,7 +386,8 @@ def getBPMoffsetFromMag(SC,BPMords,magOrds):
 def fakeMeasurement(SC,BPMords,magOrds,errorFlags):
     finOffsetErrors = getBPMoffsetFromMag(SC,BPMords,magOrds)
     finOffsetErrors[errorFlags!=0] = np.nan
-    print('Final offset error is %.1f|%.1f um (hor|ver) with %d|%d measurement failures -> being re-calculated now.\n' %(1E6*np.sqrt(np.mean(finOffsetErrors.^2,2,'omitnan')),sum(errorFlags!=0,2)))
+    LOGGER.info(f"Final offset error is {1E6*np.sqrt(np.nanmean(finOffsetErrors**2,2))}"
+                f" um (hor|ver) with {sum(errorFlags!=0,2)} measurement failures -> being re-calculated now.\n")
     for nBPM in range(len(BPMords,2)):
         for nDim in range(2):
             if errorFlags[nDim,nBPM]!=0:
@@ -395,4 +395,4 @@ def fakeMeasurement(SC,BPMords,magOrds,errorFlags):
                 if not np.isnan(fakeBPMoffset):
                     SC.RING[BPMords[nDim,nBPM]].Offset[nDim] = fakeBPMoffset
                 else:
-                    print('BPM offset not reasigned, NaN.\n')
+                    LOGGER.info('BPM offset not reasigned, NaN.\n')

@@ -8,7 +8,7 @@ from pySC.utils import logging_tools
 LOGGER = logging_tools.get_logger(__name__)
 
 
-def SCrampUpErrors(SC, nStepsRamp=10, eps=1e-5, target=0, alpha=10, maxsteps=30, verbose=0):
+def SCrampUpErrors(SC, nStepsRamp=10, eps=1e-5, target=0, alpha=10, maxsteps=30):
     errFieldsMag = ['CalErrorB', 'CalErrorA', 'PolynomAOffset', 'PolynomBOffset', 'MagnetOffset', 'MagnetRoll']
     errFieldsSup = ['Roll', 'Offset']
     errFieldsBPM = ['Noise', 'NoiseCO', 'Offset', 'SupportOffset', 'Roll', 'SupportRoll', 'CalError']
@@ -25,7 +25,7 @@ def SCrampUpErrors(SC, nStepsRamp=10, eps=1e-5, target=0, alpha=10, maxsteps=30,
         SC = scaleInjection(SC, SC0, scale)
         SC = scaleCircumference(SC, SC0, scale)
         try:
-            SC = SCfeedbackRun(SC, Mplus, target=target, maxsteps=maxsteps, eps=eps, do_plot=True)
+            SC = SCfeedbackRun(SC, Mplus, target=target, maxsteps=maxsteps, eps=eps)
         except RuntimeError:
             if 2 * nStepsRamp > 100:
                 raise Exception(f'Ramping up failed at scaling {scale:.2f} with {nStepsRamp} ramping steps. '
@@ -33,7 +33,7 @@ def SCrampUpErrors(SC, nStepsRamp=10, eps=1e-5, target=0, alpha=10, maxsteps=30,
             else:
                 LOGGER.info(f'Feedback did not succeed at scaling {scale:.2f}. Trying with {2 * nStepsRamp} ramping steps.')
                 SC = SCrampUpErrors(SC0, nStepsRamp=2 * nStepsRamp, eps=eps, target=target, alpha=alpha,
-                                    maxsteps=maxsteps, verbose=verbose)
+                                    maxsteps=maxsteps)
 
     return SC
 

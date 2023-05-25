@@ -45,7 +45,7 @@ def create_at_lattice() -> Lattice:
 
 if __name__ == "__main__":
     ring = at.Lattice(create_at_lattice())
-    print(len(ring))
+    LOGGER.info(f"{len(ring)=}")
     SC = SimulatedComissioning(ring)
     # at.summary(ring)
     ords = SCgetOrds(SC.RING, 'BPM')

@@ -6,8 +6,8 @@ from pySC.utils import logging_tools
 
 LOGGER = logging_tools.get_logger(__name__)
 
-def SCdynamicAperture(RING, dE, bounds=np.array([0, 1e-3]), nturns=1000, thetas=np.linspace(0, 2 * np.pi, 16), accuracy=1e-6,
-                      launchOnOrbit=False, centerOnOrbit=True, useOrbit6=False, auto=0, plot=False, verbose=False):
+def SCdynamicAperture(RING, dE, bounds=np.array([0, 1e-3]), nturns=1000, thetas=np.linspace(0, 2 * np.pi, 16),
+                      accuracy=1e-6, launchOnOrbit=False, centerOnOrbit=True, useOrbit6=False, auto=0, plot=False):
     inibounds = bounds
     if auto > 0:
         _, thetas = _autothetas(RING, dE, auto)
@@ -61,7 +61,7 @@ def SCdynamicAperture(RING, dE, bounds=np.array([0, 1e-3]), nturns=1000, thetas=
     return DA, RMAXs, thetas
 
 
-def SCmomentumAperture(RING, REFPTS, inibounds, nturns=1000, accuracy=1e-4, stepsize=1e-3, plot=0, debug=0):
+def SCmomentumAperture(RING, REFPTS, inibounds, nturns=1000, accuracy=1e-4, stepsize=1e-3, plot=0):
     dboundHI = np.zeros(len(REFPTS))
     dboundLO = np.zeros(len(REFPTS))
     ZCOs = findorbit6(RING, REFPTS)
