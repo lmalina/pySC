@@ -2,10 +2,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from pySC.utils.at_wrapper import atpass, findorbit6, findorbit4, findspos
+from pySC.utils import logging_tools
 
+LOGGER = logging_tools.get_logger(__name__)
 
-def SCdynamicAperture(RING, dE, bounds=np.array([0, 1e-3]), nturns=1000, thetas=np.linspace(0, 2 * np.pi, 16), accuracy=1e-6,
-                      launchOnOrbit=False, centerOnOrbit=True, useOrbit6=False, auto=0, plot=False, verbose=False):
+def SCdynamicAperture(RING, dE, bounds=np.array([0, 1e-3]), nturns=1000, thetas=np.linspace(0, 2 * np.pi, 16),
+                      accuracy=1e-6, launchOnOrbit=False, centerOnOrbit=True, useOrbit6=False, auto=0, plot=False):
     inibounds = bounds
     if auto > 0:
         _, thetas = _autothetas(RING, dE, auto)
@@ -32,12 +34,10 @@ def SCdynamicAperture(RING, dE, bounds=np.array([0, 1e-3]), nturns=1000, thetas=
                 break
             limits = scale_bounds(limits, 10)
             scales = scales + 1
-            if verbose:
-                print('Scaled: %e %e' % (limits[0], limits[1]))
+            LOGGER.debug(f'Scaled: {limits}')
         while np.abs(limits[1] - limits[0]) > accuracy:
             limits = _refine_bounds(RING, ZCO, nturns, theta, limits)
-            if verbose:
-                print('Refined: %e %e' % (limits[0], limits[1]))
+            LOGGER.debug(f'Refined: {limits}')
         RMAXs[cntt] = np.mean(limits)  # Store mean of final boundaries
     if plot:
         plt.figure(6232)
@@ -61,13 +61,13 @@ def SCdynamicAperture(RING, dE, bounds=np.array([0, 1e-3]), nturns=1000, thetas=
     return DA, RMAXs, thetas
 
 
-def SCmomentumAperture(RING, REFPTS, inibounds, nturns=1000, accuracy=1e-4, stepsize=1e-3, plot=0, debug=0):
+def SCmomentumAperture(RING, REFPTS, inibounds, nturns=1000, accuracy=1e-4, stepsize=1e-3, plot=0):
     dboundHI = np.zeros(len(REFPTS))
     dboundLO = np.zeros(len(REFPTS))
     ZCOs = findorbit6(RING, REFPTS)
     if any(~np.isfinite(ZCOs.flatten())):
         dbounds = np.array([dboundHI, dboundLO]).T
-        print('Closed Orbit could not be determined during MA evaluation. MA set to zero.')
+        LOGGER.info('Closed Orbit could not be determined during MA evaluation. MA set to zero.')
         return dbounds
     for i in range(len(REFPTS)):
         ord = REFPTS[i]
@@ -76,13 +76,13 @@ def SCmomentumAperture(RING, REFPTS, inibounds, nturns=1000, accuracy=1e-4, step
         ZCO = ZCOs[:, i]
         while not check_bounds(local_bounds, SHIFTRING, ZCO, nturns):
             local_bounds = increment_bounds(local_bounds, stepsize)
-            if debug: print('ord: %d; Incremented: %+0.5e %+0.5e' % (ord, local_bounds[0], local_bounds[1]))
+            LOGGER.debug(f'ord: {ord}; Incremented: {local_bounds}')
         while abs((local_bounds[1] - local_bounds[0]) / max(local_bounds)) > accuracy:
             local_bounds = refine_bounds(local_bounds, SHIFTRING, ZCO, nturns)
-            if debug: print('ord: %d; Refined: %e %e' % (ord, local_bounds[0], local_bounds[1]))
+            LOGGER.debug(f'ord: {ord}; Refined: {local_bounds}')
         dboundHI[i] = local_bounds[0]
         dboundLO[i] = local_bounds[1]
-        if debug: print('ord: %d; Found: %+0.5e %+0.5e' % (ord, local_bounds[0], local_bounds[1]))
+        LOGGER.debug(f'ord: {ord}; Found: {local_bounds}')
     dbounds = np.array([dboundHI, dboundLO]).T
     if plot:
         spos = findspos(RING, REFPTS)
@@ -160,7 +160,7 @@ def check_bounds(local_bounds, RING, ZCO, nturns):
     Z[4, :] = Z[4, :] + local_bounds[:]
     ROUT = atpass(RING, Z, 1, nturns, [])
     if np.isnan(ROUT[0, 0]) and not np.isnan(ROUT[0, 1]):
-        print('Closer-to-momentum particle is unstable. This shouldnt be!')
+        LOGGER.warning('Closer-to-momentum particle is unstable. This shouldnt be!')
     return not np.isnan(ROUT[0, 0]) and np.isnan(ROUT[0, 1])
 
 

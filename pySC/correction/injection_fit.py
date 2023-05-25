@@ -2,8 +2,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pySC.core.beam import SCgetBPMreading
 from pySC.utils.at_wrapper import atpass, findspos
+from pySC.utils import logging_tools
 
-def SCfitInjectionZ(SC, mode, nDims=np.array([0,1]), nBPMs=np.array([0,1,2]), nShots=None, verbose=0, plotFlag=False):
+LOGGER = logging_tools.get_logger(__name__)
+
+
+def SCfitInjectionZ(SC, mode, nDims=np.array([0, 1]), nBPMs=np.array([0, 1, 2]), nShots=None, plotFlag=False):
     if nShots is None:
         nShots = SC.INJ.nShots
     else:
@@ -54,13 +58,12 @@ def SCfitInjectionZ(SC, mode, nDims=np.array([0,1]), nBPMs=np.array([0,1,2]), nS
                 plt.title(titleStr[nDim])
             plt.show()
     else:
-        print('Unsupported mode: ' + mode)
-    if verbose:
-        print(
-            '\nInjection trajectory corrected from \n x:  %.0fum -> %.0fum \n x'': %.0furad -> %.0furad \n y:  %.0fum -> %.0fum \n y'': %.0furad -> %.0furad\n' % (
-            1E6 * SC.INJ.Z0[0], 1E6 * (SC.INJ.Z0[0] + deltaZ0[0]), 1E6 * SC.INJ.Z0[1],
-            1E6 * (SC.INJ.Z0[1] + deltaZ0[1]), 1E6 * SC.INJ.Z0[2], 1E6 * (SC.INJ.Z0[2] + deltaZ0[2]),
-            1E6 * SC.INJ.Z0[3], 1E6 * (SC.INJ.Z0[3] + deltaZ0[3])))
+        raise ValueError(f'Unsupported mode: {mode}')
+    LOGGER.debug(
+        '\nInjection trajectory corrected from \n x:  %.0fum -> %.0fum \n x'': %.0furad -> %.0furad \n y:  %.0fum -> %.0fum \n y'': %.0furad -> %.0furad\n' % (
+        1E6 * SC.INJ.Z0[0], 1E6 * (SC.INJ.Z0[0] + deltaZ0[0]), 1E6 * SC.INJ.Z0[1],
+        1E6 * (SC.INJ.Z0[1] + deltaZ0[1]), 1E6 * SC.INJ.Z0[2], 1E6 * (SC.INJ.Z0[2] + deltaZ0[2]),
+        1E6 * SC.INJ.Z0[3], 1E6 * (SC.INJ.Z0[3] + deltaZ0[3])))
     if np.isnan(deltaZ0).any():
         ERROR = 1
     return deltaZ0

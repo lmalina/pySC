@@ -3,9 +3,11 @@ import matplotlib.pyplot as plt
 
 from pySC.core.beam import SCgetBeamTransmission
 from pySC.core.lattice_setting import SCsetMags2SetPoints
+from pySC.utils import logging_tools
 
+LOGGER = logging_tools.get_logger(__name__)
 
-def SCtuneScan(SC, qOrds, qSPvec, verbose=False, plotFlag=False, nParticles=None, nTurns=None, target=1, fullScan=0):
+def SCtuneScan(SC, qOrds, qSPvec, plotFlag=False, nParticles=None, nTurns=None, target=1, fullScan=0):
     if nParticles is None:
         nParticles = SC.INJ.nParticles
     if nTurns is None:
@@ -28,7 +30,7 @@ def SCtuneScan(SC, qOrds, qSPvec, verbose=False, plotFlag=False, nParticles=None
         ords = np.hstack(qOrds)
         setpoints = np.hstack((np.repeat(qSPvec[0][q1], len(qOrds[0])), np.repeat(qSPvec[1][q2], len(qOrds[1]))))
         SC = SCsetMags2SetPoints(SC, ords, False, 1, setpoints, method='rel')
-        maxTurns[q1, q2], lostCount = SCgetBeamTransmission(SC, nParticles=nParticles, nTurns=nTurns, verbose=verbose)
+        maxTurns[q1, q2], lostCount = SCgetBeamTransmission(SC, nParticles=nParticles, nTurns=nTurns)
         finTrans[q1, q2, :] = 1 - lostCount
         allInd.append([q1, q2])
         if plotFlag:
@@ -67,9 +69,9 @@ def SCtuneScan(SC, qOrds, qSPvec, verbose=False, plotFlag=False, nParticles=None
                 ERROR = 0
                 qSP.append(qSPvec[0][q1])
                 qSP.append(qSPvec[1][q2])
-                if verbose:
-                    print('Transmission target reached with:\n  %s SetPoint: %.4f\n  %s SetPoint: %.4f\n' % (
-                        SC.RING[qOrds[0][0]].FamName, qSP[0], SC.RING[qOrds[1][0]].FamName, qSP[1]))
+                LOGGER.debug(f'Transmission target reached with:\n  '
+                             f'{SC.RING[qOrds[0][0]].FamName} SetPoint: {qSP[0]:.4f}\n '
+                             f' {SC.RING[qOrds[1][0]].FamName} SetPoint: {qSP[1]:.4f}\n')
                 return qSP, SC, maxTurns, finTrans, ERROR
     testTrans = np.zeros(len(allInd))
     testTurns = np.zeros(len(allInd))
@@ -80,27 +82,18 @@ def SCtuneScan(SC, qOrds, qSPvec, verbose=False, plotFlag=False, nParticles=None
     if a[0] == 0:
         a, b = np.sort(testTurns)[::-1], np.argsort(testTurns)[::-1]
         if a[0] == 0:
-            ERROR = 2
-            print('Fail, no transmission at all.\n')
-            return qSP, SC, maxTurns, finTrans, ERROR
-        else:
-            if verbose:
-                print(
-                    'No transmission at final turn at all. Best number of turns (%d) reached with:\n  %s SetPoint: %.4f\n  %s SetPoint: %.4f\n' % (
-                        a[0], SC.RING[qOrds[0][0]].FamName, qSPvec[0][allInd[b[0]][0]], SC.RING[qOrds[1][0]].FamName,
-                        qSPvec[1][allInd[b[0]][1]]))
+            raise RuntimeError('Fail, no transmission at all.\n')
+        LOGGER.debug(f'No transmission at final turn at all. Best number of turns ({a[0]:d}) reached with:\n  '
+                     f'{SC.RING[qOrds[0][0]].FamName} SetPoint: {qSPvec[0][allInd[b[0]][0]]:.4f}\n  '
+                     f'{SC.RING[qOrds[1][0]].FamName} SetPoint: {qSPvec[1][allInd[b[0]][1]]:.4f}\n')
     else:
-        if verbose:
-            print(
-                'Transmission target not reached. Best value (%d) reached with:\n  %s SetPoint: %.4f\n  %s SetPoint: %.4f\n' % (
-                    a[0], SC.RING[qOrds[0][0]].FamName, qSPvec[0][allInd[b[0]][0]], SC.RING[qOrds[1][0]].FamName,
-                    qSPvec[1][allInd[b[0]][1]]))
+        LOGGER.debug(f'Transmission target not reached. Best value ({a[0]:d}) reached with:\n  '
+                     f'{SC.RING[qOrds[0][0]].FamName} SetPoint: {qSPvec[0][allInd[b[0]][0]]:.4f}\n  '
+                     f'{SC.RING[qOrds[1][0]].FamName} SetPoint: {qSPvec[1][allInd[b[0]][1]]:.4f}\n')
     qSP.append(qSPvec[0][allInd[b[0]][0]])
     qSP.append(qSPvec[1][allInd[b[0]][1]])
     if qSP[0] == qSPvec[0][q1Ind[0]] and qSP[1] == qSPvec[1][q2Ind[0]]:
-        print('No improvement possible.\n')
-        ERROR = 2
-        return qSP, SC, maxTurns, finTrans, ERROR
+        raise RuntimeError('No improvement possible.\n')
     else:
         ERROR = 1
     ords = np.hstack(qOrds)

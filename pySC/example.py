@@ -45,7 +45,7 @@ def create_at_lattice() -> Lattice:
 
 if __name__ == "__main__":
     ring = at.Lattice(create_at_lattice())
-    print(len(ring))
+    LOGGER.info(f"{len(ring)=}")
     SC = SimulatedComissioning(ring)
     # at.summary(ring)
     ords = SCgetOrds(SC.RING, 'BPM')
@@ -148,7 +148,7 @@ if __name__ == "__main__":
 
     # Plot phasespace after RF correction
     SCplotPhaseSpace(SC, nParticles=10, nTurns=100)
-    [maxTurns, lostCount] = SCgetBeamTransmission(SC, nParticles=100, nTurns=10, verbose=True)
+    [maxTurns, lostCount] = SCgetBeamTransmission(SC, nParticles=100, nTurns=10)
 
     # Performing pseudo-BBA
     quadOrds = np.tile(SCgetOrds(SC.RING, 'QF|QD'), (2,1))
@@ -173,7 +173,7 @@ if __name__ == "__main__":
         SC = CUR
     SC.RING = SCcronoff(SC.RING, 'cavityon')
     SCplotPhaseSpace(SC, nParticles=10, nTurns=1000)
-    [maxTurns, lostCount] = SCgetBeamTransmission(SC, nParticles=100, nTurns=200, verbose=True, do_plot=True)
+    [maxTurns, lostCount] = SCgetBeamTransmission(SC, nParticles=100, nTurns=200, do_plot=True)
 
     CMstep = 1E-4  # [rad]
     RFstep = 1E3  # [Hz]

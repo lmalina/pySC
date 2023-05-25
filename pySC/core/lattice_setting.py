@@ -6,7 +6,9 @@ from numpy import ndarray
 from pySC.core.classes import SimulatedComissioning, DotDict
 from pySC.utils.classdef_tools import add_padded
 from pySC.utils.sc_tools import SCrandnc
+from pySC.utils import logging_tools
 
+LOGGER = logging_tools.get_logger(__name__)
 VALID_METHODS = ("abs", "rel", "add")
 
 
@@ -55,7 +57,7 @@ def SCsetCMs2SetPoints(SC: SimulatedComissioning, CMords: ndarray, setpoints: nd
             new_setpoints[i] += (SC.RING[ord].SetPointA[order] if skewness else SC.RING[ord].SetPointB[order]) * normBy[ndim]
 
         if hasattr(SC.RING[ord], 'CMlimit') and abs(new_setpoints[i]) > abs(SC.RING[ord].CMlimit[ndim]):
-            print(f'CM (ord: {ord} / dim: {ndim}) is clipping')
+            LOGGER.info(f'CM (ord: {ord} / dim: {ndim}) is clipping')
             new_setpoints[i] = np.sign(new_setpoints[i]) * SC.RING[ord].CMlimit[ndim]
         if skewness:
             SC.RING[ord].SetPointA[order] = new_setpoints[i] / normBy[ndim]
@@ -75,7 +77,7 @@ def SCsetMags2SetPoints(SC: SimulatedComissioning, MAGords: ndarray, skewness: b
             setpoints[i] += SC.RING[ord].SetPointA[order] if skewness else SC.RING[ord].SetPointB[order]
         if skewness and order == 1:  # skew quad
             if hasattr(SC.RING[ord], 'SkewQuadLimit') and abs(setpoints[i]) > abs(SC.RING[ord].SkewQuadLimit):
-                print(f'SC:SkewLim \n Skew quadrupole (ord: {ord}) is clipping')
+                LOGGER.info(f'SC:SkewLim \n Skew quadrupole (ord: {ord}) is clipping')
                 setpoints[i] = np.sign(setpoints[i]) * SC.RING[ord].SkewQuadLimit
         # TODO should check CF magnets
         if dipCompensation and order == 1:  # quad  # TODO check also skewness?

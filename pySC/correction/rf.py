@@ -163,4 +163,4 @@ def _fold_phase(delta_phi, lamb):
 #     if not hasattr(SC.RING[cavOrd], 'Frequency'):
 #         raise ValueError('This is not a cavity (ord: %d)' % cavOrd)
 #     if not any(SC.RING[cavOrd].PassMethod in ['CavityPass', 'RFCavityPass']):
-#         print('Cavity (ord: %d) seemed to be switched off.' % cavOrd)
+#         raise ValueError('Cavity (ord: %d) seemed to be switched off.' % cavOrd)

@@ -3,10 +3,12 @@ from pySC.core.constants import SUPPORT_TYPES, RF_PROPERTIES
 from pySC.correction.orbit_trajectory import SCfeedbackRun
 from pySC.lattice_properties.response_model import SCgetModelRM
 from pySC.utils.sc_tools import SCgetPinv, SCscaleCircumference
+from pySC.utils import logging_tools
+
+LOGGER = logging_tools.get_logger(__name__)
 
 
-
-def SCrampUpErrors(SC, nStepsRamp=10, eps=1e-5, target=0, alpha=10, maxsteps=30, verbose=0):
+def SCrampUpErrors(SC, nStepsRamp=10, eps=1e-5, target=0, alpha=10, maxsteps=30):
     errFieldsMag = ['CalErrorB', 'CalErrorA', 'PolynomAOffset', 'PolynomBOffset', 'MagnetOffset', 'MagnetRoll']
     errFieldsSup = ['Roll', 'Offset']
     errFieldsBPM = ['Noise', 'NoiseCO', 'Offset', 'SupportOffset', 'Roll', 'SupportRoll', 'CalError']
@@ -15,8 +17,7 @@ def SCrampUpErrors(SC, nStepsRamp=10, eps=1e-5, target=0, alpha=10, maxsteps=30,
     M = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, nTurns=SC.INJ.nTurns, trackMode=SC.INJ.trackMode)
     Mplus = SCgetPinv(M, alpha=alpha)
     for scale in np.linspace(1 / nStepsRamp, 1, nStepsRamp):
-        if verbose:
-            print('Ramping up errors with scaling factor %.2f.' % scale)
+        LOGGER.debug(f'Ramping up errors with scaling factor {scale:.2f}.')
         SC = scaleSupport(SC, SC0, errFieldsSup, scale)
         SC = scaleMagnets(SC, SC0, errFieldsMag, scale)
         SC = scaleBPMs(SC, SC0, errFieldsBPM, scale)
@@ -24,15 +25,15 @@ def SCrampUpErrors(SC, nStepsRamp=10, eps=1e-5, target=0, alpha=10, maxsteps=30,
         SC = scaleInjection(SC, SC0, scale)
         SC = scaleCircumference(SC, SC0, scale)
         try:
-            SC = SCfeedbackRun(SC, Mplus, target=target, maxsteps=maxsteps, eps=eps, do_plot=True)
+            SC = SCfeedbackRun(SC, Mplus, target=target, maxsteps=maxsteps, eps=eps)
         except RuntimeError:
             if 2 * nStepsRamp > 100:
                 raise Exception(f'Ramping up failed at scaling {scale:.2f} with {nStepsRamp} ramping steps. '
                                 f'Try different feedback parameters.')
             else:
-                print(f'Feedback did not succeed at scaling {scale:.2f}. Trying with {2 * nStepsRamp} ramping steps.')
+                LOGGER.info(f'Feedback did not succeed at scaling {scale:.2f}. Trying with {2 * nStepsRamp} ramping steps.')
                 SC = SCrampUpErrors(SC0, nStepsRamp=2 * nStepsRamp, eps=eps, target=target, alpha=alpha,
-                                    maxsteps=maxsteps, verbose=verbose)
+                                    maxsteps=maxsteps)
 
     return SC
 

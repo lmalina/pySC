@@ -5,10 +5,12 @@ from pySC.core.classes import SimulatedComissioning
 from pySC.utils.at_wrapper import atpass, findorbit6
 from pySC.core.constants import NUM_TO_AB, RF_PROPERTIES
 import copy
+from pySC.utils import logging_tools
 
+LOGGER = logging_tools.get_logger(__name__)
 
 def SCgetModelRM(SC, BPMords, CMords, trackMode='TBT', Z0=np.zeros(6), nTurns=1, dkick=1e-5, useIdealRing=True):
-    print('Calculating model response matrix')
+    LOGGER.info('Calculating model response matrix')
     track_methods = dict(TBT=atpass, ORB=orbpass)
     if trackMode not in track_methods.keys():
         ValueError(f'Unknown track mode {trackMode}. Valid values are {track_methods.keys()}')
@@ -51,7 +53,7 @@ def orbpass(RING, Z0,  nTurns, REFPTS, keep_lattice):
 
 
 def SCgetModelDispersion(SC, BPMords, CAVords, trackMode='ORB', Z0=np.zeros(6), nTurns=1, rfStep=1E3, useIdealRing=True):
-    print('Calculating model dispersion')
+    LOGGER.info('Calculating model dispersion')
     track_methods = dict(TBT=atpass, ORB=orbpass)
     if trackMode not in track_methods.keys():
         ValueError(f'Unknown track mode {trackMode}. Valid values are {track_methods.keys()}')

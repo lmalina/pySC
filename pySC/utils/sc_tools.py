@@ -6,7 +6,9 @@ from matplotlib import pyplot as plt
 from numpy import ndarray
 
 from pySC.utils.at_wrapper import findspos
+from pySC.utils import logging_tools
 
+LOGGER = logging_tools.get_logger(__name__)
 
 def SCrandnc(cut_off: float = 2, shape: tuple = (1, )) -> ndarray:
     """
@@ -33,7 +35,7 @@ def SCrandnc(cut_off: float = 2, shape: tuple = (1, )) -> ndarray:
     return out.reshape(out_shape)
 
 
-def SCgetOrds(ring: Lattice, regex: str, verbose: bool = False) -> ndarray:
+def SCgetOrds(ring: Lattice, regex: str) -> ndarray:
     """
     Returns the indices of the elements in the ring whose names match the regex.
 
@@ -43,23 +45,16 @@ def SCgetOrds(ring: Lattice, regex: str, verbose: bool = False) -> ndarray:
         The ring to search.
     regex : str
         The regular expression to match.
-    verbose : bool, optional
-        If True, prints the names of matched elements.
 
     Returns
     -------
     ndarray
         The indices of the matched elements.
     """
-    if verbose:
-        return np.array([_print_elem_get_index(ind, el) for ind, el in enumerate(ring) if re.search(regex, el.FamName)],
-                        dtype=int)
-    return np.array([ind for ind, el in enumerate(ring) if re.search(regex, el.FamName)], dtype=int)
-
-
-def _print_elem_get_index(ind, el):
-    print(f'Matched: {el.FamName}')
-    return ind
+    indices = np.array([ind for ind, el in enumerate(ring) if re.search(regex, el.FamName)], dtype=int)
+    for ind in indices:
+        LOGGER.debug(f'Matched: {ring[ind].FamName}')
+    return indices
 
 
 def SCgetPinv(matrix: ndarray, num_removed: int = 0, alpha: float = 0, damping: float = 1, plot: bool = False) -> ndarray:
@@ -191,16 +186,16 @@ def SCmultipolesRead(fname):  # TODO sample of the input anywhere?
     tab = np.array(f.read().split()).astype(float)
     f.close()
     if len(tab) % 3 != 0:
-        print('Incorrect table size.')
+        LOGGER.error('Incorrect table size.')
         return
     AB = tab.reshape((-1, 3))[:, 1:]
     idx = np.where(AB == 1)
     if len(idx[0]) != 1:
-        print('Nominal order could not be (uniquely) determined. Continuing with idx=1.')
+        LOGGER.warning('Nominal order could not be (uniquely) determined. Continuing with idx=1.')
         idx = 1
     order, type = idx[0][0], idx[1][0]
     if type > 2:
-        print('Ill-defined magnet type.')
+        LOGGER.error('Ill-defined magnet type.')
         return
     return np.roll(AB, 1, axis=1), order, type  # swapping A and B
 

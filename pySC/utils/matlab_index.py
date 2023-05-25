@@ -67,7 +67,7 @@ def SCdynamicAperture(RING, dE, /, *, bounds=np.array([0, 1e-3]), nturns=1000, t
                       verbose=False):
     return dynamic_aperture(RING, dE, bounds=bounds, nturns=nturns, thetas=thetas, accuracy=accuracy,
                             launchOnOrbit=launchOnOrbit, centerOnOrbit=centerOnOrbit, useOrbit6=useOrbit6, auto=auto,
-                            plot=plot, verbose=verbose)
+                            plot=plot)
 
 
 def SCfeedbackBalance(SC, Mplus, /, *, R0=None, CMords=None, BPMords=None, eps=1e-4, maxsteps=10, verbose=False):
@@ -97,7 +97,7 @@ def SCfeedbackStitch(SC, Mplus, /, *, R0=None, CMords=None, BPMords=None, nBPMs=
 
 def SCfitInjectionZ(SC, mode, /, *, nDims=np.array([0, 1]), nBPMs=np.array([0, 1, 2]), nShots=None, verbose=0,
                     plotFlag=False):
-    return fit_injection(SC, mode, nDims=nDims, nBPMs=nBPMs, nShots=nShots, verbose=verbose, plotFlag=plotFlag)
+    return fit_injection(SC, mode, nDims=nDims, nBPMs=nBPMs, nShots=nShots, plotFlag=plotFlag)
 
 
 def SCgenBunches(SC: SimulatedComissioning) -> ndarray:
@@ -106,7 +106,7 @@ def SCgenBunches(SC: SimulatedComissioning) -> ndarray:
 
 def SCgetBeamTransmission(SC: SimulatedComissioning, /, *, nParticles: int = None, nTurns: int = None,
                           plotFlag: bool = False, verbose: bool = False) -> Tuple[int, ndarray]:
-    return beam_transmission(SC, nParticles, nTurns=nTurns, do_plot=plotFlag, verbose=verbose)
+    return beam_transmission(SC, nParticles, nTurns=nTurns, do_plot=plotFlag)
 
 
 def SCgetBPMreading(SC, /, *, BPMords=None):
@@ -145,7 +145,7 @@ def SCgetModelRM(SC, BPMords, CMords, /, *, trackMode='TBT', Z0=np.zeros(6), nTu
 
 
 def SCgetOrds(ring: Lattice, regex: str, /, *, verbose: bool = False) -> ndarray:
-    return get_ords(ring=ring, regex=regex, verbose=verbose)
+    return get_ords(ring=ring, regex=regex)
 
 
 def SCgetPinv(matrix: ndarray, /, *, N: int = 0, alpha: float = 0, damping: float = 1, plot: bool = False) -> ndarray:
@@ -153,7 +153,7 @@ def SCgetPinv(matrix: ndarray, /, *, N: int = 0, alpha: float = 0, damping: floa
 
 
 def SCgetRespMat(SC, Amp, BPMords, CMords, /, *, mode='fixedKick', nSteps=2, fit='linear', verbose=0):
-    return response_matrix(SC, Amp, BPMords, CMords, mode=mode, nSteps=nSteps, fit=fit, verbose=verbose)
+    return response_matrix(SC, Amp, BPMords, CMords, mode=mode, nSteps=nSteps, fit=fit)
 
 
 def SCgetSupportOffset(SC: SimulatedComissioning, s: ndarray) -> ndarray:
@@ -179,8 +179,7 @@ def SClocoLib(funName, *args):
 
 
 def SCmomentumAperture(RING, REFPTS, inibounds, /, *, nturns=1000, accuracy=1e-4, stepsize=1e-3, plot=0, debug=0):
-    return momentum_aperture(RING, REFPTS, inibounds, nturns=nturns, accuracy=accuracy, stepsize=stepsize, plot=plot,
-                             debug=debug)
+    return momentum_aperture(RING, REFPTS, inibounds, nturns=nturns, accuracy=accuracy, stepsize=stepsize, plot=plot)
 
 
 def SCmultipolesRead(fname):
@@ -222,8 +221,7 @@ def SCpseudoBBA(SC, BPMords, MagOrds, postBBAoffset, /, *, sigma=2):
 
 
 def SCrampUpErrors(SC, /, *, nStepsRamp=10, eps=1e-5, target=0, alpha=10, maxsteps=30, verbose=0):
-    return ramp_up_errors(SC, nStepsRamp=nStepsRamp, eps=eps, target=target, alpha=alpha, maxsteps=maxsteps,
-                          verbose=verbose)
+    return ramp_up_errors(SC, nStepsRamp=nStepsRamp, eps=eps, target=target, alpha=alpha, maxsteps=maxsteps)
 
 
 def SCrandnc(cut_off: float = 2, shape: tuple = (1,)) -> ndarray:
@@ -322,7 +320,7 @@ def SCsynchPhaseCorrection(SC, /, *, cavOrd=None, nSteps=15, nTurns=20, plotResu
 
 def SCtuneScan(SC, qOrds, qSPvec, /, *, verbose=False, plotFlag=False, nParticles=None, nTurns=None, target=1,
                fullScan=0):
-    return tune_scan(SC, qOrds, qSPvec, verbose=verbose, plotFlag=plotFlag, nParticles=nParticles, nTurns=nTurns,
+    return tune_scan(SC, qOrds, qSPvec, plotFlag=plotFlag, nParticles=nParticles, nTurns=nTurns,
                      target=target, fullScan=fullScan)
 
 
