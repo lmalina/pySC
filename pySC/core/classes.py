@@ -10,7 +10,9 @@ from pySC.core.constants import (RF_PROPERTIES, SUPPORT_TYPES, AB, BPM_ERROR_FIE
 from pySC.utils.classdef_tools import add_padded, randn_cutoff, update_double_ordinates, intersect, s_interpolation
 from pySC.utils.sc_tools import SCrandnc, SCscaleCircumference, SCgetTransformation
 from pySC.utils.at_wrapper import findspos
+from pySC.utils import logging_tools
 
+LOGGER = logging_tools.get_logger(__name__)
 
 class DotDict(dict):
     def __init__(self, *args, **kwargs):
@@ -181,7 +183,7 @@ class SimulatedComissioning(DotDict):
         if not len(support_ords) or support_ords.shape[0] != 2:
             raise ValueError('Ordinates must be a 2xn array of ordinates.')
         if upstream := np.sum(np.diff(support_ords, axis=0) < 0):
-            print(f"{upstream} {support_type} endpoints(s) may be upstream of startpoint(s).")
+            LOGGER.warning(f"{upstream} {support_type} endpoints(s) may be upstream of startpoint(s).")
         # TODO check the dimensions of Roll and Offset values
         self.ORD[support_type] = update_double_ordinates(self.ORD[support_type], support_ords)
         for ind in np.ravel(support_ords):
@@ -228,7 +230,7 @@ class SimulatedComissioning(DotDict):
         if 'Circumference' in self.SIG.keys():
             circScaling = 1 + self.SIG.Circumference * SCrandnc(nsigmas, (1, 1))
             self.RING = SCscaleCircumference(self.RING, circScaling, 'rel')
-            print('Circumference error applied.')
+            LOGGER.info('Circumference error applied.')
         # Misalignments
         self._apply_support_alignment_error(nsigmas)
 
@@ -315,7 +317,7 @@ class SimulatedComissioning(DotDict):
                             for field in ("T1", "T2", "R1", "R2"):
                                 setattr(self.RING[child_ind], field, getattr(self.RING[ind], field))
             else:
-                print('SC: No magnets have been registered!')
+                LOGGER.warning('SC: No magnets have been registered!')
         if offset_bpms:
             if len(self.ORD.BPM):
                 s = findspos(self.RING, self.ORD.BPM)
@@ -325,7 +327,7 @@ class SimulatedComissioning(DotDict):
                     setattr(self.RING[ind], "SupportRoll",
                             np.array([rolls[0, i]]))  # BPM pitch and yaw angles not  implemented
             else:
-                print('SC: No BPMs have been registered!')
+                LOGGER.warning('SC: No BPMs have been registered!')
 
     def support_offset_and_roll(self, s_locations: ndarray) -> Tuple[ndarray, ndarray]:
         lengths = np.array([self.RING[i].Length for i in range(len(self.RING))])
@@ -378,108 +380,101 @@ class SimulatedComissioning(DotDict):
         return off0, roll0
 
     def verify_structure(self):
-        raise NotImplementedError
-    # if 'ORD' not in SC:
-    #     raise ValueError('Nothing is registered.')
-    # else:
-    #     if 'BPM' not in SC['ORD']:
-    #         print('No BPMs registered. Use ''SCregisterBPMs''.')
-    #     else:
-    #         if len(SC['ORD']['BPM']) == 0:
-    #             print('No BPMs registered. Use ''SCregisterBPMs''.')
-    #         else:
-    #             print('%d BPMs registered.' % len(SC['ORD']['BPM']))
-    #         if len(np.unique(SC['ORD']['BPM'])) != len(SC['ORD']['BPM']):
-    #             print('BPMs not uniquely defined.')
-    #     if 'Girder' not in SC['ORD'] and ('Plinth' in SC['ORD'] or 'Section' in SC['ORD']):
-    #         print('Girders must be registered for other support structure misalingments to work.')
-    #     if 'CM' not in SC['ORD']:
-    #         print('No CMs registered. Use ''SCregisterCMs''.')
-    #     else:
-    #         if len(SC['ORD']['CM'][0]) == 0:
-    #             print('No horizontal CMs registered. Use ''SCregisterCMs''.')
-    #         else:
-    #             print('%d HCMs registered.' % len(SC['ORD']['CM'][0]))
-    #         if len(SC['ORD']['CM']) != 2 or len(SC['ORD']['CM'][1]) == 0:
-    #             print('No vertical CMs registered. Use ''SCregisterCMs''.')
-    #         else:
-    #             print('%d VCMs registered.' % len(SC['ORD']['CM'][1]))
-    #         if len(np.unique(SC['ORD']['CM'][0])) != len(SC['ORD']['CM'][0]):
-    #             print('Horizontal CMs not uniquely defined.')
-    #         if len(np.unique(SC['ORD']['CM'][1])) != len(SC['ORD']['CM'][1]):
-    #             print('Vertical CMs not uniquely defined.')
-    #         for ord in SC['ORD']['CM'][0]:
-    #             if SC['RING'][ord]['CMlimit'][0] == 0:
-    #                 print('HCM limit is zero (Magnet ord: %d). Sure about that?' % ord)
-    #         for ord in SC['ORD']['CM'][1]:
-    #             if SC['RING'][ord]['CMlimit'][1] == 0:
-    #                 print('VCM limit is zero (Magnet ord: %d). Sure about that?' % ord)
-    #     if 'Magnet' not in SC['ORD']:
-    #         print('No magnets are registered. Use ''SCregisterMagnets''.')
-    #     else:
-    #         for ord in SC['ORD']['Magnet']:
-    #             if len(SC['RING'][ord]['PolynomB']) != len(SC['RING'][ord]['PolynomA']):
-    #                 raise ValueError('Length of PolynomB and PolynomA are not equal (Magnet ord: %d)' % ord)
-    #             elif len(SC['RING'][ord]['SetPointB']) != len(SC['RING'][ord]['CalErrorB']):
-    #                 print('Length of SetPointB and CalErrorB are not equal (Magnet ord: %d)' % ord)
-    #             elif len(SC['RING'][ord]['SetPointA']) != len(SC['RING'][ord]['CalErrorA']):
-    #                 print('Length of SetPointA and CalErrorA are not equal (Magnet ord: %d)' % ord)
-    #             if 'PolynomBOffset' in SC['RING'][ord]:
-    #                 if len(SC['RING'][ord]['PolynomBOffset']) != len(SC['RING'][ord]['PolynomAOffset']):
-    #                     raise ValueError(
-    #                         'Length of PolynomBOffset and PolynomAOffset are not equal (Magnet ord: %d)' % ord)
-    #             if 'CombinedFunction' in SC['RING'][ord] and SC['RING'][ord]['CombinedFunction'] == 1:
-    #                 if 'BendingAngle' not in SC['RING'][ord]:
-    #                     raise ValueError('Combined function magnet (ord: %d) requires field ''BendingAngle''.' % ord)
-    #                 if SC['RING'][ord]['NomPolynomB'][1] == 0 or SC['RING'][ord]['BendingAngle'] == 0:
-    #                     print(
-    #                         'Combined function magnet (ord: %d) has zero bending angle or design quadrupole component.' % ord)
-    #             if 'Mag' in SC['SIG'] and len(SC['SIG']['Mag'][ord]) != 0:
-    #                 for field in SC['SIG']['Mag'][ord]:
-    #                     if field not in SC['RING'][ord]:
-    #                         print('Field ''%s'' in SC.SIG.Mag doesn''t match lattice element (Magnet ord: %d)' % (
-    #                         field, ord))
-    #                     if field == 'MagnetOffset':
-    #                         if isinstance(SC['SIG']['Mag'][ord][field], list):
-    #                             off = SC['SIG']['Mag'][ord][field][0]
-    #                         else:
-    #                             off = SC['SIG']['Mag'][ord][field]
-    #                         if len(off) != 3:
-    #                             print('SC.SIG.Mag{%d}.MagnetOffset should be a [1x3] (dx,dy,dz) array.' % ord)
-    #             if 'MasterOf' in SC['RING'][ord]:
-    #                 masterFields = SC['RING'][ord].keys()
-    #                 for cOrd in SC['RING'][ord]['MasterOf']:
-    #                     for field in SC['RING'][cOrd]:
-    #                         if field not in masterFields:
-    #                             raise ValueError(
-    #                                 'Child magnet (ord: %d) has different field ''%s'' than master magnet (ord: %d).' % (
-    #                                 cOrd, field, ord))
-    #     if 'Cavity' not in SC['ORD']:
-    #         print('No cavity registered. Use ''SCregisterCAVs''.')
-    #     else:
-    #         if len(SC['ORD']['Cavity']) == 0:
-    #             print('No cavity registered. Use ''SCregisterBPMs''.')
-    #         else:
-    #             print('%d cavity/cavities registered.' % len(SC['ORD']['Cavity']))
-    #         if len(np.unique(SC['ORD']['Cavity'])) != len(SC['ORD']['Cavity']):
-    #             print('Cavities not uniquely defined.')
-    #         if 'RF' in SC['SIG']:
-    #             for ord in SC['ORD']['Cavity']:
-    #                 for field in SC['SIG']['RF'][ord]:
-    #                     if field not in SC['RING'][ord]:
-    #                         print('Field in SC.SIG.RF doesn''t match lattice element (Cavity ord: %d)' % ord)
-    #     if SC['INJ']['beamSize'].shape != (6, 6):
-    #         raise ValueError('6x6 sigma matrix has to be used!')
-    #     apEl = []
-    #     for ord in range(len(SC['RING'])):
-    #         if 'EApertures' in SC['RING'][ord] and 'RApertures' in SC['RING'][ord]:
-    #             print('Lattice element #%d has both EAperture and RAperture' % ord)
-    #         if 'EApertures' in SC['RING'][ord] or 'RApertures' in SC['RING'][ord]:
-    #             apEl.append(ord)
-    #     if len(apEl) == 0:
-    #         print('No apertures found.')
-    #     else:
-    #         print('Apertures defined in %d out of %d elements.' % (len(apEl), len(SC['RING'])))
+        # BPMs
+        if n_bpms := len(self.ORD.BPM) == 0:
+            LOGGER.warning('No BPMs registered. Use ''register_bpms''.')
+        else:
+            LOGGER.info(f'{n_bpms:d} BPMs registered.')
+            if len(np.unique(self.ORD.BPM)) != n_bpms:
+                LOGGER.warning('BPMs not uniquely defined.')
+        # Supports
+        if len(self.ORD.Girder) == 0 and (len(self.ORD.Plinth) or len(self.ORD.Section)):
+            LOGGER.warning('Girders must be registered for other support structure misalingments to work.')
+        # Corrector magnets
+        if n_hcms := len(self.ORD.HCM) == 0:
+            LOGGER.warning('No horizontal CMs registered. Use ''register_magnets''.')
+        else:
+            LOGGER.info(f'{n_hcms:d} HCMs registered.')
+            if len(np.unique(self.ORD.HCM)) != n_hcms:
+                LOGGER.warning('Horizontal CMs not uniquely defined.')
+        if n_vcms := len(self.ORD.VCM) == 0:
+            LOGGER.warning('No vertical CMs registered. Use ''register_magnets''.')
+        else:
+            LOGGER.info(f'{n_vcms:d} VCMs registered.')
+            if len(np.unique(self.ORD.VCM)) != n_vcms:
+                LOGGER.warning('Vertical CMs not uniquely defined.')
+        for ord in self.ORD.HCM:
+            if self.RING[ord]['CMlimit'][0] == 0:
+                LOGGER.warning(f'HCM limit is zero (Magnet ord: {ord:d}). Sure about that?')
+        for ord in self.ORD.VCM:
+            if self.RING[ord]['CMlimit'][1] == 0:
+                LOGGER.warning(f'VCM limit is zero (Magnet ord: {ord:d}). Sure about that?')
+        # if 'Magnet' not in SC['ORD']:
+        #     LOGGER.warning('No magnets are registered. Use ''SCregisterMagnets''.')
+        # else:
+        #     for ord in SC['ORD']['Magnet']:
+        #         if len(SC['RING'][ord]['PolynomB']) != len(SC['RING'][ord]['PolynomA']):
+        #             raise ValueError('Length of PolynomB and PolynomA are not equal (Magnet ord: %d)' % ord)
+        #         elif len(SC['RING'][ord]['SetPointB']) != len(SC['RING'][ord]['CalErrorB']):
+        #             LOGGER.warning('Length of SetPointB and CalErrorB are not equal (Magnet ord: %d)' % ord)
+        #         elif len(SC['RING'][ord]['SetPointA']) != len(SC['RING'][ord]['CalErrorA']):
+        #             LOGGER.warning('Length of SetPointA and CalErrorA are not equal (Magnet ord: %d)' % ord)
+        #         if 'PolynomBOffset' in SC['RING'][ord]:
+        #             if len(SC['RING'][ord]['PolynomBOffset']) != len(SC['RING'][ord]['PolynomAOffset']):
+        #                 raise ValueError(
+        #                     'Length of PolynomBOffset and PolynomAOffset are not equal (Magnet ord: %d)' % ord)
+        #         if 'CombinedFunction' in SC['RING'][ord] and SC['RING'][ord]['CombinedFunction'] == 1:
+        #             if 'BendingAngle' not in SC['RING'][ord]:
+        #                 raise ValueError('Combined function magnet (ord: %d) requires field ''BendingAngle''.' % ord)
+        #             if SC['RING'][ord]['NomPolynomB'][1] == 0 or SC['RING'][ord]['BendingAngle'] == 0:
+        #                 LOGGER.warning(
+        #                     'Combined function magnet (ord: %d) has zero bending angle or design quadrupole component.' % ord)
+        #         if 'Mag' in SC['SIG'] and len(SC['SIG']['Mag'][ord]) != 0:
+        #             for field in SC['SIG']['Mag'][ord]:
+        #                 if field not in SC['RING'][ord]:
+        #                     LOGGER.warning('Field ''%s'' in SC.SIG.Mag doesn''t match lattice element (Magnet ord: %d)' % (
+        #                     field, ord))
+        #                 if field == 'MagnetOffset':
+        #                     if isinstance(SC['SIG']['Mag'][ord][field], list):
+        #                         off = SC['SIG']['Mag'][ord][field][0]
+        #                     else:
+        #                         off = SC['SIG']['Mag'][ord][field]
+        #                     if len(off) != 3:
+        #                         LOGGER.warning(f'SC.SIG.Magnet[{ord:d}].MagnetOffset should be a [1x3] (dx,dy,dz) array.')
+        #         if 'MasterOf' in SC['RING'][ord]:
+        #             masterFields = SC['RING'][ord].keys()
+        #             for cOrd in SC['RING'][ord]['MasterOf']:
+        #                 for field in SC['RING'][cOrd]:
+        #                     if field not in masterFields:
+        #                         raise ValueError(
+        #                             'Child magnet (ord: %d) has different field ''%s'' than master magnet (ord: %d).' % (
+        #                             cOrd, field, ord))
+        # if 'Cavity' not in SC['ORD']:
+        #     LOGGER.warning('No cavity registered. Use ''SCregisterCAVs''.')
+        # else:
+        #     if len(SC['ORD']['Cavity']) == 0:
+        #         LOGGER.warning('No cavity registered. Use ''SCregisterBPMs''.')
+        #     else:
+        #         LOGGER.warning(f'{len(SC["ORD"]["Cavity"]):d} cavity/cavities registered.')
+        #     if len(np.unique(SC['ORD']['Cavity'])) != len(SC['ORD']['Cavity']):
+        #         LOGGER.warning('Cavities not uniquely defined.')
+        #     if 'RF' in SC['SIG']:
+        #         for ord in SC['ORD']['Cavity']:
+        #             for field in SC['SIG']['RF'][ord]:
+        #                 if field not in SC['RING'][ord]:
+        #                     LOGGER.warning('Field in SC.SIG.RF doesn''t match lattice element (Cavity ord: %d)' % ord)
+        # if SC['INJ']['beamSize'].shape != (6, 6):
+        #     raise ValueError('6x6 sigma matrix has to be used!')
+        # apEl = []
+        # for ord in range(len(SC['RING'])):
+        #     if 'EApertures' in SC['RING'][ord] and 'RApertures' in SC['RING'][ord]:
+        #         LOGGER.warning(f'Lattice element #{ord:d} has both EAperture and RAperture')
+        #     if 'EApertures' in SC['RING'][ord] or 'RApertures' in SC['RING'][ord]:
+        #         apEl.append(ord)
+        # if len(apEl) == 0:
+        #     LOGGER.warning('No apertures found.')
+        # else:
+        #     LOGGER.info(f'Apertures defined in {len(apEl):d} out of {len(SC["RING"]):d} elements.')
 
     def _optional_magnet_fields(self, ind, MAGords, **kwargs):
         if 'CF' in kwargs.keys():

@@ -97,7 +97,7 @@ def SCfeedbackStitch(SC, Mplus, /, *, R0=None, CMords=None, BPMords=None, nBPMs=
 
 def SCfitInjectionZ(SC, mode, /, *, nDims=np.array([0, 1]), nBPMs=np.array([0, 1, 2]), nShots=None, verbose=0,
                     plotFlag=False):
-    return fit_injection(SC, mode, nDims=nDims, nBPMs=nBPMs, nShots=nShots, verbose=verbose, plotFlag=plotFlag)
+    return fit_injection(SC, mode, nDims=nDims, nBPMs=nBPMs, nShots=nShots, plotFlag=plotFlag)
 
 
 def SCgenBunches(SC: SimulatedComissioning) -> ndarray:
@@ -106,7 +106,7 @@ def SCgenBunches(SC: SimulatedComissioning) -> ndarray:
 
 def SCgetBeamTransmission(SC: SimulatedComissioning, /, *, nParticles: int = None, nTurns: int = None,
                           plotFlag: bool = False, verbose: bool = False) -> Tuple[int, ndarray]:
-    return beam_transmission(SC, nParticles, nTurns=nTurns, do_plot=plotFlag, verbose=verbose)
+    return beam_transmission(SC, nParticles, nTurns=nTurns, do_plot=plotFlag)
 
 
 def SCgetBPMreading(SC, /, *, BPMords=None):
@@ -322,7 +322,7 @@ def SCsynchPhaseCorrection(SC, /, *, cavOrd=None, nSteps=15, nTurns=20, plotResu
 
 def SCtuneScan(SC, qOrds, qSPvec, /, *, verbose=False, plotFlag=False, nParticles=None, nTurns=None, target=1,
                fullScan=0):
-    return tune_scan(SC, qOrds, qSPvec, verbose=verbose, plotFlag=plotFlag, nParticles=nParticles, nTurns=nTurns,
+    return tune_scan(SC, qOrds, qSPvec, plotFlag=plotFlag, nParticles=nParticles, nTurns=nTurns,
                      target=target, fullScan=fullScan)
 
 
