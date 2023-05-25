@@ -112,7 +112,9 @@
 <span class="kn">from</span> <span class="nn">pySC.utils.classdef_tools</span> <span class="kn">import</span> <span class="n">add_padded</span><span class="p">,</span> <span class="n">randn_cutoff</span><span class="p">,</span> <span class="n">update_double_ordinates</span><span class="p">,</span> <span class="n">intersect</span><span class="p">,</span> <span class="n">s_interpolation</span>
 <span class="kn">from</span> <span class="nn">pySC.utils.sc_tools</span> <span class="kn">import</span> <span class="n">SCrandnc</span><span class="p">,</span> <span class="n">SCscaleCircumference</span><span class="p">,</span> <span class="n">SCgetTransformation</span>
 <span class="kn">from</span> <span class="nn">pySC.utils.at_wrapper</span> <span class="kn">import</span> <span class="n">findspos</span>
+<span class="kn">from</span> <span class="nn">pySC.utils</span> <span class="kn">import</span> <span class="n">logging_tools</span>
 
+<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging_tools</span><span class="o">.</span><span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 <div class="viewcode-block" id="DotDict"><a class="viewcode-back" href="../../../modules/core.html#pySC.core.classes.DotDict">[docs]</a><span class="k">class</span> <span class="nc">DotDict</span><span class="p">(</span><span class="nb">dict</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -283,7 +285,7 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">support_ords</span><span class="p">)</span> <span class="ow">or</span> <span class="n">support_ords</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Ordinates must be a 2xn array of ordinates.&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">upstream</span> <span class="o">:=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">support_ords</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">):</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">upstream</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">support_type</span><span class="si">}</span><span class="s2"> endpoints(s) may be upstream of startpoint(s).&quot;</span><span class="p">)</span>
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">upstream</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">support_type</span><span class="si">}</span><span class="s2"> endpoints(s) may be upstream of startpoint(s).&quot;</span><span class="p">)</span>
         <span class="c1"># TODO check the dimensions of Roll and Offset values</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ORD</span><span class="p">[</span><span class="n">support_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">update_double_ordinates</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ORD</span><span class="p">[</span><span class="n">support_type</span><span class="p">],</span> <span class="n">support_ords</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">support_ords</span><span class="p">):</span>
@@ -330,7 +332,7 @@
         <span class="k">if</span> <span class="s1">&#39;Circumference&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">SIG</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
             <span class="n">circScaling</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">SIG</span><span class="o">.</span><span class="n">Circumference</span> <span class="o">*</span> <span class="n">SCrandnc</span><span class="p">(</span><span class="n">nsigmas</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">RING</span> <span class="o">=</span> <span class="n">SCscaleCircumference</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RING</span><span class="p">,</span> <span class="n">circScaling</span><span class="p">,</span> <span class="s1">&#39;rel&#39;</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Circumference error applied.&#39;</span><span class="p">)</span>
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Circumference error applied.&#39;</span><span class="p">)</span>
         <span class="c1"># Misalignments</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_apply_support_alignment_error</span><span class="p">(</span><span class="n">nsigmas</span><span class="p">)</span>
 
@@ -417,7 +419,7 @@
                             <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;T1&quot;</span><span class="p">,</span> <span class="s2">&quot;T2&quot;</span><span class="p">,</span> <span class="s2">&quot;R1&quot;</span><span class="p">,</span> <span class="s2">&quot;R2&quot;</span><span class="p">):</span>
                                 <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="n">child_ind</span><span class="p">],</span> <span class="n">field</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="n">ind</span><span class="p">],</span> <span class="n">field</span><span class="p">))</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;SC: No magnets have been registered!&#39;</span><span class="p">)</span>
+                <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;SC: No magnets have been registered!&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">offset_bpms</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ORD</span><span class="o">.</span><span class="n">BPM</span><span class="p">):</span>
                 <span class="n">s</span> <span class="o">=</span> <span class="n">findspos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RING</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ORD</span><span class="o">.</span><span class="n">BPM</span><span class="p">)</span>
@@ -427,7 +429,7 @@
                     <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="n">ind</span><span class="p">],</span> <span class="s2">&quot;SupportRoll&quot;</span><span class="p">,</span>
                             <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">rolls</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span><span class="p">]]))</span>  <span class="c1"># BPM pitch and yaw angles not  implemented</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;SC: No BPMs have been registered!&#39;</span><span class="p">)</span>
+                <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;SC: No BPMs have been registered!&#39;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">support_offset_and_roll</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s_locations</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">ndarray</span><span class="p">]:</span>
         <span class="n">lengths</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">Length</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RING</span><span class="p">))])</span>
@@ -480,108 +482,101 @@
         <span class="k">return</span> <span class="n">off0</span><span class="p">,</span> <span class="n">roll0</span>
 
     <span class="k">def</span> <span class="nf">verify_structure</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
-    <span class="c1"># if &#39;ORD&#39; not in SC:</span>
-    <span class="c1">#     raise ValueError(&#39;Nothing is registered.&#39;)</span>
-    <span class="c1"># else:</span>
-    <span class="c1">#     if &#39;BPM&#39; not in SC[&#39;ORD&#39;]:</span>
-    <span class="c1">#         print(&#39;No BPMs registered. Use &#39;&#39;SCregisterBPMs&#39;&#39;.&#39;)</span>
-    <span class="c1">#     else:</span>
-    <span class="c1">#         if len(SC[&#39;ORD&#39;][&#39;BPM&#39;]) == 0:</span>
-    <span class="c1">#             print(&#39;No BPMs registered. Use &#39;&#39;SCregisterBPMs&#39;&#39;.&#39;)</span>
-    <span class="c1">#         else:</span>
-    <span class="c1">#             print(&#39;%d BPMs registered.&#39; % len(SC[&#39;ORD&#39;][&#39;BPM&#39;]))</span>
-    <span class="c1">#         if len(np.unique(SC[&#39;ORD&#39;][&#39;BPM&#39;])) != len(SC[&#39;ORD&#39;][&#39;BPM&#39;]):</span>
-    <span class="c1">#             print(&#39;BPMs not uniquely defined.&#39;)</span>
-    <span class="c1">#     if &#39;Girder&#39; not in SC[&#39;ORD&#39;] and (&#39;Plinth&#39; in SC[&#39;ORD&#39;] or &#39;Section&#39; in SC[&#39;ORD&#39;]):</span>
-    <span class="c1">#         print(&#39;Girders must be registered for other support structure misalingments to work.&#39;)</span>
-    <span class="c1">#     if &#39;CM&#39; not in SC[&#39;ORD&#39;]:</span>
-    <span class="c1">#         print(&#39;No CMs registered. Use &#39;&#39;SCregisterCMs&#39;&#39;.&#39;)</span>
-    <span class="c1">#     else:</span>
-    <span class="c1">#         if len(SC[&#39;ORD&#39;][&#39;CM&#39;][0]) == 0:</span>
-    <span class="c1">#             print(&#39;No horizontal CMs registered. Use &#39;&#39;SCregisterCMs&#39;&#39;.&#39;)</span>
-    <span class="c1">#         else:</span>
-    <span class="c1">#             print(&#39;%d HCMs registered.&#39; % len(SC[&#39;ORD&#39;][&#39;CM&#39;][0]))</span>
-    <span class="c1">#         if len(SC[&#39;ORD&#39;][&#39;CM&#39;]) != 2 or len(SC[&#39;ORD&#39;][&#39;CM&#39;][1]) == 0:</span>
-    <span class="c1">#             print(&#39;No vertical CMs registered. Use &#39;&#39;SCregisterCMs&#39;&#39;.&#39;)</span>
-    <span class="c1">#         else:</span>
-    <span class="c1">#             print(&#39;%d VCMs registered.&#39; % len(SC[&#39;ORD&#39;][&#39;CM&#39;][1]))</span>
-    <span class="c1">#         if len(np.unique(SC[&#39;ORD&#39;][&#39;CM&#39;][0])) != len(SC[&#39;ORD&#39;][&#39;CM&#39;][0]):</span>
-    <span class="c1">#             print(&#39;Horizontal CMs not uniquely defined.&#39;)</span>
-    <span class="c1">#         if len(np.unique(SC[&#39;ORD&#39;][&#39;CM&#39;][1])) != len(SC[&#39;ORD&#39;][&#39;CM&#39;][1]):</span>
-    <span class="c1">#             print(&#39;Vertical CMs not uniquely defined.&#39;)</span>
-    <span class="c1">#         for ord in SC[&#39;ORD&#39;][&#39;CM&#39;][0]:</span>
-    <span class="c1">#             if SC[&#39;RING&#39;][ord][&#39;CMlimit&#39;][0] == 0:</span>
-    <span class="c1">#                 print(&#39;HCM limit is zero (Magnet ord: %d). Sure about that?&#39; % ord)</span>
-    <span class="c1">#         for ord in SC[&#39;ORD&#39;][&#39;CM&#39;][1]:</span>
-    <span class="c1">#             if SC[&#39;RING&#39;][ord][&#39;CMlimit&#39;][1] == 0:</span>
-    <span class="c1">#                 print(&#39;VCM limit is zero (Magnet ord: %d). Sure about that?&#39; % ord)</span>
-    <span class="c1">#     if &#39;Magnet&#39; not in SC[&#39;ORD&#39;]:</span>
-    <span class="c1">#         print(&#39;No magnets are registered. Use &#39;&#39;SCregisterMagnets&#39;&#39;.&#39;)</span>
-    <span class="c1">#     else:</span>
-    <span class="c1">#         for ord in SC[&#39;ORD&#39;][&#39;Magnet&#39;]:</span>
-    <span class="c1">#             if len(SC[&#39;RING&#39;][ord][&#39;PolynomB&#39;]) != len(SC[&#39;RING&#39;][ord][&#39;PolynomA&#39;]):</span>
-    <span class="c1">#                 raise ValueError(&#39;Length of PolynomB and PolynomA are not equal (Magnet ord: %d)&#39; % ord)</span>
-    <span class="c1">#             elif len(SC[&#39;RING&#39;][ord][&#39;SetPointB&#39;]) != len(SC[&#39;RING&#39;][ord][&#39;CalErrorB&#39;]):</span>
-    <span class="c1">#                 print(&#39;Length of SetPointB and CalErrorB are not equal (Magnet ord: %d)&#39; % ord)</span>
-    <span class="c1">#             elif len(SC[&#39;RING&#39;][ord][&#39;SetPointA&#39;]) != len(SC[&#39;RING&#39;][ord][&#39;CalErrorA&#39;]):</span>
-    <span class="c1">#                 print(&#39;Length of SetPointA and CalErrorA are not equal (Magnet ord: %d)&#39; % ord)</span>
-    <span class="c1">#             if &#39;PolynomBOffset&#39; in SC[&#39;RING&#39;][ord]:</span>
-    <span class="c1">#                 if len(SC[&#39;RING&#39;][ord][&#39;PolynomBOffset&#39;]) != len(SC[&#39;RING&#39;][ord][&#39;PolynomAOffset&#39;]):</span>
-    <span class="c1">#                     raise ValueError(</span>
-    <span class="c1">#                         &#39;Length of PolynomBOffset and PolynomAOffset are not equal (Magnet ord: %d)&#39; % ord)</span>
-    <span class="c1">#             if &#39;CombinedFunction&#39; in SC[&#39;RING&#39;][ord] and SC[&#39;RING&#39;][ord][&#39;CombinedFunction&#39;] == 1:</span>
-    <span class="c1">#                 if &#39;BendingAngle&#39; not in SC[&#39;RING&#39;][ord]:</span>
-    <span class="c1">#                     raise ValueError(&#39;Combined function magnet (ord: %d) requires field &#39;&#39;BendingAngle&#39;&#39;.&#39; % ord)</span>
-    <span class="c1">#                 if SC[&#39;RING&#39;][ord][&#39;NomPolynomB&#39;][1] == 0 or SC[&#39;RING&#39;][ord][&#39;BendingAngle&#39;] == 0:</span>
-    <span class="c1">#                     print(</span>
-    <span class="c1">#                         &#39;Combined function magnet (ord: %d) has zero bending angle or design quadrupole component.&#39; % ord)</span>
-    <span class="c1">#             if &#39;Mag&#39; in SC[&#39;SIG&#39;] and len(SC[&#39;SIG&#39;][&#39;Mag&#39;][ord]) != 0:</span>
-    <span class="c1">#                 for field in SC[&#39;SIG&#39;][&#39;Mag&#39;][ord]:</span>
-    <span class="c1">#                     if field not in SC[&#39;RING&#39;][ord]:</span>
-    <span class="c1">#                         print(&#39;Field &#39;&#39;%s&#39;&#39; in SC.SIG.Mag doesn&#39;&#39;t match lattice element (Magnet ord: %d)&#39; % (</span>
-    <span class="c1">#                         field, ord))</span>
-    <span class="c1">#                     if field == &#39;MagnetOffset&#39;:</span>
-    <span class="c1">#                         if isinstance(SC[&#39;SIG&#39;][&#39;Mag&#39;][ord][field], list):</span>
-    <span class="c1">#                             off = SC[&#39;SIG&#39;][&#39;Mag&#39;][ord][field][0]</span>
-    <span class="c1">#                         else:</span>
-    <span class="c1">#                             off = SC[&#39;SIG&#39;][&#39;Mag&#39;][ord][field]</span>
-    <span class="c1">#                         if len(off) != 3:</span>
-    <span class="c1">#                             print(&#39;SC.SIG.Mag{%d}.MagnetOffset should be a [1x3] (dx,dy,dz) array.&#39; % ord)</span>
-    <span class="c1">#             if &#39;MasterOf&#39; in SC[&#39;RING&#39;][ord]:</span>
-    <span class="c1">#                 masterFields = SC[&#39;RING&#39;][ord].keys()</span>
-    <span class="c1">#                 for cOrd in SC[&#39;RING&#39;][ord][&#39;MasterOf&#39;]:</span>
-    <span class="c1">#                     for field in SC[&#39;RING&#39;][cOrd]:</span>
-    <span class="c1">#                         if field not in masterFields:</span>
-    <span class="c1">#                             raise ValueError(</span>
-    <span class="c1">#                                 &#39;Child magnet (ord: %d) has different field &#39;&#39;%s&#39;&#39; than master magnet (ord: %d).&#39; % (</span>
-    <span class="c1">#                                 cOrd, field, ord))</span>
-    <span class="c1">#     if &#39;Cavity&#39; not in SC[&#39;ORD&#39;]:</span>
-    <span class="c1">#         print(&#39;No cavity registered. Use &#39;&#39;SCregisterCAVs&#39;&#39;.&#39;)</span>
-    <span class="c1">#     else:</span>
-    <span class="c1">#         if len(SC[&#39;ORD&#39;][&#39;Cavity&#39;]) == 0:</span>
-    <span class="c1">#             print(&#39;No cavity registered. Use &#39;&#39;SCregisterBPMs&#39;&#39;.&#39;)</span>
-    <span class="c1">#         else:</span>
-    <span class="c1">#             print(&#39;%d cavity/cavities registered.&#39; % len(SC[&#39;ORD&#39;][&#39;Cavity&#39;]))</span>
-    <span class="c1">#         if len(np.unique(SC[&#39;ORD&#39;][&#39;Cavity&#39;])) != len(SC[&#39;ORD&#39;][&#39;Cavity&#39;]):</span>
-    <span class="c1">#             print(&#39;Cavities not uniquely defined.&#39;)</span>
-    <span class="c1">#         if &#39;RF&#39; in SC[&#39;SIG&#39;]:</span>
-    <span class="c1">#             for ord in SC[&#39;ORD&#39;][&#39;Cavity&#39;]:</span>
-    <span class="c1">#                 for field in SC[&#39;SIG&#39;][&#39;RF&#39;][ord]:</span>
-    <span class="c1">#                     if field not in SC[&#39;RING&#39;][ord]:</span>
-    <span class="c1">#                         print(&#39;Field in SC.SIG.RF doesn&#39;&#39;t match lattice element (Cavity ord: %d)&#39; % ord)</span>
-    <span class="c1">#     if SC[&#39;INJ&#39;][&#39;beamSize&#39;].shape != (6, 6):</span>
-    <span class="c1">#         raise ValueError(&#39;6x6 sigma matrix has to be used!&#39;)</span>
-    <span class="c1">#     apEl = []</span>
-    <span class="c1">#     for ord in range(len(SC[&#39;RING&#39;])):</span>
-    <span class="c1">#         if &#39;EApertures&#39; in SC[&#39;RING&#39;][ord] and &#39;RApertures&#39; in SC[&#39;RING&#39;][ord]:</span>
-    <span class="c1">#             print(&#39;Lattice element #%d has both EAperture and RAperture&#39; % ord)</span>
-    <span class="c1">#         if &#39;EApertures&#39; in SC[&#39;RING&#39;][ord] or &#39;RApertures&#39; in SC[&#39;RING&#39;][ord]:</span>
-    <span class="c1">#             apEl.append(ord)</span>
-    <span class="c1">#     if len(apEl) == 0:</span>
-    <span class="c1">#         print(&#39;No apertures found.&#39;)</span>
-    <span class="c1">#     else:</span>
-    <span class="c1">#         print(&#39;Apertures defined in %d out of %d elements.&#39; % (len(apEl), len(SC[&#39;RING&#39;])))</span>
+        <span class="c1"># BPMs</span>
+        <span class="k">if</span> <span class="n">n_bpms</span> <span class="o">:=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ORD</span><span class="o">.</span><span class="n">BPM</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;No BPMs registered. Use &#39;&#39;register_bpms&#39;&#39;.&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">n_bpms</span><span class="si">:</span><span class="s1">d</span><span class="si">}</span><span class="s1"> BPMs registered.&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ORD</span><span class="o">.</span><span class="n">BPM</span><span class="p">))</span> <span class="o">!=</span> <span class="n">n_bpms</span><span class="p">:</span>
+                <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;BPMs not uniquely defined.&#39;</span><span class="p">)</span>
+        <span class="c1"># Supports</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ORD</span><span class="o">.</span><span class="n">Girder</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ORD</span><span class="o">.</span><span class="n">Plinth</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ORD</span><span class="o">.</span><span class="n">Section</span><span class="p">)):</span>
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Girders must be registered for other support structure misalingments to work.&#39;</span><span class="p">)</span>
+        <span class="c1"># Corrector magnets</span>
+        <span class="k">if</span> <span class="n">n_hcms</span> <span class="o">:=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ORD</span><span class="o">.</span><span class="n">HCM</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;No horizontal CMs registered. Use &#39;&#39;register_magnets&#39;&#39;.&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">n_hcms</span><span class="si">:</span><span class="s1">d</span><span class="si">}</span><span class="s1"> HCMs registered.&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ORD</span><span class="o">.</span><span class="n">HCM</span><span class="p">))</span> <span class="o">!=</span> <span class="n">n_hcms</span><span class="p">:</span>
+                <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Horizontal CMs not uniquely defined.&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">n_vcms</span> <span class="o">:=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ORD</span><span class="o">.</span><span class="n">VCM</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;No vertical CMs registered. Use &#39;&#39;register_magnets&#39;&#39;.&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">n_vcms</span><span class="si">:</span><span class="s1">d</span><span class="si">}</span><span class="s1"> VCMs registered.&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ORD</span><span class="o">.</span><span class="n">VCM</span><span class="p">))</span> <span class="o">!=</span> <span class="n">n_vcms</span><span class="p">:</span>
+                <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Vertical CMs not uniquely defined.&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="nb">ord</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ORD</span><span class="o">.</span><span class="n">HCM</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="nb">ord</span><span class="p">][</span><span class="s1">&#39;CMlimit&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;HCM limit is zero (Magnet ord: </span><span class="si">{</span><span class="nb">ord</span><span class="si">:</span><span class="s1">d</span><span class="si">}</span><span class="s1">). Sure about that?&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="nb">ord</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ORD</span><span class="o">.</span><span class="n">VCM</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="nb">ord</span><span class="p">][</span><span class="s1">&#39;CMlimit&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;VCM limit is zero (Magnet ord: </span><span class="si">{</span><span class="nb">ord</span><span class="si">:</span><span class="s1">d</span><span class="si">}</span><span class="s1">). Sure about that?&#39;</span><span class="p">)</span>
+        <span class="c1"># if &#39;Magnet&#39; not in SC[&#39;ORD&#39;]:</span>
+        <span class="c1">#     LOGGER.warning(&#39;No magnets are registered. Use &#39;&#39;SCregisterMagnets&#39;&#39;.&#39;)</span>
+        <span class="c1"># else:</span>
+        <span class="c1">#     for ord in SC[&#39;ORD&#39;][&#39;Magnet&#39;]:</span>
+        <span class="c1">#         if len(SC[&#39;RING&#39;][ord][&#39;PolynomB&#39;]) != len(SC[&#39;RING&#39;][ord][&#39;PolynomA&#39;]):</span>
+        <span class="c1">#             raise ValueError(&#39;Length of PolynomB and PolynomA are not equal (Magnet ord: %d)&#39; % ord)</span>
+        <span class="c1">#         elif len(SC[&#39;RING&#39;][ord][&#39;SetPointB&#39;]) != len(SC[&#39;RING&#39;][ord][&#39;CalErrorB&#39;]):</span>
+        <span class="c1">#             LOGGER.warning(&#39;Length of SetPointB and CalErrorB are not equal (Magnet ord: %d)&#39; % ord)</span>
+        <span class="c1">#         elif len(SC[&#39;RING&#39;][ord][&#39;SetPointA&#39;]) != len(SC[&#39;RING&#39;][ord][&#39;CalErrorA&#39;]):</span>
+        <span class="c1">#             LOGGER.warning(&#39;Length of SetPointA and CalErrorA are not equal (Magnet ord: %d)&#39; % ord)</span>
+        <span class="c1">#         if &#39;PolynomBOffset&#39; in SC[&#39;RING&#39;][ord]:</span>
+        <span class="c1">#             if len(SC[&#39;RING&#39;][ord][&#39;PolynomBOffset&#39;]) != len(SC[&#39;RING&#39;][ord][&#39;PolynomAOffset&#39;]):</span>
+        <span class="c1">#                 raise ValueError(</span>
+        <span class="c1">#                     &#39;Length of PolynomBOffset and PolynomAOffset are not equal (Magnet ord: %d)&#39; % ord)</span>
+        <span class="c1">#         if &#39;CombinedFunction&#39; in SC[&#39;RING&#39;][ord] and SC[&#39;RING&#39;][ord][&#39;CombinedFunction&#39;] == 1:</span>
+        <span class="c1">#             if &#39;BendingAngle&#39; not in SC[&#39;RING&#39;][ord]:</span>
+        <span class="c1">#                 raise ValueError(&#39;Combined function magnet (ord: %d) requires field &#39;&#39;BendingAngle&#39;&#39;.&#39; % ord)</span>
+        <span class="c1">#             if SC[&#39;RING&#39;][ord][&#39;NomPolynomB&#39;][1] == 0 or SC[&#39;RING&#39;][ord][&#39;BendingAngle&#39;] == 0:</span>
+        <span class="c1">#                 LOGGER.warning(</span>
+        <span class="c1">#                     &#39;Combined function magnet (ord: %d) has zero bending angle or design quadrupole component.&#39; % ord)</span>
+        <span class="c1">#         if &#39;Mag&#39; in SC[&#39;SIG&#39;] and len(SC[&#39;SIG&#39;][&#39;Mag&#39;][ord]) != 0:</span>
+        <span class="c1">#             for field in SC[&#39;SIG&#39;][&#39;Mag&#39;][ord]:</span>
+        <span class="c1">#                 if field not in SC[&#39;RING&#39;][ord]:</span>
+        <span class="c1">#                     LOGGER.warning(&#39;Field &#39;&#39;%s&#39;&#39; in SC.SIG.Mag doesn&#39;&#39;t match lattice element (Magnet ord: %d)&#39; % (</span>
+        <span class="c1">#                     field, ord))</span>
+        <span class="c1">#                 if field == &#39;MagnetOffset&#39;:</span>
+        <span class="c1">#                     if isinstance(SC[&#39;SIG&#39;][&#39;Mag&#39;][ord][field], list):</span>
+        <span class="c1">#                         off = SC[&#39;SIG&#39;][&#39;Mag&#39;][ord][field][0]</span>
+        <span class="c1">#                     else:</span>
+        <span class="c1">#                         off = SC[&#39;SIG&#39;][&#39;Mag&#39;][ord][field]</span>
+        <span class="c1">#                     if len(off) != 3:</span>
+        <span class="c1">#                         LOGGER.warning(f&#39;SC.SIG.Magnet[{ord:d}].MagnetOffset should be a [1x3] (dx,dy,dz) array.&#39;)</span>
+        <span class="c1">#         if &#39;MasterOf&#39; in SC[&#39;RING&#39;][ord]:</span>
+        <span class="c1">#             masterFields = SC[&#39;RING&#39;][ord].keys()</span>
+        <span class="c1">#             for cOrd in SC[&#39;RING&#39;][ord][&#39;MasterOf&#39;]:</span>
+        <span class="c1">#                 for field in SC[&#39;RING&#39;][cOrd]:</span>
+        <span class="c1">#                     if field not in masterFields:</span>
+        <span class="c1">#                         raise ValueError(</span>
+        <span class="c1">#                             &#39;Child magnet (ord: %d) has different field &#39;&#39;%s&#39;&#39; than master magnet (ord: %d).&#39; % (</span>
+        <span class="c1">#                             cOrd, field, ord))</span>
+        <span class="c1"># if &#39;Cavity&#39; not in SC[&#39;ORD&#39;]:</span>
+        <span class="c1">#     LOGGER.warning(&#39;No cavity registered. Use &#39;&#39;SCregisterCAVs&#39;&#39;.&#39;)</span>
+        <span class="c1"># else:</span>
+        <span class="c1">#     if len(SC[&#39;ORD&#39;][&#39;Cavity&#39;]) == 0:</span>
+        <span class="c1">#         LOGGER.warning(&#39;No cavity registered. Use &#39;&#39;SCregisterBPMs&#39;&#39;.&#39;)</span>
+        <span class="c1">#     else:</span>
+        <span class="c1">#         LOGGER.warning(f&#39;{len(SC[&quot;ORD&quot;][&quot;Cavity&quot;]):d} cavity/cavities registered.&#39;)</span>
+        <span class="c1">#     if len(np.unique(SC[&#39;ORD&#39;][&#39;Cavity&#39;])) != len(SC[&#39;ORD&#39;][&#39;Cavity&#39;]):</span>
+        <span class="c1">#         LOGGER.warning(&#39;Cavities not uniquely defined.&#39;)</span>
+        <span class="c1">#     if &#39;RF&#39; in SC[&#39;SIG&#39;]:</span>
+        <span class="c1">#         for ord in SC[&#39;ORD&#39;][&#39;Cavity&#39;]:</span>
+        <span class="c1">#             for field in SC[&#39;SIG&#39;][&#39;RF&#39;][ord]:</span>
+        <span class="c1">#                 if field not in SC[&#39;RING&#39;][ord]:</span>
+        <span class="c1">#                     LOGGER.warning(&#39;Field in SC.SIG.RF doesn&#39;&#39;t match lattice element (Cavity ord: %d)&#39; % ord)</span>
+        <span class="c1"># if SC[&#39;INJ&#39;][&#39;beamSize&#39;].shape != (6, 6):</span>
+        <span class="c1">#     raise ValueError(&#39;6x6 sigma matrix has to be used!&#39;)</span>
+        <span class="c1"># apEl = []</span>
+        <span class="c1"># for ord in range(len(SC[&#39;RING&#39;])):</span>
+        <span class="c1">#     if &#39;EApertures&#39; in SC[&#39;RING&#39;][ord] and &#39;RApertures&#39; in SC[&#39;RING&#39;][ord]:</span>
+        <span class="c1">#         LOGGER.warning(f&#39;Lattice element #{ord:d} has both EAperture and RAperture&#39;)</span>
+        <span class="c1">#     if &#39;EApertures&#39; in SC[&#39;RING&#39;][ord] or &#39;RApertures&#39; in SC[&#39;RING&#39;][ord]:</span>
+        <span class="c1">#         apEl.append(ord)</span>
+        <span class="c1"># if len(apEl) == 0:</span>
+        <span class="c1">#     LOGGER.warning(&#39;No apertures found.&#39;)</span>
+        <span class="c1"># else:</span>
+        <span class="c1">#     LOGGER.info(f&#39;Apertures defined in {len(apEl):d} out of {len(SC[&quot;RING&quot;]):d} elements.&#39;)</span>
 
     <span class="k">def</span> <span class="nf">_optional_magnet_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ind</span><span class="p">,</span> <span class="n">MAGords</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">if</span> <span class="s1">&#39;CF&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>

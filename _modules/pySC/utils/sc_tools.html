@@ -108,7 +108,9 @@
 <span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">ndarray</span>
 
 <span class="kn">from</span> <span class="nn">pySC.utils.at_wrapper</span> <span class="kn">import</span> <span class="n">findspos</span>
+<span class="kn">from</span> <span class="nn">pySC.utils</span> <span class="kn">import</span> <span class="n">logging_tools</span>
 
+<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging_tools</span><span class="o">.</span><span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 <div class="viewcode-block" id="SCrandnc"><a class="viewcode-back" href="../../../modules/utils.html#pySC.utils.sc_tools.SCrandnc">[docs]</a><span class="k">def</span> <span class="nf">SCrandnc</span><span class="p">(</span><span class="n">cut_off</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n">shape</span><span class="p">:</span> <span class="nb">tuple</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="p">))</span> <span class="o">-&gt;</span> <span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -135,7 +137,7 @@
     <span class="k">return</span> <span class="n">out</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">out_shape</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="SCgetOrds"><a class="viewcode-back" href="../../../modules/utils.html#pySC.utils.sc_tools.SCgetOrds">[docs]</a><span class="k">def</span> <span class="nf">SCgetOrds</span><span class="p">(</span><span class="n">ring</span><span class="p">:</span> <span class="n">Lattice</span><span class="p">,</span> <span class="n">regex</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ndarray</span><span class="p">:</span>
+<div class="viewcode-block" id="SCgetOrds"><a class="viewcode-back" href="../../../modules/utils.html#pySC.utils.sc_tools.SCgetOrds">[docs]</a><span class="k">def</span> <span class="nf">SCgetOrds</span><span class="p">(</span><span class="n">ring</span><span class="p">:</span> <span class="n">Lattice</span><span class="p">,</span> <span class="n">regex</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Returns the indices of the elements in the ring whose names match the regex.</span>
 
@@ -145,23 +147,16 @@
 <span class="sd">        The ring to search.</span>
 <span class="sd">    regex : str</span>
 <span class="sd">        The regular expression to match.</span>
-<span class="sd">    verbose : bool, optional</span>
-<span class="sd">        If True, prints the names of matched elements.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    ndarray</span>
 <span class="sd">        The indices of the matched elements.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">_print_elem_get_index</span><span class="p">(</span><span class="n">ind</span><span class="p">,</span> <span class="n">el</span><span class="p">)</span> <span class="k">for</span> <span class="n">ind</span><span class="p">,</span> <span class="n">el</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ring</span><span class="p">)</span> <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">regex</span><span class="p">,</span> <span class="n">el</span><span class="o">.</span><span class="n">FamName</span><span class="p">)],</span>
-                        <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">ind</span> <span class="k">for</span> <span class="n">ind</span><span class="p">,</span> <span class="n">el</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ring</span><span class="p">)</span> <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">regex</span><span class="p">,</span> <span class="n">el</span><span class="o">.</span><span class="n">FamName</span><span class="p">)],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span></div>
-
-
-<span class="k">def</span> <span class="nf">_print_elem_get_index</span><span class="p">(</span><span class="n">ind</span><span class="p">,</span> <span class="n">el</span><span class="p">):</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Matched: </span><span class="si">{</span><span class="n">el</span><span class="o">.</span><span class="n">FamName</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">ind</span>
+    <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">ind</span> <span class="k">for</span> <span class="n">ind</span><span class="p">,</span> <span class="n">el</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ring</span><span class="p">)</span> <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">regex</span><span class="p">,</span> <span class="n">el</span><span class="o">.</span><span class="n">FamName</span><span class="p">)],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">:</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Matched: </span><span class="si">{</span><span class="n">ring</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span><span class="o">.</span><span class="n">FamName</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">indices</span></div>
 
 
 <div class="viewcode-block" id="SCgetPinv"><a class="viewcode-back" href="../../../modules/utils.html#pySC.utils.sc_tools.SCgetPinv">[docs]</a><span class="k">def</span> <span class="nf">SCgetPinv</span><span class="p">(</span><span class="n">matrix</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span> <span class="n">num_removed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">damping</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">plot</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ndarray</span><span class="p">:</span>
@@ -293,16 +288,16 @@
     <span class="n">tab</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">())</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
     <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tab</span><span class="p">)</span> <span class="o">%</span> <span class="mi">3</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Incorrect table size.&#39;</span><span class="p">)</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Incorrect table size.&#39;</span><span class="p">)</span>
         <span class="k">return</span>
     <span class="n">AB</span> <span class="o">=</span> <span class="n">tab</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">))[:,</span> <span class="mi">1</span><span class="p">:]</span>
     <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">AB</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">idx</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Nominal order could not be (uniquely) determined. Continuing with idx=1.&#39;</span><span class="p">)</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Nominal order could not be (uniquely) determined. Continuing with idx=1.&#39;</span><span class="p">)</span>
         <span class="n">idx</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">order</span><span class="p">,</span> <span class="nb">type</span> <span class="o">=</span> <span class="n">idx</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">idx</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
     <span class="k">if</span> <span class="nb">type</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Ill-defined magnet type.&#39;</span><span class="p">)</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Ill-defined magnet type.&#39;</span><span class="p">)</span>
         <span class="k">return</span>
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">AB</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="n">order</span><span class="p">,</span> <span class="nb">type</span>  <span class="c1"># swapping A and B</span>
 
