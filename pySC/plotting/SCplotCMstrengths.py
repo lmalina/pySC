@@ -7,9 +7,9 @@ def SCplotCMstrengths(SC):
     f, ax = plt.subplots(nrows=2, num=86)
     CMs = []
     CMval = [[], []]
-
+    s_pos = findspos(SC.RING)
     for nDim in range(2):
-        CMs.append(findspos(SC.RING, SC.ORD.CM[nDim]))
+        CMs.append(s_pos[SC.ORD.CM[nDim]])
         for ord in SC.ORD.CM[nDim]:
             if SC.RING[ord].PassMethod == 'CorrectorPass':
                 CMval[nDim].append(1E6 * SC.RING[ord].KickAngle[nDim])

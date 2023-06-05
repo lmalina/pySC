@@ -85,7 +85,7 @@ def SCmomentumAperture(RING, REFPTS, inibounds, nturns=1000, accuracy=1e-4, step
         LOGGER.debug(f'ord: {ord}; Found: {local_bounds}')
     dbounds = np.array([dboundHI, dboundLO]).T
     if plot:
-        spos = findspos(RING, REFPTS)
+        spos = findspos(RING)[REFPTS]
         plt.figure(81222)
         plt.clf()
         plt.plot(spos, dboundHI, 'kx-')

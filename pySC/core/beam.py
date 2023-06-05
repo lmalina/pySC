@@ -66,7 +66,7 @@ def SCgetBeamTransmission(SC: SimulatedComissioning, nParticles: int = None, nTu
         ax.set_xlabel('Number of turns')
         ax.set_ylabel('EDF of lost count')
         fig.show()
-    LOGGER.debug(f'{max_turns} turns and {100 * (1 - fraction_lost[-1]):.0f}% transmission.')
+    LOGGER.info(f'{max_turns} turns and {100 * (1 - fraction_lost[-1]):.0f}% transmission.')
     return int(max_turns), fraction_lost
 
 
@@ -106,7 +106,7 @@ def _plot_bpm_reading(SC, B, T):  # T is 5D matrix
     fig, ax = plt.subplots(num=1, nrows=2, ncols=1, figsize=(8, 6), dpi=100, facecolor="w")
     ylabelStr = [r'$\Delta x$ [mm]', r'$\Delta y$ [mm]']
     legStr = ['Particle trajectories', 'BPM reading', 'Aperture']
-    sPos = findspos(SC.RING, range(len(SC.RING)))
+    sPos = findspos(SC.RING)
     sMax = sPos[-1]
     for nDim in range(2):
         x = np.ravel(np.arange(SC.INJ.nTurns)[:, np.newaxis] * sMax + sPos)
