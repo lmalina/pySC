@@ -66,7 +66,7 @@ def SCfitInjectionZ(SC, mode, nDims=np.array([0, 1]), nBPMs=np.array([0, 1, 2]),
 
 
 def merritFunction(SC, Bref, ordsUsed, x):
-    Ta = atpass(SC.IDEALRING, [x, 0, 0], 1, 1, ordsUsed)
+    Ta = atpass(SC.IDEALRING, [x, 0, 0], 1, ordsUsed)
     T = Ta[[0, 2], :]
     out = np.sqrt(np.mean((Bref[:] - T[:]) ** 2))
     return out

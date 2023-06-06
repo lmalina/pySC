@@ -17,33 +17,37 @@ Function ``get_value_refpts`` indexes elements as usual.
 import at
 from copy import deepcopy
 
-import numpy as np
 from numpy import ndarray
 from at import Lattice
 
 
-def atpass(ring, initial_pos, nturns, refpts, keep_lattice=False):
-    return at.lattice_pass(ring.copy(), initial_pos.copy(), nturns, refpts, keep_lattice=keep_lattice)
-#lattice, r_in, nturns=1, refpts=None, keep_lattice=False,
-#refpts
-# 0 means entrance of the first element, len(line) means end of the last element ,
-# i.e. 6D positions in the start of elements
+def atpass(ring: Lattice, init_pos: ndarray, nturns: int, refpts: ndarray, keep_lattice: bool = False):
+    return at.lattice_pass(lattice=ring.copy(), r_in=init_pos.copy(), nturns=nturns, refpts=refpts,
+                           keep_lattice=keep_lattice)
+
 
 def atgetfieldvalues(ring: Lattice, refpts: ndarray, attrname: str, index: int = None):
-    return at.get_value_refpts(ring, refpts, attrname, index)  # refpts goes by element index, i.e. starts with 0
+    return at.get_value_refpts(ring, refpts, attrname, index)
 
 
 # TODO straight in pyAT there are switches between orbit4 and orbit6 (maybe usefull)
-def findorbit6(*args, **kwargs):
-    return at.find_orbit6(*deepcopy(args), **deepcopy(kwargs))
-# i.e. 6D positions in the start of elements
+def findorbit6(ring: Lattice, refpts: ndarray = None, keep_lattice: bool = False, **kwargs):
+    """
+    Returns:
+        orbit0:         (6,) closed orbit vector at the entrance of the
+                        1-st element (x,px,y,py,dp,0)
+        orbit:          (Nrefs, 6) closed orbit vector at each location
+                        specified in ``refpts``
 
-def findorbit4(*args, **kwargs):
-    return at.find_orbit4(*deepcopy(args), **deepcopy(kwargs))
-# i.e. 6D positions in the start of elements
+    """
+    return at.find_orbit6(ring=ring.copy(), refpts=refpts, keep_lattice=keep_lattice, **kwargs)
 
 
-def findspos(ring):
+def findorbit4(ring: Lattice, dp: float = 0.0, refpts: ndarray = None,  keep_lattice: bool = False, **kwargs):
+    return at.find_orbit4(ring=ring.copy(), dp=dp, refpts=refpts, keep_lattice=keep_lattice, **kwargs)
+
+
+def findspos(ring: Lattice):
     return at.get_s_pos(ring=ring)
 
 
