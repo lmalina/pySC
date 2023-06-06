@@ -6,7 +6,7 @@ This module contains wrappers to all the ``pyAT`` functions, used in ``pySC``,
 which are not member functions of used ``pyAT`` objects.
 This is due to observed side effects, such as modification of input parameters.
 
-Tracking fuctions ``latice_pass``, ``find_orbit``,  ``find_orbit4``, ``find_orbit6``
+Tracking fuctions ``latice_pass``, ``find_orbit4``, ``find_orbit6``
 index the result the same way as ``get_s_pos``,
 i.e. 0 means entrance of the first element, len(elements) means end of the last element.
 Function ``get_value_refpts`` indexes elements as usual.
@@ -30,16 +30,7 @@ def atgetfieldvalues(ring: Lattice, refpts: ndarray, attrname: str, index: int =
     return at.get_value_refpts(ring, refpts, attrname, index)
 
 
-# TODO straight in pyAT there are switches between orbit4 and orbit6 (maybe usefull)
 def findorbit6(ring: Lattice, refpts: ndarray = None, keep_lattice: bool = False, **kwargs):
-    """
-    Returns:
-        orbit0:         (6,) closed orbit vector at the entrance of the
-                        1-st element (x,px,y,py,dp,0)
-        orbit:          (Nrefs, 6) closed orbit vector at each location
-                        specified in ``refpts``
-
-    """
     return at.find_orbit6(ring=ring.copy(), refpts=refpts, keep_lattice=keep_lattice, **kwargs)
 
 
