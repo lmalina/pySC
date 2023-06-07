@@ -58,7 +58,7 @@ def SCBBA(SC, bpm_ords, mag_ords, **kwargs):
             if not np.isnan(OffsetChange):
                 SC.RING[bpm_ords[nDim, jBPM]].Offset[nDim] = SC.RING[bpm_ords[nDim, jBPM]].Offset[nDim] + OffsetChange
         if par.plotResults:
-            plotBBAResults(SC, init_offset_errors, error_flags, jBPM, bpm_ords, mag_ords)
+            plot_bba_results(SC, init_offset_errors, error_flags, jBPM, bpm_ords, mag_ords)
     if par.fakeMeasForFailures:
         SC = _fake_measurement(SC, bpm_ords, mag_ords, error_flags)
     return SC, error_flags
@@ -302,7 +302,7 @@ def _plot_bba_step(SC, ax, BPMind, nDim):
     return ax
 
 
-def plotBBAResults(SC, initOffsetErrors, errorFlags, jBPM, BPMords, magOrds):
+def plot_bba_results(SC, initOffsetErrors, errorFlags, jBPM, BPMords, magOrds):
     plt.rcParams.update({'font.size': 18})
     fom0 = initOffsetErrors
     fom = _get_bpm_offset_from_mag(SC, BPMords, magOrds)
@@ -329,17 +329,16 @@ def plotBBAResults(SC, initOffsetErrors, errorFlags, jBPM, BPMords, magOrds):
     ax[0].set_ylabel('Number of counts')
     ax[0].set(box="on")
 
-    plane_labels = ("Horizontal", "Vertical")
+    mask_errors = errorFlags == 0
+    plabels = ("Horizontal", "Vertical")
     for nDim in range(BPMords.shape[0]):
         x = np.where(np.in1d(SC.ORD.BPM, BPMords[nDim, :]))
-
-        if any(~np.isnan(fom[nDim, errorFlags[nDim, :] == 0])):
-            ax[1].plot(x[errorFlags[nDim, :] == 0], 1E6 * np.abs(fom[nDim, errorFlags[nDim, :] == 0]),
-                       label=plane_labels[nDim], marker='O', linewidth=2, color=colors[nDim])
-        if any(~np.isnan(fom[nDim, errorFlags[nDim, :] > 0])):
-            ax[1].plot(x[errorFlags[nDim, :] > 0], 1E6 * np.abs(fom[nDim, errorFlags[nDim, :] > 0]),
-                       label=f"{plane_labels[nDim]} failed", marker='X', linewidth=2, color=colors[nDim])
-        ax[2].plot(x, 1E6 * (fom0[nDim, :] - fom[nDim, :]), label=plane_labels[nDim], marker='d', linewidth=2)
+        mask = mask_errors[nDim, :]
+        if not np.all(np.isnan(fom[nDim, mask])):
+            ax[1].plot(x[mask], 1E6 * np.abs(fom[nDim, mask]), label=plabels[nDim], marker='O', linewidth=2, color=colors[nDim])
+        if not np.all(np.isnan(fom[nDim, ~mask])):
+            ax[1].plot(x[~mask], 1E6 * np.abs(fom[nDim, ~mask]), label=f"{plabels[nDim]} failed", marker='X', linewidth=2, color=colors[nDim])
+        ax[2].plot(x, 1E6 * (fom0[nDim, :] - fom[nDim, :]), label=plabels[nDim], marker='d', linewidth=2)
 
     ax[1].set_ylabel(r'Final offset [$\mu$m]')
     ax[1].set_xlabel('Index of BPM')
