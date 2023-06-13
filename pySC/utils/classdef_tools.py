@@ -31,7 +31,8 @@ def add_padded(v1, v2):
     return vsum
 
 
-def s_interpolation(off, s, C, s1, ord1, f1, s2, ord2, f2):
+def s_interpolation(off, s, ord1, f1, ord2, f2):
+    s1, s2, C = s[ord1], s[ord2], s[-1]
     for n in range(len(s1)):
         if s1[n] == s2[n]:  # Sampling points have same s-position
             if f1[n] != f2[n]:

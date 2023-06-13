@@ -1,6 +1,6 @@
 import numpy as np
 
-from pySC.utils.at_wrapper import atlinopt, atmatchchromdelta
+from pySC.utils.at_wrapper import atlinopt
 from pySC.core.classes import DotDict
 from pySC.correction.orbit_trajectory import SCfeedbackRun
 from pySC.lattice_properties.response_model import SCgetModelRM

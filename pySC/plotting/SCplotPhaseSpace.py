@@ -33,7 +33,7 @@ def SCplotPhaseSpace(SC, ord=np.zeros(1), customBunch=[], nParticles=None, nTurn
         _, CO = findorbit6(SC.RING, ord)
         if np.isnan(CO[0, 0]):
             startPointGuess = np.nanmean(T, axis=(1, 2, 3))
-            _, CO = findorbit6(SC.RING, ord, startPointGuess)
+            _, CO = findorbit6(SC.RING, ord, guess=startPointGuess)
             if np.isnan(CO[0, 0]):
                 CO = np.full(6, np.nan)
     else:

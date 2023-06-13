@@ -25,8 +25,8 @@ def SCfeedbackFirstTurn(SC, Mplus, reference=None, CMords=None, BPMords=None, ma
         dphi = np.dot(Mplus, (measurement - reference))
         lastCMh = _get_last_cm(transmission_history[-1]-1, 1, BPMords, CMords[0])[1][0]
         lastCMv = _get_last_cm(transmission_history[-1]-1, 1, BPMords, CMords[1])[1][0]         
-        SC, _ = SCsetCMs2SetPoints(SC, CMords[0][:lastCMh+1], -dphi[0][:lastCMh+1], skewness=False, method='add')
-        SC, _ = SCsetCMs2SetPoints(SC, CMords[1][:lastCMv+1], -dphi[1][:lastCMv+1], skewness=True, method='add')
+        SC, _ = SCsetCMs2SetPoints(SC, CMords[0][:lastCMh+1], -dphi[:lastCMh+1], skewness=False, method='add')
+        SC, _ = SCsetCMs2SetPoints(SC, CMords[1][:lastCMv+1], -dphi[len(CMords[0]):len(CMords[0]) + lastCMv+1], skewness=True, method='add')
         bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(
             SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history)  # Inject...
  

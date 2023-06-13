@@ -97,7 +97,7 @@ def SCfeedbackStitch(SC, Mplus, /, *, R0=None, CMords=None, BPMords=None, nBPMs=
 
 def SCfitInjectionZ(SC, mode, /, *, nDims=np.array([0, 1]), nBPMs=np.array([0, 1, 2]), nShots=None, verbose=0,
                     plotFlag=False):
-    return fit_injection(SC, mode, nDims=nDims, nBPMs=nBPMs, nShots=nShots, plotFlag=plotFlag)
+    return fit_injection(SC, mode, nDims=nDims, nBPMs=nBPMs, plotFlag=plotFlag)
 
 
 def SCgenBunches(SC: SimulatedComissioning) -> ndarray:

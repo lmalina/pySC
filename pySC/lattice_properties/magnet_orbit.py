@@ -18,7 +18,7 @@ def SCgetCOD(SC, ords=None, plot=False):
         magOffset[:, i] = SC.RING[ord].T2([1, 3])
     COD = T[[1, 3], :] - magOffset
     if plot:
-        sPos = findspos(SC.RING, ords)
+        sPos = findspos(SC.RING)[ords]
         ylabelStr = ['$\Delta x$ [mm]', '$\Delta y$ [mm]']
         plt.figure(784)
         plt.clf()

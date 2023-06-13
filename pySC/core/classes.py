@@ -241,6 +241,7 @@ class SimulatedComissioning(DotDict):
             self.update_cavities()
 
     def _apply_support_alignment_error(self, nsigmas):
+        s_pos = findspos(self.RING)
         for support_type in SUPPORT_TYPES:
             for ordPair in self.ORD[support_type].T:
                 if ordPair[0] not in self.SIG.Support.keys():
@@ -253,11 +254,7 @@ class SimulatedComissioning(DotDict):
                             randn_cutoff(value, nsigmas) if field in self.SIG.Support[ordPair[1]].keys()
                             else getattr(self.RING[ordPair[0]], field))
 
-                struct_length = np.diff(findspos(self.RING, ordPair)) if np.diff(ordPair) > 0 else -np.diff(
-                    findspos(self.RING, ordPair[::-1]))
-                if ordPair[0] > ordPair[1]:
-                    struct_length = findspos(self.RING, len(self.RING))[0] - struct_length
-
+                struct_length = np.remainder(np.diff(s_pos[ordPair]), s_pos[-1])
                 rolls0 = copy.deepcopy(getattr(self.RING[ordPair[0]], f"{support_type}Roll"))  # Twisted supports are not considered
                 offsets0 = copy.deepcopy(getattr(self.RING[ordPair[0]], f"{support_type}Offset"))
                 offsets1 = copy.deepcopy(getattr(self.RING[ordPair[1]], f"{support_type}Offset"))
@@ -299,10 +296,10 @@ class SimulatedComissioning(DotDict):
                     self._update_magnets(ind, child_ind)
 
     def update_supports(self, offset_bpms: bool = True, offset_magnets: bool = True):
+        s_pos = findspos(self.RING)
         if offset_magnets:
             if len(self.ORD.Magnet):
-                s = findspos(self.RING, self.ORD.Magnet)
-                offsets, rolls = self.support_offset_and_roll(s)
+                offsets, rolls = self.support_offset_and_roll(s_pos[self.ORD.Magnet])
                 for i, ind in enumerate(self.ORD.Magnet):
                     setattr(self.RING[ind], "SupportOffset", offsets[:, i])
                     setattr(self.RING[ind], "SupportRoll", rolls[:, i])
@@ -320,8 +317,7 @@ class SimulatedComissioning(DotDict):
                 LOGGER.warning('SC: No magnets have been registered!')
         if offset_bpms:
             if len(self.ORD.BPM):
-                s = findspos(self.RING, self.ORD.BPM)
-                offsets, rolls = self.support_offset_and_roll(s)
+                offsets, rolls = self.support_offset_and_roll(s_pos[self.ORD.BPM])
                 for i, ind in enumerate(self.ORD.BPM):
                     setattr(self.RING[ind], "SupportOffset", offsets[0:2, i])  # No longitudinal BPM offsets implemented
                     setattr(self.RING[ind], "SupportRoll",
@@ -330,33 +326,28 @@ class SimulatedComissioning(DotDict):
                 LOGGER.warning('SC: No BPMs have been registered!')
 
     def support_offset_and_roll(self, s_locations: ndarray) -> Tuple[ndarray, ndarray]:
-        lengths = np.array([self.RING[i].Length for i in range(len(self.RING))])
-        ring_length = np.sum(lengths)
-        s0 = np.cumsum(lengths)
-        sposMID = s0 - lengths / 2
-        off0 = np.zeros((3, len(s0)))
-        roll0 = np.zeros((3, len(s0)))
+        s_pos = findspos(self.RING)
+        ring_length = s_pos[-1]
+        off0 = np.zeros((3, len(s_pos)))
+        roll0 = np.zeros((3, len(s_pos)))
 
         for suport_type in SUPPORT_TYPES:  # Order has to be Section, Plinth, Girder
             if suport_type in self.ORD:
                 ord1 = self.ORD[suport_type][0, :]  # Beginning ordinates
                 ord2 = self.ORD[suport_type][1, :]  # End ordinates
-                s1 = sposMID[ord1]
-                s2 = sposMID[ord2]
                 tmpoff1 = np.zeros((3, len(ord1)))
                 tmpoff2 = np.zeros((3, len(ord2)))
                 for i in range(len(ord1)):
                     tmpoff1[:, i] = off0[:, ord1[i]] + getattr(self.RING[ord1[i]], f"{suport_type}Offset")
                     tmpoff2[:, i] = off0[:, ord2[i]] + getattr(self.RING[ord2[i]], f"{suport_type}Offset")
                 for i in range(3):
-                    off0[i, :] = s_interpolation(off0[i, :], s0, ring_length, s1, ord1, tmpoff1[i, :], s2, ord2,
-                                                tmpoff2[i, :])
+                    off0[i, :] = s_interpolation(off0[i, :], s_pos, ord1, tmpoff1[i, :], ord2, tmpoff2[i, :])
 
         for support_type in SUPPORT_TYPES:  # Order has to be Section, Plinth, Girder
             for ords in self.ORD[support_type].T:
                 roll_start0 = getattr(self.RING[ords[0]], f"{support_type}Roll")[0]
-                struct_length = s0[ords[1]] - s0[ords[0]]
-                mask = np.zeros(len(s0), dtype=bool)
+                struct_length = s_pos[ords[1]] - s_pos[ords[0]]
+                mask = np.zeros(len(s_pos), dtype=bool)
                 mask[ords[0]:ords[1]] = True
                 offset1 = off0[1, ords[1]] - off0[1, ords[0]]
                 offset2 = off0[0, ords[1]] - off0[0, ords[0]]
@@ -370,12 +361,12 @@ class SimulatedComissioning(DotDict):
                 roll0[1, mask] = offset1 / struct_length
                 roll0[2, mask] = offset2 / struct_length
 
-        if not np.array_equal(s_locations, s0):
-            b = np.unique(s0, return_index=True)[1]
+        if not np.array_equal(s_locations, s_pos):
+            b = np.unique(s_pos, return_index=True)[1]
             off, roll = np.empty((3, len(s_locations))), np.empty((3, len(s_locations)))
             for i in range(3):
-                off[i, :] = np.interp(s_locations, s0[b], off0[i, b])
-                roll[i, :] = np.interp(s_locations, s0[b], roll0[i, b])
+                off[i, :] = np.interp(s_locations, s_pos[b], off0[i, b])
+                roll[i, :] = np.interp(s_locations, s_pos[b], roll0[i, b])
             return off, roll
         return off0, roll0
 
