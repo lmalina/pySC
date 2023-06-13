@@ -16,7 +16,7 @@ LOGGER = logging_tools.get_logger(__name__)
 def SCgetBPMreading(SC, BPMords=None):
     #  lattice_pass output:            (6, N, R, T) coordinates of N particles at R reference points for T turns.
     #  findorbit second output value:  (R, 6) closed orbit vector at each specified location
-    refs = np.arange(len(SC.RING)) if SC.plot else SC.ORD.BPM[:]
+    refs = np.arange(len(SC.RING) + 1) if SC.plot else SC.ORD.BPM[:]
     n_refs = len(refs)
     if SC.plot:
         all_readings_5d = np.full((2, SC.INJ.nParticles, n_refs, SC.INJ.nTurns, SC.INJ.nShots), np.nan)
