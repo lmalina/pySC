@@ -21,7 +21,7 @@ def SCgetModelRM(SC, BPMords, CMords, trackMode='TBT', Z0=np.zeros(6), nTurns=1,
     nBPM = len(BPMords)
     nCM = len(CMords[0]) + len(CMords[1])
     RM = np.full((2 * nBPM * nTurns, nCM), np.nan)
-    Ta = trackmethod(ring, Z0,  nTurns, BPMords, keep_lattice=False)
+    Ta = trackmethod(ring, Z0,  nTurns, BPMords)
     if np.any(np.isnan(Ta)):
         raise ValueError('Initial trajectory/orbit is NaN. Aborting. ')
 
@@ -31,7 +31,7 @@ def SCgetModelRM(SC, BPMords, CMords, trackMode='TBT', Z0=np.zeros(6), nTurns=1,
             if ring[CMord].PassMethod == 'CorrectorPass':
                 KickNominal = ring[CMord].KickAngle[nDim]
                 ring[CMord].KickAngle[nDim] = KickNominal + dkick
-                TdB = trackmethod(ring, Z0, nTurns, BPMords, keep_lattice=False)
+                TdB = trackmethod(ring, Z0, nTurns, BPMords)
                 ring[CMord].KickAngle[nDim] = KickNominal
             else:
                 PolynomNominal = getattr(ring[CMord], f"Polynom{NUM_TO_AB[nDim]}")
@@ -39,7 +39,7 @@ def SCgetModelRM(SC, BPMords, CMords, trackMode='TBT', Z0=np.zeros(6), nTurns=1,
                 changed_polynom = copy.deepcopy(PolynomNominal[:])
                 changed_polynom[0] += (-1) ** (nDim+1) * delta
                 setattr(ring[CMord], f"Polynom{NUM_TO_AB[nDim]}", changed_polynom[:])
-                TdB = trackmethod(ring, Z0, nTurns, BPMords, keep_lattice=False)
+                TdB = trackmethod(ring, Z0, nTurns, BPMords)
                 setattr(ring[CMord], f"Polynom{NUM_TO_AB[nDim]}", PolynomNominal[:])
             dTdB = (TdB - Ta) / dkick
             RM[:, cnt] = np.concatenate((np.ravel(np.transpose(dTdB[0, :, :, :], axes=(2, 1, 0))),
@@ -48,8 +48,8 @@ def SCgetModelRM(SC, BPMords, CMords, trackMode='TBT', Z0=np.zeros(6), nTurns=1,
     return RM
 
 
-def orbpass(RING, Z0,  nTurns, REFPTS, keep_lattice):
-    return np.transpose(findorbit6(RING, REFPTS, keep_lattice=keep_lattice)[1])[[0,1,2,3], :].reshape(4, 1, len(REFPTS), 1)
+def orbpass(RING, Z0,  nTurns, REFPTS):
+    return np.transpose(findorbit6(RING, REFPTS)[1])[[0,1,2,3], :].reshape(4, 1, len(REFPTS), 1)
 
 
 def SCgetModelDispersion(SC, BPMords, CAVords, trackMode='ORB', Z0=np.zeros(6), nTurns=1, rfStep=1E3, useIdealRing=True):
@@ -62,13 +62,13 @@ def SCgetModelDispersion(SC, BPMords, CAVords, trackMode='ORB', Z0=np.zeros(6), 
     if trackMode == 'ORB':
         nTurns = 1
 
-    Ta = trackmethod(ring, Z0,  nTurns, BPMords, keep_lattice=False)
+    Ta = trackmethod(ring, Z0,  nTurns, BPMords)
     if np.any(np.isnan(Ta)):
         raise ValueError('Initial trajectory/orbit is NaN. Aborting. ')
 
     for ord in CAVords:  # Single point with all cavities with the same frequency shift
         ring[ord].Frequency += rfStep
-    TdB = trackmethod(ring, Z0,  nTurns, BPMords, keep_lattice=False)
+    TdB = trackmethod(ring, Z0,  nTurns, BPMords)
     dTdB = (TdB - Ta) / rfStep
     eta = np.concatenate((np.ravel(np.transpose(dTdB[0, :, :, :], axes=(2, 1, 0))),
                           np.ravel(np.transpose(dTdB[2, :, :, :], axes=(2, 1, 0)))))

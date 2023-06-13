@@ -1,34 +1,49 @@
+"""
+AT wrapper
+-------------
+
+This module contains wrappers to all the ``pyAT`` functions, used in ``pySC``,
+which are not member functions of used ``pyAT`` objects.
+This is due to observed side effects, such as modification of input parameters.
+
+Tracking fuctions ``latice_pass``, ``find_orbit4``, ``find_orbit6``
+index the result the same way as ``get_s_pos``,
+i.e. 0 means entrance of the first element, len(elements) means end of the last element.
+Function ``get_value_refpts`` indexes elements as usual.
+
+
+"""
+
 import at
 from copy import deepcopy
 
-
-def atpass(*args, **kwargs):
-    return at.lattice_pass(*deepcopy(args), **deepcopy(kwargs))
-
-
-def atgetfieldvalues(*args, **kwargs):
-    return at.get_value_refpts(*deepcopy(args), **deepcopy(kwargs))
+from numpy import ndarray
+from at import Lattice
 
 
-# TODO straight in pyAT there are switches between orbit4 and orbit6 (maybe usefull)
-def findorbit6(*args, **kwargs):
-    return at.find_orbit(*deepcopy(args), **deepcopy(kwargs))
+def atpass(ring: Lattice, init_pos: ndarray, nturns: int, refpts: ndarray, keep_lattice: bool = False):
+    return at.lattice_pass(lattice=ring.copy(), r_in=init_pos.copy(), nturns=nturns, refpts=refpts,
+                           keep_lattice=keep_lattice)
 
 
-def findorbit4(*args, **kwargs):
-    return at.find_orbit4(*deepcopy(args), **deepcopy(kwargs))
+def atgetfieldvalues(ring: Lattice, refpts: ndarray, attrname: str, index: int = None):
+    return at.get_value_refpts(ring, refpts, attrname, index)
 
 
-def findspos(*args, **kwargs):
-    return at.get_s_pos(*deepcopy(args), **deepcopy(kwargs))
+def findorbit6(ring: Lattice, refpts: ndarray = None, keep_lattice: bool = False, **kwargs):
+    return at.find_orbit6(ring=ring.copy(), refpts=refpts, keep_lattice=keep_lattice, **kwargs)
+
+
+def findorbit4(ring: Lattice, dp: float = 0.0, refpts: ndarray = None,  keep_lattice: bool = False, **kwargs):
+    return at.find_orbit4(ring=ring.copy(), dp=dp, refpts=refpts, keep_lattice=keep_lattice, **kwargs)
+
+
+def findspos(ring: Lattice):
+    return at.get_s_pos(ring=ring)
 
 
 def atlinopt(*args, **kwargs):
     return at.get_optics(*deepcopy(args), **deepcopy(kwargs))
-
-
-def atmatchchromdelta(*args, **kwargs):  # TODO maybe match
-    raise NotImplementedError
 
 
 def twissline(*args, **kwargs):  # TODO find single pass linopt

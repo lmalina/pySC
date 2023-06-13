@@ -29,7 +29,7 @@ def SCplotSupport(SC: SimulatedComissioning, fontSize: int = 8, xLim: Tuple[floa
     if fontSize:
         plt.rcParams.update({'font.size': fontSize})
     # Get s - positions along the lattice
-    s_pos = findspos(SC.RING, np.arange(len(SC.RING) + 1, dtype=int))
+    s_pos = findspos(SC.RING)
     circumference = s_pos[-1]
     if xLim is None:
         xLim = (0, circumference)

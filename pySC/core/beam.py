@@ -16,7 +16,7 @@ LOGGER = logging_tools.get_logger(__name__)
 def SCgetBPMreading(SC, BPMords=None):
     #  lattice_pass output:            (6, N, R, T) coordinates of N particles at R reference points for T turns.
     #  findorbit second output value:  (R, 6) closed orbit vector at each specified location
-    refs = np.arange(len(SC.RING)) if SC.plot else SC.ORD.BPM[:]
+    refs = np.arange(len(SC.RING) + 1) if SC.plot else SC.ORD.BPM[:]
     n_refs = len(refs)
     if SC.plot:
         all_readings_5d = np.full((2, SC.INJ.nParticles, n_refs, SC.INJ.nTurns, SC.INJ.nShots), np.nan)
@@ -66,7 +66,7 @@ def SCgetBeamTransmission(SC: SimulatedComissioning, nParticles: int = None, nTu
         ax.set_xlabel('Number of turns')
         ax.set_ylabel('EDF of lost count')
         fig.show()
-    LOGGER.debug(f'{max_turns} turns and {100 * (1 - fraction_lost[-1]):.0f}% transmission.')
+    LOGGER.info(f'{max_turns} turns and {100 * (1 - fraction_lost[-1]):.0f}% transmission.')
     return int(max_turns), fraction_lost
 
 
@@ -106,7 +106,7 @@ def _plot_bpm_reading(SC, B, T):  # T is 5D matrix
     fig, ax = plt.subplots(num=1, nrows=2, ncols=1, figsize=(8, 6), dpi=100, facecolor="w")
     ylabelStr = [r'$\Delta x$ [mm]', r'$\Delta y$ [mm]']
     legStr = ['Particle trajectories', 'BPM reading', 'Aperture']
-    sPos = findspos(SC.RING, range(len(SC.RING)))
+    sPos = findspos(SC.RING)
     sMax = sPos[-1]
     for nDim in range(2):
         x = np.ravel(np.arange(SC.INJ.nTurns)[:, np.newaxis] * sMax + sPos)
