@@ -2,6 +2,10 @@ Utils
 **************************
 
 
+.. automodule:: pySC.utils.at_wrapper
+    :members:
+
+
 .. automodule:: pySC.utils.classdef_tools
     :members:
 

@@ -70,6 +70,7 @@
 </ul>
 </li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Utils</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#at-wrapper">AT wrapper</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pySC.utils.sc_tools.SCgetOrds"><code class="docutils literal notranslate"><span class="pre">SCgetOrds()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pySC.utils.sc_tools.SCgetPinv"><code class="docutils literal notranslate"><span class="pre">SCgetPinv()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pySC.utils.sc_tools.SCrandnc"><code class="docutils literal notranslate"><span class="pre">SCrandnc()</span></code></a></li>
@@ -102,9 +103,19 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="module-pySC.utils.classdef_tools">
-<span id="utils"></span><h1>Utils<a class="headerlink" href="#module-pySC.utils.classdef_tools" title="Permalink to this heading"></a></h1>
-<span class="target" id="module-pySC.utils.sc_tools"></span><dl class="py function">
+  <section id="module-pySC.utils.at_wrapper">
+<span id="utils"></span><h1>Utils<a class="headerlink" href="#module-pySC.utils.at_wrapper" title="Permalink to this heading"></a></h1>
+<section id="at-wrapper">
+<h2>AT wrapper<a class="headerlink" href="#at-wrapper" title="Permalink to this heading"></a></h2>
+<p>This module contains wrappers to all the <code class="docutils literal notranslate"><span class="pre">pyAT</span></code> functions, used in <code class="docutils literal notranslate"><span class="pre">pySC</span></code>,
+which are not member functions of used <code class="docutils literal notranslate"><span class="pre">pyAT</span></code> objects.
+This is due to observed side effects, such as modification of input parameters.</p>
+<p>Tracking fuctions <code class="docutils literal notranslate"><span class="pre">latice_pass</span></code>, <code class="docutils literal notranslate"><span class="pre">find_orbit4</span></code>, <code class="docutils literal notranslate"><span class="pre">find_orbit6</span></code>
+index the result the same way as <code class="docutils literal notranslate"><span class="pre">get_s_pos</span></code>,
+i.e. 0 means entrance of the first element, len(elements) means end of the last element.
+Function <code class="docutils literal notranslate"><span class="pre">get_value_refpts</span></code> indexes elements as usual.</p>
+</section>
+<span class="target" id="module-pySC.utils.classdef_tools"></span><span class="target" id="module-pySC.utils.sc_tools"></span><dl class="py function">
 <dt class="sig sig-object py" id="pySC.utils.sc_tools.SCgetOrds">
 <span class="sig-prename descclassname"><span class="pre">pySC.utils.sc_tools.</span></span><span class="sig-name descname"><span class="pre">SCgetOrds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ring</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Lattice</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regex</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/pySC/utils/sc_tools.html#SCgetOrds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pySC.utils.sc_tools.SCgetOrds" title="Permalink to this definition"></a></dt>
 <dd><p>Returns the indices of the elements in the ring whose names match the regex.</p>
