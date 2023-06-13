@@ -308,6 +308,7 @@ def plot_bba_results(SC, initOffsetErrors, errorFlags, jBPM, BPMords, magOrds):
     fom = _get_bpm_offset_from_mag(SC, BPMords, magOrds)
     fom[:, jBPM + 1:] = np.nan
     if BPMords.shape[1] == 1:
+
         nSteps = 1
     else:
         nSteps = 1.1 * np.max(np.abs(fom0)) * np.linspace(-1, 1, np.floor(BPMords.shape[1] / 3))
