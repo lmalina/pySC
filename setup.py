@@ -18,7 +18,7 @@ with README.open("r") as docs:
 DEPENDENCIES = [
     "numpy>=1.22.0",
     "matplotlib>=3.5.0",
-    "accelerator-toolbox>=0.3.0"
+    "accelerator-toolbox>=0.4.0"
 
 ]
 
