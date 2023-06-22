@@ -59,12 +59,7 @@ def SCgetBeamTransmission(SC: SimulatedComissioning, nParticles: int = None, nTu
     max_turns = np.sum(fraction_lost < SC.INJ.beamLostAt)
     if do_plot:
         fig, ax = plt.subplots()
-        ax.plot(fraction_lost)
-        ax.plot([0, nTurns], [SC.INJ.beamLostAt, SC.INJ.beamLostAt], 'k:')
-        ax.set_xlim([0, nTurns])
-        ax.set_ylim([0, 1])
-        ax.set_xlabel('Number of turns')
-        ax.set_ylabel('EDF of lost count')
+        ax = plot_transmission(ax, fraction_lost, nTurns, SC.INJ.beamLostAt)
         fig.show()
     LOGGER.info(f'{max_turns} turns and {100 * (1 - fraction_lost[-1]):.0f}% transmission.')
     return int(max_turns), fraction_lost
@@ -79,6 +74,15 @@ def SCgenBunches(SC: SimulatedComissioning, nParticles=None) -> ndarray:
         Z += np.diag(np.sqrt(V)) @ L @ SCrandnc(3, (6, nParticles))
     return SC.INJ.postFun(Z)
 
+
+def plot_transmission(ax, fraction_lost, n_turns, beam_lost_at):
+    ax.plot(fraction_lost)
+    ax.plot([0, n_turns], [beam_lost_at, beam_lost_at], 'k:')
+    ax.set_xlim([0, n_turns])
+    ax.set_ylim([0, 1])
+    ax.set_xlabel('Number of turns')
+    ax.set_ylabel('CDF of lost count')
+    return ax
 
 def _real_bpm_reading(SC, track_mat):  # track_mat should be only x,y over all particles only at BPM positions
     nBpms, nTurns = track_mat.shape[2:]

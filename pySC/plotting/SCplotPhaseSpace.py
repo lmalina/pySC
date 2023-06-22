@@ -6,7 +6,7 @@ from pySC.core.beam import SCgenBunches
 SPEED_OF_LIGHT = 299792458
 
 
-def SCplotPhaseSpace(SC, ord=np.zeros(1), customBunch=[], nParticles=None, nTurns=None, plotCO=False):
+def SCplotPhaseSpace(SC, ord=np.zeros(1, dtype=int), customBunch=[], nParticles=None, nTurns=None, plotCO=False):
     if len(customBunch):
         Zin = customBunch[:]
         nParticles = Zin.shape[1]
