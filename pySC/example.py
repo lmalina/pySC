@@ -176,7 +176,8 @@ if __name__ == "__main__":
     SCplotPhaseSpace(SC, nParticles=10, nTurns=1000)
     [maxTurns, lostCount] = SCgetBeamTransmission(SC, nParticles=100, nTurns=200, do_plot=True)
     SC, _, _, _ = tune_scan(SC, np.vstack((SCgetOrds(SC.RING, 'QF'), SCgetOrds(SC.RING, 'QD'))),
-                            np.outer(np.ones(2), 1 + np.linspace(-0.01, 0.01, 51)), nParticles=100, nTurns=200, plotFlag=False)
+                            np.outer(np.ones(2), 1 + np.linspace(-0.01, 0.01, 51)), do_plot=False, nParticles=100,
+                            nTurns=200)
     CMstep = 1E-4  # [rad]
     RFstep = 1E3  # [Hz]
     [RINGdata, LOCOflags, Init] = SClocoLib('setupLOCOmodel', SC,

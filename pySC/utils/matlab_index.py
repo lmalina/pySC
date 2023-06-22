@@ -320,8 +320,8 @@ def SCsynchPhaseCorrection(SC, /, *, cavOrd=None, nSteps=15, nTurns=20, plotResu
 
 def SCtuneScan(SC, qOrds, qSPvec, /, *, verbose=False, plotFlag=False, nParticles=None, nTurns=None, target=1,
                fullScan=0):
-    return tune_scan(SC, qOrds, qSPvec, plotFlag=plotFlag, nParticles=nParticles, nTurns=nTurns,
-                     target=target, fullScan=fullScan)
+    return tune_scan(SC, qOrds, qSPvec, target=target, do_plot=plotFlag, nParticles=nParticles, nTurns=nTurns,
+                     full_scan=fullScan)
 
 
 def SCupdateCAVs(SC: SimulatedComissioning, ords: ndarray = None) -> SimulatedComissioning:
