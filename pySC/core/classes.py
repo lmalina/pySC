@@ -308,7 +308,7 @@ class SimulatedComissioning(DotDict):
                     magnet_offsets = self.RING[ind].SupportOffset + self.RING[ind].MagnetOffset
                     magnet_rolls = np.roll(self.RING[ind].MagnetRoll + self.RING[ind].SupportRoll, -1)  # z,x,y -> x,y,z
                     self.RING[ind].T1, self.RING[ind].T2, self.RING[ind].R1, self.RING[ind].R2 = SCgetTransformation(
-                        magnet_offsets, magnet_rolls, magTheta, magLength)
+                        magnet_offsets, magnet_rolls, magTheta, magLength, refPoint="entrance")
                     if hasattr(self.RING[ind], 'MasterOf'):
                         for child_ind in self.RING[ind].MasterOf:
                             for field in ("T1", "T2", "R1", "R2"):
