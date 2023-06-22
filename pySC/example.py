@@ -6,6 +6,7 @@ from pySC.core.classes import SimulatedComissioning
 from pySC.correction.orbit_trajectory import SCfeedbackFirstTurn, SCfeedbackStitch, SCfeedbackRun, SCfeedbackBalance, \
     SCpseudoBBA
 from pySC.core.beam import SCgetBPMreading, SCgetBeamTransmission
+from pySC.correction.tune import tune_scan
 from pySC.lattice_properties.response_model import SCgetModelRM, SCgetModelDispersion
 from pySC.utils.sc_tools import SCgetOrds, SCgetPinv
 from pySC.correction.loco_lib import SClocoLib
@@ -174,7 +175,8 @@ if __name__ == "__main__":
     SC.RING = SCcronoff(SC.RING, 'cavityon')
     SCplotPhaseSpace(SC, nParticles=10, nTurns=1000)
     [maxTurns, lostCount] = SCgetBeamTransmission(SC, nParticles=100, nTurns=200, do_plot=True)
-
+    SC, _, _, _ = tune_scan(SC, np.vstack((SCgetOrds(SC.RING, 'QF'), SCgetOrds(SC.RING, 'QD'))),
+                            np.outer(np.ones(2), 1 + np.linspace(-0.01, 0.01, 51)), nParticles=100, nTurns=200, plotFlag=False)
     CMstep = 1E-4  # [rad]
     RFstep = 1E3  # [Hz]
     [RINGdata, LOCOflags, Init] = SClocoLib('setupLOCOmodel', SC,

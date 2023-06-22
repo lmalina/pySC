@@ -26,7 +26,7 @@ from pySC.correction.orbit_trajectory import SCfeedbackFirstTurn as first_turn, 
     SCfeedbackRun as frun, SCfeedbackBalance as fbalance, SCpseudoBBA as pseudo_bba
 from pySC.correction.ramp_errors import SCrampUpErrors as ramp_up_errors
 from pySC.correction.rf import SCsynchPhaseCorrection as synch_phase_corr, SCsynchEnergyCorrection as synch_energy_corr
-from pySC.correction.tune import SCtuneScan as tune_scan
+from pySC.correction.tune import tune_scan
 from pySC.lattice_properties.apertures import SCdynamicAperture as dynamic_aperture, \
     SCmomentumAperture as momentum_aperture
 # from pySC.correction.bba import SCBBA as bba

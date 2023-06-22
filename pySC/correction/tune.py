@@ -1,102 +1,91 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.gridspec import GridSpec
 
-from pySC.core.beam import SCgetBeamTransmission
+from pySC.core.beam import SCgetBeamTransmission, plot_transmission
 from pySC.core.lattice_setting import SCsetMags2SetPoints
 from pySC.utils import logging_tools
 
 LOGGER = logging_tools.get_logger(__name__)
 
-def SCtuneScan(SC, qOrds, qSPvec, plotFlag=False, nParticles=None, nTurns=None, target=1, fullScan=0):
+
+def tune_scan(SC, qOrds, qSPvec, n_points=60, plotFlag=False, nParticles=None, nTurns=None, target=1, fullScan=False):
     if nParticles is None:
         nParticles = SC.INJ.nParticles
     if nTurns is None:
         nTurns = SC.INJ.nTurns
-    SC.INJ.nParticles = nParticles  # TODO
-    SC.INJ.nTurns = nTurns
-    maxTurns = np.empty((len(qSPvec[0]), len(qSPvec[1])))
-    maxTurns[:] = np.nan
-    finTrans = np.empty((len(qSPvec[0]), len(qSPvec[1]), nTurns))
-    finTrans[:] = np.nan
-    ERROR = 2
-    qSP = []
-    allInd = []
-    tmp = spiral(max(len(qSPvec[0]), len(qSPvec[1])))
-    idx = np.argsort(tmp.flatten())
-    q1Ind, q2Ind = np.unravel_index(idx, (max(len(qSPvec[0]), len(qSPvec[1])), max(len(qSPvec[0]), len(qSPvec[1]))))
-    for i in range(len(q1Ind)):
-        q1 = q1Ind[i]
-        q2 = q2Ind[i]
-        ords = np.hstack(qOrds)
-        setpoints = np.hstack((np.repeat(qSPvec[0][q1], len(qOrds[0])), np.repeat(qSPvec[1][q2], len(qOrds[1]))))
-        SC = SCsetMags2SetPoints(SC, ords, False, 1, setpoints, method='rel')
+    nq = np.array([len(qOrds[0]), len(qOrds[1])], dtype=int)
+    nqsp = np.array([len(qSPvec[0]), len(qSPvec[1])], dtype=int)
+    maxTurns = np.full((nqsp[0], nqsp[1]), np.nan)
+    finTrans = np.full((nqsp[0], nqsp[1], nTurns), np.nan)
+    inds = _golden_donut_inds(np.floor_divide(nqsp, 2), n_points=n_points)
+    first_quads = [SC.RING[qOrds[0][0]].FamName, SC.RING[qOrds[1][0]].FamName]
+    ords = np.hstack(qOrds)
+    for q1, q2 in inds.T:
+        qsetpoints = np.hstack((np.ones(nq[0]) * qSPvec[0][q1], np.ones(nq[1]) * qSPvec[1][q2]))
+        SC = SCsetMags2SetPoints(SC, ords, False, 1, qsetpoints, method='rel')
         maxTurns[q1, q2], lostCount = SCgetBeamTransmission(SC, nParticles=nParticles, nTurns=nTurns)
         finTrans[q1, q2, :] = 1 - lostCount
-        allInd.append([q1, q2])
+        SC = SCsetMags2SetPoints(SC, ords, False, 1, 1 / qsetpoints, method='rel')
+
         if plotFlag:
-            plt.figure(185)
-            plt.clf()
-            plt.subplot(2, 2, 1)
-            plt.imshow(100 * finTrans[:, :, -1])
-            c1 = plt.colorbar(orientation='horizontal')
-            c1.set_label('Beam transmission [%]')
-            plt.clim(0, 100)
-            plt.ylabel(SC.RING[qOrds[1][0]].FamName + ' [rel. to nom setpoint]')
-            plt.xlabel(SC.RING[qOrds[0][0]].FamName + ' [rel. to nom setpoint]')
-            tickInd = np.unique(np.round(np.hstack((np.linspace(1, len(qSPvec[0]), 5), len(qSPvec[0])))))
-            plt.yticks(tickInd, qSPvec[1][tickInd])
-            plt.xticks(tickInd, qSPvec[0][tickInd])
-            plt.subplot(2, 2, 2)
-            plt.imshow(maxTurns)
-            c1 = plt.colorbar(orientation='horizontal')
-            c1.set_label('Number of achieved turns')
-            plt.clim(1, nTurns)
-            plt.ylabel(SC.RING[qOrds[1][0]].FamName + ' [rel. to nom setpoint]')
-            plt.xlabel(SC.RING[qOrds[0][0]].FamName + ' [rel. to nom setpoint]')
-            tickInd = np.unique(np.round(np.hstack((np.linspace(1, len(qSPvec[0]), 5), len(qSPvec[0])))))
-            plt.yticks(tickInd, qSPvec[1][tickInd])
-            plt.xticks(tickInd, qSPvec[0][tickInd])
-            plt.subplot(2, 2, [3, 4])
-            plt.plot(lostCount)
-            plt.plot([0, nTurns], [SC.INJ.beamLostAt, SC.INJ.beamLostAt], 'k:')
-            plt.xlim(0, nTurns)
-            plt.ylim(0, 1)
-            plt.xlabel('Number of turns')
-            plt.ylabel('EDF of lost count')
+            f, ax = plot_scan(finTrans, maxTurns, first_quads, qSPvec)
+            ax[2] = plot_transmission(ax[2], lostCount, nTurns, SC.INJ.beamLostAt)
+            f.tight_layout()
             plt.show()
-        if not fullScan:
-            if finTrans[q1, q2, -1] >= target:
-                ERROR = 0
-                qSP.append(qSPvec[0][q1])
-                qSP.append(qSPvec[1][q2])
-                LOGGER.debug(f'Transmission target reached with:\n  '
-                             f'{SC.RING[qOrds[0][0]].FamName} SetPoint: {qSP[0]:.4f}\n '
-                             f' {SC.RING[qOrds[1][0]].FamName} SetPoint: {qSP[1]:.4f}\n')
-                return qSP, SC, maxTurns, finTrans, ERROR
-    testTrans = np.zeros(len(allInd))
-    testTurns = np.zeros(len(allInd))
-    for i in range(len(allInd)):
-        testTrans[i] = finTrans[allInd[i][0], allInd[i][1], -1]
-        testTurns[i] = maxTurns[allInd[i][0], allInd[i][1]]
-    a, b = np.sort(testTrans)[::-1], np.argsort(testTrans)[::-1]
-    if a[0] == 0:
-        a, b = np.sort(testTurns)[::-1], np.argsort(testTurns)[::-1]
-        if a[0] == 0:
-            raise RuntimeError('Fail, no transmission at all.\n')
-        LOGGER.debug(f'No transmission at final turn at all. Best number of turns ({a[0]:d}) reached with:\n  '
-                     f'{SC.RING[qOrds[0][0]].FamName} SetPoint: {qSPvec[0][allInd[b[0]][0]]:.4f}\n  '
-                     f'{SC.RING[qOrds[1][0]].FamName} SetPoint: {qSPvec[1][allInd[b[0]][1]]:.4f}\n')
+
+        if not fullScan and finTrans[q1, q2, -1] >= target:
+            setpoints = [qSPvec[0][q1], qSPvec[1][q2]]
+            LOGGER.info(f'Transmission target reached with:\n  '
+                        f'{first_quads[0]} SetPoint: {setpoints[0]:.4f}\n '
+                        f'{first_quads[1]} SetPoint: {setpoints[1]:.4f}\n')
+            return SC, setpoints, maxTurns, finTrans
+
+    testTrans = np.zeros(n_points)
+    testTurns = np.zeros(n_points)
+    for i in range(n_points):
+        testTrans[i] = finTrans[inds[0, i], inds[1, i], -1]
+        testTurns[i] = maxTurns[inds[0, i], inds[1, i]]
+    if np.max(testTurns) == 0:
+        raise RuntimeError('Fail, no transmission at all.\n')
+    max_ind = np.argmax(testTurns if np.max(testTrans) == 0 else testTrans)
+    if max_ind == 0:
+        LOGGER.warning('No improvement possible.\n')
+    setpoints = [qSPvec[0][inds[0, max_ind]], qSPvec[1][inds[1, max_ind]]]
+    if (max_transmission := np.max(testTrans)) == 0:
+        LOGGER.warning(f'No transmission at final turn at all. Best number of turns ({testTurns[max_ind]:d}) reached with:\n  '
+                     f'{first_quads[0]} SetPoint: {setpoints[0]:.4f}\n  '
+                     f'{first_quads[1]} SetPoint: {setpoints[0]:.4f}\n')
     else:
-        LOGGER.debug(f'Transmission target not reached. Best value ({a[0]:d}) reached with:\n  '
-                     f'{SC.RING[qOrds[0][0]].FamName} SetPoint: {qSPvec[0][allInd[b[0]][0]]:.4f}\n  '
-                     f'{SC.RING[qOrds[1][0]].FamName} SetPoint: {qSPvec[1][allInd[b[0]][1]]:.4f}\n')
-    qSP.append(qSPvec[0][allInd[b[0]][0]])
-    qSP.append(qSPvec[1][allInd[b[0]][1]])
-    if qSP[0] == qSPvec[0][q1Ind[0]] and qSP[1] == qSPvec[1][q2Ind[0]]:
-        raise RuntimeError('No improvement possible.\n')
-    else:
-        ERROR = 1
-    ords = np.hstack(qOrds)
-    setpoints = np.hstack((np.repeat(qSP[0], len(qOrds[0])), np.repeat(qSP[1], len(qOrds[1]))))
-    SC = SCsetMags2SetPoints(SC, ords, False, 1, setpoints, method='rel')
-    return qSP, SC, maxTurns, finTrans, ERROR
+        LOGGER.warning(f'Transmission target not reached. Best value ({max_transmission:.4f}) reached with:\n  '
+                       f'{first_quads[0]} SetPoint: {setpoints[0]:.4f}\n  '
+                       f'{first_quads[1]} SetPoint: {setpoints[0]:.4f}\n')
+    SC = SCsetMags2SetPoints(SC, ords, False, 1,
+                             np.hstack((setpoints[0] * np.ones(nq[0]),
+                                        setpoints[1] * np.ones(nq[1]))), method='rel')
+    return SC, setpoints, maxTurns, finTrans
+
+
+def _golden_donut_inds(r, n_points):
+    ints = np.arange(n_points)
+    phi = 2 * np.pi / ((1 + np.sqrt(5)) / 2)  # golden ratio
+    pos_2d = np.round(np.sqrt(ints / (n_points - 1)) * np.vstack((r[0] * np.cos(ints * phi), r[1]*np.sin(ints * phi))))
+    return np.array(np.clip(pos_2d + r[:, np.newaxis], a_min=np.zeros((2, 1)), a_max=2 * r[:, np.newaxis]), dtype=int)
+
+
+def plot_scan(finTrans, maxTurns, first_quads, qSPvec):
+    f = plt.figure(num=185)
+    gs = GridSpec(2, 2, height_ratios=[2.5, 1])
+    ax1, ax2 = f.add_subplot(gs[0, 0]), f.add_subplot(gs[0, 1])
+    ax3 = f.add_subplot(gs[1, :])
+    ticks = np.outer(np.floor_divide(np.array([len(qSPvec[0]), len(qSPvec[1])], dtype=int), 4), np.arange(5, dtype=int))
+    im = ax1.imshow(100 * finTrans[:, :, -1], vmin=0, vmax=100)
+    plt.colorbar(im, ax=ax1, orientation='vertical', label='Beam transmission [%]', shrink=0.6)
+    im2 = ax2.imshow(maxTurns, vmin=0)
+    plt.colorbar(im2, ax=ax2, orientation='vertical', label='Number of turns', shrink=0.6)
+    for ax in (ax1, ax2):
+        ax.set_xlabel(f'{first_quads[0]} [relative]')
+        ax.set_ylabel(f'{first_quads[1]} [relative]')
+        ax.set_xticks(ticks[0], qSPvec[0][ticks[0, :]])
+        ax.set_yticks(ticks[0], qSPvec[1][ticks[1, :]])
+    return f, [ax1, ax2, ax3]
