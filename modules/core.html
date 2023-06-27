@@ -21,7 +21,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Correction algorithms" href="correction.html" />
-    <link rel="prev" title="Data Structures" href="classes.html" /> 
+    <link rel="prev" title="Welcome to pySC’s documentation!" href="../index.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -49,11 +49,11 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Modules</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="classes.html">Data Structures</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="classes.html#simulatedcommissioning">SimulatedCommissioning</a></li>
-</ul>
-</li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Core functions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#pySC.core.beam.all_elements_reading"><code class="docutils literal notranslate"><span class="pre">all_elements_reading()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pySC.core.beam.beam_transmission"><code class="docutils literal notranslate"><span class="pre">beam_transmission()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pySC.core.beam.bpm_reading"><code class="docutils literal notranslate"><span class="pre">bpm_reading()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pySC.core.beam.generate_bunches"><code class="docutils literal notranslate"><span class="pre">generate_bunches()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pySC.core.classes.DotDict"><code class="docutils literal notranslate"><span class="pre">DotDict</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pySC.core.classes.Indices"><code class="docutils literal notranslate"><span class="pre">Indices</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pySC.core.classes.Sigmas"><code class="docutils literal notranslate"><span class="pre">Sigmas</span></code></a></li>
@@ -106,6 +106,94 @@
              
   <section id="module-pySC.core.beam">
 <span id="core-functions"></span><h1>Core functions<a class="headerlink" href="#module-pySC.core.beam" title="Permalink to this heading"></a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="pySC.core.beam.all_elements_reading">
+<span class="sig-prename descclassname"><span class="pre">pySC.core.beam.</span></span><span class="sig-name descname"><span class="pre">all_elements_reading</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">SC</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pySC.core.classes.SimulatedComissioning" title="pySC.core.classes.SimulatedComissioning"><span class="pre">SimulatedComissioning</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/pySC/core/beam.html#all_elements_reading"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pySC.core.beam.all_elements_reading" title="Permalink to this definition"></a></dt>
+<dd><p>Calculates horizontal and vertical positions with current injection setup <cite>SC.INJ</cite>.
+Returns the measured BPM positions at all BPMs as well as TRUE positions at all elements,
+i.e. provides information NOT available in actual commissioning.
+If SC.plot is True the reading is plotted.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>SC</strong> -- SimulatedComissioning instance</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p>Array of all horizontal and vertical BPM readings (2, T x B) for T turns and B BPMs</p>
+<p>Array of all horizontal and vertical positions at all elements
+(2, P, B, T, S) for P particles B BPMs, T turns and S shots</p>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pySC.core.beam.beam_transmission">
+<span class="sig-prename descclassname"><span class="pre">pySC.core.beam.</span></span><span class="sig-name descname"><span class="pre">beam_transmission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">SC</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pySC.core.classes.SimulatedComissioning" title="pySC.core.classes.SimulatedComissioning"><span class="pre">SimulatedComissioning</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">nParticles</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nTurns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/pySC/core/beam.html#beam_transmission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pySC.core.beam.beam_transmission" title="Permalink to this definition"></a></dt>
+<dd><p>Calculates the turn-by-turn beam transmission with current injection setup as defined in <cite>SC.INJ</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>SC</strong> -- SimulatedComissioning instance</p></li>
+<li><p><strong>nParticles</strong> -- Number of particles to track
+(for convenience, otherwise <cite>SC.INJ.nParticles</cite> is used)</p></li>
+<li><p><strong>nTurns</strong> -- Number of turns to track
+(for convenience, otherwise <cite>SC.INJ.nTurns</cite> is used)</p></li>
+<li><p><strong>plot</strong> -- If True, plots beam transmission</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p>Number of survived turns following <cite>SC.INJ.beamLostAt</cite> criteria</p>
+<p>Array of accumulated lost fraction of beam (turn-by-turn)</p>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pySC.core.beam.bpm_reading">
+<span class="sig-prename descclassname"><span class="pre">pySC.core.beam.</span></span><span class="sig-name descname"><span class="pre">bpm_reading</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">SC</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pySC.core.classes.SimulatedComissioning" title="pySC.core.classes.SimulatedComissioning"><span class="pre">SimulatedComissioning</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">bpm_ords</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/pySC/core/beam.html#bpm_reading"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pySC.core.beam.bpm_reading" title="Permalink to this definition"></a></dt>
+<dd><p>Calculates BPM readings with current injection setup <cite>SC.INJ</cite> and included all BPM uncertainties.
+Included uncertainties are offsets, rolls, calibration errors, and position noise.
+When the beam is lost following <cite>SC.INJ.beamLostAt</cite> criteria with sum signal errors included,
+the readings are NaN.
+If SC.plot is True the reading is plotted.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>SC</strong> -- SimulatedComissioning instance</p></li>
+<li><p><strong>bpm_ords</strong> -- array of element indices of registered BPMs for which to calculate readings
+(for convenience, otherwise <cite>SC.ORD.BPM</cite> is used)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Array of horizontal and vertical BPM readings (2, T x B) for T turns and B BPMs</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pySC.core.beam.generate_bunches">
+<span class="sig-prename descclassname"><span class="pre">pySC.core.beam.</span></span><span class="sig-name descname"><span class="pre">generate_bunches</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">SC</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pySC.core.classes.SimulatedComissioning" title="pySC.core.classes.SimulatedComissioning"><span class="pre">SimulatedComissioning</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">nParticles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/pySC/core/beam.html#generate_bunches"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pySC.core.beam.generate_bunches" title="Permalink to this definition"></a></dt>
+<dd><p>Generates bunches according to the current injection setup as defined in <cite>SC.INJ</cite>.
+The random injection error is added to the mean injected beam trajectory for each bunch.
+Either a single particle (nParticles=1) is generated at the bunch centroid,
+or individual particles are randomly distributed around the bunch centroid
+using the beam sigma matrix.
+A function <cite>SC.INJ.postFun</cite> is applied to the generated coordinates.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>SC</strong> -- SimulatedComissioning instance</p></li>
+<li><p><strong>nParticles</strong> -- Number of particles to generate
+(for convenience, otherwise <cite>SC.INJ.nParticles</cite> is used)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Array of particle coordinates (6, nParticles)</p>
+</dd>
+</dl>
+</dd></dl>
+
 <span class="target" id="module-pySC.core.classes"></span><dl class="py class">
 <dt class="sig sig-object py" id="pySC.core.classes.DotDict">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pySC.core.classes.</span></span><span class="sig-name descname"><span class="pre">DotDict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pySC/core/classes.html#DotDict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pySC.core.classes.DotDict" title="Permalink to this definition"></a></dt>
@@ -138,7 +226,7 @@
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="classes.html" class="btn btn-neutral float-left" title="Data Structures" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../index.html" class="btn btn-neutral float-left" title="Welcome to pySC’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="correction.html" class="btn btn-neutral float-right" title="Correction algorithms" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
