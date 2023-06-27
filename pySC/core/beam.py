@@ -14,27 +14,15 @@ warnings.filterwarnings("ignore", message='Mean of empty slice')
 LOGGER = logging_tools.get_logger(__name__)
 
 
-def bpm_reading(SC: SimulatedComissioning, bpm_ords: ndarray = None, all_elements: bool = False) -> Tuple[ndarray, ndarray|None]:
-    #  lattice_pass output:            (6, N, R, T) coordinates of N particles at R reference points for T turns.
-    #  findorbit second output value:  (R, 6) closed orbit vector at each specified location
-    refs = np.arange(len(SC.RING) + 1) if all_elements else SC.ORD.BPM
-    n_refs = len(refs)
-    all_readings_5d = np.full((2, SC.INJ.nParticles, n_refs, SC.INJ.nTurns, SC.INJ.nShots), np.nan) if all_elements else None
+def bpm_reading(SC: SimulatedComissioning, bpm_ords: ndarray = None) -> ndarray:
     all_bpm_orbits_4d = np.full((2, len(SC.ORD.BPM), SC.INJ.nTurns, SC.INJ.nShots), np.nan)
     for shot_num in range(SC.INJ.nShots):
-        if SC.INJ.trackMode == 'ORB':
-            tracking_4d = np.transpose(findorbit6(SC.RING, refs, keep_lattice=False)[1])[[0, 2], :].reshape(2, 1, n_refs, 1)
-        else:
-            tracking_4d = atpass(SC.RING, generate_bunches(SC), SC.INJ.nTurns, refs, keep_lattice=False)[[0, 2], :, :, :]
-        all_bpm_orbits_4d[:, :, :, shot_num] = _real_bpm_reading(SC, tracking_4d[:, :, SC.ORD.BPM, :] if all_elements else tracking_4d)
-        tracking_4d[:, np.isnan(tracking_4d[0, :])] = np.nan
-        if all_elements:
-            all_readings_5d[:, :, :, :, shot_num] = tracking_4d[:, :, :, :]
+        tracking_4d = _tracking(SC, SC.ORD.BPM)
+        all_bpm_orbits_4d[:, :, :, shot_num] = _real_bpm_reading(SC, tracking_4d)
 
     mean_bpm_orbits_3d = np.nanmean(all_bpm_orbits_4d, axis=3)  # mean_bpm_orbits_3d is 3D (dim, BPM, turn)
     if SC.plot:
-        _plot_bpm_reading(SC, mean_bpm_orbits_3d, all_readings_5d)
-
+        _plot_bpm_reading(SC, mean_bpm_orbits_3d)
     if SC.INJ.trackMode == 'PORB':   # ORB averaged over low amount of turns
         mean_bpm_orbits_3d = np.nanmean(mean_bpm_orbits_3d, axis=2, keepdims=True)
     if bpm_ords is not None:
@@ -42,12 +30,24 @@ def bpm_reading(SC: SimulatedComissioning, bpm_ords: ndarray = None, all_element
         if len(ind) != len(bpm_ords):
             LOGGER.warning('Not all specified ordinates are registered BPMs.')
         mean_bpm_orbits_3d = mean_bpm_orbits_3d[:, ind, :]
-    # Organising the array the same way as in matlab version 2 x (nturns, nbpms) sorted by "arrival time"
-    mean_bpm_orbits_2d = np.transpose(mean_bpm_orbits_3d, axes=(0, 2, 1)).reshape((2, np.prod(mean_bpm_orbits_3d.shape[1:])))
-    if all_elements:
-        return mean_bpm_orbits_2d, all_readings_5d
-    return mean_bpm_orbits_2d
+    # Organising the array 2 x (nturns x nbpms) sorted by "arrival time"
+    return _reshape_3d_to_matlab_like_2d(mean_bpm_orbits_3d)
 
+
+def all_elements_reading(SC: SimulatedComissioning) -> Tuple[ndarray, ndarray]:
+    n_refs = len(SC.RING) + 1
+    all_readings_5d = np.full((2, SC.INJ.nParticles, n_refs, SC.INJ.nTurns, SC.INJ.nShots), np.nan)
+    all_bpm_orbits_4d = np.full((2, len(SC.ORD.BPM), SC.INJ.nTurns, SC.INJ.nShots), np.nan)
+    for shot_num in range(SC.INJ.nShots):
+        tracking_4d = _tracking(SC, np.arange(n_refs))
+        all_bpm_orbits_4d[:, :, :, shot_num] = _real_bpm_reading(SC, tracking_4d[:, :, SC.ORD.BPM, :])
+        tracking_4d[:, np.isnan(tracking_4d[0, :])] = np.nan
+        all_readings_5d[:, :, :, :, shot_num] = tracking_4d[:, :, :, :]
+
+    mean_bpm_orbits_3d = np.nanmean(all_bpm_orbits_4d, axis=3)  # mean_bpm_orbits_3d is 3D (dim, BPM, turn)
+    if SC.plot:
+        _plot_bpm_reading(SC, mean_bpm_orbits_3d, all_readings_5d)
+    return _reshape_3d_to_matlab_like_2d(mean_bpm_orbits_3d), all_readings_5d
 
 
 def beam_transmission(SC: SimulatedComissioning, nParticles: int = None, nTurns: int = None,
@@ -110,6 +110,21 @@ def _real_bpm_reading(SC, track_mat):  # track_mat should be only x,y over all p
 
 def _rotation_matrix(a):
     return np.array([[np.cos(a), -np.sin(a)], [np.sin(a), np.cos(a)]])
+
+
+def _tracking(SC: SimulatedComissioning, refs: ndarray) -> ndarray:
+    """Returns numpy array (2, N, R, T) of X and Y coordinates of N particles at R reference points for T turns.
+       If ORB: N and T are equal to 1"""
+    #  lattice_pass output:            (6, N, R, T) coordinates of N particles at R reference points for T turns.
+    #  findorbit second output value:  (R, 6) closed orbit vector at each specified location
+    if SC.INJ.trackMode == 'ORB':
+        return np.transpose(findorbit6(SC.RING, refs, keep_lattice=False)[1])[[0, 2], :].reshape(2, 1, len(refs), 1)
+    return atpass(SC.RING, generate_bunches(SC), SC.INJ.nTurns, refs, keep_lattice=False)[[0, 2], :, :, :]
+
+
+def _reshape_3d_to_matlab_like_2d(mean_bpm_orbits_3d: ndarray) -> ndarray:
+    """Organising the array the same way as in matlab version 2 x (nturns x nbpms) sorted by 'arrival time'."""
+    return np.transpose(mean_bpm_orbits_3d, axes=(0, 2, 1)).reshape((2, np.prod(mean_bpm_orbits_3d.shape[1:])))
 
 
 def _plot_bpm_reading(SC, bpm_orbits_3d, all_readings_5d=None):

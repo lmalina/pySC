@@ -3,13 +3,33 @@ import numpy as np
 
 from pySC.utils.at_wrapper import findspos, atgetfieldvalues
 from pySC.correction.orbit_trajectory import SCfeedbackRun
-from pySC.core.beam import bpm_reading
+from pySC.core.beam import bpm_reading, all_elements_reading
 from pySC.utils.sc_tools import SCrandnc
 from pySC.core.lattice_setting import SCsetCMs2SetPoints, SCsetMags2SetPoints, SCgetCMSetPoints
 from pySC.utils import logging_tools
 from pySC.core.classes import DotDict
 
 LOGGER = logging_tools.get_logger(__name__)
+
+"""
+Pieces of found function calls from ALS-U SR, i.e. nothing in PETRA IV
+
+qOrd = SCgetOrds(SC.RING,'QF')
+SC,errorFlags = SCBBA(SC, repmat(SC.ORD.BPM,2,1),QuadOrds, mode='TBT', fakeMeasForFailures=True, 
+        quadOrdPhaseAdvance=qOrd[0], quadStrengthPhaseAdvance=[0.95 0.8 1.05], magSPvec=magSPvec, plotResults=SC.plot)
+
+SC = SCBBA(SC, BPMordsQuadBBA, QuadOrds, mode='ORB',fakeMeasForFailures=True, outlierRejectionAt=200E-6, RMstruct=RMstruct,
+        plotResults=SC.plot, magSPvec=magSPvec, minSlopeForFit=0.005, minBPMrangeAtBBABBPM=1*20E-6,
+        BBABPMtarget=5*50E-6, minBPMrangeOtherBPM=0)
+
+# Orbit correction (without weights)
+SC = performOrbitCorr_ALSU_SR(SC,RMstruct,'weight=[])
+
+# BBA on sextupoles (quad trim coils)
+SC = SCBBA(SC, BPMordsSextBBA, sextOrds, mode='ORB',fakeMeasForFailures=True, outlierRejectionAt=200E-6,
+    RMstruct=RMstruct, plotResults=SC.plot, switchOffSext=True, magSPflag='abs', magSPvec=magSPvecSext, 
+    minSlopeForFit=0.005, minBPMrangeAtBBABBPM=1*10E-6, BBABPMtarget=5*50E-6, minBPMrangeOtherBPM=0)
+"""
 
 
 def SCBBA(SC, bpm_ords, mag_ords, **kwargs):
@@ -119,7 +139,7 @@ def _data_measurement(SC, mOrd, BPMind, jBPM, nDim, par, varargin):
                     SC, _ = SCsetCMs2SetPoints(SC, CMords[nD], CMvec[nD][nKick, :], bool(nD), method='abs')
             else:
                 SC.INJ.Z0[2 * nDim:2 * nDim + 2] = initialZ0[2 * nDim:2 * nDim + 2] + kickVec[:, nKick]
-            B = SCgetBPMreading(SC)
+            B = bpm_reading(SC)
             if par.plotLines:
                 ax[nQ] = _plot_bba_step(SC, ax[nQ], BPMind, nDim)
             BPMpos[nKick, nQ] = B[nDim, BPMind]
@@ -226,7 +246,7 @@ def _scale_injection_to_reach_bpm(SC, BPMind, nDim, kickVec0):
         tmp_bpm_pos = np.full(kickVec0.shape[1], np.nan)
         for nK in range(kickVec0.shape[1]):
             SC.INJ.Z0[2 * nDim:2 * nDim + 2] = initialZ0[2 * nDim:2 * nDim + 2] + scaling_factor * kickVec0[:, nK]
-            tmp_bpm_pos[nK] = SCgetBPMreading(SC, SC.ORD.BPM[BPMind])[nDim, 0]
+            tmp_bpm_pos[nK] = bpm_reading(SC, SC.ORD.BPM[BPMind])[nDim, 0]
         SC.INJ.Z0 = initialZ0.copy()
 
         if np.sum(np.isnan(tmp_bpm_pos)) == 0:
@@ -273,7 +293,7 @@ def _get_orbit_bump(SC, mOrd, BPMord, nDim, par):
         par.RMstruct.CMords[0] = np.delete(par.RMstruct.CMords[0], tmpCMind)
     tmpBPMind = np.where(BPMord == par.RMstruct.BPMords)[0]
 
-    R0 = SCgetBPMreading(SC) if par.useBPMreadingsForOrbBumpRef else np.zeros((2, len(par.RMstruct.BPMords)))
+    R0 = bpm_reading(SC) if par.useBPMreadingsForOrbBumpRef else np.zeros((2, len(par.RMstruct.BPMords)))
     R0[nDim, tmpBPMind] += par.BBABPMtarget
     CMords = par.RMstruct.CMords
 
@@ -295,10 +315,10 @@ def _get_orbit_bump(SC, mOrd, BPMord, nDim, par):
 
 def _plot_bba_step(SC, ax, BPMind, nDim):
     s_pos = findspos(SC.RING)
-    B, T = SCgetBPMreading(SC)  # TODO handle the readout at all elements
+    B, T = all_elements_reading(SC)
     ax.plot(s_pos[SC.ORD.BPM], 1E3 * B[nDim, :], marker='o')
     ax.plot(s_pos[SC.ORD.BPM[BPMind]], 1E3 * B[nDim, BPMind], marker='o', markersize=10, markerfacecolor='k')
-    ax.plot(s_pos, 1E3 * T[nDim, 0, :, 0], linestyle='-')
+    ax.plot(s_pos, 1E3 * T[nDim, 0, :, 0], linestyle='-')  # TODO 5D
     return ax
 
 
