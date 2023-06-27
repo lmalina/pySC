@@ -1,17 +1,9 @@
-import copy
-
 import pytest
 import numpy as np
 from numpy.testing import assert_equal
-import at
-from at import Lattice
 from pySC.core.beam import bpm_reading, all_elements_reading, beam_transmission, generate_bunches
-from pySC.utils.at_wrapper import findspos, atgetfieldvalues, atpass, findorbit6, findorbit4
 from pySC.utils.sc_tools import SCgetOrds
-from tests.test_at_wrapper import at_lattice
 from pySC.core.classes import SimulatedComissioning
-
-np.random.seed(123)
 
 
 def test_beam_transmission_basic(sc):
@@ -21,7 +13,7 @@ def test_beam_transmission_basic(sc):
     max_turns, lost_fraction = beam_transmission(sc, nTurns=2)
     assert max_turns == 2
     assert_equal(lost_fraction, np.zeros(2))
-    max_turns, lost_fraction = beam_transmission(sc, nTurns=2, nParticles=3, do_plot=True)
+    max_turns, lost_fraction = beam_transmission(sc, nTurns=2, nParticles=3, plot=True)
     assert max_turns == 2
     assert_equal(lost_fraction, np.zeros(2))
 
@@ -52,7 +44,6 @@ def test_bpm_reading_basic(sc):
     sc.plot = True
     bpm_readings = bpm_reading(sc, 20 * np.ones(2))
     assert bpm_readings.shape == (2, 1)
-
 
 
 def test_generate_bunches_basic(sc):

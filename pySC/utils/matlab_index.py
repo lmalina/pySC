@@ -105,7 +105,7 @@ def SCgenBunches(SC: SimulatedComissioning) -> ndarray:
 
 def SCgetBeamTransmission(SC: SimulatedComissioning, /, *, nParticles: int = None, nTurns: int = None,
                           plotFlag: bool = False, verbose: bool = False) -> Tuple[int, ndarray]:
-    return beam_transmission(SC, nParticles, nTurns=nTurns, do_plot=plotFlag)
+    return beam_transmission(SC, nParticles, nTurns=nTurns, plot=plotFlag)
 
 
 def SCgetBPMreading(SC, /, *, BPMords=None):

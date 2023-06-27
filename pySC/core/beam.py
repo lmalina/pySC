@@ -41,9 +41,7 @@ def bpm_reading(SC: SimulatedComissioning, bpm_ords: ndarray = None) -> ndarray:
     if SC.INJ.trackMode == 'PORB':   # ORB averaged over low amount of turns
         mean_bpm_orbits_3d = np.nanmean(mean_bpm_orbits_3d, axis=2, keepdims=True)
     if bpm_ords is not None:
-        ind = np.where(np.isin(SC.ORD.BPM, bpm_ords))[0]
-        if len(ind) != len(bpm_ords):
-            LOGGER.warning('Not all specified ordinates are registered BPMs.')
+        ind = _only_registered_bpms(SC, bpm_ords)
         mean_bpm_orbits_3d = mean_bpm_orbits_3d[:, ind, :]
     # Organising the array 2 x (nturns x nbpms) sorted by "arrival time"
     return _reshape_3d_to_matlab_like_2d(mean_bpm_orbits_3d)
@@ -52,7 +50,8 @@ def bpm_reading(SC: SimulatedComissioning, bpm_ords: ndarray = None) -> ndarray:
 def all_elements_reading(SC: SimulatedComissioning) -> Tuple[ndarray, ndarray]:
     """
     Calculates horizontal and vertical positions with current injection setup `SC.INJ`.
-    Returns the measured BPM positions at all BPMs as well as true positions at all elements.
+    Returns the measured BPM positions at all BPMs as well as TRUE positions at all elements,
+    i.e. provides information NOT available in actual commissioning.
     If SC.plot is True the reading is plotted.
 
     Args:
@@ -80,7 +79,7 @@ def all_elements_reading(SC: SimulatedComissioning) -> Tuple[ndarray, ndarray]:
 
 
 def beam_transmission(SC: SimulatedComissioning, nParticles: int = None, nTurns: int = None,
-                      do_plot: bool = False) -> Tuple[int, ndarray]:
+                      plot: bool = False) -> Tuple[int, ndarray]:
     """
     Calculates the turn-by-turn beam transmission with current injection setup as defined in `SC.INJ`.
 
@@ -90,7 +89,7 @@ def beam_transmission(SC: SimulatedComissioning, nParticles: int = None, nTurns:
             (for convenience, otherwise `SC.INJ.nParticles` is used)
         nTurns: Number of turns to track
             (for convenience, otherwise `SC.INJ.nTurns` is used)
-        do_plot: If True, plots beam transmission
+        plot: If True, plots beam transmission
 
     Returns:
         Number of survived turns following `SC.INJ.beamLostAt` criteria
@@ -106,7 +105,7 @@ def beam_transmission(SC: SimulatedComissioning, nParticles: int = None, nTurns:
     T = atpass(SC.RING, generate_bunches(SC, nParticles=nParticles), nTurns, np.array([len(SC.RING)]), keep_lattice=False)
     fraction_lost = np.mean(np.isnan(T[0, :, :, :]), axis=(0, 1))
     max_turns = np.sum(fraction_lost < SC.INJ.beamLostAt)
-    if do_plot:
+    if plot:
         fig, ax = plt.subplots()
         ax = plot_transmission(ax, fraction_lost, nTurns, SC.INJ.beamLostAt)
         fig.tight_layout()
@@ -184,6 +183,13 @@ def _tracking(SC: SimulatedComissioning, refs: ndarray) -> ndarray:
     return atpass(SC.RING, generate_bunches(SC), SC.INJ.nTurns, refs, keep_lattice=False)[[0, 2], :, :, :]
 
 
+def _only_registered_bpms(SC: SimulatedComissioning, bpm_ords: ndarray) -> ndarray:
+    ind = np.where(np.isin(SC.ORD.BPM, bpm_ords))[0]
+    if len(ind) != len(bpm_ords):
+        LOGGER.warning('Not all specified ordinates are registered BPMs.')
+    return ind
+
+
 def _reshape_3d_to_matlab_like_2d(mean_bpm_orbits_3d: ndarray) -> ndarray:
     """Organising the array the same way as in matlab version (2, nturns x nbpms) sorted by 'arrival time'."""
     return np.transpose(mean_bpm_orbits_3d, axes=(0, 2, 1)).reshape((2, np.prod(mean_bpm_orbits_3d.shape[1:])))
@@ -211,7 +217,7 @@ def _plot_bpm_reading(SC, bpm_orbits_3d, all_readings_5d=None):
     ax = _plot_annotations_and_limits(ax, 3 * np.array([-5, 5]), turn_breaks)
     fig.tight_layout()
     plt.pause(0.001)
-    plt.show()
+    fig.show()
 
 
 def _plot_all_trajectories(ax, x, all_readings_5d):
@@ -219,9 +225,7 @@ def _plot_all_trajectories(ax, x, all_readings_5d):
         for shot_number in range(all_readings_5d.shape[4]):
             y = 1E3 * all_readings_5d[n_dim, :, :, :, shot_number]
             y = np.reshape(np.transpose(y, axes=(2, 1, 0)), (np.prod(y.shape[1:]), y.shape[0]))
-            ax[n_dim].plot(x, y, 'k')
-            if shot_number == 0:
-                ax[n_dim].plot(x, y, 'k', label='Particle trajectories')
+            ax[n_dim].plot(x, y, 'k', label='Particle trajectories')
     return ax
 
 
