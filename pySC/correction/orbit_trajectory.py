@@ -1,6 +1,6 @@
 import numpy as np
 
-from pySC.core.beam import SCgetBPMreading
+from pySC.core.beam import bpm_reading
 from pySC.core.lattice_setting import SCsetCavs2SetPoints, SCsetCMs2SetPoints
 from pySC.utils import logging_tools
 from pySC.utils.sc_tools import SCrandnc
@@ -186,7 +186,7 @@ def _check_ords(SC, Mplus, reference, BPMords, CMords):
 
 
 def _bpm_reading_and_logging(SC, BPMords, ind_history=None, orb_history=None):
-    bpm_readings = SCgetBPMreading(SC, BPMords=BPMords)
+    bpm_readings = bpm_reading(SC, bpm_ords=BPMords)
     bpms_reached = ~np.isnan(bpm_readings[0])
     if ind_history is None or orb_history is None:
         return bpm_readings, [np.sum(bpms_reached)], [np.sqrt(np.mean(np.square(bpm_readings[:, bpms_reached]), axis=1))]

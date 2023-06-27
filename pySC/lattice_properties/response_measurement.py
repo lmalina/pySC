@@ -1,6 +1,6 @@
 import numpy as np
 
-from pySC.core.beam import SCgetBPMreading
+from pySC.core.beam import bpm_reading
 from pySC.core.lattice_setting import SCsetCMs2SetPoints, SCgetCMSetPoints, SCsetCavs2SetPoints
 from pySC.utils import logging_tools
 
@@ -16,7 +16,7 @@ def SCgetRespMat(SC, Amp, BPMords, CMords, mode='fixedKick', nSteps=2, fit='line
     RM = np.nan * np.zeros((2 * SC.INJ.nTurns * len(BPMords), len(CMords[0]) + len(CMords[1])))
     Err = np.nan * np.zeros((2 * SC.INJ.nTurns * len(BPMords), len(CMords[0]) + len(CMords[1])))
     CMsteps = [np.zeros((nSteps, len(CMords[0]))), np.zeros((nSteps, len(CMords[1])))]
-    Bref = np.reshape(SCgetBPMreading(SC, BPMords=BPMords), [], 1)
+    Bref = np.reshape(bpm_reading(SC, bpm_ords=BPMords), [], 1)
     if SC.INJ.trackMode == 'ORB' and np.any(np.isnan(Bref)):
         raise ValueError('No closed orbit found.')
     i = 0
@@ -32,7 +32,7 @@ def SCgetRespMat(SC, Amp, BPMords, CMords, mode='fixedKick', nSteps=2, fit='line
                 for nStep in range(nSteps):
                     if CMstepVec[nStep] != 0 and CMstepVec[nStep] != MaxStep:
                         SC, realCMsetPoint[nStep] = SCsetCMs2SetPoints(SC, CMords[nDim][nCM], cmstart[nCM] + CMstepVec[nStep], skewness=nDim)
-                        dB[nStep, :] = np.reshape(SCgetBPMreading(SC, BPMords=BPMords), [], 1) - Bref
+                        dB[nStep, :] = np.reshape(bpm_reading(SC, bpm_ords=BPMords), [], 1) - Bref
                 dCM = realCMsetPoint - cmstart[nCM]
             else:
                 dCM = MaxStep
@@ -65,16 +65,16 @@ def SCgetDispersion(SC,RFstep,BPMords=None,CAVords=None,nSteps=2):
     RFsteps = np.zeros((len(CAVords),nSteps))
     for nCav in range(len(CAVords)):
         RFsteps[nCav,:] = SC.RING[CAVords[nCav]].FrequencySetPoint + np.linspace(-RFstep,RFstep,nSteps)
-    Bref = np.reshape(SCgetBPMreading(SC,BPMords=BPMords),[],1)
+    Bref = np.reshape(bpm_reading(SC, bpm_ords=BPMords), [], 1)
     if nSteps==2:
         SC = SCsetCavs2SetPoints(SC,CAVords,'Frequency',RFstep,'add')
-        B = np.reshape(SCgetBPMreading(SC,BPMords=BPMords),[],1)
+        B = np.reshape(bpm_reading(SC, bpm_ords=BPMords), [], 1)
         eta = (B-Bref)/RFstep
     else:
         dB = np.zeros((nSteps,*np.shape(Bref)))
         for nStep in range(nSteps):
             SC = SCsetCavs2SetPoints(SC,CAVords,'Frequency',RFsteps[:,nStep],'abs')
-            dB[nStep,:] = np.reshape(SCgetBPMreading(SC,BPMords=BPMords),[],1) - Bref
+            dB[nStep,:] = np.reshape(bpm_reading(SC, bpm_ords=BPMords), [], 1) - Bref
         eta = np.linalg.lstsq(np.linspace(-RFstep,RFstep,nSteps),dB)[0]
     return eta
 
@@ -89,7 +89,7 @@ def getKickAmplitude(SC, Bref, BPMords, CMord, Amp, skewness: bool, nTurns, nSte
                 LOGGER.debug('CM  clipped. Using different CM direction.')
                 MaxStep = - MaxStep
                 SC, _ = SCsetCMs2SetPoints(SC, CMord, cmstart + MaxStep, skewness)
-            B = np.reshape(SCgetBPMreading(SC, BPMords=BPMords), [], 1)
+            B = np.reshape(bpm_reading(SC, bpm_ords=BPMords), [], 1)
             maxpos = min([np.where(np.isnan(B))[0][0] - 1, nTurns * len(BPMords)])
             maxposRef = min([np.where(np.isnan(Bref))[0][0] - 1, nTurns * len(BPMords)])
             if not (maxpos < maxposRef):
@@ -105,7 +105,7 @@ def getKickAmplitude(SC, Bref, BPMords, CMord, Amp, skewness: bool, nTurns, nSte
                 LOGGER.debug('CM  clipped. Using different CM direction.')
                 MaxStep = - MaxStep
                 SC, _ = SCsetCMs2SetPoints(SC, CMord, cmstart + MaxStep, skewness)
-            B = np.reshape(SCgetBPMreading(SC, BPMords=BPMords), [], 1)
+            B = np.reshape(bpm_reading(SC, bpm_ords=BPMords), [], 1)
             maxpos = min([np.where(np.isnan(B))[0][0] - 1, nTurns * len(BPMords)])
             maxposRef = min([np.where(np.isnan(Bref))[0][0] - 1, nTurns * len(BPMords)])
             if maxpos < maxposRef:
@@ -113,6 +113,6 @@ def getKickAmplitude(SC, Bref, BPMords, CMord, Amp, skewness: bool, nTurns, nSte
                 LOGGER.debug(f'Insufficient beam reach ({maxpos:d}/{maxposRef:d}). CMstep reduced to {1E6 * MaxStep:.1f}urad.')
                 continue
             MaxStep = MaxStep * Amp / np.max(np.abs(B - Bref))
-        dB = np.reshape(SCgetBPMreading(SC, BPMords=BPMords), [], 1) - Bref
+        dB = np.reshape(bpm_reading(SC, bpm_ords=BPMords), [], 1) - Bref
     return MaxStep, dB
 # End
