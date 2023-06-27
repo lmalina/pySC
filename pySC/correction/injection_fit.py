@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from pySC.core.beam import SCgetBPMreading
+from pySC.core.beam import bpm_reading
 from pySC.utils.at_wrapper import atpass, findspos
 from pySC.utils import logging_tools
 
@@ -14,7 +14,7 @@ def SCfitInjectionZ(SC, mode, nDims=np.array([0, 1]), nBPMs=np.array([0, 1, 2]),
     # uses SC.INJ.nShots
     deltaZ0 = np.zeros(6)
     s_pos = findspos(SC.RING)
-    B = SCgetBPMreading(SC)
+    B = bpm_reading(SC)
     if plotFlag:
         fig, ax = plt.subplots(nrows=2, num=342)
         titleStr = ['Horizontal', 'Vertical']
@@ -23,7 +23,7 @@ def SCfitInjectionZ(SC, mode, nDims=np.array([0, 1]), nBPMs=np.array([0, 1, 2]),
         deltaZ0[0:4] = -fminsearch(merritFunction, np.zeros(4))  # TODO pass variables?
         if plotFlag:
             SC.INJ.Z0 = SC.INJ.Z0 + deltaZ0
-            B1 = SCgetBPMreading(SC)
+            B1 = bpm_reading(SC)
             sBPM = s_pos[SC.ORD.BPM[nBPMs]]
             titleStr = ['Horizontal', 'Vertical']
             for nDim in range(2):

@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from pySC.utils.at_wrapper import atpass, findorbit6
-from pySC.core.beam import SCgenBunches
+from pySC.core.beam import generate_bunches
 
 SPEED_OF_LIGHT = 299792458
 
@@ -13,7 +13,7 @@ def SCplotPhaseSpace(SC, ord=np.zeros(1, dtype=int), customBunch=[], nParticles=
     else:
         if nParticles is None:
             nParticles = SC.INJ.nParticles
-        Zin = SCgenBunches(SC, nParticles=nParticles)
+        Zin = generate_bunches(SC, nParticles=nParticles)
     if nTurns is None:
         nTurns = SC.INJ.nTurns
 

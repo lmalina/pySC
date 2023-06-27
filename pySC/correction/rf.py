@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit, fsolve
 
 from pySC.utils.at_wrapper import findorbit6
-from pySC.core.beam import SCgetBPMreading
+from pySC.core.beam import bpm_reading
 from pySC.core.lattice_setting import SCsetCavs2SetPoints
 from pySC.utils import logging_tools
 
@@ -128,7 +128,7 @@ def _sin_fit_fun(x, a, b, c):
 
 
 def _get_tbt_energy_shift(SC, min_turns=2):
-    bpm_readings = SCgetBPMreading(SC)
+    bpm_readings = bpm_reading(SC)
     x_reading = np.reshape(bpm_readings[0, :], (SC.INJ.nTurns, len(SC.ORD.BPM)))
     TBTdE = np.mean(x_reading - x_reading[0, :], axis=1)
     if len(TBTdE[~np.isnan(TBTdE)]) < min_turns:  # not enough data for linear fit

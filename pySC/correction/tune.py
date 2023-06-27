@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 
-from pySC.core.beam import SCgetBeamTransmission, plot_transmission
+from pySC.core.beam import beam_transmission, plot_transmission
 from pySC.core.lattice_setting import SCsetMags2SetPoints
 from pySC.utils import logging_tools
 
@@ -25,7 +25,7 @@ def tune_scan(SC, quad_ords, rel_quad_changes, target=1, n_points=60, do_plot=Fa
     for q1, q2 in inds.T:
         q_setpoints = np.hstack((np.ones(nq[0]) * rel_quad_changes[0][q1], np.ones(nq[1]) * rel_quad_changes[1][q2]))
         SC = SCsetMags2SetPoints(SC, ords, False, 1, q_setpoints, method='rel')
-        max_turns[q1, q2], lost_fraction = SCgetBeamTransmission(SC, nParticles=nParticles, nTurns=nTurns)
+        max_turns[q1, q2], lost_fraction = beam_transmission(SC, nParticles=nParticles, nTurns=nTurns)
         transmission[q1, q2, :] = 1 - lost_fraction
         SC = SCsetMags2SetPoints(SC, ords, False, 1, 1 / q_setpoints, method='rel')
 

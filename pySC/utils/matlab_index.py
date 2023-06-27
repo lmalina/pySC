@@ -14,8 +14,7 @@ import numpy as np
 from at import Lattice
 from numpy import ndarray
 
-from pySC.core.beam import SCgetBPMreading as bpm_reading, SCgenBunches as generate_bunches
-from pySC.core.beam import SCgetBeamTransmission as beam_transmission
+from pySC.core.beam import beam_transmission, bpm_reading, generate_bunches
 from pySC.core.classes import SimulatedComissioning
 from pySC.core.lattice_setting import SCsetCavs2SetPoints as cavity_setpoints, SCsetMags2SetPoints as magnet_setpoints, \
     SCsetCMs2SetPoints as cm_setpoints, SCsetMultipoles as multipole_setpoints, SCgetCMSetPoints as get_cm_setpoints, \
@@ -106,11 +105,11 @@ def SCgenBunches(SC: SimulatedComissioning) -> ndarray:
 
 def SCgetBeamTransmission(SC: SimulatedComissioning, /, *, nParticles: int = None, nTurns: int = None,
                           plotFlag: bool = False, verbose: bool = False) -> Tuple[int, ndarray]:
-    return beam_transmission(SC, nParticles, nTurns=nTurns, do_plot=plotFlag)
+    return beam_transmission(SC, nParticles, nTurns=nTurns, plot=plotFlag)
 
 
 def SCgetBPMreading(SC, /, *, BPMords=None):
-    return bpm_reading(SC, BPMords=BPMords)
+    return bpm_reading(SC, bpm_ords=BPMords)
 
 
 def SCgetCMSetPoints(SC: SimulatedComissioning, CMords: ndarray, nDim: int) -> ndarray:

@@ -5,7 +5,7 @@ from pySC.utils.at_wrapper import atloco
 from pySC.core.classes import SimulatedComissioning
 from pySC.correction.orbit_trajectory import SCfeedbackFirstTurn, SCfeedbackStitch, SCfeedbackRun, SCfeedbackBalance, \
     SCpseudoBBA
-from pySC.core.beam import SCgetBPMreading, SCgetBeamTransmission
+from pySC.core.beam import bpm_reading, beam_transmission
 from pySC.correction.tune import tune_scan
 from pySC.lattice_properties.response_model import SCgetModelRM, SCgetModelDispersion
 from pySC.utils.sc_tools import SCgetOrds, SCgetPinv
@@ -117,7 +117,7 @@ if __name__ == "__main__":
     SC.INJ.nShots = 1
     SC.INJ.trackMode = 'TBT'
     eps = 5E-4  # Noise level
-    SCgetBPMreading(SC)
+    bpm_reading(SC)
     SC = SCfeedbackFirstTurn(SC, Minv1)
 
     SC.INJ.nTurns = 2
@@ -149,7 +149,7 @@ if __name__ == "__main__":
 
     # Plot phasespace after RF correction
     SCplotPhaseSpace(SC, nParticles=10, nTurns=100)
-    [maxTurns, lostCount] = SCgetBeamTransmission(SC, nParticles=100, nTurns=10)
+    [maxTurns, lostCount] = beam_transmission(SC, nParticles=100, nTurns=10)
 
     # Performing pseudo-BBA
     quadOrds = np.tile(SCgetOrds(SC.RING, 'QF|QD'), (2,1))
@@ -167,14 +167,14 @@ if __name__ == "__main__":
             CUR = SCfeedbackRun(SC, MinvCO, target=0, maxsteps=50, scaleDisp=1E8)
         except RuntimeError:
             break
-        B0rms = np.sqrt(np.mean(np.square(SCgetBPMreading(SC)), axis=1))
-        Brms = np.sqrt(np.mean(np.square(SCgetBPMreading(CUR)), axis=1))
+        B0rms = np.sqrt(np.mean(np.square(bpm_reading(SC)), axis=1))
+        Brms = np.sqrt(np.mean(np.square(bpm_reading(CUR)), axis=1))
         if np.mean(B0rms) < np.mean(Brms):
             break
         SC = CUR
     SC.RING = SCcronoff(SC.RING, 'cavityon')
     SCplotPhaseSpace(SC, nParticles=10, nTurns=1000)
-    [maxTurns, lostCount] = SCgetBeamTransmission(SC, nParticles=100, nTurns=200, do_plot=True)
+    [maxTurns, lostCount] = beam_transmission(SC, nParticles=100, nTurns=200, do_plot=True)
     SC, _, _, _ = tune_scan(SC, np.vstack((SCgetOrds(SC.RING, 'QF'), SCgetOrds(SC.RING, 'QD'))),
                             np.outer(np.ones(2), 1 + np.linspace(-0.01, 0.01, 51)), do_plot=False, nParticles=100,
                             nTurns=200)
