@@ -4,7 +4,7 @@ from numpy.testing import assert_equal
 from pySC.core.beam import bpm_reading, all_elements_reading, beam_transmission, generate_bunches
 from pySC.utils.sc_tools import SCgetOrds
 from pySC.core.classes import SimulatedComissioning
-
+from tests.test_at_wrapper import at_lattice
 
 def test_beam_transmission_basic(sc):
     max_turns, lost_fraction = beam_transmission(sc)
