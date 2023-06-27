@@ -15,6 +15,21 @@ LOGGER = logging_tools.get_logger(__name__)
 
 
 def bpm_reading(SC: SimulatedComissioning, bpm_ords: ndarray = None) -> ndarray:
+    """
+    Calculates BPM readings with current injection setup `SC.INJ` and included all BPM uncertainties.
+    Included uncertainties are offsets, rolls, calibration errors, and position noise.
+    When the beam is lost following `SC.INJ.beamLostAt` criteria with sum signal errors included,
+    the readings are NaN.
+    If SC.plot is True the reading is plotted.
+
+    Args:
+        SC: SimulatedComissioning instance
+        bpm_ords: array of element indices of registered BPMs for which to calculate readings
+            (for convenience, otherwise `SC.ORD.BPM` is used)
+
+    Returns:
+        Array of horizontal and vertical BPM readings (2, T x B) for T turns and B BPMs
+    """
     all_bpm_orbits_4d = np.full((2, len(SC.ORD.BPM), SC.INJ.nTurns, SC.INJ.nShots), np.nan)
     for shot_num in range(SC.INJ.nShots):
         tracking_4d = _tracking(SC, SC.ORD.BPM)
@@ -35,6 +50,20 @@ def bpm_reading(SC: SimulatedComissioning, bpm_ords: ndarray = None) -> ndarray:
 
 
 def all_elements_reading(SC: SimulatedComissioning) -> Tuple[ndarray, ndarray]:
+    """
+    Calculates horizontal and vertical positions with current injection setup `SC.INJ`.
+    Returns the measured BPM positions at all BPMs as well as true positions at all elements.
+    If SC.plot is True the reading is plotted.
+
+    Args:
+        SC: SimulatedComissioning instance
+
+    Returns:
+        Array of all horizontal and vertical BPM readings (2, T x B) for T turns and B BPMs
+
+        Array of all horizontal and vertical positions at all elements
+        (2, P, B, T, S) for P particles B BPMs, T turns and S shots
+    """
     n_refs = len(SC.RING) + 1
     all_readings_5d = np.full((2, SC.INJ.nParticles, n_refs, SC.INJ.nTurns, SC.INJ.nShots), np.nan)
     all_bpm_orbits_4d = np.full((2, len(SC.ORD.BPM), SC.INJ.nTurns, SC.INJ.nShots), np.nan)
@@ -52,6 +81,23 @@ def all_elements_reading(SC: SimulatedComissioning) -> Tuple[ndarray, ndarray]:
 
 def beam_transmission(SC: SimulatedComissioning, nParticles: int = None, nTurns: int = None,
                       do_plot: bool = False) -> Tuple[int, ndarray]:
+    """
+    Calculates the turn-by-turn beam transmission with current injection setup as defined in `SC.INJ`.
+
+    Args:
+        SC: SimulatedComissioning instance
+        nParticles: Number of particles to track
+            (for convenience, otherwise `SC.INJ.nParticles` is used)
+        nTurns: Number of turns to track
+            (for convenience, otherwise `SC.INJ.nTurns` is used)
+        do_plot: If True, plots beam transmission
+
+    Returns:
+        Number of survived turns following `SC.INJ.beamLostAt` criteria
+
+        Array of accumulated lost fraction of beam (turn-by-turn)
+
+    """
     if nParticles is None:
         nParticles = SC.INJ.nParticles
     if nTurns is None:
@@ -70,6 +116,22 @@ def beam_transmission(SC: SimulatedComissioning, nParticles: int = None, nTurns:
 
 
 def generate_bunches(SC: SimulatedComissioning, nParticles=None) -> ndarray:
+    """
+    Generates bunches according to the current injection setup as defined in `SC.INJ`.
+    The random injection error is added to the mean injected beam trajectory for each bunch.
+    Either a single particle (nParticles=1) is generated at the bunch centroid,
+    or individual particles are randomly distributed around the bunch centroid
+    using the beam sigma matrix.
+    A function `SC.INJ.postFun` is applied to the generated coordinates.
+
+    Args:
+        SC: SimulatedComissioning instance
+        nParticles: Number of particles to generate
+            (for convenience, otherwise `SC.INJ.nParticles` is used)
+
+    Returns:
+        Array of particle coordinates (6, nParticles)
+    """
     if nParticles is None:
         nParticles = SC.INJ.nParticles
     Z = np.tile(np.transpose(SC.INJ.randomInjectionZ * SCrandnc(2, (1, 6)) + SC.INJ.Z0), nParticles)
@@ -123,7 +185,7 @@ def _tracking(SC: SimulatedComissioning, refs: ndarray) -> ndarray:
 
 
 def _reshape_3d_to_matlab_like_2d(mean_bpm_orbits_3d: ndarray) -> ndarray:
-    """Organising the array the same way as in matlab version 2 x (nturns x nbpms) sorted by 'arrival time'."""
+    """Organising the array the same way as in matlab version (2, nturns x nbpms) sorted by 'arrival time'."""
     return np.transpose(mean_bpm_orbits_3d, axes=(0, 2, 1)).reshape((2, np.prod(mean_bpm_orbits_3d.shape[1:])))
 
 
