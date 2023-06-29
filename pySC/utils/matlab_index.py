@@ -16,9 +16,8 @@ from numpy import ndarray
 
 from pySC.core.beam import beam_transmission, bpm_reading, generate_bunches
 from pySC.core.classes import SimulatedComissioning
-from pySC.core.lattice_setting import SCsetCavs2SetPoints as cavity_setpoints, SCsetMags2SetPoints as magnet_setpoints, \
-    SCsetCMs2SetPoints as cm_setpoints, SCsetMultipoles as multipole_setpoints, SCgetCMSetPoints as get_cm_setpoints, \
-    SCcronoff as cronoff
+from pySC.core.lattice_setting import (set_cavity_setpoints, set_magnet_setpoints,
+    set_cm_setpoints, set_multipole_errors, get_cm_setpoints, SCcronoff as cronoff)
 from pySC.correction.injection_fit import SCfitInjectionZ as fit_injection
 from pySC.correction.loco_lib import SClocoLib as loco_lib
 from pySC.correction.orbit_trajectory import SCfeedbackFirstTurn as first_turn, SCfeedbackStitch as stitch, \
@@ -117,7 +116,7 @@ def SCgetCMSetPoints(SC: SimulatedComissioning, CMords: ndarray, nDim: int) -> n
                 "Transition concerns nDim 1 -> horizontal, 2-> vertical.")
     if nDim not in (1, 2):
         raise ValueError("Function expects nDim 1 (hor) or 2 (ver)")
-    return get_cm_setpoints(SC, CMords=CMords, skewness=(nDim == 2))
+    return get_cm_setpoints(SC, ords=CMords, skewness=(nDim == 2))
 
 
 def SCgetCOD(SC, /, *, ords=None, plot=False):
@@ -258,7 +257,7 @@ def SCscaleCircumference(RING, circ, /, *, mode='abs'):
 
 def SCsetCavs2SetPoints(SC: SimulatedComissioning, CAVords: ndarray, type: str, setpoints: ndarray, /, *,
                         mode: str = 'abs') -> SimulatedComissioning:
-    return cavity_setpoints(SC, CAVords=CAVords, type=type, setpoints=setpoints, method=mode)
+    return set_cavity_setpoints(SC, ords=CAVords, type=type, setpoints=setpoints, method=mode)
 
 
 def SCsetCMs2SetPoints(SC: SimulatedComissioning, CMords: ndarray, setpoints: ndarray, nDim: int, /, *,
@@ -267,7 +266,7 @@ def SCsetCMs2SetPoints(SC: SimulatedComissioning, CMords: ndarray, setpoints: nd
                 "Transition concerns nDim 1 -> horizontal, 2-> vertical.")
     if nDim not in (1, 2):
         raise ValueError("Function expects nDim 1 (hor) or 2 (ver)")
-    return cm_setpoints(SC, CMords=CMords, setpoints=setpoints, skewness=(nDim == 2), method=mode)
+    return set_cm_setpoints(SC, ords=CMords, setpoints=setpoints, skewness=(nDim == 2), method=mode)
 
 
 def SCsetMags2SetPoints(SC: SimulatedComissioning, MAGords: ndarray, type: int, order: int, setpoints: ndarray, /, *,
@@ -278,8 +277,8 @@ def SCsetMags2SetPoints(SC: SimulatedComissioning, MAGords: ndarray, type: int, 
     if type not in (1, 2):
         raise ValueError("Function expects type 1 (skew) or 2 (normal)")
 
-    return magnet_setpoints(SC, MAGords=MAGords, skewness=(type == 1), order=order - 1, setpoints=setpoints,
-                            method=method, dipCompensation=dipCompensation)
+    return set_magnet_setpoints(SC, ords=MAGords, skewness=(type == 1), order=order - 1, setpoints=setpoints,
+                                method=method, dipole_compensation=dipCompensation)
 
 
 def SCsetMultipoles(RING, ords: ndarray, AB, /, *, method: str = 'rnd', order: int = None, type: int = None):
@@ -292,7 +291,7 @@ def SCsetMultipoles(RING, ords: ndarray, AB, /, *, method: str = 'rnd', order: i
     if type is not None:
         if type not in (1, 2):
             raise ValueError("Function expects type 1 (skew) or 2 (normal)")
-    return multipole_setpoints(RING=RING, ords=ords, BA=np.roll(AB, 1, axis=1), method=method,
+    return set_multipole_errors(RING=RING, ords=ords, BA=np.roll(AB, 1, axis=1), method=method,
                                order=None if order is None else order - 1,
                                skewness=None if order is None else (type == 1))
 

@@ -4,7 +4,7 @@ from scipy.optimize import curve_fit, fsolve
 
 from pySC.utils.at_wrapper import findorbit6
 from pySC.core.beam import bpm_reading
-from pySC.core.lattice_setting import SCsetCavs2SetPoints
+from pySC.core.lattice_setting import set_cavity_setpoints
 from pySC.utils import logging_tools
 
 LOGGER = logging_tools.get_logger(__name__)
@@ -26,9 +26,9 @@ def SCsynchPhaseCorrection(SC, cavOrd=None, nSteps=15, plotResults=False, plotPr
 
     # Main loop
     for nL in range(len(l_test_vec)):
-        SC = SCsetCavs2SetPoints(SC, cavOrd, 'TimeLag', np.array([l_test_vec[nL]]), 'add')
+        SC = set_cavity_setpoints(SC, cavOrd, 'TimeLag', np.array([l_test_vec[nL]]), 'add')
         bpm_shift[nL], TBTdE = _get_tbt_energy_shift(SC)
-        SC = SCsetCavs2SetPoints(SC, cavOrd, 'TimeLag', -np.array([l_test_vec[nL]]), 'add')
+        SC = set_cavity_setpoints(SC, cavOrd, 'TimeLag', -np.array([l_test_vec[nL]]), 'add')
         if plotProgress:
             _fun_plot_progress(TBTdE, bpm_shift, l_test_vec, nL, phase=True)
 
@@ -54,7 +54,7 @@ def SCsynchPhaseCorrection(SC, cavOrd=None, nSteps=15, plotResults=False, plotPr
         raise RuntimeError('SCsynchPhaseCorrection: ERROR (NaN phase)')
 
     initial = _fold_phase((findorbit6(SC.RING)[0][5] - SC.INJ.Z0[5]) / lamb, lamb)
-    SC = SCsetCavs2SetPoints(SC, cavOrd, 'TimeLag', delta_phi, 'add')
+    SC = set_cavity_setpoints(SC, cavOrd, 'TimeLag', delta_phi, 'add')
     final = _fold_phase((findorbit6(SC.RING)[0][5] - SC.INJ.Z0[5]) / lamb, lamb)
     LOGGER.debug(f'Time lag correction step: {delta_phi[0]:.3f} m\n')
     LOGGER.debug(f'Static phase error corrected from {initial*360:.0f} deg to {final*360:.1f} deg')
@@ -88,9 +88,9 @@ def SCsynchEnergyCorrection(SC, cavOrd=None, f_range=(-1E3, 1E3), nSteps=15, min
 
     # Main loop
     for nE in range(len(f_test_vec)):  # TODO later this does not have to set value back and forth in each step
-        SC = SCsetCavs2SetPoints(SC, cavOrd, 'Frequency', np.array([f_test_vec[nE]]), 'add')
+        SC = set_cavity_setpoints(SC, cavOrd, 'Frequency', np.array([f_test_vec[nE]]), 'add')
         [BPM_shift[nE], TBTdE] = _get_tbt_energy_shift(SC, minTurns)
-        SC = SCsetCavs2SetPoints(SC, cavOrd, 'Frequency', -np.array([f_test_vec[nE]]), 'add')
+        SC = set_cavity_setpoints(SC, cavOrd, 'Frequency', -np.array([f_test_vec[nE]]), 'add')
         if plotProgress:
             _fun_plot_progress(TBTdE, BPM_shift, f_test_vec, nE, phase=False)
 
@@ -107,7 +107,7 @@ def SCsynchEnergyCorrection(SC, cavOrd=None, f_range=(-1E3, 1E3), nSteps=15, min
         raise RuntimeError('SCsynchEnergyCorrection: ERROR (NaN frequency)')
 
     initial = SC.INJ.Z0[4] - findorbit6(SC.RING)[0][4]
-    SC = SCsetCavs2SetPoints(SC, cavOrd, 'Frequency', np.array([delta_f]), 'add')
+    SC = set_cavity_setpoints(SC, cavOrd, 'Frequency', np.array([delta_f]), 'add')
     final = SC.INJ.Z0[4] - findorbit6(SC.RING)[0][4]
     LOGGER.debug(f'Frequency correction step: {1E-3 * delta_f:.2f} kHz')
     LOGGER.debug(f'Energy error corrected from {1E2*initial:.2f}% to {1E2*final:.2f}%')

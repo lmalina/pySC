@@ -12,85 +12,86 @@ LOGGER = logging_tools.get_logger(__name__)
 VALID_METHODS = ("abs", "rel", "add")
 
 
-def SCsetCavs2SetPoints(SC: SimulatedComissioning, CAVords: ndarray, type: str, setpoints: ndarray, method: str ='abs') -> SimulatedComissioning:
-    setpoints = _check_input_and_setpoints(method, CAVords, setpoints)
+def set_cavity_setpoints(SC: SimulatedComissioning, ords: ndarray, type: str, setpoints: ndarray, method: str = 'abs') -> SimulatedComissioning:
+    new_setpoints = _check_input_and_setpoints(method, ords, setpoints)
     setpoint_str = f"{type}SetPoint"
-    for i, ord in enumerate(CAVords):
-        new_setpoint = setpoints[i]
+    for i, ord in enumerate(ords):
+        new_setpoint = new_setpoints[i]
         if method == 'rel':
             new_setpoint *= getattr(SC.RING[ord], setpoint_str)
         if method == 'add':
             new_setpoint += getattr(SC.RING[ord], setpoint_str)
         setattr(SC.RING[ord], setpoint_str, new_setpoint)
-    SC.update_cavities(CAVords)
+    SC.update_cavities(ords)
     return SC
 
 
-def SCgetCMSetPoints(SC: SimulatedComissioning, CMords: ndarray, skewness: bool) -> ndarray:
-    setpoints = np.nan*np.ones(len(CMords))
+def get_cm_setpoints(SC: SimulatedComissioning, ords: ndarray, skewness: bool) -> ndarray:
+    setpoints = np.nan*np.ones(len(ords))
     order = 0
     ndim = 1 if skewness else 0
-    for i, ord in enumerate(CMords):
+    for i, ord in enumerate(ords):
         if SC.RING[ord].PassMethod == 'CorrectorPass':
-            normBy = np.array([1, 1])
+            norm_by = np.array([1, 1])
         else:
-            normBy = np.array([-1, 1]) * SC.RING[ord].Length  # positive setpoint -> positive kick -> negative horizontal field
+            norm_by = np.array([-1, 1]) * SC.RING[ord].Length  # positive setpoint -> positive kick -> negative horizontal field
         if skewness:
-            setpoints[i] = SC.RING[ord].SetPointA[order] * normBy[ndim]
+            setpoints[i] = SC.RING[ord].SetPointA[order] * norm_by[ndim]
         else:
-            setpoints[i] = SC.RING[ord].SetPointB[order] * normBy[ndim]
+            setpoints[i] = SC.RING[ord].SetPointB[order] * norm_by[ndim]
     return setpoints
 
-def SCsetCMs2SetPoints(SC: SimulatedComissioning, CMords: ndarray, setpoints: ndarray, skewness: bool, method: str = 'abs') -> Tuple[SimulatedComissioning, ndarray]:
+def set_cm_setpoints(SC: SimulatedComissioning, ords: ndarray, setpoints: ndarray, skewness: bool, method: str = 'abs') -> Tuple[SimulatedComissioning, ndarray]:
     # skewness: old 2 -> True, 1 -> False
-    new_setpoints = _check_input_and_setpoints(method, CMords, setpoints)
+    new_setpoints = _check_input_and_setpoints(method, ords, setpoints)
     order = 0
     ndim = 1 if skewness else 0
-    for i, ord in enumerate(CMords):
+    for i, ord in enumerate(ords):
         if SC.RING[ord].PassMethod == 'CorrectorPass':
-            normBy = np.array([1, 1])
+            norm_by = np.array([1, 1])
         else:
-            normBy = np.array([-1, 1]) * SC.RING[ord].Length  # positive setpoint -> positive kick -> negative horizontal field
+            norm_by = np.array([-1, 1]) * SC.RING[ord].Length  # positive setpoint -> positive kick -> negative horizontal field
         if method == 'rel':
-            new_setpoints[i] *= (SC.RING[ord].SetPointA[order] if skewness else SC.RING[ord].SetPointB[order]) * normBy[ndim]
+            new_setpoints[i] *= (SC.RING[ord].SetPointA[order] if skewness else SC.RING[ord].SetPointB[order]) * norm_by[ndim]
         if method == 'add':
-            new_setpoints[i] += (SC.RING[ord].SetPointA[order] if skewness else SC.RING[ord].SetPointB[order]) * normBy[ndim]
+            new_setpoints[i] += (SC.RING[ord].SetPointA[order] if skewness else SC.RING[ord].SetPointB[order]) * norm_by[ndim]
 
         if hasattr(SC.RING[ord], 'CMlimit') and abs(new_setpoints[i]) > abs(SC.RING[ord].CMlimit[ndim]):
             LOGGER.info(f'CM (ord: {ord} / dim: {ndim}) is clipping')
             new_setpoints[i] = np.sign(new_setpoints[i]) * SC.RING[ord].CMlimit[ndim]
         if skewness:
-            SC.RING[ord].SetPointA[order] = new_setpoints[i] / normBy[ndim]
+            SC.RING[ord].SetPointA[order] = new_setpoints[i] / norm_by[ndim]
         else:
-            SC.RING[ord].SetPointB[order] = new_setpoints[i] / normBy[ndim]
-    SC.update_magnets(CMords)
+            SC.RING[ord].SetPointB[order] = new_setpoints[i] / norm_by[ndim]
+    SC.update_magnets(ords)
     return SC, new_setpoints
 
 
-def SCsetMags2SetPoints(SC: SimulatedComissioning, MAGords: ndarray, skewness: bool, order: int, setpoints: ndarray, method: str = 'abs', dipCompensation: bool = False) -> SimulatedComissioning:
+def set_magnet_setpoints(SC: SimulatedComissioning, ords: ndarray, skewness: bool, order: int, setpoints: ndarray,
+                         method: str = 'abs', dipole_compensation: bool = False) -> SimulatedComissioning:
     # skewness: old 2 -> False, 1 -> True , order decresed by 1
-    setpoints = _check_input_and_setpoints(method, MAGords, setpoints)
-    for i, ord in enumerate(MAGords):
+    new_setpoints = _check_input_and_setpoints(method, ords, setpoints)
+    for i, ord in enumerate(ords):
         if method == 'rel':
-            setpoints[i] *= SC.RING[ord].NomPolynomA[order] if skewness else SC.RING[ord].NomPolynomB[order]
+            new_setpoints[i] *= SC.RING[ord].NomPolynomA[order] if skewness else SC.RING[ord].NomPolynomB[order]
         if method == 'add':
-            setpoints[i] += SC.RING[ord].SetPointA[order] if skewness else SC.RING[ord].SetPointB[order]
+            new_setpoints[i] += SC.RING[ord].SetPointA[order] if skewness else SC.RING[ord].SetPointB[order]
         if skewness and order == 1:  # skew quad
-            if hasattr(SC.RING[ord], 'SkewQuadLimit') and abs(setpoints[i]) > abs(SC.RING[ord].SkewQuadLimit):
+            if hasattr(SC.RING[ord], 'SkewQuadLimit') and abs(new_setpoints[i]) > abs(SC.RING[ord].SkewQuadLimit):
                 LOGGER.info(f'SC:SkewLim \n Skew quadrupole (ord: {ord}) is clipping')
-                setpoints[i] = np.sign(setpoints[i]) * SC.RING[ord].SkewQuadLimit
+                new_setpoints[i] = np.sign(new_setpoints[i]) * SC.RING[ord].SkewQuadLimit
         # TODO should check CF magnets
-        if dipCompensation and order == 1:  # quad  # TODO check also skewness?
-            SC = _dipole_compensation(SC, ord, setpoints[i])
+        if dipole_compensation and order == 1:  # quad  # TODO check also skewness?
+            SC = _dipole_compensation(SC, ord, new_setpoints[i])
         if skewness:
-            SC.RING[ord].SetPointA[order] = setpoints[i]
+            SC.RING[ord].SetPointA[order] = new_setpoints[i]
         else:
-            SC.RING[ord].SetPointB[order] = setpoints[i]
-    SC.update_magnets(MAGords)
+            SC.RING[ord].SetPointB[order] = new_setpoints[i]
+    SC.update_magnets(ords)
     return SC
 
 
-def SCsetMultipoles(RING, ords: ndarray, BA, method: str = 'rnd', order: int = None, skewness: bool = None):
+def set_multipole_errors(RING, ords: ndarray, BA, method: str = 'rnd', order: int = None, skewness: bool = None):
     allowed_methods = ("sys", "rnd")
     if method not in allowed_methods:
         raise ValueError(f'Unsupported multipole method {method}. Allowed are {allowed_methods}.')
@@ -158,7 +159,7 @@ def _dipole_compensation(SC, ord, setpoint):
         return SC
     idealKickDifference = ((setpoint - (SC.RING[ord].SetPointB[1] - SC.RING[ord].NomPolynomB[1])) /
                            SC.RING[ord].NomPolynomB[1] - 1) * SC.RING[ord].BendingAngle / SC.RING[ord].Length
-    SC, _ = SCsetCMs2SetPoints(SC, ord, idealKickDifference * SC.RING[ord].Length, skewness=False, method='add')
+    SC, _ = set_cm_setpoints(SC, ord, idealKickDifference * SC.RING[ord].Length, skewness=False, method='add')
     return SC
 
 
@@ -169,4 +170,4 @@ def _check_input_and_setpoints(method, ords, setpoints):
         raise ValueError(f'Setpoints have to have length of 1 or matching to the length or ordinates.')
     if len(setpoints) == 1:
         return np.repeat(setpoints, len(ords))
-    return setpoints[:]
+    return setpoints.copy()

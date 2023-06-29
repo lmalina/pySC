@@ -12,7 +12,7 @@ from pySC.utils.sc_tools import SCgetOrds, SCgetPinv
 from pySC.correction.loco_lib import SClocoLib
 from pySC.plotting.SCplotPhaseSpace import SCplotPhaseSpace
 from pySC.plotting.SCplotSupport import SCplotSupport
-from pySC.core.lattice_setting import SCsetMags2SetPoints, SCcronoff
+from pySC.core.lattice_setting import set_magnet_setpoints, SCcronoff
 from pySC.correction.rf import SCsynchPhaseCorrection, SCsynchEnergyCorrection
 from pySC.utils import logging_tools
 
@@ -107,7 +107,7 @@ if __name__ == "__main__":
 
     SC.RING = SCcronoff(SC.RING, 'cavityoff')
     sextOrds = SCgetOrds(SC.RING, 'SF|SD')
-    SC = SCsetMags2SetPoints(SC, sextOrds, False, 2, np.array([0.0]), method='abs')
+    SC = set_magnet_setpoints(SC, sextOrds, False, 2, np.array([0.0]), method='abs')
     RM1 = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, nTurns=1)
     RM2 = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, nTurns=2)
     Minv1 = SCgetPinv(RM1, alpha=50)
@@ -127,7 +127,7 @@ if __name__ == "__main__":
 
     # Turning on the sextupoles
     for S in np.linspace(0.1, 1, 5):
-        SC = SCsetMags2SetPoints(SC, sextOrds, False, 2, np.array([S]), method='rel')
+        SC = set_magnet_setpoints(SC, sextOrds, False, 2, np.array([S]), method='rel')
         try:
             SC = SCfeedbackBalance(SC, Minv2, maxsteps=32, eps=eps)
         except RuntimeError:
