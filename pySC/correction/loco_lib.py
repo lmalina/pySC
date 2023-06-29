@@ -6,7 +6,7 @@ from pySC.correction.orbit_trajectory import SCfeedbackRun
 from pySC.lattice_properties.response_model import SCgetModelRM
 from pySC.utils.sc_tools import SCgetPinv
 from pySC.lattice_properties.response_measurement import SCgetRespMat, SCgetDispersion
-from pySC.core.lattice_setting import SCsetMags2SetPoints
+from pySC.core.lattice_setting import set_magnet_setpoints
 from pySC.utils import logging_tools
 
 LOGGER = logging_tools.get_logger(__name__)
@@ -129,9 +129,9 @@ def applyLatticeCorrection(SC, FitParameters, dipCompensation=True, damping=1):
             setpoint = FitParameters.OrigValues[nGroup] + damping * (
                     FitParameters.IdealValues[nGroup] - FitParameters.Values[nGroup])
             if field == 'SetPointB':  # Normal quadrupole
-                SC = SCsetMags2SetPoints(SC, ord, False, 1, setpoint, dipCompensation=dipCompensation)
+                SC = set_magnet_setpoints(SC, ord, False, 1, setpoint, dipole_compensation=dipCompensation)
             elif field == 'SetPointA':  # Skew quadrupole
-                SC = SCsetMags2SetPoints(SC, ord, True, 1, setpoint)
+                SC = set_magnet_setpoints(SC, ord, True, 1, setpoint)
     SC = SC.update_magnets(SC.ORD.Magnet)
     return SC
 
@@ -204,7 +204,7 @@ def fitChromaticity(SC, sOrds, targetChrom=[], InitStepSize=[2, 2], TolX=1E-4, T
     SC0 = SC
     if len(sepTunesWithOrds) > 0 and len(sepTunesDeltaK) > 0:
         for nFam in range(len(sepTunesWithOrds)):
-            SC = SCsetMags2SetPoints(SC, sepTunesWithOrds[nFam], False, 1, sepTunesDeltaK[nFam], method='add')  # TODO quads here?
+            SC = set_magnet_setpoints(SC, sepTunesWithOrds[nFam], False, 1, sepTunesDeltaK[nFam], method='add')  # TODO quads here?
     LOGGER.debug(f'Fitting chromaticities from {atlinopt(SC.RING, 0, [])[2]} to {targetChrom}.')  # first two elements
     SP0 = np.zeros((len(sOrds), len(sOrds[0])))  # TODO can the lengts vary
     for nFam in range(len(sOrds)):
@@ -254,5 +254,5 @@ def getLatProps(SC, FitInteger):
 
 def applySetpoints(SC, ords, setpoints, SP0):
     for nFam in range(len(ords)):
-        SC = SCsetMags2SetPoints(SC, ords[nFam], False, 1, setpoints[nFam] + SP0[nFam], method='abs', dipCompensation=True)
+        SC = set_magnet_setpoints(SC, ords[nFam], False, 1, setpoints[nFam] + SP0[nFam], method='abs', dipole_compensation=True)
     return SC

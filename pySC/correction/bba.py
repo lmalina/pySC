@@ -5,7 +5,7 @@ from pySC.utils.at_wrapper import findspos, atgetfieldvalues
 from pySC.correction.orbit_trajectory import SCfeedbackRun
 from pySC.core.beam import bpm_reading, all_elements_reading
 from pySC.utils.sc_tools import SCrandnc
-from pySC.core.lattice_setting import SCsetCMs2SetPoints, SCsetMags2SetPoints, SCgetCMSetPoints
+from pySC.core.lattice_setting import set_cm_setpoints, set_magnet_setpoints, get_cm_setpoints
 from pySC.utils import logging_tools
 from pySC.core.classes import DotDict
 
@@ -61,7 +61,7 @@ def SCBBA(SC, bpm_ords, mag_ords, **kwargs):
             BPMind = np.where(bpm_ords[nDim, jBPM] == SC.ORD.BPM)[0][0]
             mOrd = mag_ords[nDim, jBPM]
             if par.switchOffSext:
-                SC = SCsetMags2SetPoints(SC, mOrd, skewness=False, order=2, setpoints=np.zeros(1), method='abs')
+                SC = set_magnet_setpoints(SC, mOrd, skewness=False, order=2, setpoints=np.zeros(1), method='abs')
                 SC = SCfeedbackRun(SC, par.RMstruct.MinvCO, BPMords=par.RMstruct.BPMords, CMords=par.RMstruct.CMords,
                                    target=0, maxsteps=50, scaleDisp=par.RMstruct.scaleDisp, eps=1E-6)
             if par.mode == 'ORB':
@@ -131,12 +131,12 @@ def _data_measurement(SC, mOrd, BPMind, jBPM, nDim, par, varargin):
     if par.plotLines:
         f, ax = plt.subplots(nrows=len(par.magSPvec[nDim, jBPM]), num=99)
     for nQ, setpointQ in enumerate(par.magSPvec[nDim, jBPM]):
-        SC = SCsetMags2SetPoints(SC, mOrd, par.skewQuadrupole, par.magOrder, setpointQ, method=par.magSPflag,
-                                 dipCompensation=par.dipCompensation)
+        SC = set_magnet_setpoints(SC, mOrd, par.skewQuadrupole, par.magOrder, setpointQ, method=par.magSPflag,
+                                  dipole_compensation=par.dipCompensation)
         for nKick in range(nMsteps):
             if par.mode == 'ORB':
                 for nD in range(2):
-                    SC, _ = SCsetCMs2SetPoints(SC, CMords[nD], CMvec[nD][nKick, :], bool(nD), method='abs')
+                    SC, _ = set_cm_setpoints(SC, CMords[nD], CMvec[nD][nKick, :], bool(nD), method='abs')
             else:
                 SC.INJ.Z0[2 * nDim:2 * nDim + 2] = initialZ0[2 * nDim:2 * nDim + 2] + kickVec[:, nKick]
             B = bpm_reading(SC)
@@ -269,7 +269,7 @@ def _scan_phase_advance(SC, BPMind, nDim, kickVec0, par):
     for nQ in range(len(qVec)):
         LOGGER.debug(f'BBA-BPM range to small, try to change phase advance with quad ord {par.quadOrdPhaseAdvance} '
                      f'to {qVec[nQ]:.2f} of nom. SP.')
-        SC = SCsetMags2SetPoints(SC, mOrd, False, 1, qVec[nQ], method='rel', dipCompensation=True)
+        SC = set_magnet_setpoints(SC, mOrd, False, 1, qVec[nQ], method='rel', dipole_compensation=True)
         kickVec, BPMrange = _scale_injection_to_reach_bpm(SC, BPMind, nDim, kickVec0)
 
         if BPMrange >= par.BBABPMtarget:
@@ -281,9 +281,9 @@ def _scan_phase_advance(SC, BPMind, nDim, kickVec0, par):
     if BPMrange < np.max(allBPMRange):
         LOGGER.debug(f'Changing phase advance of quad with ord {mOrd} NOT succesfull, '
                      f'returning to best value with BBA-BPM range = {1E6 * max(allBPMRange):.0f}um.')
-        return SCsetMags2SetPoints(SC, mOrd, False, 1, np.max(qVec), method='rel', dipCompensation=True), kickVec
+        return set_magnet_setpoints(SC, mOrd, False, 1, np.max(qVec), method='rel', dipole_compensation=True), kickVec
     LOGGER.debug(f'Changing phase advance of quad with ord {mOrd} NOT succesfull, returning to initial setpoint.')
-    return SCsetMags2SetPoints(SC, mOrd, False, 1, q0, method='abs', dipCompensation=True), kickVec
+    return set_magnet_setpoints(SC, mOrd, False, 1, q0, method='abs', dipole_compensation=True), kickVec
 
 
 def _get_orbit_bump(SC, mOrd, BPMord, nDim, par):
@@ -306,8 +306,8 @@ def _get_orbit_bump(SC, mOrd, BPMord, nDim, par):
     CMvec = []
     factor = np.linspace(-1, 1, par.nSteps)
     for nDim in range(2):
-        vec0 = SCgetCMSetPoints(SC, CMords[nDim], skewness=bool(nDim))
-        vec1 = SCgetCMSetPoints(CUR, CMords[nDim], skewness=bool(nDim))
+        vec0 = get_cm_setpoints(SC, CMords[nDim], skewness=bool(nDim))
+        vec1 = get_cm_setpoints(CUR, CMords[nDim], skewness=bool(nDim))
         CMvec.append(vec0 + np.outer(factor, vec0 - vec1))
 
     return CMords, CMvec
