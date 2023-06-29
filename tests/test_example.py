@@ -13,10 +13,9 @@ from pySC.plotting.SCplotSupport import SCplotSupport
 from pySC.core.lattice_setting import set_magnet_setpoints, SCcronoff
 from pySC.correction.rf import SCsynchPhaseCorrection, SCsynchEnergyCorrection
 
-np.random.seed(1234567)
-
 
 def test_example(at_lattice):
+    np.random.seed(1234567)
     sc = SimulatedComissioning(at_lattice)
     sc.register_bpms(SCgetOrds(sc.RING, 'BPM'),
                      CalError=5E-2 * np.ones(2),
