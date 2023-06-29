@@ -12,7 +12,8 @@ from pySC.core.lattice_setting import set_magnet_setpoints, SCcronoff
 from pySC.correction.rf import SCsynchPhaseCorrection, SCsynchEnergyCorrection
 
 
-def test_example(at_lattice, numpy_seed):
+def test_example(at_lattice):
+    np.random.seed(1234567)
     sc = SimulatedComissioning(at_lattice)
     sc.register_bpms(SCgetOrds(sc.RING, 'BPM'),
                      CalError=5E-2 * np.ones(2),
@@ -119,7 +120,3 @@ def test_example(at_lattice, numpy_seed):
     max_turns, lost_count = beam_transmission(sc, nParticles=100, nTurns=200, plot=True)
     assert max_turns == 200
     assert lost_count[-1] == 0
-
-@pytest.fixture
-def numpy_seed():
-    np.random.seed(1234567)
