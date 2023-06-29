@@ -41,8 +41,8 @@ def SCsynchPhaseCorrection(SC, cavOrd=None, nSteps=15, plotResults=False, plotPr
         raise RuntimeError('Zero crossing not within data set.\n')
 
     # Fit sinusoidal function to data
-    param, param_cov = curve_fit(_sin_fit_fun, l_test_vec, bpm_shift, p0=[max(bpm_shift)-np.mean(bpm_shift), 3.14, np.mean(bpm_shift)])
-    sol = lambda x: _sin_fit_fun(x, param[0], param[1], param[2])
+    param, param_cov = curve_fit(_sin_fit_fun, l_test_vec/lamb, bpm_shift, p0=np.array([max(bpm_shift)-np.mean(bpm_shift), 3.14, np.mean(bpm_shift)]))
+    sol = lambda x: _sin_fit_fun(x/lamb, param[0], param[1], param[2])
 
     if not (max(sol(l_test_vec)) > 0 > min(sol(l_test_vec))):
         raise RuntimeError('Zero crossing not within fit function\n')
@@ -124,7 +124,7 @@ def SCsynchEnergyCorrection(SC, cavOrd=None, f_range=(-1E3, 1E3), nSteps=15, min
 
 
 def _sin_fit_fun(x, a, b, c):
-    return a * np.sin(np.pi * x + b) + c
+    return a * np.sin(2 * np.pi * x + b) + c
 
 
 def _get_tbt_energy_shift(SC, min_turns=2):

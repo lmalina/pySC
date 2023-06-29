@@ -35,7 +35,7 @@ def create_at_lattice() -> Lattice:
                        _marker('GirderStart'), BPM, qf, d2, d2, bend, d3, sd, d3, qd, d2, _marker('BPM'),
                        _marker('GirderEnd'), _marker('SectionEnd')], name='Simple FODO cell', energy=2.5E9)
     new_ring = at.Lattice(cell * 20)
-    rfc = at.RFCavity('RFCav', energy=2.5E9, voltage=2e6, frequency=149896228.99999985, harmonic_number=50, length=0)
+    rfc = at.RFCavity('RFCav', energy=2.5E9, voltage=2e6, frequency=500653404.8599995, harmonic_number=167, length=0)
     new_ring.insert(0, rfc)
     new_ring.enable_6d()
     new_ring.set_cavity_phase()
@@ -139,7 +139,7 @@ if __name__ == "__main__":
     SCplotPhaseSpace(SC, nParticles=10, nTurns=100)
 
     # RF cavity correction
-    SC.INJ.nTurns = 20
+    SC.INJ.nTurns = 5
     for nIter in range(2):
         SC = SCsynchPhaseCorrection(SC, nSteps=25, plotResults=False, plotProgress=False)
 
