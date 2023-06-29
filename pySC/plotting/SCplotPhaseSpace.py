@@ -66,4 +66,4 @@ def SCplotPhaseSpace(SC, ord=np.zeros(1, dtype=int), customBunch=[], nParticles=
     # plt.legend(pVec, legStr)
     # plt.colorbar()
     # c.set_label('Number of turns')
-    plt.show()
+    fig.show()

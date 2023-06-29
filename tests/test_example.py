@@ -8,8 +8,6 @@ from pySC.core.beam import bpm_reading, beam_transmission
 from pySC.correction.tune import tune_scan
 from pySC.lattice_properties.response_model import SCgetModelRM, SCgetModelDispersion
 from pySC.utils.sc_tools import SCgetOrds, SCgetPinv
-from pySC.plotting.SCplotPhaseSpace import SCplotPhaseSpace
-from pySC.plotting.SCplotSupport import SCplotSupport
 from pySC.core.lattice_setting import set_magnet_setpoints, SCcronoff
 from pySC.correction.rf import SCsynchPhaseCorrection, SCsynchEnergyCorrection
 
@@ -64,7 +62,6 @@ def test_example(at_lattice, numpy_seed):
     sc.RING[sc.ORD.Magnet[50]].EApertures = np.array([6E-3, 3E-3])
 
     sc.apply_errors()
-    SCplotSupport(sc)
 
     sc.RING = SCcronoff(sc.RING, 'cavityoff')
     sext_ords = SCgetOrds(sc.RING, 'SF|SD')
@@ -93,10 +90,9 @@ def test_example(at_lattice, numpy_seed):
 
     # RF cavity correction
     sc.INJ.nTurns = 5
-    sc = SCsynchPhaseCorrection(sc, nSteps=15, plotResults=True, plotProgress=True)
-    sc = SCsynchEnergyCorrection(sc, f_range=4E3 * np.array([-1, 1]), nSteps=15, plotResults=True, plotProgress=True)
+    sc = SCsynchPhaseCorrection(sc, nSteps=15)
+    sc = SCsynchEnergyCorrection(sc, f_range=4E3 * np.array([-1, 1]), nSteps=15)
 
-    SCplotPhaseSpace(sc, nParticles=10, nTurns=100)
     sc = SCpseudoBBA(sc, np.tile(sc.ORD.BPM, (2, 1)), np.tile(SCgetOrds(sc.RING, 'QF|QD'), (2, 1)), np.array([50E-6]))
 
     # Orbit correction
@@ -116,7 +112,6 @@ def test_example(at_lattice, numpy_seed):
             break
         sc = cur
     sc.RING = SCcronoff(sc.RING, 'cavityon')
-    SCplotPhaseSpace(sc, nParticles=10, nTurns=100)
     max_turns, lost_count = beam_transmission(sc, nParticles=100, nTurns=200, plot=True)
     sc, _, _, _ = tune_scan(sc, np.vstack((SCgetOrds(sc.RING, 'QF'), SCgetOrds(sc.RING, 'QD'))),
                             np.outer(np.ones(2), 1 + np.linspace(-0.01, 0.01, 51)), do_plot=False, nParticles=50,
