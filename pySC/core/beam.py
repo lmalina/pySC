@@ -1,3 +1,9 @@
+"""
+Beam
+-------------
+
+This module contains the 'beam-based' functions to interact with lattice under study.
+"""
 from typing import Tuple
 
 import numpy as np

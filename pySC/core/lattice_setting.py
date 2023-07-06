@@ -1,3 +1,9 @@
+"""
+Lattice setting
+-------------
+
+This module contains the 'machine-based' functions to interact with lattice under study.
+"""
 import numpy as np
 from typing import Tuple
 

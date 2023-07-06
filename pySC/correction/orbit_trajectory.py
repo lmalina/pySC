@@ -1,3 +1,9 @@
+"""
+Trajectory and Orbit
+-------------
+
+This module contains functions to correct trajectory (first turns(s)) and orbit.
+"""
 import numpy as np
 
 from pySC.core.beam import bpm_reading

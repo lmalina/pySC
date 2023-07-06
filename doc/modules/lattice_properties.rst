@@ -1,6 +1,6 @@
 Lattice properties
 **************************
 
-.. automodule:: pySC.core.response_model
+.. automodule:: pySC.lattice_properties.response_model
     :members:
 

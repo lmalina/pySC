@@ -5,13 +5,6 @@ Core functions
     :members:
 
 
-.. automodule:: pySC.core.classes
-    :members:
-
-
 .. automodule:: pySC.core.lattice_setting
     :members:
-
-
-
 

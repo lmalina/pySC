@@ -1,3 +1,10 @@
+"""
+Simulated Commissioning
+-------------
+
+This module contains the main data structure of ``pySC`` package
+built up around the ``at.Lattice`` under study.
+"""
 import copy
 import re
 from typing import Tuple
@@ -18,6 +25,11 @@ LOGGER = logging_tools.get_logger(__name__)
 
 
 class SimulatedCommissioning:
+    """
+    The main structure of ``pySC``, which holds all the information about
+    lattice error sources and errors, injection settings and its errors.
+    The class is initialized from ``at.Lattice``.
+    """
     def __init__(self, ring: Lattice):
         self.RING: Lattice = ring.deepcopy()
         self.IDEALRING: Lattice = ring.deepcopy()

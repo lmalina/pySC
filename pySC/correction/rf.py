@@ -1,3 +1,9 @@
+"""
+RF
+-------------
+
+This module contains functions to correct RF phase and frequency.
+"""
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit, fsolve

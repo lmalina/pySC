@@ -1,3 +1,9 @@
+"""
+Sub-classes
+-------------
+
+This module contains the classes needed in the main data structure (``SimulatedCommissioning``).
+"""
 import copy
 
 import numpy as np
