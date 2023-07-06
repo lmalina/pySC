@@ -4,7 +4,8 @@ import numpy as np
 from matplotlib import pyplot as plt
 from numpy import ndarray
 
-from pySC.core.classes import SimulatedComissioning
+from pySC.core.simulated_commissioning import SimulatedCommissioning
+from pySC.core.constants import TRACK_ORB, TRACK_PORB
 from pySC.utils.sc_tools import SCrandnc
 from pySC.utils.at_wrapper import atgetfieldvalues, atpass, findorbit6, findspos
 import warnings
@@ -14,7 +15,7 @@ warnings.filterwarnings("ignore", message='Mean of empty slice')
 LOGGER = logging_tools.get_logger(__name__)
 
 
-def bpm_reading(SC: SimulatedComissioning, bpm_ords: ndarray = None) -> ndarray:
+def bpm_reading(SC: SimulatedCommissioning, bpm_ords: ndarray = None) -> ndarray:
     """
     Calculates BPM readings with current injection setup `SC.INJ` and included all BPM uncertainties.
     Included uncertainties are offsets, rolls, calibration errors, and position noise.
@@ -23,7 +24,7 @@ def bpm_reading(SC: SimulatedComissioning, bpm_ords: ndarray = None) -> ndarray:
     If SC.plot is True the reading is plotted.
 
     Args:
-        SC: SimulatedComissioning instance
+        SC: SimulatedCommissioning instance
         bpm_ords: array of element indices of registered BPMs for which to calculate readings
             (for convenience, otherwise `SC.ORD.BPM` is used)
 
@@ -38,7 +39,7 @@ def bpm_reading(SC: SimulatedComissioning, bpm_ords: ndarray = None) -> ndarray:
     mean_bpm_orbits_3d = np.nanmean(all_bpm_orbits_4d, axis=3)  # mean_bpm_orbits_3d is 3D (dim, BPM, turn)
     if SC.plot:
         _plot_bpm_reading(SC, mean_bpm_orbits_3d)
-    if SC.INJ.trackMode == 'PORB':   # ORB averaged over low amount of turns
+    if SC.INJ.trackMode == TRACK_PORB:   # ORB averaged over low amount of turns
         mean_bpm_orbits_3d = np.nanmean(mean_bpm_orbits_3d, axis=2, keepdims=True)
     if bpm_ords is not None:
         ind = _only_registered_bpms(SC, bpm_ords)
@@ -47,7 +48,7 @@ def bpm_reading(SC: SimulatedComissioning, bpm_ords: ndarray = None) -> ndarray:
     return _reshape_3d_to_matlab_like_2d(mean_bpm_orbits_3d)
 
 
-def all_elements_reading(SC: SimulatedComissioning) -> Tuple[ndarray, ndarray]:
+def all_elements_reading(SC: SimulatedCommissioning) -> Tuple[ndarray, ndarray]:
     """
     Calculates horizontal and vertical positions with current injection setup `SC.INJ`.
     Returns the measured BPM positions at all BPMs as well as TRUE positions at all elements,
@@ -55,7 +56,7 @@ def all_elements_reading(SC: SimulatedComissioning) -> Tuple[ndarray, ndarray]:
     If SC.plot is True the reading is plotted.
 
     Args:
-        SC: SimulatedComissioning instance
+        SC: SimulatedCommissioning instance
 
     Returns:
         Array of all horizontal and vertical BPM readings (2, T x B) for T turns and B BPMs
@@ -78,13 +79,13 @@ def all_elements_reading(SC: SimulatedComissioning) -> Tuple[ndarray, ndarray]:
     return _reshape_3d_to_matlab_like_2d(mean_bpm_orbits_3d), all_readings_5d
 
 
-def beam_transmission(SC: SimulatedComissioning, nParticles: int = None, nTurns: int = None,
+def beam_transmission(SC: SimulatedCommissioning, nParticles: int = None, nTurns: int = None,
                       plot: bool = False) -> Tuple[int, ndarray]:
     """
     Calculates the turn-by-turn beam transmission with current injection setup as defined in `SC.INJ`.
 
     Args:
-        SC: SimulatedComissioning instance
+        SC: SimulatedCommissioning instance
         nParticles: Number of particles to track
             (for convenience, otherwise `SC.INJ.nParticles` is used)
         nTurns: Number of turns to track
@@ -114,7 +115,7 @@ def beam_transmission(SC: SimulatedComissioning, nParticles: int = None, nTurns:
     return int(max_turns), fraction_lost
 
 
-def generate_bunches(SC: SimulatedComissioning, nParticles=None) -> ndarray:
+def generate_bunches(SC: SimulatedCommissioning, nParticles=None) -> ndarray:
     """
     Generates bunches according to the current injection setup as defined in `SC.INJ`.
     The random injection error is added to the mean injected beam trajectory for each bunch.
@@ -124,7 +125,7 @@ def generate_bunches(SC: SimulatedComissioning, nParticles=None) -> ndarray:
     A function `SC.INJ.postFun` is applied to the generated coordinates.
 
     Args:
-        SC: SimulatedComissioning instance
+        SC: SimulatedCommissioning instance
         nParticles: Number of particles to generate
             (for convenience, otherwise `SC.INJ.nParticles` is used)
 
@@ -173,17 +174,17 @@ def _rotation_matrix(a):
     return np.array([[np.cos(a), -np.sin(a)], [np.sin(a), np.cos(a)]])
 
 
-def _tracking(SC: SimulatedComissioning, refs: ndarray) -> ndarray:
+def _tracking(SC: SimulatedCommissioning, refs: ndarray) -> ndarray:
     """Returns numpy array (2, N, R, T) of X and Y coordinates of N particles at R reference points for T turns.
        If ORB: N and T are equal to 1"""
     #  lattice_pass output:            (6, N, R, T) coordinates of N particles at R reference points for T turns.
     #  findorbit second output value:  (R, 6) closed orbit vector at each specified location
-    if SC.INJ.trackMode == 'ORB':
+    if SC.INJ.trackMode == TRACK_ORB:
         return np.transpose(findorbit6(SC.RING, refs, keep_lattice=False)[1])[[0, 2], :].reshape(2, 1, len(refs), 1)
     return atpass(SC.RING, generate_bunches(SC), SC.INJ.nTurns, refs, keep_lattice=False)[[0, 2], :, :, :]
 
 
-def _only_registered_bpms(SC: SimulatedComissioning, bpm_ords: ndarray) -> ndarray:
+def _only_registered_bpms(SC: SimulatedCommissioning, bpm_ords: ndarray) -> ndarray:
     ind = np.where(np.isin(SC.ORD.BPM, bpm_ords))[0]
     if len(ind) != len(bpm_ords):
         LOGGER.warning('Not all specified ordinates are registered BPMs.')

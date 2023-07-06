@@ -4,10 +4,10 @@ import copy
 from pySC.utils.at_wrapper import findspos, atgetfieldvalues
 from pySC.core.constants import SUPPORT_TYPES
 from typing import Tuple
-from pySC.core.classes import SimulatedComissioning
+from pySC.core.simulated_commissioning import SimulatedCommissioning
 
 
-def SCplotSupport(SC: SimulatedComissioning, fontSize: int = 8, xLim: Tuple[float, float] = None):
+def SCplotSupport(SC: SimulatedCommissioning, fontSize: int = 8, xLim: Tuple[float, float] = None):
     """
     Plots the offset and rolls of magnets, the support structure and BPMs.
     Specifically, this function plots the overall offsets [dx,dy,dz] and rolls [az,ax,ay] of all magnets and BPMs,

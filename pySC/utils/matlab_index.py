@@ -15,9 +15,9 @@ from at import Lattice
 from numpy import ndarray
 
 from pySC.core.beam import beam_transmission, bpm_reading, generate_bunches
-from pySC.core.classes import SimulatedComissioning
+from pySC.core.simulated_commissioning import SimulatedCommissioning
 from pySC.core.lattice_setting import (set_cavity_setpoints, set_magnet_setpoints,
-    set_cm_setpoints, set_multipole_errors, get_cm_setpoints, SCcronoff as cronoff)
+    set_cm_setpoints, get_cm_setpoints, SCcronoff as cronoff)
 from pySC.correction.injection_fit import SCfitInjectionZ as fit_injection
 from pySC.correction.loco_lib import SClocoLib as loco_lib
 from pySC.correction.orbit_trajectory import SCfeedbackFirstTurn as first_turn, SCfeedbackStitch as stitch, \
@@ -46,7 +46,7 @@ LOGGER.warn("Matlab_index imported: \n"
             "             For any important use cases, please consider using pySC methods directly.\n")
 
 
-def SCapplyErrors(SC: SimulatedComissioning, nsigmas: float = 2) -> SimulatedComissioning:
+def SCapplyErrors(SC: SimulatedCommissioning, nsigmas: float = 2) -> SimulatedCommissioning:
     SC.apply_errors(nsigmas=nsigmas)
     return SC
 
@@ -98,11 +98,11 @@ def SCfitInjectionZ(SC, mode, /, *, nDims=np.array([0, 1]), nBPMs=np.array([0, 1
     return fit_injection(SC, mode, nDims=nDims, nBPMs=nBPMs, plotFlag=plotFlag)
 
 
-def SCgenBunches(SC: SimulatedComissioning) -> ndarray:
+def SCgenBunches(SC: SimulatedCommissioning) -> ndarray:
     return generate_bunches(SC)
 
 
-def SCgetBeamTransmission(SC: SimulatedComissioning, /, *, nParticles: int = None, nTurns: int = None,
+def SCgetBeamTransmission(SC: SimulatedCommissioning, /, *, nParticles: int = None, nTurns: int = None,
                           plotFlag: bool = False, verbose: bool = False) -> Tuple[int, ndarray]:
     return beam_transmission(SC, nParticles, nTurns=nTurns, plot=plotFlag)
 
@@ -111,7 +111,7 @@ def SCgetBPMreading(SC, /, *, BPMords=None):
     return bpm_reading(SC, bpm_ords=BPMords)
 
 
-def SCgetCMSetPoints(SC: SimulatedComissioning, CMords: ndarray, nDim: int) -> ndarray:
+def SCgetCMSetPoints(SC: SimulatedCommissioning, CMords: ndarray, nDim: int) -> ndarray:
     LOGGER.warn("Function SCgetCMSetPoints contains non-trivial transition between Matlab and Python code.\n"
                 "Transition concerns nDim 1 -> horizontal, 2-> vertical.")
     if nDim not in (1, 2):
@@ -133,7 +133,7 @@ def SCgetModelDispersion(SC, BPMords, CAVords, /, *, trackMode='ORB', Z0=np.zero
                             useIdealRing=useIdealRing)
 
 
-def SCgetModelRING(SC: SimulatedComissioning, /, *, includeAperture: bool = False) -> Lattice:
+def SCgetModelRING(SC: SimulatedCommissioning, /, *, includeAperture: bool = False) -> Lattice:
     return model_ring(SC, includeAperture=includeAperture)
 
 
@@ -154,12 +154,12 @@ def SCgetRespMat(SC, Amp, BPMords, CMords, /, *, mode='fixedKick', nSteps=2, fit
     return response_matrix(SC, Amp, BPMords, CMords, mode=mode, nSteps=nSteps, fit=fit)
 
 
-def SCgetSupportOffset(SC: SimulatedComissioning, s: ndarray) -> ndarray:
+def SCgetSupportOffset(SC: SimulatedCommissioning, s: ndarray) -> ndarray:
     offsets, rolls = SC.support_offset_and_roll(s)
     return offsets
 
 
-def SCgetSupportRoll(SC: SimulatedComissioning, s: ndarray) -> ndarray:
+def SCgetSupportRoll(SC: SimulatedCommissioning, s: ndarray) -> ndarray:
     offsets, rolls = SC.support_offset_and_roll(s)
     return rolls
 
@@ -168,8 +168,8 @@ def SCgetTransformation(dx, dy, dz, ax, ay, az, magTheta, magLength, refPoint='c
     return transform(np.array([dx, dy, dz]), np.array([ax, ay, az]), magTheta, magLength, refPoint=refPoint)
 
 
-def SCinit(RING: Lattice) -> SimulatedComissioning:
-    return SimulatedComissioning(RING)
+def SCinit(RING: Lattice) -> SimulatedCommissioning:
+    return SimulatedCommissioning(RING)
 
 
 def SClocoLib(funName, *args):
@@ -196,7 +196,7 @@ def SCplotBPMreading(SC, B=None, T=None):
     return SC
 
 
-def SCplotCMstrengths(SC: SimulatedComissioning):
+def SCplotCMstrengths(SC: SimulatedCommissioning):
     plot_cm_strength(SC)
 
 
@@ -210,7 +210,7 @@ def SCplotPhaseSpace(SC, /, *, ord=np.zeros(1), customBunch=[], nParticles=None,
     plot_phase_space(SC, ord=ord, customBunch=customBunch, nParticles=nParticles, nTurns=nTurns, plotCO=plotCO)
 
 
-def SCplotSupport(SC: SimulatedComissioning, /, *, fontSize: int = 8, xLim: Tuple[float, float] = None, ShiftAxes=None):
+def SCplotSupport(SC: SimulatedCommissioning, /, *, fontSize: int = 8, xLim: Tuple[float, float] = None, ShiftAxes=None):
     plot_support(SC, fontSize=fontSize, xLim=xLim)
 
 
@@ -226,28 +226,28 @@ def SCrandnc(cut_off: float = 2, shape: tuple = (1,)) -> ndarray:
     return randnc(cut_off, shape)
 
 
-def SCregisterBPMs(SC: SimulatedComissioning, BPMords: ndarray, **kwargs) -> SimulatedComissioning:
+def SCregisterBPMs(SC: SimulatedCommissioning, BPMords: ndarray, **kwargs) -> SimulatedCommissioning:
     SC.register_bpms(ords=BPMords, **kwargs)
     return SC
 
 
-def SCregisterCAVs(SC: SimulatedComissioning, CAVords: ndarray, **kwargs) -> SimulatedComissioning:
+def SCregisterCAVs(SC: SimulatedCommissioning, CAVords: ndarray, **kwargs) -> SimulatedCommissioning:
     SC.register_cavities(ords=CAVords, **kwargs)
     return SC
 
 
-def SCregisterMagnets(SC: SimulatedComissioning, MAGords: ndarray, **kwargs) -> SimulatedComissioning:
+def SCregisterMagnets(SC: SimulatedCommissioning, MAGords: ndarray, **kwargs) -> SimulatedCommissioning:
     SC.register_magnets(ords=MAGords, **kwargs)
     return SC
 
 
-def SCregisterSupport(SC: SimulatedComissioning, support_type: str, support_ords: ndarray,
-                      **kwargs) -> SimulatedComissioning:
+def SCregisterSupport(SC: SimulatedCommissioning, support_type: str, support_ords: ndarray,
+                      **kwargs) -> SimulatedCommissioning:
     SC.register_supports(support_ords=support_ords, support_type=support_type, **kwargs)
     return SC
 
 
-def SCSanityCheck(SC: SimulatedComissioning) -> None:
+def SCSanityCheck(SC: SimulatedCommissioning) -> None:
     SC.verify_structure()
 
 
@@ -255,13 +255,13 @@ def SCscaleCircumference(RING, circ, /, *, mode='abs'):
     return scale_circumference(RING, circ, mode=mode)
 
 
-def SCsetCavs2SetPoints(SC: SimulatedComissioning, CAVords: ndarray, type: str, setpoints: ndarray, /, *,
-                        mode: str = 'abs') -> SimulatedComissioning:
+def SCsetCavs2SetPoints(SC: SimulatedCommissioning, CAVords: ndarray, type: str, setpoints: ndarray, /, *,
+                        mode: str = 'abs') -> SimulatedCommissioning:
     return set_cavity_setpoints(SC, ords=CAVords, type=type, setpoints=setpoints, method=mode)
 
 
-def SCsetCMs2SetPoints(SC: SimulatedComissioning, CMords: ndarray, setpoints: ndarray, nDim: int, /, *,
-                       mode: str = 'abs') -> Tuple[SimulatedComissioning, ndarray]:
+def SCsetCMs2SetPoints(SC: SimulatedCommissioning, CMords: ndarray, setpoints: ndarray, nDim: int, /, *,
+                       mode: str = 'abs') -> Tuple[SimulatedCommissioning, ndarray]:
     LOGGER.warn("Function SCsetCM2SetPoints contains non-trivial transition between Matlab and Python code.\n"
                 "Transition concerns nDim 1 -> horizontal, 2-> vertical.")
     if nDim not in (1, 2):
@@ -269,8 +269,8 @@ def SCsetCMs2SetPoints(SC: SimulatedComissioning, CMords: ndarray, setpoints: nd
     return set_cm_setpoints(SC, ords=CMords, setpoints=setpoints, skewness=(nDim == 2), method=mode)
 
 
-def SCsetMags2SetPoints(SC: SimulatedComissioning, MAGords: ndarray, type: int, order: int, setpoints: ndarray, /, *,
-                        method: str = 'abs', dipCompensation: bool = False) -> SimulatedComissioning:
+def SCsetMags2SetPoints(SC: SimulatedCommissioning, MAGords: ndarray, type: int, order: int, setpoints: ndarray, /, *,
+                        method: str = 'abs', dipCompensation: bool = False) -> SimulatedCommissioning:
     LOGGER.warn("Function SCsetMags2SetPoints contains non-trivial transition between Matlab and Python code.\n"
                 "Transition concerns:    type 1 -> skew, 2-> normal. \n"
                 "                        order 1 -> dipole, 2-> quadrupole, 3-> sextupole, ...")
@@ -281,7 +281,7 @@ def SCsetMags2SetPoints(SC: SimulatedComissioning, MAGords: ndarray, type: int, 
                                 method=method, dipole_compensation=dipCompensation)
 
 
-def SCsetMultipoles(RING, ords: ndarray, AB, /, *, method: str = 'rnd', order: int = None, type: int = None):
+def SCsetMultipoles(SC: SimulatedCommissioning, ords: ndarray, AB, /, *, method: str = 'rnd', order: int = None, type: int = None):
     LOGGER.warn("Function SCsetMultipoles contains non-trivial transition between Matlab and Python code.\n"
                 "Transition concerns:    type 1 -> skew, 2-> normal. \n"
                 "                        order 1 -> dipole, 2-> quadrupole, 3-> sextupole, ...\n"
@@ -291,9 +291,11 @@ def SCsetMultipoles(RING, ords: ndarray, AB, /, *, method: str = 'rnd', order: i
     if type is not None:
         if type not in (1, 2):
             raise ValueError("Function expects type 1 (skew) or 2 (normal)")
-    return set_multipole_errors(RING=RING, ords=ords, BA=np.roll(AB, 1, axis=1), method=method,
-                               order=None if order is None else order - 1,
-                               skewness=None if order is None else (type == 1))
+    if method == "rnd":
+        SC.set_random_multipole_errors(ords=ords, BA=np.roll(AB, 1, axis=1))
+    else:
+        SC.set_systematic_multipole_errors(ords=ords, BA=np.roll(AB, 1, axis=1), order=order - 1, skewness=(type == 1))
+    return SC
 
 
 def SCsynchEnergyCorrection(SC, /, *, cavOrd=None, f_range=(-1E3, 1E3), nSteps=15, nTurns=150, minTurns=0,
@@ -322,17 +324,17 @@ def SCtuneScan(SC, qOrds, qSPvec, /, *, verbose=False, plotFlag=False, nParticle
                      full_scan=fullScan)
 
 
-def SCupdateCAVs(SC: SimulatedComissioning, ords: ndarray = None) -> SimulatedComissioning:
+def SCupdateCAVs(SC: SimulatedCommissioning, ords: ndarray = None) -> SimulatedCommissioning:
     SC.update_cavities(ords=ords)
     return SC
 
 
-def SCupdateMagnets(SC: SimulatedComissioning, ords: ndarray = None) -> SimulatedComissioning:
+def SCupdateMagnets(SC: SimulatedCommissioning, ords: ndarray = None) -> SimulatedCommissioning:
     SC.update_magnets(ords=ords)
     return SC
 
 
-def SCupdateSupport(SC: SimulatedComissioning, BPMstructOffset: bool = True,
-                    MAGstructOffset: bool = True) -> SimulatedComissioning:
+def SCupdateSupport(SC: SimulatedCommissioning, BPMstructOffset: bool = True,
+                    MAGstructOffset: bool = True) -> SimulatedCommissioning:
     SC.update_supports(offset_bpms=BPMstructOffset, offset_magnets=MAGstructOffset)
     return SC

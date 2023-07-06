@@ -2,7 +2,7 @@ import at
 import numpy as np
 from at import Lattice
 from pySC.utils.at_wrapper import atloco
-from pySC.core.classes import SimulatedComissioning
+from pySC.core.simulated_commissioning import SimulatedCommissioning
 from pySC.correction.orbit_trajectory import SCfeedbackFirstTurn, SCfeedbackStitch, SCfeedbackRun, SCfeedbackBalance, \
     SCpseudoBBA
 from pySC.core.beam import bpm_reading, beam_transmission
@@ -47,7 +47,7 @@ def create_at_lattice() -> Lattice:
 if __name__ == "__main__":
     ring = at.Lattice(create_at_lattice())
     LOGGER.info(f"{len(ring)=}")
-    SC = SimulatedComissioning(ring)
+    SC = SimulatedCommissioning(ring)
     # at.summary(ring)
     ords = SCgetOrds(SC.RING, 'BPM')
     SC.register_bpms(ords, CalError=5E-2 * np.ones(2),  # x and y, relative
@@ -174,7 +174,7 @@ if __name__ == "__main__":
         SC = CUR
     SC.RING = SCcronoff(SC.RING, 'cavityon')
     SCplotPhaseSpace(SC, nParticles=10, nTurns=1000)
-    [maxTurns, lostCount] = beam_transmission(SC, nParticles=100, nTurns=200, do_plot=True)
+    maxTurns, lostCount = beam_transmission(SC, nParticles=100, nTurns=200, plot=True)
     SC, _, _, _ = tune_scan(SC, np.vstack((SCgetOrds(SC.RING, 'QF'), SCgetOrds(SC.RING, 'QD'))),
                             np.outer(np.ones(2), 1 + np.linspace(-0.01, 0.01, 51)), do_plot=False, nParticles=100,
                             nTurns=200)

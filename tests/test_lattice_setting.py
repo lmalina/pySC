@@ -5,7 +5,7 @@ import numpy as np
 from numpy.testing import assert_equal
 from tests.test_at_wrapper import at_lattice
 from pySC.utils.sc_tools import SCgetOrds
-from pySC.core.classes import SimulatedComissioning
+from pySC.core.simulated_commissioning import SimulatedCommissioning
 from pySC.core.lattice_setting import set_cm_setpoints, set_magnet_setpoints, set_cavity_setpoints, get_cm_setpoints
 
 
@@ -50,7 +50,7 @@ def test_set_cavity_setpoints_side_effects(sc):
 
 @pytest.fixture
 def sc(at_lattice):
-    SC = SimulatedComissioning(at_lattice)
+    SC = SimulatedCommissioning(at_lattice)
     SC.register_magnets(SCgetOrds(SC.RING, 'QF'), HCM=1E-3,
                         CalErrorB=np.array([5E-2, 1E-3]),
                         MagnetOffset=200E-6 * np.array([1, 1, 0]),
