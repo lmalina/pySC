@@ -43,8 +43,7 @@ class SimulatedCommissioning:
         self.plot: bool = False
 
     def register_bpms(self, ords: ndarray, **kwargs):
-        if len(unknown_keys := [key for key in kwargs.keys() if key not in BPM_ERROR_FIELDS]):
-            raise ValueError(f"Unknown keywords {unknown_keys}. Allowed keywords are {BPM_ERROR_FIELDS}")
+        self._check_kwargs(kwargs, BPM_ERROR_FIELDS)
         self.ORD.BPM = np.unique(np.concatenate((self.ORD.BPM, ords)))
         for ind in np.unique(ords):
             if ind not in self.SIG.BPM.keys():
@@ -61,8 +60,7 @@ class SimulatedCommissioning:
             self.RING[ind].SumError = 0
 
     def register_cavities(self, ords: ndarray, **kwargs):
-        if len(unknown_keys := [key for key in kwargs.keys() if key not in RF_ERROR_FIELDS]):
-            raise ValueError(f"Unknown keywords {unknown_keys}. Allowed keywords are {RF_ERROR_FIELDS}")
+        self._check_kwargs(kwargs, RF_ERROR_FIELDS)
         self.ORD.RF = np.unique(np.concatenate((self.ORD.RF, ords)))
         for ind in np.unique(ords):
             if ind not in self.SIG.RF.keys():
@@ -74,8 +72,7 @@ class SimulatedCommissioning:
                 setattr(self.RING[ind], f"{field}CalError", 0)
 
     def register_magnets(self, ords: ndarray, **kwargs):
-        if len(unknown_keys := [key for key in kwargs.keys() if key not in MAGNET_TYPE_FIELDS + MAGNET_ERROR_FIELDS]):
-            raise ValueError(f"Unknown keywords {unknown_keys}. Allowed keywords are {MAGNET_TYPE_FIELDS + MAGNET_ERROR_FIELDS}")
+        self._check_kwargs(kwargs, MAGNET_TYPE_FIELDS + MAGNET_ERROR_FIELDS)
         nvpairs = {key: value for key, value in kwargs.items() if key not in MAGNET_TYPE_FIELDS}
         self.ORD.Magnet = np.unique(np.concatenate((self.ORD.Magnet, ords)))
         if 'SkewQuad' in kwargs.keys():
@@ -107,8 +104,7 @@ class SimulatedCommissioning:
     def register_supports(self, support_ords: ndarray, support_type: str, **kwargs):
         if support_type not in SUPPORT_TYPES:
             raise ValueError(f'Unknown support type ``{support_type}`` found. Allowed are {SUPPORT_TYPES}.')
-        if len(unknown_keys := [key for key in kwargs.keys() if key not in SUPPORT_ERROR_FIELDS]):
-            raise ValueError(f"Unknown keywords {unknown_keys}. Allowed keywords are {SUPPORT_ERROR_FIELDS}")
+        self._check_kwargs(kwargs, SUPPORT_ERROR_FIELDS)
         if not len(support_ords) or support_ords.shape[0] != 2:
             raise ValueError('Ordinates must be a 2xn array of ordinates.')
         if upstream := np.sum(np.diff(support_ords, axis=0) < 0):
@@ -419,6 +415,11 @@ class SimulatedCommissioning:
         #     LOGGER.warning('No apertures found.')
         # else:
         #     LOGGER.info(f'Apertures defined in {len(apEl):d} out of {len(SC["RING"]):d} elements.')
+
+    @staticmethod
+    def _check_kwargs(kwargs, allowed_options):
+        if len(unknown_keys := [key for key in kwargs.keys() if key not in allowed_options]):
+            raise ValueError(f"Unknown keywords {unknown_keys}. Allowed keywords are {allowed_options}")
 
     def _optional_magnet_fields(self, ind, MAGords, **kwargs):
         if 'CF' in kwargs.keys():
