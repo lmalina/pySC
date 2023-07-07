@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lattice properties &mdash; pySC 0.1.0 documentation</title>
+  <title>Core structure &mdash; pySC 0.1.0 documentation</title>
       <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../_static/css/custom.css" type="text/css" />
@@ -20,8 +20,8 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Logging" href="logging.html" />
-    <link rel="prev" title="Correction algorithms" href="correction.html" /> 
+    <link rel="next" title="Correction algorithms" href="correction.html" />
+    <link rel="prev" title="Core functions" href="core_functions.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -58,13 +58,13 @@
 <li class="toctree-l2"><a class="reference internal" href="core_functions.html#lattice-setting">Lattice setting</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="core_structure.html">Core structure</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="core_structure.html#simulated-commissioning">Simulated Commissioning</a></li>
-<li class="toctree-l2"><a class="reference internal" href="core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning"><code class="docutils literal notranslate"><span class="pre">SimulatedCommissioning</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="core_structure.html#sub-classes">Sub-classes</a></li>
-<li class="toctree-l2"><a class="reference internal" href="core_structure.html#pySC.core.classes.DotDict"><code class="docutils literal notranslate"><span class="pre">DotDict</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="core_structure.html#pySC.core.classes.Indices"><code class="docutils literal notranslate"><span class="pre">Indices</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="core_structure.html#pySC.core.classes.Sigmas"><code class="docutils literal notranslate"><span class="pre">Sigmas</span></code></a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Core structure</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#simulated-commissioning">Simulated Commissioning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pySC.core.simulated_commissioning.SimulatedCommissioning"><code class="docutils literal notranslate"><span class="pre">SimulatedCommissioning</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#sub-classes">Sub-classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pySC.core.classes.DotDict"><code class="docutils literal notranslate"><span class="pre">DotDict</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pySC.core.classes.Indices"><code class="docutils literal notranslate"><span class="pre">Indices</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pySC.core.classes.Sigmas"><code class="docutils literal notranslate"><span class="pre">Sigmas</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="correction.html">Correction algorithms</a><ul>
@@ -73,7 +73,7 @@
 <li class="toctree-l2"><a class="reference internal" href="correction.html#tune">Tune</a></li>
 </ul>
 </li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Lattice properties</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lattice_properties.html">Lattice properties</a></li>
 <li class="toctree-l1"><a class="reference internal" href="logging.html">Logging</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="logging.html#pySC.utils.logging_tools.DebugMode"><code class="docutils literal notranslate"><span class="pre">DebugMode</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="logging.html#pySC.utils.logging_tools.MaxFilter"><code class="docutils literal notranslate"><span class="pre">MaxFilter</span></code></a></li>
@@ -105,7 +105,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Lattice properties</li>
+      <li class="breadcrumb-item active">Core structure</li>
       <li class="wy-breadcrumbs-aside">
               <!-- User defined GitHub URL -->
               <a href="https://github.com/lmalina/pySC" class="fa fa-github"> Edit on GitHub</a>
@@ -116,16 +116,54 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="module-pySC.lattice_properties.response_model">
-<span id="lattice-properties"></span><h1>Lattice properties<a class="headerlink" href="#module-pySC.lattice_properties.response_model" title="Permalink to this heading"></a></h1>
+  <section id="module-pySC.core.simulated_commissioning">
+<span id="core-structure"></span><h1>Core structure<a class="headerlink" href="#module-pySC.core.simulated_commissioning" title="Permalink to this heading"></a></h1>
+<section id="simulated-commissioning">
+<h2>Simulated Commissioning<a class="headerlink" href="#simulated-commissioning" title="Permalink to this heading"></a></h2>
+<p>This module contains the main data structure of <code class="docutils literal notranslate"><span class="pre">pySC</span></code> package
+built up around the <code class="docutils literal notranslate"><span class="pre">at.Lattice</span></code> under study.</p>
+</section>
+<dl class="py class">
+<dt class="sig sig-object py" id="pySC.core.simulated_commissioning.SimulatedCommissioning">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pySC.core.simulated_commissioning.</span></span><span class="sig-name descname"><span class="pre">SimulatedCommissioning</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ring</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Lattice</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pySC/core/simulated_commissioning.html#SimulatedCommissioning"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pySC.core.simulated_commissioning.SimulatedCommissioning" title="Permalink to this definition"></a></dt>
+<dd><p>The main structure of <code class="docutils literal notranslate"><span class="pre">pySC</span></code>, which holds all the information about
+lattice error sources and errors, injection settings and its errors.
+The class is initialized from <code class="docutils literal notranslate"><span class="pre">at.Lattice</span></code>.</p>
+</dd></dl>
+
+<span class="target" id="module-pySC.core.classes"></span><section id="sub-classes">
+<h2>Sub-classes<a class="headerlink" href="#sub-classes" title="Permalink to this heading"></a></h2>
+<p>This module contains the classes needed in the main data structure (<code class="docutils literal notranslate"><span class="pre">SimulatedCommissioning</span></code>).</p>
+</section>
+<dl class="py class">
+<dt class="sig sig-object py" id="pySC.core.classes.DotDict">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pySC.core.classes.</span></span><span class="sig-name descname"><span class="pre">DotDict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pySC/core/classes.html#DotDict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pySC.core.classes.DotDict" title="Permalink to this definition"></a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="pySC.core.classes.DotDict.deepcopy">
+<span class="sig-name descname"><span class="pre">deepcopy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#pySC.core.classes.DotDict" title="pySC.core.classes.DotDict"><span class="pre">DotDict</span></a></span></span><a class="reference internal" href="../_modules/pySC/core/classes.html#DotDict.deepcopy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pySC.core.classes.DotDict.deepcopy" title="Permalink to this definition"></a></dt>
+<dd><p>Returns a deep copy</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pySC.core.classes.Indices">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pySC.core.classes.</span></span><span class="sig-name descname"><span class="pre">Indices</span></span><a class="reference internal" href="../_modules/pySC/core/classes.html#Indices"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pySC.core.classes.Indices" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pySC.core.classes.Sigmas">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pySC.core.classes.</span></span><span class="sig-name descname"><span class="pre">Sigmas</span></span><a class="reference internal" href="../_modules/pySC/core/classes.html#Sigmas"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pySC.core.classes.Sigmas" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="correction.html" class="btn btn-neutral float-left" title="Correction algorithms" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="logging.html" class="btn btn-neutral float-right" title="Logging" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="core_functions.html" class="btn btn-neutral float-left" title="Core functions" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="correction.html" class="btn btn-neutral float-right" title="Correction algorithms" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

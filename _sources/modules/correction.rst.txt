@@ -5,6 +5,10 @@ Correction algorithms
     :members:
 
 
-.. automodule:: pySC.core.rf
+.. automodule:: pySC.correction.rf
+    :members:
+
+
+.. automodule:: pySC.correction.tune
     :members:
 

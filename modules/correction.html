@@ -21,7 +21,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Lattice properties" href="lattice_properties.html" />
-    <link rel="prev" title="Core functions" href="core.html" /> 
+    <link rel="prev" title="Core structure" href="core_structure.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -49,18 +49,30 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Modules</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="core.html">Core functions</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="core.html#pySC.core.beam.all_elements_reading"><code class="docutils literal notranslate"><span class="pre">all_elements_reading()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="core.html#pySC.core.beam.beam_transmission"><code class="docutils literal notranslate"><span class="pre">beam_transmission()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="core.html#pySC.core.beam.bpm_reading"><code class="docutils literal notranslate"><span class="pre">bpm_reading()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="core.html#pySC.core.beam.generate_bunches"><code class="docutils literal notranslate"><span class="pre">generate_bunches()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="core.html#pySC.core.classes.DotDict"><code class="docutils literal notranslate"><span class="pre">DotDict</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="core.html#pySC.core.classes.Indices"><code class="docutils literal notranslate"><span class="pre">Indices</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="core.html#pySC.core.classes.Sigmas"><code class="docutils literal notranslate"><span class="pre">Sigmas</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="core.html#pySC.core.classes.SimulatedComissioning"><code class="docutils literal notranslate"><span class="pre">SimulatedComissioning</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="core_functions.html">Core functions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="core_functions.html#beam">Beam</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_functions.html#pySC.core.beam.all_elements_reading"><code class="docutils literal notranslate"><span class="pre">all_elements_reading()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_functions.html#pySC.core.beam.beam_transmission"><code class="docutils literal notranslate"><span class="pre">beam_transmission()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_functions.html#pySC.core.beam.bpm_reading"><code class="docutils literal notranslate"><span class="pre">bpm_reading()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_functions.html#pySC.core.beam.generate_bunches"><code class="docutils literal notranslate"><span class="pre">generate_bunches()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_functions.html#lattice-setting">Lattice setting</a></li>
 </ul>
 </li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Correction algorithms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="core_structure.html">Core structure</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="core_structure.html#simulated-commissioning">Simulated Commissioning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning"><code class="docutils literal notranslate"><span class="pre">SimulatedCommissioning</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_structure.html#sub-classes">Sub-classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_structure.html#pySC.core.classes.DotDict"><code class="docutils literal notranslate"><span class="pre">DotDict</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_structure.html#pySC.core.classes.Indices"><code class="docutils literal notranslate"><span class="pre">Indices</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_structure.html#pySC.core.classes.Sigmas"><code class="docutils literal notranslate"><span class="pre">Sigmas</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Correction algorithms</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#trajectory-and-orbit">Trajectory and Orbit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#rf">RF</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#tune">Tune</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="lattice_properties.html">Lattice properties</a></li>
 <li class="toctree-l1"><a class="reference internal" href="logging.html">Logging</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="logging.html#pySC.utils.logging_tools.DebugMode"><code class="docutils literal notranslate"><span class="pre">DebugMode</span></code></a></li>
@@ -106,13 +118,25 @@
              
   <section id="module-pySC.correction.orbit_trajectory">
 <span id="correction-algorithms"></span><h1>Correction algorithms<a class="headerlink" href="#module-pySC.correction.orbit_trajectory" title="Permalink to this heading"></a></h1>
+<section id="trajectory-and-orbit">
+<h2>Trajectory and Orbit<a class="headerlink" href="#trajectory-and-orbit" title="Permalink to this heading"></a></h2>
+<p>This module contains functions to correct trajectory (first turns(s)) and orbit.</p>
+</section>
+<span class="target" id="module-pySC.correction.rf"></span><section id="rf">
+<h2>RF<a class="headerlink" href="#rf" title="Permalink to this heading"></a></h2>
+<p>This module contains functions to correct RF phase and frequency.</p>
+</section>
+<span class="target" id="module-pySC.correction.tune"></span><section id="tune">
+<h2>Tune<a class="headerlink" href="#tune" title="Permalink to this heading"></a></h2>
+<p>This module contains functions to correct betatron tunes.</p>
+</section>
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="core.html" class="btn btn-neutral float-left" title="Core functions" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="core_structure.html" class="btn btn-neutral float-left" title="Core structure" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="lattice_properties.html" class="btn btn-neutral float-right" title="Lattice properties" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

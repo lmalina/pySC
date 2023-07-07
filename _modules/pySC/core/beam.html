@@ -46,18 +46,30 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Modules</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../modules/core.html">Core functions</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../../modules/core.html#pySC.core.beam.all_elements_reading"><code class="docutils literal notranslate"><span class="pre">all_elements_reading()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../modules/core.html#pySC.core.beam.beam_transmission"><code class="docutils literal notranslate"><span class="pre">beam_transmission()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../modules/core.html#pySC.core.beam.bpm_reading"><code class="docutils literal notranslate"><span class="pre">bpm_reading()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../modules/core.html#pySC.core.beam.generate_bunches"><code class="docutils literal notranslate"><span class="pre">generate_bunches()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../modules/core.html#pySC.core.classes.DotDict"><code class="docutils literal notranslate"><span class="pre">DotDict</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../modules/core.html#pySC.core.classes.Indices"><code class="docutils literal notranslate"><span class="pre">Indices</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../modules/core.html#pySC.core.classes.Sigmas"><code class="docutils literal notranslate"><span class="pre">Sigmas</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../modules/core.html#pySC.core.classes.SimulatedComissioning"><code class="docutils literal notranslate"><span class="pre">SimulatedComissioning</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/core_functions.html">Core functions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_functions.html#beam">Beam</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_functions.html#pySC.core.beam.all_elements_reading"><code class="docutils literal notranslate"><span class="pre">all_elements_reading()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_functions.html#pySC.core.beam.beam_transmission"><code class="docutils literal notranslate"><span class="pre">beam_transmission()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_functions.html#pySC.core.beam.bpm_reading"><code class="docutils literal notranslate"><span class="pre">bpm_reading()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_functions.html#pySC.core.beam.generate_bunches"><code class="docutils literal notranslate"><span class="pre">generate_bunches()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_functions.html#lattice-setting">Lattice setting</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../../../modules/correction.html">Correction algorithms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/core_structure.html">Core structure</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_structure.html#simulated-commissioning">Simulated Commissioning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning"><code class="docutils literal notranslate"><span class="pre">SimulatedCommissioning</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_structure.html#sub-classes">Sub-classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_structure.html#pySC.core.classes.DotDict"><code class="docutils literal notranslate"><span class="pre">DotDict</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_structure.html#pySC.core.classes.Indices"><code class="docutils literal notranslate"><span class="pre">Indices</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_structure.html#pySC.core.classes.Sigmas"><code class="docutils literal notranslate"><span class="pre">Sigmas</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/correction.html">Correction algorithms</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/correction.html#trajectory-and-orbit">Trajectory and Orbit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/correction.html#rf">RF</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/correction.html#tune">Tune</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/lattice_properties.html">Lattice properties</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/logging.html">Logging</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/logging.html#pySC.utils.logging_tools.DebugMode"><code class="docutils literal notranslate"><span class="pre">DebugMode</span></code></a></li>
@@ -101,13 +113,20 @@
            <div itemprop="articleBody">
              
   <h1>Source code for pySC.core.beam</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Tuple</span>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Beam</span>
+<span class="sd">-------------</span>
+
+<span class="sd">This module contains the &#39;beam-based&#39; functions to interact with lattice under study.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
 <span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">ndarray</span>
 
-<span class="kn">from</span> <span class="nn">pySC.core.classes</span> <span class="kn">import</span> <span class="n">SimulatedComissioning</span>
+<span class="kn">from</span> <span class="nn">pySC.core.simulated_commissioning</span> <span class="kn">import</span> <span class="n">SimulatedCommissioning</span>
+<span class="kn">from</span> <span class="nn">pySC.core.constants</span> <span class="kn">import</span> <span class="n">TRACK_ORB</span><span class="p">,</span> <span class="n">TRACK_PORB</span>
 <span class="kn">from</span> <span class="nn">pySC.utils.sc_tools</span> <span class="kn">import</span> <span class="n">SCrandnc</span>
 <span class="kn">from</span> <span class="nn">pySC.utils.at_wrapper</span> <span class="kn">import</span> <span class="n">atgetfieldvalues</span><span class="p">,</span> <span class="n">atpass</span><span class="p">,</span> <span class="n">findorbit6</span><span class="p">,</span> <span class="n">findspos</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
@@ -117,7 +136,7 @@
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging_tools</span><span class="o">.</span><span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="bpm_reading"><a class="viewcode-back" href="../../../modules/core.html#pySC.core.beam.bpm_reading">[docs]</a><span class="k">def</span> <span class="nf">bpm_reading</span><span class="p">(</span><span class="n">SC</span><span class="p">:</span> <span class="n">SimulatedComissioning</span><span class="p">,</span> <span class="n">bpm_ords</span><span class="p">:</span> <span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ndarray</span><span class="p">:</span>
+<div class="viewcode-block" id="bpm_reading"><a class="viewcode-back" href="../../../modules/core_functions.html#pySC.core.beam.bpm_reading">[docs]</a><span class="k">def</span> <span class="nf">bpm_reading</span><span class="p">(</span><span class="n">SC</span><span class="p">:</span> <span class="n">SimulatedCommissioning</span><span class="p">,</span> <span class="n">bpm_ords</span><span class="p">:</span> <span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Calculates BPM readings with current injection setup `SC.INJ` and included all BPM uncertainties.</span>
 <span class="sd">    Included uncertainties are offsets, rolls, calibration errors, and position noise.</span>
@@ -126,7 +145,7 @@
 <span class="sd">    If SC.plot is True the reading is plotted.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        SC: SimulatedComissioning instance</span>
+<span class="sd">        SC: SimulatedCommissioning instance</span>
 <span class="sd">        bpm_ords: array of element indices of registered BPMs for which to calculate readings</span>
 <span class="sd">            (for convenience, otherwise `SC.ORD.BPM` is used)</span>
 
@@ -141,7 +160,7 @@
     <span class="n">mean_bpm_orbits_3d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">all_bpm_orbits_4d</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>  <span class="c1"># mean_bpm_orbits_3d is 3D (dim, BPM, turn)</span>
     <span class="k">if</span> <span class="n">SC</span><span class="o">.</span><span class="n">plot</span><span class="p">:</span>
         <span class="n">_plot_bpm_reading</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">mean_bpm_orbits_3d</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">SC</span><span class="o">.</span><span class="n">INJ</span><span class="o">.</span><span class="n">trackMode</span> <span class="o">==</span> <span class="s1">&#39;PORB&#39;</span><span class="p">:</span>   <span class="c1"># ORB averaged over low amount of turns</span>
+    <span class="k">if</span> <span class="n">SC</span><span class="o">.</span><span class="n">INJ</span><span class="o">.</span><span class="n">trackMode</span> <span class="o">==</span> <span class="n">TRACK_PORB</span><span class="p">:</span>   <span class="c1"># ORB averaged over low amount of turns</span>
         <span class="n">mean_bpm_orbits_3d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">mean_bpm_orbits_3d</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">bpm_ords</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">ind</span> <span class="o">=</span> <span class="n">_only_registered_bpms</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">bpm_ords</span><span class="p">)</span>
@@ -150,7 +169,7 @@
     <span class="k">return</span> <span class="n">_reshape_3d_to_matlab_like_2d</span><span class="p">(</span><span class="n">mean_bpm_orbits_3d</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="all_elements_reading"><a class="viewcode-back" href="../../../modules/core.html#pySC.core.beam.all_elements_reading">[docs]</a><span class="k">def</span> <span class="nf">all_elements_reading</span><span class="p">(</span><span class="n">SC</span><span class="p">:</span> <span class="n">SimulatedComissioning</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">ndarray</span><span class="p">]:</span>
+<div class="viewcode-block" id="all_elements_reading"><a class="viewcode-back" href="../../../modules/core_functions.html#pySC.core.beam.all_elements_reading">[docs]</a><span class="k">def</span> <span class="nf">all_elements_reading</span><span class="p">(</span><span class="n">SC</span><span class="p">:</span> <span class="n">SimulatedCommissioning</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">ndarray</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Calculates horizontal and vertical positions with current injection setup `SC.INJ`.</span>
 <span class="sd">    Returns the measured BPM positions at all BPMs as well as TRUE positions at all elements,</span>
@@ -158,7 +177,7 @@
 <span class="sd">    If SC.plot is True the reading is plotted.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        SC: SimulatedComissioning instance</span>
+<span class="sd">        SC: SimulatedCommissioning instance</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Array of all horizontal and vertical BPM readings (2, T x B) for T turns and B BPMs</span>
@@ -181,13 +200,13 @@
     <span class="k">return</span> <span class="n">_reshape_3d_to_matlab_like_2d</span><span class="p">(</span><span class="n">mean_bpm_orbits_3d</span><span class="p">),</span> <span class="n">all_readings_5d</span></div>
 
 
-<div class="viewcode-block" id="beam_transmission"><a class="viewcode-back" href="../../../modules/core.html#pySC.core.beam.beam_transmission">[docs]</a><span class="k">def</span> <span class="nf">beam_transmission</span><span class="p">(</span><span class="n">SC</span><span class="p">:</span> <span class="n">SimulatedComissioning</span><span class="p">,</span> <span class="n">nParticles</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">nTurns</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<div class="viewcode-block" id="beam_transmission"><a class="viewcode-back" href="../../../modules/core_functions.html#pySC.core.beam.beam_transmission">[docs]</a><span class="k">def</span> <span class="nf">beam_transmission</span><span class="p">(</span><span class="n">SC</span><span class="p">:</span> <span class="n">SimulatedCommissioning</span><span class="p">,</span> <span class="n">nParticles</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">nTurns</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
                       <span class="n">plot</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">ndarray</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Calculates the turn-by-turn beam transmission with current injection setup as defined in `SC.INJ`.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        SC: SimulatedComissioning instance</span>
+<span class="sd">        SC: SimulatedCommissioning instance</span>
 <span class="sd">        nParticles: Number of particles to track</span>
 <span class="sd">            (for convenience, otherwise `SC.INJ.nParticles` is used)</span>
 <span class="sd">        nTurns: Number of turns to track</span>
@@ -217,7 +236,7 @@
     <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">max_turns</span><span class="p">),</span> <span class="n">fraction_lost</span></div>
 
 
-<div class="viewcode-block" id="generate_bunches"><a class="viewcode-back" href="../../../modules/core.html#pySC.core.beam.generate_bunches">[docs]</a><span class="k">def</span> <span class="nf">generate_bunches</span><span class="p">(</span><span class="n">SC</span><span class="p">:</span> <span class="n">SimulatedComissioning</span><span class="p">,</span> <span class="n">nParticles</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ndarray</span><span class="p">:</span>
+<div class="viewcode-block" id="generate_bunches"><a class="viewcode-back" href="../../../modules/core_functions.html#pySC.core.beam.generate_bunches">[docs]</a><span class="k">def</span> <span class="nf">generate_bunches</span><span class="p">(</span><span class="n">SC</span><span class="p">:</span> <span class="n">SimulatedCommissioning</span><span class="p">,</span> <span class="n">nParticles</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Generates bunches according to the current injection setup as defined in `SC.INJ`.</span>
 <span class="sd">    The random injection error is added to the mean injected beam trajectory for each bunch.</span>
@@ -227,7 +246,7 @@
 <span class="sd">    A function `SC.INJ.postFun` is applied to the generated coordinates.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        SC: SimulatedComissioning instance</span>
+<span class="sd">        SC: SimulatedCommissioning instance</span>
 <span class="sd">        nParticles: Number of particles to generate</span>
 <span class="sd">            (for convenience, otherwise `SC.INJ.nParticles` is used)</span>
 
@@ -276,17 +295,17 @@
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">a</span><span class="p">)],</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">a</span><span class="p">)]])</span>
 
 
-<span class="k">def</span> <span class="nf">_tracking</span><span class="p">(</span><span class="n">SC</span><span class="p">:</span> <span class="n">SimulatedComissioning</span><span class="p">,</span> <span class="n">refs</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ndarray</span><span class="p">:</span>
+<span class="k">def</span> <span class="nf">_tracking</span><span class="p">(</span><span class="n">SC</span><span class="p">:</span> <span class="n">SimulatedCommissioning</span><span class="p">,</span> <span class="n">refs</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns numpy array (2, N, R, T) of X and Y coordinates of N particles at R reference points for T turns.</span>
 <span class="sd">       If ORB: N and T are equal to 1&quot;&quot;&quot;</span>
     <span class="c1">#  lattice_pass output:            (6, N, R, T) coordinates of N particles at R reference points for T turns.</span>
     <span class="c1">#  findorbit second output value:  (R, 6) closed orbit vector at each specified location</span>
-    <span class="k">if</span> <span class="n">SC</span><span class="o">.</span><span class="n">INJ</span><span class="o">.</span><span class="n">trackMode</span> <span class="o">==</span> <span class="s1">&#39;ORB&#39;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">SC</span><span class="o">.</span><span class="n">INJ</span><span class="o">.</span><span class="n">trackMode</span> <span class="o">==</span> <span class="n">TRACK_ORB</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">findorbit6</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">,</span> <span class="n">refs</span><span class="p">,</span> <span class="n">keep_lattice</span><span class="o">=</span><span class="kc">False</span><span class="p">)[</span><span class="mi">1</span><span class="p">])[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">:]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">refs</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">atpass</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">,</span> <span class="n">generate_bunches</span><span class="p">(</span><span class="n">SC</span><span class="p">),</span> <span class="n">SC</span><span class="o">.</span><span class="n">INJ</span><span class="o">.</span><span class="n">nTurns</span><span class="p">,</span> <span class="n">refs</span><span class="p">,</span> <span class="n">keep_lattice</span><span class="o">=</span><span class="kc">False</span><span class="p">)[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">:,</span> <span class="p">:,</span> <span class="p">:]</span>
 
 
-<span class="k">def</span> <span class="nf">_only_registered_bpms</span><span class="p">(</span><span class="n">SC</span><span class="p">:</span> <span class="n">SimulatedComissioning</span><span class="p">,</span> <span class="n">bpm_ords</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ndarray</span><span class="p">:</span>
+<span class="k">def</span> <span class="nf">_only_registered_bpms</span><span class="p">(</span><span class="n">SC</span><span class="p">:</span> <span class="n">SimulatedCommissioning</span><span class="p">,</span> <span class="n">bpm_ords</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ndarray</span><span class="p">:</span>
     <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">ORD</span><span class="o">.</span><span class="n">BPM</span><span class="p">,</span> <span class="n">bpm_ords</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ind</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">bpm_ords</span><span class="p">):</span>
         <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Not all specified ordinates are registered BPMs.&#39;</span><span class="p">)</span>
