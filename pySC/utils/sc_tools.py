@@ -10,6 +10,7 @@ from pySC.utils import logging_tools
 
 LOGGER = logging_tools.get_logger(__name__)
 
+
 def SCrandnc(cut_off: float = 2, shape: tuple = (1, )) -> ndarray:
     """
     Generates an array of random number(s) from normal distribution with a cut-off.

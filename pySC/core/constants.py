@@ -12,4 +12,13 @@ TYPE_TO_AB: Dict[str, str] = dict(NORMAL="B", SKEW="A")
 NUM_TO_AB: Tuple[str, str] = ("B", "A")
 AB_TO_TYPE: Dict[str, str] = dict(B="NORMAL", A="SKEW")
 AB_TO_NUM: Dict[str, int] = dict(B=0, A=1)
-TRACKING_MODES: Tuple[str, str, str] = ("TBT", "ORB", "PORB")
+
+TRACK_TBT: str = "TBT"
+TRACK_ORB: str = "ORB"
+TRACK_PORB: str = "PORB"
+TRACKING_MODES: Tuple[str, str, str] = (TRACK_TBT, TRACK_ORB, TRACK_PORB)
+
+SETTING_ABS: str = "abs"
+SETTING_REL: str = "rel"
+SETTING_ADD: str = "add"
+SETTING_METHODS: Tuple[str, str, str] = (SETTING_ABS, SETTING_REL, SETTING_ADD)

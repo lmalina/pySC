@@ -1,7 +1,7 @@
 import pytest
 from tests.test_at_wrapper import at_lattice
 import numpy as np
-from pySC.core.classes import SimulatedComissioning
+from pySC.core.simulated_commissioning import SimulatedCommissioning
 from pySC.correction.orbit_trajectory import SCfeedbackFirstTurn, SCfeedbackStitch, SCfeedbackRun, SCfeedbackBalance, \
     SCpseudoBBA
 from pySC.core.beam import bpm_reading, beam_transmission
@@ -14,7 +14,7 @@ from pySC.correction.rf import SCsynchPhaseCorrection, SCsynchEnergyCorrection
 
 def test_example(at_lattice):
     np.random.seed(1234567)
-    sc = SimulatedComissioning(at_lattice)
+    sc = SimulatedCommissioning(at_lattice)
     sc.register_bpms(SCgetOrds(sc.RING, 'BPM'),
                      CalError=5E-2 * np.ones(2),
                      Offset=500E-6 * np.ones(2),

@@ -1,7 +1,7 @@
 import numpy as np
 from at import Lattice
 
-from pySC.core.classes import SimulatedComissioning
+from pySC.core.simulated_commissioning import SimulatedCommissioning
 from pySC.utils.at_wrapper import atpass, findorbit6
 from pySC.core.constants import NUM_TO_AB, RF_PROPERTIES
 import copy
@@ -75,7 +75,7 @@ def SCgetModelDispersion(SC, BPMords, CAVords, trackMode='ORB', Z0=np.zeros(6), 
     return eta
 
 
-def SCgetModelRING(SC: SimulatedComissioning, includeAperture: bool =False) -> Lattice:
+def SCgetModelRING(SC: SimulatedCommissioning, includeAperture: bool =False) -> Lattice:
     ring = SC.IDEALRING.deepcopy()
     for ord in range(len(SC.RING)):
         if hasattr(SC.RING[ord], 'SetPointA') and hasattr(SC.RING[ord], 'SetPointB'):

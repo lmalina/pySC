@@ -1,3 +1,9 @@
+"""
+Tune
+-------------
+
+This module contains functions to correct betatron tunes.
+"""
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec

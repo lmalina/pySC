@@ -1,32 +1,38 @@
+"""
+Lattice setting
+-------------
+
+This module contains the 'machine-based' functions to interact with lattice under study.
+"""
 import numpy as np
 from typing import Tuple
 
 from at import Lattice
 from numpy import ndarray
-from pySC.core.classes import SimulatedComissioning, DotDict
-from pySC.utils.classdef_tools import add_padded
-from pySC.utils.sc_tools import SCrandnc
+
+from pySC.core.constants import SETTING_METHODS, SETTING_ABS, SETTING_REL, SETTING_ADD
+from pySC.core.simulated_commissioning import SimulatedCommissioning
 from pySC.utils import logging_tools
 
 LOGGER = logging_tools.get_logger(__name__)
-VALID_METHODS = ("abs", "rel", "add")
 
 
-def set_cavity_setpoints(SC: SimulatedComissioning, ords: ndarray, type: str, setpoints: ndarray, method: str = 'abs') -> SimulatedComissioning:
+def set_cavity_setpoints(SC: SimulatedCommissioning, ords: ndarray, type: str, setpoints: ndarray,
+                         method: str = SETTING_ABS) -> SimulatedCommissioning:
     new_setpoints = _check_input_and_setpoints(method, ords, setpoints)
     setpoint_str = f"{type}SetPoint"
     for i, ord in enumerate(ords):
         new_setpoint = new_setpoints[i]
-        if method == 'rel':
+        if method == SETTING_REL:
             new_setpoint *= getattr(SC.RING[ord], setpoint_str)
-        if method == 'add':
+        if method == SETTING_ADD:
             new_setpoint += getattr(SC.RING[ord], setpoint_str)
         setattr(SC.RING[ord], setpoint_str, new_setpoint)
     SC.update_cavities(ords)
     return SC
 
 
-def get_cm_setpoints(SC: SimulatedComissioning, ords: ndarray, skewness: bool) -> ndarray:
+def get_cm_setpoints(SC: SimulatedCommissioning, ords: ndarray, skewness: bool) -> ndarray:
     setpoints = np.nan*np.ones(len(ords))
     order = 0
     ndim = 1 if skewness else 0
@@ -34,15 +40,17 @@ def get_cm_setpoints(SC: SimulatedComissioning, ords: ndarray, skewness: bool) -
         if SC.RING[ord].PassMethod == 'CorrectorPass':
             norm_by = np.array([1, 1])
         else:
-            norm_by = np.array([-1, 1]) * SC.RING[ord].Length  # positive setpoint -> positive kick -> negative horizontal field
+            # positive setpoint -> positive kick -> negative horizontal field
+            norm_by = np.array([-1, 1]) * SC.RING[ord].Length
         if skewness:
             setpoints[i] = SC.RING[ord].SetPointA[order] * norm_by[ndim]
         else:
             setpoints[i] = SC.RING[ord].SetPointB[order] * norm_by[ndim]
     return setpoints
 
-def set_cm_setpoints(SC: SimulatedComissioning, ords: ndarray, setpoints: ndarray, skewness: bool, method: str = 'abs') -> Tuple[SimulatedComissioning, ndarray]:
-    # skewness: old 2 -> True, 1 -> False
+
+def set_cm_setpoints(SC: SimulatedCommissioning, ords: ndarray, setpoints: ndarray, skewness: bool,
+                     method: str = SETTING_ABS) -> Tuple[SimulatedCommissioning, ndarray]:
     new_setpoints = _check_input_and_setpoints(method, ords, setpoints)
     order = 0
     ndim = 1 if skewness else 0
@@ -50,10 +58,11 @@ def set_cm_setpoints(SC: SimulatedComissioning, ords: ndarray, setpoints: ndarra
         if SC.RING[ord].PassMethod == 'CorrectorPass':
             norm_by = np.array([1, 1])
         else:
-            norm_by = np.array([-1, 1]) * SC.RING[ord].Length  # positive setpoint -> positive kick -> negative horizontal field
-        if method == 'rel':
+            # positive setpoint -> positive kick -> negative horizontal field
+            norm_by = np.array([-1, 1]) * SC.RING[ord].Length
+        if method == SETTING_REL:
             new_setpoints[i] *= (SC.RING[ord].SetPointA[order] if skewness else SC.RING[ord].SetPointB[order]) * norm_by[ndim]
-        if method == 'add':
+        if method == SETTING_ADD:
             new_setpoints[i] += (SC.RING[ord].SetPointA[order] if skewness else SC.RING[ord].SetPointB[order]) * norm_by[ndim]
 
         if hasattr(SC.RING[ord], 'CMlimit') and abs(new_setpoints[i]) > abs(SC.RING[ord].CMlimit[ndim]):
@@ -67,14 +76,13 @@ def set_cm_setpoints(SC: SimulatedComissioning, ords: ndarray, setpoints: ndarra
     return SC, new_setpoints
 
 
-def set_magnet_setpoints(SC: SimulatedComissioning, ords: ndarray, skewness: bool, order: int, setpoints: ndarray,
-                         method: str = 'abs', dipole_compensation: bool = False) -> SimulatedComissioning:
-    # skewness: old 2 -> False, 1 -> True , order decresed by 1
+def set_magnet_setpoints(SC: SimulatedCommissioning, ords: ndarray, skewness: bool, order: int, setpoints: ndarray,
+                         method: str = SETTING_ABS, dipole_compensation: bool = False) -> SimulatedCommissioning:
     new_setpoints = _check_input_and_setpoints(method, ords, setpoints)
     for i, ord in enumerate(ords):
-        if method == 'rel':
+        if method == SETTING_REL:
             new_setpoints[i] *= SC.RING[ord].NomPolynomA[order] if skewness else SC.RING[ord].NomPolynomB[order]
-        if method == 'add':
+        if method == SETTING_ADD:
             new_setpoints[i] += SC.RING[ord].SetPointA[order] if skewness else SC.RING[ord].SetPointB[order]
         if skewness and order == 1:  # skew quad
             if hasattr(SC.RING[ord], 'SkewQuadLimit') and abs(new_setpoints[i]) > abs(SC.RING[ord].SkewQuadLimit):
@@ -89,36 +97,6 @@ def set_magnet_setpoints(SC: SimulatedComissioning, ords: ndarray, skewness: boo
             SC.RING[ord].SetPointB[order] = new_setpoints[i]
     SC.update_magnets(ords)
     return SC
-
-
-def set_multipole_errors(RING, ords: ndarray, BA, method: str = 'rnd', order: int = None, skewness: bool = None):
-    allowed_methods = ("sys", "rnd")
-    if method not in allowed_methods:
-        raise ValueError(f'Unsupported multipole method {method}. Allowed are {allowed_methods}.')
-    if BA.ndim != 2 or BA.shape[1] != 2:
-        raise ValueError("BA has to  be numpy.array of shape N x 2.")
-    if method == 'rnd':
-        for ord in ords:
-            randBA = SCrandnc(2, BA.shape) * BA  # TODO this should be registered in SC.SIG
-            for ind, target in enumerate(("B", "A")):
-                attr_name = f"Polynom{target}Offset"
-                setattr(RING[ord], attr_name,
-                        add_padded(getattr(RING[ord], attr_name), randBA[:, ind])
-                        if hasattr(RING[ord], attr_name) else randBA[:, ind])
-        return RING
-    # Systematic multipole errors
-    if order is None or skewness is None:
-        raise ValueError(f'Order and skewness have to be defined with method "sys".')
-    ind, source = (1, "A") if skewness else (0, "B")
-    newBA = BA[:, :]
-    newBA[order, ind] = 0
-    for ord in ords:
-        for target in ("A", "B"):
-            attr_name = f'SysPol{target}From{source}'
-            syspol = getattr(RING[ord], attr_name) if hasattr(RING[ord], attr_name) else DotDict()
-            syspol[order] = newBA[:, ind]
-            setattr(RING[ord], attr_name, syspol)
-    return RING
 
 
 def SCcronoff(ring: Lattice, *args: str) -> Lattice:  # TODO some at methods do that?
@@ -157,15 +135,15 @@ def SCcronoff(ring: Lattice, *args: str) -> Lattice:  # TODO some at methods do 
 def _dipole_compensation(SC, ord, setpoint):
     if not (hasattr(SC.RING[ord], 'BendingAngle') and SC.RING[ord].BendingAngle != 0 and ord in SC.ORD.CM[0]):
         return SC
-    idealKickDifference = ((setpoint - (SC.RING[ord].SetPointB[1] - SC.RING[ord].NomPolynomB[1])) /
-                           SC.RING[ord].NomPolynomB[1] - 1) * SC.RING[ord].BendingAngle / SC.RING[ord].Length
-    SC, _ = set_cm_setpoints(SC, ord, idealKickDifference * SC.RING[ord].Length, skewness=False, method='add')
+    ideal_kick_difference = ((setpoint - (SC.RING[ord].SetPointB[1] - SC.RING[ord].NomPolynomB[1])) /
+                             SC.RING[ord].NomPolynomB[1] - 1) * SC.RING[ord].BendingAngle / SC.RING[ord].Length
+    SC, _ = set_cm_setpoints(SC, ord, ideal_kick_difference * SC.RING[ord].Length, skewness=False, method=SETTING_ADD)
     return SC
 
 
 def _check_input_and_setpoints(method, ords, setpoints):
-    if method not in VALID_METHODS:
-        raise ValueError(f'Unsupported setpoint method: {method}. Allowed options are: {VALID_METHODS}.')
+    if method not in SETTING_METHODS:
+        raise ValueError(f'Unsupported setpoint method: {method}. Allowed options are: {SETTING_METHODS}.')
     if len(setpoints) not in (1, len(ords)) or np.prod(setpoints.shape) > len(ords):
         raise ValueError(f'Setpoints have to have length of 1 or matching to the length or ordinates.')
     if len(setpoints) == 1:
