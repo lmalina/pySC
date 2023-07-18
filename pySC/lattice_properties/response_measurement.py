@@ -3,116 +3,114 @@ import numpy as np
 from pySC.core.beam import bpm_reading
 from pySC.core.lattice_setting import set_cm_setpoints, get_cm_setpoints, set_cavity_setpoints
 from pySC.utils import logging_tools
+from pySC.utils.at_wrapper import atgetfieldvalues
 
 LOGGER = logging_tools.get_logger(__name__)
 
-def SCgetRespMat(SC, Amp, BPMords, CMords, mode='fixedKick', nSteps=2, fit='linear'):
-    if (not isinstance(Amp, list) and not len(Amp) == 1) or (
-            isinstance(Amp, list) and (len(Amp[0]) != len(CMords[0]) and len(Amp[1]) != len(CMords[1]))):
-        raise ValueError('RM amplitude must be defined as single value or cell array matching the number of used HCM and VCM.')
-    if not isinstance(Amp, list):
-        Amp = [np.ones(len(CMords[0])) * Amp, np.ones(len(CMords[1])) * Amp]
-    LOGGER.debug('Calculate {:d}-turn trajectory response matrix for {:d} BPMs and {:d}|{:d} CMs with mode ''{}'' and amplitude {:.0e}|{:.0e} using {:d} steps ...'.format(SC.INJ.nTurns, len(BPMords), len(CMords[0]), len(CMords[1]), mode, np.mean(Amp[0]), np.mean(Amp[1]), nSteps))
-    RM = np.nan * np.zeros((2 * SC.INJ.nTurns * len(BPMords), len(CMords[0]) + len(CMords[1])))
-    Err = np.nan * np.zeros((2 * SC.INJ.nTurns * len(BPMords), len(CMords[0]) + len(CMords[1])))
-    CMsteps = [np.zeros((nSteps, len(CMords[0]))), np.zeros((nSteps, len(CMords[1])))]
-    Bref = np.reshape(bpm_reading(SC, bpm_ords=BPMords), [], 1)
-    if SC.INJ.trackMode == 'ORB' and np.any(np.isnan(Bref)):
+
+def response_matrix(SC, amp, bpm_ords, cm_ords, mode='fixedKick', n_steps=2, fit_order=1):
+    if ((not isinstance(amp, list) and not len(amp) == 1) or
+            (isinstance(amp, list) and (len(amp[0]) != len(cm_ords[0]) or len(amp[1]) != len(cm_ords[1])))):
+        raise ValueError('response_matrix amplitude must be defined as single value or '
+                         'array matching the number of used HCM and VCM.')
+    if not isinstance(amp, list):
+        amp = [np.ones(len(cm_ords[0])) * amp, np.ones(len(cm_ords[1])) * amp]
+    LOGGER.debug(f'Calculate {SC.INJ.nTurns}-turn trajectory response matrix for {len(bpm_ords)} BPMs and '
+                 f'{len(cm_ords[0])}|{len(cm_ords[1])} CMs with {mode=} and '
+                 f'amplitudes {np.mean(amp[0])}|{np.mean(amp[1])} using {n_steps} steps ...')
+    n_hcm, n_vcm = cm_ords[0].shape[0], cm_ords[1].shape[0]
+    rm = np.full((2 * SC.INJ.nTurns * bpm_ords.shape[0], n_hcm + n_vcm), np.nan)
+    error = np.full((2 * SC.INJ.nTurns * bpm_ords.shape[0], n_hcm + n_vcm), np.nan)
+    cm_steps = [np.zeros((n_steps, n_hcm)), np.zeros((n_steps, n_vcm))]
+    bref = np.ravel(bpm_reading(SC, bpm_ords=bpm_ords))
+    if SC.INJ.trackMode == 'ORB' and np.sum(np.isnan(bref)):
         raise ValueError('No closed orbit found.')
     i = 0
-    for nDim in range(2):
-        cmstart = get_cm_setpoints(SC, CMords[nDim], nDim)
-        for nCM in range(len(CMords[nDim])):
-            MaxStep, dB = getKickAmplitude(SC, Bref, BPMords, CMords[nDim][nCM], Amp[nDim][nCM], nDim, SC.INJ.nTurns,
-                                           nSteps, mode)
-            CMstepVec = np.linspace(-MaxStep, MaxStep, nSteps)
-            if nSteps != 2:
-                realCMsetPoint = cmstart[nCM] + CMstepVec
-                dB = np.vstack((np.zeros((nSteps - 1, len(Bref))), dB.T))
-                for nStep in range(nSteps):
-                    if CMstepVec[nStep] != 0 and CMstepVec[nStep] != MaxStep:
-                        SC, realCMsetPoint[nStep] = set_cm_setpoints(SC, CMords[nDim][nCM], cmstart[nCM] + CMstepVec[nStep], skewness=nDim)
-                        dB[nStep, :] = np.reshape(bpm_reading(SC, bpm_ords=BPMords), [], 1) - Bref
-                dCM = realCMsetPoint - cmstart[nCM]
+    for n_dim in range(2):
+        cmstart = get_cm_setpoints(SC, cm_ords[n_dim], bool(n_dim))
+        for nCM in range(len(cm_ords[n_dim])):
+            max_step, gradient = _kick_amplitude(SC, bref, bpm_ords, cm_ords[n_dim][nCM], amp[n_dim][nCM], bool(n_dim), mode)
+            cm_step_vec = np.linspace(-max_step, max_step, n_steps)
+            if n_steps != 2:
+                real_cm_setpoint = cmstart[nCM] + cm_step_vec
+                gradient = np.vstack((np.zeros((n_steps - 1, len(bref))), gradient.T))
+                for n_step in range(n_steps):
+                    if cm_step_vec[n_step] != 0 and cm_step_vec[n_step] != max_step:
+                        SC, real_cm_setpoint[n_step] = set_cm_setpoints(SC, cm_ords[n_dim][nCM],
+                                                                        cmstart[nCM] + cm_step_vec[n_step],
+                                                                        skewness=bool(n_dim))
+                        gradient[n_step, :] = np.ravel(bpm_reading(SC, bpm_ords=bpm_ords)) - bref
+                dCM = real_cm_setpoint - cmstart[nCM]
+                cm_steps[n_dim][:, nCM] = dCM
+                rm[:, i] = gradient / dCM
             else:
-                dCM = MaxStep
-            CMsteps[nDim][:, nCM] = dCM
-            if nSteps == 2:
-                RM[:, i] = dB / dCM
-            else:
-                for nBPM in range(dB.shape[1]):
-                    x = dCM[~np.isnan(dB[:, nBPM])]
-                    y = dB[~np.isnan(dB[:, nBPM]), nBPM]
-                    if fit == 'linear':
-                        RM[nBPM, i] = np.linalg.lstsq(x[:, None], y, rcond=None)[0]
-                    elif fit == 'quadratic':
-                        tmp = np.polyfit(x, y, 2)
-                        RM[nBPM, i] = tmp[1]
-                    Err[nBPM, i] = np.sqrt(
-                        np.mean((RM[nBPM, i] * dCM[~np.isnan(dB[:, nBPM])] - dB[~np.isnan(dB[:, nBPM]), nBPM]).T ** 2))
+                dCM = max_step
+                cm_steps[n_dim][:, nCM] = dCM
+                for nBPM in range(gradient.shape[1]):
+                    x = dCM[~np.isnan(gradient[:, nBPM])]
+                    y = gradient[~np.isnan(gradient[:, nBPM]), nBPM]
+                    rm[nBPM, i] = np.polyfit(x, y, fit_order)[fit_order - 1]
+                    error[nBPM, i] = np.sqrt(np.mean((rm[nBPM, i] * x - y).T ** 2))
             i = i + 1
-            SC, _ = set_cm_setpoints(SC, CMords[nDim][nCM], cmstart[nCM], skewness=nDim)
-    RM[np.isnan(RM)] = 0
+            SC, _ = set_cm_setpoints(SC, cm_ords[n_dim][nCM], cmstart[nCM], skewness=bool(n_dim))
+    rm[np.isnan(rm)] = 0
     LOGGER.debug(' done.')
-    return RM, Err, CMsteps
+    return rm, error, cm_steps
 
 
-def SCgetDispersion(SC,RFstep,BPMords=None,CAVords=None,nSteps=2):
-    if BPMords is None:
-        BPMords = SC.ORD.BPM
-    if CAVords is None:
-        CAVords = SC.ORD.RF
-    RFsteps = np.zeros((len(CAVords),nSteps))
-    for nCav in range(len(CAVords)):
-        RFsteps[nCav,:] = SC.RING[CAVords[nCav]].FrequencySetPoint + np.linspace(-RFstep,RFstep,nSteps)
-    Bref = np.reshape(bpm_reading(SC, bpm_ords=BPMords), [], 1)
-    if nSteps==2:
-        SC = set_cavity_setpoints(SC, CAVords, 'Frequency', RFstep, 'add')
-        B = np.reshape(bpm_reading(SC, bpm_ords=BPMords), [], 1)
-        eta = (B-Bref)/RFstep
-    else:
-        dB = np.zeros((nSteps,*np.shape(Bref)))
-        for nStep in range(nSteps):
-            SC = set_cavity_setpoints(SC, CAVords, 'Frequency', RFsteps[:, nStep], 'abs')
-            dB[nStep,:] = np.reshape(bpm_reading(SC, bpm_ords=BPMords), [], 1) - Bref
-        eta = np.linalg.lstsq(np.linspace(-RFstep,RFstep,nSteps),dB)[0]
-    return eta
+def dispersion(SC, rf_step, bpm_ords=None, cav_ords=None, n_steps=2):
+    bpm_ords, cav_ords = _check_ords(SC, bpm_ords, cav_ords)
+    bref = np.ravel(bpm_reading(SC, bpm_ords=bpm_ords))
+    if n_steps == 2:
+        SC = set_cavity_setpoints(SC, cav_ords, 'Frequency', rf_step, 'add')
+        B = np.ravel(bpm_reading(SC, bpm_ords=bpm_ords))
+        SC = set_cavity_setpoints(SC, cav_ords, 'Frequency', -rf_step, 'add')
+        return (B - bref) / rf_step
+    rf_steps = np.zeros((len(cav_ords), n_steps))
+    for n_cav, cav_ord in enumerate(cav_ords):
+        rf_steps[n_cav, :] = SC.RING[cav_ord].FrequencySetPoint + np.linspace(-rf_step, rf_step, n_steps)
+    dB = np.zeros((n_steps, *np.shape(bref)))
+    rf0 = atgetfieldvalues(SC.RING, cav_ords, "FrequencySetPoint")
+    for nStep in range(n_steps):
+        SC = set_cavity_setpoints(SC, cav_ords, 'Frequency', rf_steps[:, nStep], 'abs')
+        dB[nStep, :] = np.ravel(bpm_reading(SC, bpm_ords=bpm_ords)) - bref
+    SC = set_cavity_setpoints(SC, cav_ords, 'Frequency', rf0, 'abs')
+    return np.linalg.lstsq(np.linspace(-rf_step, rf_step, n_steps), dB)[0]
 
 
-def getKickAmplitude(SC, Bref, BPMords, CMord, Amp, skewness: bool, nTurns, nSteps, mode):
-    cmstart = get_cm_setpoints(SC, CMord, skewness)
-    MaxStep = Amp
-    if mode == 'fixedKick':
-        for n in range(20):
-            SC, realCMsetPoint = set_cm_setpoints(SC, CMord, cmstart + MaxStep, skewness)
-            if realCMsetPoint != (cmstart + MaxStep):
-                LOGGER.debug('CM  clipped. Using different CM direction.')
-                MaxStep = - MaxStep
-                SC, _ = set_cm_setpoints(SC, CMord, cmstart + MaxStep, skewness)
-            B = np.reshape(bpm_reading(SC, bpm_ords=BPMords), [], 1)
-            maxpos = min([np.where(np.isnan(B))[0][0] - 1, nTurns * len(BPMords)])
-            maxposRef = min([np.where(np.isnan(Bref))[0][0] - 1, nTurns * len(BPMords)])
-            if not (maxpos < maxposRef):
-                dB = B - Bref
-                break
+def _check_ords(SC, bpm_ords, cav_ords):
+    if bpm_ords is None:
+        bpm_ords = SC.ORD.BPM
+    if cav_ords is None:
+        cav_ords = SC.ORD.RF
+    return bpm_ords, cav_ords
+
+
+def _kick_amplitude(SC, bref, bpm_ords, cm_ord, amp, skewness: bool, mode):
+    cmstart = get_cm_setpoints(SC, cm_ord, skewness)
+    max_step = amp
+    params = dict(fixedOffset=(4, 0.5), fixedKick=(20, 0.9))
+    n_iter, decrease_factor = params[mode]
+    for n in range(n_iter):
+        SC, max_step, bpm_readings_ravel = _try_setpoint(SC, bpm_ords, cm_ord, cmstart, max_step, skewness)
+        max_pos, max_pos_ref = np.sum(~np.isnan(bpm_readings_ravel)) / 2, np.sum(~np.isnan(bref)) / 2
+        if max_pos_ref <= max_pos:
+            if mode == "fixedOffset":
+                max_step = max_step * amp / np.max(np.abs(bpm_readings_ravel - bref))
             else:
-                MaxStep = 0.9 * MaxStep
-                LOGGER.debug(f'Insufficient beam reach ({maxpos:d}/{maxposRef:d}). CMstep reduced to {1E6 * MaxStep:.1f}urad.')
-    elif mode == 'fixedOffset':
-        for n in range(4):
-            SC, realCMsetPoint = set_cm_setpoints(SC, CMord, cmstart + MaxStep, skewness)
-            if realCMsetPoint != (cmstart + MaxStep):
-                LOGGER.debug('CM  clipped. Using different CM direction.')
-                MaxStep = - MaxStep
-                SC, _ = set_cm_setpoints(SC, CMord, cmstart + MaxStep, skewness)
-            B = np.reshape(bpm_reading(SC, bpm_ords=BPMords), [], 1)
-            maxpos = min([np.where(np.isnan(B))[0][0] - 1, nTurns * len(BPMords)])
-            maxposRef = min([np.where(np.isnan(Bref))[0][0] - 1, nTurns * len(BPMords)])
-            if maxpos < maxposRef:
-                MaxStep = 0.5 * MaxStep
-                LOGGER.debug(f'Insufficient beam reach ({maxpos:d}/{maxposRef:d}). CMstep reduced to {1E6 * MaxStep:.1f}urad.')
-                continue
-            MaxStep = MaxStep * Amp / np.max(np.abs(B - Bref))
-        dB = np.reshape(bpm_reading(SC, bpm_ords=BPMords), [], 1) - Bref
-    return MaxStep, dB
-# End
+                break
+        else:
+            max_step *= decrease_factor
+            LOGGER.debug(
+                f'Insufficient beam reach ({max_pos:d}/{max_pos_ref:d}). '
+                f'cm_step reduced to {1E6 * max_step:.1f}urad.')
+    return max_step, np.ravel(bpm_reading(SC, bpm_ords=bpm_ords)) - bref
+
+
+def _try_setpoint(SC, bpm_ords, cm_ord, cmstart, max_step, skewness):
+    SC, real_cm_setpoint = set_cm_setpoints(SC, cm_ord, cmstart + max_step, skewness)
+    if real_cm_setpoint != (cmstart + max_step):
+        LOGGER.debug('CM  clipped. Using different CM direction.')
+        max_step *= -1
+        SC, _ = set_cm_setpoints(SC, cm_ord, cmstart + max_step, skewness)
+    return SC, max_step, np.ravel(bpm_reading(SC, bpm_ords=bpm_ords))

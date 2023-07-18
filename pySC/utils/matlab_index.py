@@ -17,7 +17,7 @@ from numpy import ndarray
 from pySC.core.beam import beam_transmission, bpm_reading, generate_bunches
 from pySC.core.simulated_commissioning import SimulatedCommissioning
 from pySC.core.lattice_setting import (set_cavity_setpoints, set_magnet_setpoints,
-    set_cm_setpoints, get_cm_setpoints, SCcronoff as cronoff)
+                                       set_cm_setpoints, get_cm_setpoints, SCcronoff as cronoff)
 from pySC.correction.bba import SCBBA as bba
 from pySC.correction.injection_fit import fit_injection_trajectory, fit_injection_drift
 from pySC.correction.orbit_trajectory import SCfeedbackFirstTurn as first_turn, SCfeedbackStitch as stitch, \
@@ -27,9 +27,8 @@ from pySC.correction.rf import SCsynchPhaseCorrection as synch_phase_corr, SCsyn
 from pySC.correction.tune import tune_scan
 from pySC.lattice_properties.apertures import SCdynamicAperture as dynamic_aperture, \
     SCmomentumAperture as momentum_aperture
-# from pySC.correction.bba import SCBBA as bba
 from pySC.lattice_properties.magnet_orbit import SCgetCOD as cod
-from pySC.lattice_properties.response_measurement import SCgetRespMat as response_matrix, SCgetDispersion as dispersion
+from pySC.lattice_properties.response_measurement import response_matrix, dispersion
 from pySC.lattice_properties.response_model import SCgetModelRM as model_rm, SCgetModelDispersion as model_dispersion, \
     SCgetModelRING as model_ring
 from pySC.plotting.SCplotCMstrengths import SCplotCMstrengths as plot_cm_strength
@@ -127,7 +126,7 @@ def SCgetCOD(SC, /, *, ords=None, plot=False):
 
 
 def SCgetDispersion(SC, RFstep, /, *, BPMords=None, CAVords=None, nSteps=2):
-    return dispersion(SC, RFstep, BPMords=BPMords, CAVords=CAVords, nSteps=nSteps)
+    return dispersion(SC, RFstep, bpm_ords=BPMords, cav_ords=CAVords, n_steps=nSteps)
 
 
 def SCgetModelDispersion(SC, BPMords, CAVords, /, *, trackMode='ORB', Z0=np.zeros(6), nTurns=1, rfStep=1E3,
@@ -154,7 +153,7 @@ def SCgetPinv(matrix: ndarray, /, *, N: int = 0, alpha: float = 0, damping: floa
 
 
 def SCgetRespMat(SC, Amp, BPMords, CMords, /, *, mode='fixedKick', nSteps=2, fit='linear', verbose=0):
-    return response_matrix(SC, Amp, BPMords, CMords, mode=mode, nSteps=nSteps, fit=fit)
+    return response_matrix(SC, Amp, BPMords, CMords, mode=mode, n_steps=nSteps, fit_order=(1 if fit == 'linear' else 2))
 
 
 def SCgetSupportOffset(SC: SimulatedCommissioning, s: ndarray) -> ndarray:
