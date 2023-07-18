@@ -9,7 +9,8 @@ from pySC.core.beam import bpm_reading, beam_transmission
 from pySC.correction.tune import tune_scan
 from pySC.lattice_properties.response_model import SCgetModelRM, SCgetModelDispersion
 from pySC.utils.sc_tools import SCgetOrds, SCgetPinv
-from pySC.correction.loco_lib import SClocoLib
+from pySC.correction.loco_wrapper import (loco_model, loco_fit_parameters, apply_lattice_correction, loco_measurement,
+                                          loco_bpm_structure, loco_cm_structure)
 from pySC.plotting.SCplotPhaseSpace import SCplotPhaseSpace
 from pySC.plotting.SCplotSupport import SCplotSupport
 from pySC.core.lattice_setting import set_magnet_setpoints, SCcronoff
@@ -178,29 +179,27 @@ if __name__ == "__main__":
     SC, _, _, _ = tune_scan(SC, np.vstack((SCgetOrds(SC.RING, 'QF'), SCgetOrds(SC.RING, 'QD'))),
                             np.outer(np.ones(2), 1 + np.linspace(-0.01, 0.01, 51)), do_plot=False, nParticles=100,
                             nTurns=200)
-    CMstep = 1E-4  # [rad]
+    CMstep = 1E-4  # [rad] # TODO later in the structure it is in mrad, ???
     RFstep = 1E3  # [Hz]
-    [RINGdata, LOCOflags, Init] = SClocoLib('setupLOCOmodel', SC,
-                                            'Dispersion', 'Yes',
-                                            'HorizontalDispersionWeight', .1E2,
-                                            'VerticalDispersionWeight', .1E2)
-    [BPMData, CMData] = SClocoLib('getBPMCMstructure', SC, CMstep,
-                                  {'BPM', 'FitGains', 'Yes'},
-                                  {'CM', 'FitKicks', 'Yes'})
-    LOCOmeasData = SClocoLib('getMeasurement', SC, CMstep, RFstep, SC.ORD.BPM, SC.ORD.CM)
-    FitParameters = SClocoLib('setupFitparameters', SC, Init.SC.RING, RINGdata, RFstep,
-                              {SCgetOrds(SC.RING, 'QF'), 'normal', 'individual', 1E-3},
-                              # {Ords, normal/skew, ind/fam, deltaK}
-                              {SCgetOrds(SC.RING, 'QD'), 'normal', 'individual',
-                               1E-4})  # {Ords, normal/skew, ind/fam, deltaK}
+    ring_data, loco_flags, init = loco_model(SC, Dispersion=True, HorizontalDispersionWeight=.1E2,
+                                             VerticalDispersionWeight= .1E2)
+    bpm_data = loco_bpm_structure(SC, FitGains=True)
+    cm_data = loco_cm_structure(SC, CMstep, FitKicks=True)
+    loco_meas_data = loco_measurement(SC, CMstep, RFstep, SC.ORD.BPM, SC.ORD.CM)
+    fit_parameters = loco_fit_parameters(SC, init.SC.RING, ring_data, RFstep,
+                                         [SCgetOrds(SC.RING, 'QF'), False, 'individual', 1E-3],
+                                         # {Ords, normal/skew, ind/fam, deltaK}
+                                         [SCgetOrds(SC.RING, 'QD'), False, 'individual', 1E-4])
+
+    Morbinv = SCgetPinv(MCO, alpha=50)
     for n in range(6):
-        _, BPMData, CMData, FitParameters, LOCOflags, RINGdata = atloco(LOCOmeasData,  BPMData,  CMData,  FitParameters,  LOCOflags,  RINGdata)
-        SC = SClocoLib('applyLatticeCorrection', SC, FitParameters)
-        SC = SClocoLib('applyOrbitCorrection', SC)
-        SClocoLib('plotStatus', SC, Init, BPMData, CMData)
+        _, bpm_data, cm_data, fit_parameters, loco_flags, ring_data = atloco(loco_meas_data, bpm_data, cm_data,
+                                                                             fit_parameters, loco_flags, ring_data)
+        SC = apply_lattice_correction(SC, fit_parameters)
+        SC = SCfeedbackRun(SC, Morbinv, target=0, maxsteps=30)
         if n == 3:
-            LOCOflags.Coupling = 'Yes'
-            FitParameters = SClocoLib('setupFitparameters', SC, Init.SC.RING, RINGdata, RFstep,
-                                      {SCgetOrds(SC.RING, 'QF'), 'normal', 'individual', 1E-3},
-                                      {SCgetOrds(SC.RING, 'QD'), 'normal', 'individual', 1E-4},
-                                      {SC.ORD.SkewQuad, 'skew', 'individual', 1E-3})
+            loco_flags.Coupling = True
+            fit_parameters = loco_fit_parameters(SC, init.SC.RING, ring_data, RFstep,
+                                                 [SCgetOrds(SC.RING, 'QF'), False, 'individual', 1E-3],
+                                                 [SCgetOrds(SC.RING, 'QD'), False, 'individual', 1E-4],
+                                                 [SC.ORD.SkewQuad, True, 'individual', 1E-3])
