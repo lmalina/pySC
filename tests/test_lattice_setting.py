@@ -9,9 +9,6 @@ from pySC.core.simulated_commissioning import SimulatedCommissioning
 from pySC.core.lattice_setting import set_cm_setpoints, set_magnet_setpoints, set_cavity_setpoints, get_cm_setpoints
 
 
-
-
-
 def test_set_cm_setpoints_side_effects(sc):
     indices = np.arange(11, 450, 22, dtype=int)
     setpoints = 1e-4 * np.ones(len(indices))
@@ -45,7 +42,6 @@ def test_set_cavity_setpoints_side_effects(sc):
         assert_equal(indices, np.zeros(1, dtype=int))
         assert_equal(setpoints, np.ones(1))
         assert sc.RING.__repr__() != lattice_copy.__repr__()
-
 
 
 @pytest.fixture
