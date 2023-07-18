@@ -18,8 +18,8 @@ from pySC.core.beam import beam_transmission, bpm_reading, generate_bunches
 from pySC.core.simulated_commissioning import SimulatedCommissioning
 from pySC.core.lattice_setting import (set_cavity_setpoints, set_magnet_setpoints,
     set_cm_setpoints, get_cm_setpoints, SCcronoff as cronoff)
-from pySC.correction.injection_fit import SCfitInjectionZ as fit_injection
-from pySC.correction.loco_lib import SClocoLib as loco_lib
+from pySC.correction.bba import SCBBA as bba
+from pySC.correction.injection_fit import fit_injection_trajectory, fit_injection_drift
 from pySC.correction.orbit_trajectory import SCfeedbackFirstTurn as first_turn, SCfeedbackStitch as stitch, \
     SCfeedbackRun as frun, SCfeedbackBalance as fbalance, SCpseudoBBA as pseudo_bba
 from pySC.correction.ramp_errors import SCrampUpErrors as ramp_up_errors
@@ -52,7 +52,6 @@ def SCapplyErrors(SC: SimulatedCommissioning, nsigmas: float = 2) -> SimulatedCo
 
 
 def SCBBA(SC, BPMords, magOrds, **kwargs):
-    return NotImplementedError
     return bba(SC, BPMords, magOrds, **kwargs)
 
 
@@ -95,7 +94,11 @@ def SCfeedbackStitch(SC, Mplus, /, *, R0=None, CMords=None, BPMords=None, nBPMs=
 
 def SCfitInjectionZ(SC, mode, /, *, nDims=np.array([0, 1]), nBPMs=np.array([0, 1, 2]), nShots=None, verbose=0,
                     plotFlag=False):
-    return fit_injection(SC, mode, nDims=nDims, nBPMs=nBPMs, plotFlag=plotFlag)
+    if mode == "fitTrajectory":
+        return fit_injection_trajectory(SC, bpm_inds=nBPMs, plot=plotFlag)
+    if mode == "injectionDrift":
+        return fit_injection_drift(SC, n_dims=nDims, plot=plotFlag)
+    raise ValueError(f" Unexpected {mode=} .")
 
 
 def SCgenBunches(SC: SimulatedCommissioning) -> ndarray:
@@ -173,7 +176,7 @@ def SCinit(RING: Lattice) -> SimulatedCommissioning:
 
 
 def SClocoLib(funName, *args):
-    return loco_lib(funName, *args)
+    raise NotImplementedError("SClocoLib implementation is specific to SC and matlab AT.")
 
 
 def SCmomentumAperture(RING, REFPTS, inibounds, /, *, nturns=1000, accuracy=1e-4, stepsize=1e-3, plot=0, debug=0):
@@ -202,8 +205,8 @@ def SCplotCMstrengths(SC: SimulatedCommissioning):
 
 def SCplotLattice(SC, /, *, transferLine=0, nSectors=1, oList=[], plotIdealRing=1, sRange=[], plotMagNames=0,
                   fontSize=16):
-    return plot_lattice(SC, transferLine=transferLine, nSectors=nSectors, oList=oList, plotIdealRing=plotIdealRing,
-                        sRange=sRange, plotMagNames=plotMagNames, fontSize=fontSize)
+    return plot_lattice(SC, transfer_line=bool(transferLine), n_sectors=nSectors, indices=oList,
+                        ideal_ring=bool(plotIdealRing), s_range=sRange, plot_magnet_names=bool(plotMagNames), font_size=fontSize)
 
 
 def SCplotPhaseSpace(SC, /, *, ord=np.zeros(1), customBunch=[], nParticles=None, nTurns=None, plotCO=False):
