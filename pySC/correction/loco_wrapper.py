@@ -1,7 +1,7 @@
 import numpy as np
 
 from pySC.core.classes import DotDict
-from pySC.lattice_properties.response_measurement import SCgetRespMat, SCgetDispersion
+from pySC.lattice_properties.response_measurement import response_matrix, dispersion
 from pySC.core.lattice_setting import set_magnet_setpoints
 from pySC.utils import logging_tools
 
@@ -60,10 +60,10 @@ def loco_measurement(SC, CMstep, deltaRF, BPMords, CMords, **kwargs):
     loco_meas_data.RF = SC.RING[SC.ORD.RF[0]].Frequency
     loco_meas_data.DeltaRF = deltaRF
     loco_meas_data.BPMSTD = 1E-3 * np.ones(2 * len(BPMords))  # [mm]
-    RM, Err, CMsteps = SCgetRespMat(SC, CMstep, BPMords, CMords, *kwargs)
+    RM, Err, CMsteps = response_matrix(SC, CMstep, BPMords, CMords, *kwargs)
     CMsteps = [np.max(np.abs(CMsteps[0]), axis=1), np.max(np.abs(CMsteps[1]), axis=1)]
     loco_meas_data.M = 2 * 1000 * np.concatenate((CMsteps[0], CMsteps[1])) * RM
-    loco_meas_data.Eta = deltaRF * 1000 * SCgetDispersion(SC, RFstep=deltaRF, BPMords=BPMords, nSteps=3)
+    loco_meas_data.Eta = deltaRF * 1000 * dispersion(SC, rf_step=deltaRF, bpm_ords=BPMords, n_steps=3)
     return loco_meas_data, CMsteps
 
 
