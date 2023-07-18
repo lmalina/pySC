@@ -32,6 +32,13 @@ def set_cavity_setpoints(SC: SimulatedCommissioning, ords: ndarray, type: str, s
     return SC
 
 
+def switch_rf(ring: Lattice, ords: ndarray, state: bool) -> Lattice:
+    cavs = [i for i in ords if hasattr(ring[i], 'Frequency')]
+    for ind in cavs:
+        ring[ind].PassMethod = 'RFCavityPass' if state else 'IdentityPass'
+    return ring
+
+
 def get_cm_setpoints(SC: SimulatedCommissioning, ords: ndarray, skewness: bool) -> ndarray:
     setpoints = np.nan*np.ones(len(ords))
     order = 0
