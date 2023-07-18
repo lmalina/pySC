@@ -7,10 +7,12 @@ This module contains functions to correct betatron tunes.
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
+from scipy.optimize import fmin
 
 from pySC.core.beam import beam_transmission, plot_transmission
 from pySC.core.lattice_setting import set_magnet_setpoints
 from pySC.utils import logging_tools
+from pySC.utils.at_wrapper import atlinopt
 
 LOGGER = logging_tools.get_logger(__name__)
 
@@ -61,7 +63,7 @@ def tune_scan(SC, quad_ords, rel_quad_changes, target=1, n_points=60, do_plot=Fa
         LOGGER.warning('No improvement possible.\n')
     setpoints = [rel_quad_changes[0][inds[0, max_ind]], rel_quad_changes[1][inds[1, max_ind]]]
     if (max_transmission := np.max(testTrans)) == 0:
-        LOGGER.warning(f'No transmission at final turn at all. Maximum of {testTurns[max_ind]:d} turns reached with:\n'
+        LOGGER.warning(f'No transmission at final turn at all. Maximum of {testTurns[max_ind]} turns reached with:\n'
                        f'    {first_quads[0]} SetPoint: {setpoints[0]:.4f}\n'
                        f'    {first_quads[1]} SetPoint: {setpoints[0]:.4f}')
     else:
@@ -98,3 +100,34 @@ def plot_scan(fin_trans, max_turns, first_quads, rel_quad_changes):
         ax.set_xticks(ticks[0], rel_quad_changes[0][ticks[0, :]])
         ax.set_yticks(ticks[0], rel_quad_changes[1][ticks[1, :]])
     return f, [ax1, ax2, ax3]
+
+
+def fit_tune(SC, q_ords, target_tune=None, xtol=1E-4, ftol=1E-3, fit_integer=True):
+    #  TODO check if experimantally feasible
+    if target_tune is None:
+        target_tune = tune(SC, fit_integer, ideal=True)
+    LOGGER.debug(f'Fitting tunes from [{tune(SC, fit_integer)}] to [{target_tune}].')
+    SP0 = np.zeros((len(q_ords), len(q_ords[0])))  # TODO can the lengts vary
+    for nFam in range(len(q_ords)):
+        for n in range(len(q_ords[nFam])):
+            SP0[nFam][n] = SC.RING[q_ords[nFam][n]].SetPointB[1]
+    fun = lambda x: _fit_tune_fun(SC, q_ords, x, SP0, target_tune, fit_integer)
+    sol = fmin(fun, xtol=xtol, ftol=ftol)
+    SC = set_magnet_setpoints(SC, q_ords, False, 1, sol + SP0, method='abs', dipole_compensation=True)
+    LOGGER.debug(f'       Final tune: [{tune(SC, fit_integer)}]\n  Setpoints change: [{sol}]')
+    return SC
+
+
+def _fit_tune_fun(SC, q_ords, setpoints, init_setpoints, target, fit_integer):
+    SC = set_magnet_setpoints(SC, q_ords, False, 1, setpoints + init_setpoints, method='abs', dipole_compensation=True)
+    nu = tune(SC, fit_integer)
+    return np.sqrt(np.mean((nu - target) ** 2))
+
+
+def tune(SC, fit_integer: bool = False, ideal: bool = False):
+    ring = SC.IDEALRING if ideal else SC.RING
+    if fit_integer:
+        ld, _, _ = atlinopt(ring, 0, range(len(ring) + 1))
+        return ld[-1].mu / 2 / np.pi
+    _, nu, _ = atlinopt(ring, 0)
+    return nu
