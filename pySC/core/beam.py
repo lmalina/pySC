@@ -110,15 +110,15 @@ def beam_transmission(SC: SimulatedCommissioning, nParticles: int = None, nTurns
         nTurns = SC.INJ.nTurns
     LOGGER.debug(f'Calculating maximum beam transmission for {nParticles} particles and {nTurns} turns: ')
     T = atpass(SC.RING, generate_bunches(SC, nParticles=nParticles), nTurns, np.array([len(SC.RING)]), keep_lattice=False)
-    fraction_lost = np.mean(np.isnan(T[0, :, :, :]), axis=(0, 1))
-    max_turns = np.sum(fraction_lost < SC.INJ.beamLostAt)
+    fraction_survived = np.mean(~np.isnan(T[0, :, :, :]), axis=(0, 1))
+    max_turns = np.sum(fraction_survived > 1 - SC.INJ.beamLostAt)
     if plot:
         fig, ax = plt.subplots()
-        ax = plot_transmission(ax, fraction_lost, nTurns, SC.INJ.beamLostAt)
+        ax = plot_transmission(ax, fraction_survived, nTurns, SC.INJ.beamLostAt)
         fig.tight_layout()
         fig.show()
-    LOGGER.info(f'{max_turns} turns and {100 * (1 - fraction_lost[-1]):.0f}% transmission.')
-    return int(max_turns), fraction_lost
+    LOGGER.info(f'{max_turns} turns and {100 * fraction_survived[-1]:.0f}% transmission.')
+    return int(max_turns), fraction_survived
 
 
 def generate_bunches(SC: SimulatedCommissioning, nParticles=None) -> ndarray:
@@ -147,13 +147,13 @@ def generate_bunches(SC: SimulatedCommissioning, nParticles=None) -> ndarray:
     return SC.INJ.postFun(Z)
 
 
-def plot_transmission(ax, fraction_lost, n_turns, beam_lost_at):
-    ax.plot(fraction_lost, lw=3)
-    ax.plot([0, n_turns], [beam_lost_at, beam_lost_at], 'k:', lw=2)
+def plot_transmission(ax, fraction_survived, n_turns, beam_lost_at):
+    ax.plot(100 * fraction_survived, lw=3)
+    ax.plot([0, n_turns], [100*(1-beam_lost_at), 100*(1-beam_lost_at)], 'k:', lw=2)
     ax.set_xlim([0, n_turns])
-    ax.set_ylim([0, 1])
+    ax.set_ylim([0, 103])
     ax.set_xlabel('Number of turns')
-    ax.set_ylabel('Lost fraction of beam')
+    ax.set_ylabel('Beam transmission [%]')
     for item in ([ax.title, ax.xaxis.label, ax.yaxis.label] + ax.get_xticklabels() + ax.get_yticklabels()):
         item.set_fontsize(18)
     return ax
@@ -265,6 +265,6 @@ def _get_ring_aperture(SC):
             ords.append(ind)
             aps.append(np.outer(getattr(SC.RING[ind], 'EApertures'), np.array([-1, 1]))
                        if hasattr(SC.RING[ind], 'EApertures')
-                       # from RApertures [+x, -x, +y, -y]  to [[-x, +x], [-y, +y]]
-                       else np.roll(np.reshape(getattr(SC.RING[ind], 'RApertures'), (2, 2)), 1, axis=1))
+                       # from RApertures [-x, +x, -y, +y]  to [[-x, +x], [-y, +y]]
+                       else np.reshape(getattr(SC.RING[ind], 'RApertures'), (2, 2)))
     return np.array(ords), np.array(aps)

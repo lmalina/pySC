@@ -31,10 +31,9 @@ from pySC.lattice_properties.magnet_orbit import SCgetCOD as cod
 from pySC.lattice_properties.response_measurement import response_matrix, dispersion
 from pySC.lattice_properties.response_model import SCgetModelRM as model_rm, SCgetModelDispersion as model_dispersion, \
     SCgetModelRING as model_ring
-from pySC.plotting.SCplotCMstrengths import SCplotCMstrengths as plot_cm_strength
-from pySC.plotting.SCplotLattice import SCplotLattice as plot_lattice
-from pySC.plotting.SCplotPhaseSpace import SCplotPhaseSpace as plot_phase_space
-from pySC.plotting.SCplotSupport import SCplotSupport as plot_support
+from pySC.plotting.plot_lattice import plot_lattice, plot_cm_strengths
+from pySC.plotting.plot_phase_space import plot_phase_space
+from pySC.plotting.plot_support import plot_support
 from pySC.utils import logging_tools
 from pySC.utils.sc_tools import SCgetOrds as get_ords, SCgetPinv as get_pinv, SCrandnc as randnc, \
     SCscaleCircumference as scale_circumference, SCgetTransformation as transform, SCmultipolesRead as read_multipoles
@@ -199,7 +198,7 @@ def SCplotBPMreading(SC, B=None, T=None):
 
 
 def SCplotCMstrengths(SC: SimulatedCommissioning):
-    plot_cm_strength(SC)
+    plot_cm_strengths(SC)
 
 
 def SCplotLattice(SC, /, *, transferLine=0, nSectors=1, oList=[], plotIdealRing=1, sRange=[], plotMagNames=0,
@@ -209,11 +208,11 @@ def SCplotLattice(SC, /, *, transferLine=0, nSectors=1, oList=[], plotIdealRing=
 
 
 def SCplotPhaseSpace(SC, /, *, ord=np.zeros(1), customBunch=[], nParticles=None, nTurns=None, plotCO=False):
-    plot_phase_space(SC, ord=ord, customBunch=customBunch, nParticles=nParticles, nTurns=nTurns, plotCO=plotCO)
+    plot_phase_space(SC, ords=ord, custom_bunch=customBunch, nParticles=nParticles, nTurns=nTurns, plotCO=plotCO)
 
 
 def SCplotSupport(SC: SimulatedCommissioning, /, *, fontSize: int = 8, xLim: Tuple[float, float] = None, ShiftAxes=None):
-    plot_support(SC, fontSize=fontSize, xLim=xLim)
+    plot_support(SC, font_size=fontSize, x_lim=xLim)
 
 
 def SCpseudoBBA(SC, BPMords, MagOrds, postBBAoffset, /, *, sigma=2):

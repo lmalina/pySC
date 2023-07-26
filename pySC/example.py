@@ -11,8 +11,9 @@ from pySC.lattice_properties.response_model import SCgetModelRM, SCgetModelDispe
 from pySC.utils.sc_tools import SCgetOrds, SCgetPinv
 from pySC.correction.loco_wrapper import (loco_model, loco_fit_parameters, apply_lattice_correction, loco_measurement,
                                           loco_bpm_structure, loco_cm_structure)
-from pySC.plotting.SCplotPhaseSpace import SCplotPhaseSpace
-from pySC.plotting.SCplotSupport import SCplotSupport
+from pySC.plotting.plot_phase_space import plot_phase_space
+from pySC.plotting.plot_support import plot_support
+from pySC.plotting.plot_lattice import plot_lattice
 from pySC.core.lattice_setting import set_magnet_setpoints, SCcronoff
 from pySC.correction.rf import SCsynchPhaseCorrection, SCsynchEnergyCorrection
 from pySC.utils import logging_tools
@@ -101,10 +102,10 @@ if __name__ == "__main__":
         SC.RING[ord].EApertures = 10E-3 * np.array([1, 1])  # [m]
     SC.RING[SC.ORD.Magnet[50]].EApertures = np.array([6E-3, 3E-3])  # [m]
 
-    # SCplotLattice(SC, nSectors=10)
+    plot_lattice(SC, s_range=np.array([0, 20]))
     SC.apply_errors()
     # SC.verify_structure()
-    SCplotSupport(SC)
+    plot_support(SC)
 
     SC.RING = SCcronoff(SC.RING, 'cavityoff')
     sextOrds = SCgetOrds(SC.RING, 'SF|SD')
@@ -137,7 +138,7 @@ if __name__ == "__main__":
     SC.RING = SCcronoff(SC.RING, 'cavityon')
 
     # Plot initial phasespace
-    SCplotPhaseSpace(SC, nParticles=10, nTurns=100)
+    plot_phase_space(SC, nParticles=10, nTurns=100)
 
     # RF cavity correction
     SC.INJ.nTurns = 5
@@ -149,7 +150,7 @@ if __name__ == "__main__":
                                          plotResults=False, plotProgress=False)
 
     # Plot phasespace after RF correction
-    SCplotPhaseSpace(SC, nParticles=10, nTurns=100)
+    plot_phase_space(SC, nParticles=10, nTurns=100)
     [maxTurns, lostCount] = beam_transmission(SC, nParticles=100, nTurns=10)
 
     # Performing pseudo-BBA
@@ -174,7 +175,7 @@ if __name__ == "__main__":
             break
         SC = CUR
     SC.RING = SCcronoff(SC.RING, 'cavityon')
-    SCplotPhaseSpace(SC, nParticles=10, nTurns=1000)
+    plot_phase_space(SC, nParticles=10, nTurns=1000)
     maxTurns, lostCount = beam_transmission(SC, nParticles=100, nTurns=200, plot=True)
     SC, _, _, _ = tune_scan(SC, np.vstack((SCgetOrds(SC.RING, 'QF'), SCgetOrds(SC.RING, 'QD'))),
                             np.outer(np.ones(2), 1 + np.linspace(-0.01, 0.01, 51)), do_plot=False, nParticles=100,
