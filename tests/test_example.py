@@ -113,10 +113,10 @@ def test_example(at_lattice):
             break
         sc = cur
     sc.RING = SCcronoff(sc.RING, 'cavityon')
-    max_turns, lost_count = beam_transmission(sc, nParticles=100, nTurns=200, plot=True)
+    max_turns, fraction_survived = beam_transmission(sc, nParticles=100, nTurns=200, plot=True)
     sc, _, _, _ = tune_scan(sc, np.vstack((SCgetOrds(sc.RING, 'QF'), SCgetOrds(sc.RING, 'QD'))),
                             np.outer(np.ones(2), 1 + np.linspace(-0.01, 0.01, 51)), do_plot=False, nParticles=50,
                             nTurns=100, target=0.85)
-    max_turns, lost_count = beam_transmission(sc, nParticles=100, nTurns=200, plot=True)
+    max_turns, fraction_survived = beam_transmission(sc, nParticles=100, nTurns=200, plot=True)
     assert max_turns == 200
-    assert lost_count[-1] == 0
+    assert fraction_survived[-1] == 1

@@ -22,3 +22,4 @@ SETTING_ABS: str = "abs"
 SETTING_REL: str = "rel"
 SETTING_ADD: str = "add"
 SETTING_METHODS: Tuple[str, str, str] = (SETTING_ABS, SETTING_REL, SETTING_ADD)
+SPEED_OF_LIGHT = 299792458

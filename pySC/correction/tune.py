@@ -33,15 +33,15 @@ def tune_scan(SC, quad_ords, rel_quad_changes, target=1, n_points=60, do_plot=Fa
     for q1, q2 in inds.T:
         q_setpoints = np.hstack((np.ones(nq[0]) * rel_quad_changes[0][q1], np.ones(nq[1]) * rel_quad_changes[1][q2]))
         SC = set_magnet_setpoints(SC, ords, False, 1, q_setpoints, method='rel')
-        max_turns[q1, q2], lost_fraction = beam_transmission(SC, nParticles=nParticles, nTurns=nTurns)
-        transmission[q1, q2, :] = 1 - lost_fraction
+        max_turns[q1, q2], surviving_fraction = beam_transmission(SC, nParticles=nParticles, nTurns=nTurns)
+        transmission[q1, q2, :] = 1 * surviving_fraction
         SC = set_magnet_setpoints(SC, ords, False, 1, 1 / q_setpoints, method='rel')
 
         if do_plot:
             f, ax = plot_scan(transmission[:, :, -1], max_turns, first_quads, rel_quad_changes)
-            ax[2] = plot_transmission(ax[2], lost_fraction, nTurns, SC.INJ.beamLostAt)
+            ax[2] = plot_transmission(ax[2], surviving_fraction, nTurns, SC.INJ.beamLostAt)
             f.tight_layout()
-            plt.show()
+            f.show()
 
         if not full_scan and transmission[q1, q2, -1] >= target:
             setpoints = [rel_quad_changes[0][q1], rel_quad_changes[1][q2]]
@@ -84,21 +84,26 @@ def _golden_donut_inds(r, n_points):
 
 
 def plot_scan(fin_trans, max_turns, first_quads, rel_quad_changes):
-    f = plt.figure(num=185)
-    gs = GridSpec(2, 2, height_ratios=[2.5, 1])
+    f = plt.figure(num=185, figsize=(12, 9))
+    gs = GridSpec(2, 2, height_ratios=[2, 1])
     ax1, ax2 = f.add_subplot(gs[0, 0]), f.add_subplot(gs[0, 1])
     ax3 = f.add_subplot(gs[1, :])
-    ticks = np.outer(np.floor_divide(np.array([len(rel_quad_changes[0]), len(rel_quad_changes[1])], dtype=int), 4),
-                     np.arange(5, dtype=int))
+    ticks = np.array([[0, rel_quad_changes[0].shape[0] // 2, rel_quad_changes[0].shape[0] - 1],
+                     [0, rel_quad_changes[1].shape[0] // 2, rel_quad_changes[1].shape[0] - 1]])
     im = ax1.imshow(100 * fin_trans, vmin=0, vmax=100)
-    plt.colorbar(im, ax=ax1, orientation='vertical', label='Beam transmission [%]', shrink=0.6)
+    c1 = plt.colorbar(im, ax=ax1, orientation='vertical', label='Beam transmission [%]', shrink=0.6)
     im2 = ax2.imshow(max_turns, vmin=0)
-    plt.colorbar(im2, ax=ax2, orientation='vertical', label='Number of turns', shrink=0.6)
+    c2 = plt.colorbar(im2, ax=ax2, orientation='vertical', label='Number of turns', shrink=0.6)
     for ax in (ax1, ax2):
-        ax.set_xlabel(f'{first_quads[0]} [relative]')
-        ax.set_ylabel(f'{first_quads[1]} [relative]')
-        ax.set_xticks(ticks[0], rel_quad_changes[0][ticks[0, :]])
-        ax.set_yticks(ticks[0], rel_quad_changes[1][ticks[1, :]])
+        ax.set_xlabel(rf'$\Delta${first_quads[0]} [relative]')
+        ax.set_ylabel(rf'$\Delta${first_quads[1]} [relative]')
+        ax.set_xticks(ticks[0], np.round(rel_quad_changes[0][ticks[0, :]]-1, 5))
+        ax.set_yticks(ticks[0], np.round(rel_quad_changes[1][ticks[1, :]]-1, 5))
+        for item in ([ax.xaxis.label, ax.yaxis.label] + ax.get_xticklabels() + ax.get_yticklabels()):
+            item.set_fontsize(18)
+    for cx in (c1, c2):
+        for item in ([cx.ax.yaxis.label] + cx.ax.get_yticklabels()):
+            item.set_fontsize(18)
     return f, [ax1, ax2, ax3]
 
 

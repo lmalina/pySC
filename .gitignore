@@ -133,3 +133,5 @@ dmypy.json
 
 # matlab raw files
 matlab
+
+pySC/plots
