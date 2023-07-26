@@ -8,15 +8,15 @@ from tests.test_at_wrapper import at_lattice
 
 
 def test_beam_transmission_basic(sc):
-    max_turns, lost_fraction = beam_transmission(sc)
+    max_turns, fraction_survived = beam_transmission(sc)
     assert max_turns == 1
-    assert lost_fraction == np.zeros(1)
-    max_turns, lost_fraction = beam_transmission(sc, nTurns=2)
+    assert fraction_survived == np.ones(1)
+    max_turns, fraction_survived = beam_transmission(sc, nTurns=2)
     assert max_turns == 2
-    assert_equal(lost_fraction, np.zeros(2))
-    max_turns, lost_fraction = beam_transmission(sc, nTurns=2, nParticles=3, plot=True)
+    assert_equal(fraction_survived, np.ones(2))
+    max_turns, fraction_survived = beam_transmission(sc, nTurns=2, nParticles=3, plot=True)
     assert max_turns == 2
-    assert_equal(lost_fraction, np.zeros(2))
+    assert_equal(fraction_survived, np.ones(2))
 
 
 def test_all_reading_basic(sc):
