@@ -19,7 +19,7 @@ from pySC.core.constants import (BPM_ERROR_FIELDS, RF_ERROR_FIELDS, RF_PROPERTIE
 from pySC.utils import logging_tools
 from pySC.utils.at_wrapper import findspos
 from pySC.utils.classdef_tools import update_double_ordinates, add_padded, intersect, randn_cutoff, s_interpolation
-from pySC.utils.sc_tools import SCrandnc, SCscaleCircumference, SCgetTransformation
+from pySC.utils.sc_tools import SCrandnc, SCscaleCircumference, update_transformation
 
 LOGGER = logging_tools.get_logger(__name__)
 
