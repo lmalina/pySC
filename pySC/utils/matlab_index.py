@@ -18,7 +18,7 @@ from pySC.core.beam import beam_transmission, bpm_reading, generate_bunches
 from pySC.core.simulated_commissioning import SimulatedCommissioning
 from pySC.core.lattice_setting import (set_cavity_setpoints, set_magnet_setpoints,
                                        set_cm_setpoints, get_cm_setpoints, SCcronoff as cronoff)
-from pySC.correction.bba import SCBBA as bba
+from pySC.correction.bba import bba
 from pySC.correction.injection_fit import fit_injection_trajectory, fit_injection_drift
 from pySC.correction.orbit_trajectory import SCfeedbackFirstTurn as first_turn, SCfeedbackStitch as stitch, \
     SCfeedbackRun as frun, SCfeedbackBalance as fbalance, SCpseudoBBA as pseudo_bba
