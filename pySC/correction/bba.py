@@ -39,7 +39,7 @@ def bba(SC, bpm_ords, mag_ords, **kwargs):
                        magSPvec=np.array([0.95, 1.05]), setpoint_method='rel', RMstruct=[], orbBumpWindow=5, BBABPMtarget=1E-3,
                        minBPMrangeAtBBABBPM=500E-6, minBPMrangeOtherBPM=100E-6, maxStdForFittedCenters=600E-6,
                        nXPointsNeededAtMeasBPM=3, maxNumOfDownstreamBPMs=len(SC.ORD.BPM), minSlopeForFit=0.03,
-                       maxTrajChangeAtInjection=np.array([.9E-3, .9E-3]), quadOrdPhaseAdvance=np.array([8]),
+                       maxTrajChangeAtInjection=np.array([0.9E-3, 0.9E-3]), quadOrdPhaseAdvance=np.array([8]),
                        quadStrengthPhaseAdvance=np.array([0.95, 1.05]), fakeMeasForFailures=False, dipole_compensation=True,
                        skewQuadrupole=False, switch_off_sextupoles=False, useBPMreadingsForOrbBumpRef=False,
                        plotLines=False, plotResults=False))
@@ -158,7 +158,7 @@ def _data_measurement_tbt(SC, m_ord, bpm_ind, j_bpm, n_dim, par, kick_vec):
         f.show()
     SC.INJ.Z0 = initialZ0
     SC = set_magnet_setpoints(SC, np.array([m_ord]), par.skewQuadrupole, par.magnet_order, np.array([init_setpoint]),
-                              method=par.setpoint_method, dipole_compensation=par.dipole_compensation)
+                              method="abs", dipole_compensation=par.dipole_compensation)
     print(f"Final Z0: {SC.INJ.Z0}")
     return BPMpos, tmpTra
 
@@ -303,7 +303,7 @@ def _scan_phase_advance(SC, bpm_ind, n_dim, kick_vec0, par):
     all_bpm_ranges = np.zeros(len(q_vec))
     for nQ in range(len(q_vec)):
         LOGGER.debug(f'BBA-BPM range too small, try to change phase advance with quad ord {q_ord} to {q_vec[nQ]:.2f} of nom. SP.')
-        SC = set_magnet_setpoints(SC, q_ord, False, 1, q_vec[nQ], method='rel', dipole_compensation=True)
+        SC = set_magnet_setpoints(SC, np.array([q_ord]), False, 1, np.array([q_vec[nQ]]), method='rel', dipole_compensation=True)
         kick_vec, bpm_range = _scale_injection_to_reach_bpm(SC, bpm_ind, n_dim, kick_vec0)
         if bpm_range >= par.BBABPMtarget:
             LOGGER.debug(f'Change phase advance with quad ord {q_ord} successful. BBA-BPM range = {1E6 * bpm_range:.0f} um.')
@@ -313,11 +313,11 @@ def _scan_phase_advance(SC, bpm_ind, n_dim, kick_vec0, par):
     if all_bpm_ranges[-1] < np.max(all_bpm_ranges):
         LOGGER.debug(f'Changing phase advance of quad with ord {q_ord} NOT succesfull, '
                      f'returning to best value with BBA-BPM range = {1E6 * max(all_bpm_ranges):.0f}um.')
-        SC = set_magnet_setpoints(SC, q_ord, False, 1, np.max(q_vec), method='rel', dipole_compensation=True)
+        SC = set_magnet_setpoints(SC, np.array([q_ord]), False, 1, np.array([np.max(q_vec)]), method='rel', dipole_compensation=True)
         kick_vec, _ = _scale_injection_to_reach_bpm(SC, bpm_ind, n_dim, kick_vec0)
         return SC, kick_vec
     LOGGER.debug(f'Changing phase advance of quad with ord {q_ord} NOT succesfull, returning to initial setpoint.')
-    SC = set_magnet_setpoints(SC, q_ord, False, 1, q0, method='abs', dipole_compensation=True)
+    SC = set_magnet_setpoints(SC, np.array([q_ord]), False, 1, np.array([q0]), method='abs', dipole_compensation=True)
     kick_vec, _ = _scale_injection_to_reach_bpm(SC, bpm_ind, n_dim, kick_vec0)
     return SC, kick_vec
 
@@ -354,7 +354,7 @@ def _plot_bba_step(SC, ax, bpm_ind, n_dim):
     bpm_readings, all_elements_positions = all_elements_reading(SC)
     ax.plot(s_pos[SC.ORD.BPM], 1E3 * bpm_readings[n_dim, :len(SC.ORD.BPM)], marker='o')
     ax.plot(s_pos[SC.ORD.BPM[bpm_ind]], 1E3 * bpm_readings[n_dim, bpm_ind], marker='o', markersize=10, markerfacecolor='k')
-    ax.plot(s_pos, 1E3 * all_elements_positions[n_dim, 0, :, 0,0], linestyle='-')  # TODO 5D
+    ax.plot(s_pos, 1E3 * all_elements_positions[n_dim, 0, :, 0,0], linestyle='-')
     return ax
 
 
@@ -364,7 +364,7 @@ def plot_bba_results(SC, init_offset_errors, error_flags, bpm_ind, bpm_ords, mag
     fom = _get_bpm_offset_from_mag(SC.RING, bpm_ords, mag_ords)
     fom[:, bpm_ind + 1:] = np.nan
     n_steps = 1 if bpm_ords.shape[1] == 1 else 1.1 * np.max(np.abs(fom0)) * np.linspace(-1, 1, int(np.floor(bpm_ords.shape[1] / 3)))
-    f, ax = plt.subplots(nrows=3, num=90, facecolor="w")
+    f, ax = plt.subplots(nrows=3, num=90, figsize=(8, 8), facecolor="w")
     colors = ['#1f77b4', '#ff7f0e']
     for n_dim in range(bpm_ords.shape[0]):
         a, b = np.histogram(fom[n_dim, :], n_steps)
@@ -379,7 +379,7 @@ def plot_bba_results(SC, init_offset_errors, error_flags, bpm_ind, bpm_ords, mag
                    f"Initial rms: {init_rms:.0f}$\\mu m$"]
         ax[0].legend(legends)
     ax[0].set_xlabel(r'Final BPM offset w.r.t. magnet [$\mu$m]')
-    ax[0].set_ylabel('Number of counts')
+    ax[0].set_ylabel('Occurrences')
 
     mask_errors = error_flags == 0
     plabels = ("Horizontal", "Vertical")
@@ -401,5 +401,5 @@ def plot_bba_results(SC, init_offset_errors, error_flags, bpm_ind, bpm_ords, mag
     ax[2].set_xlabel('Index of BPM')
     ax[2].set(xlim=(1, len(SC.ORD.BPM)))
     ax[2].legend()
-
+    f.tight_layout()
     f.show()
