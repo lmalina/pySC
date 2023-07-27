@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle
 import numpy as np
-
+import copy
 from pySC.utils.at_wrapper import findspos, atgetfieldvalues
 from pySC.correction.orbit_trajectory import SCfeedbackRun
 from pySC.core.beam import bpm_reading, all_elements_reading
@@ -60,7 +61,7 @@ def bba(SC, bpm_ords, mag_ords, **kwargs):
     for j_bpm in range(bpm_ords.shape[1]):  # j_bpm: Index of BPM adjacent to magnet for BBA
         for n_dim in range(bpm_ords.shape[0]):
             LOGGER.debug(f'BBA-BPM {j_bpm}/{bpm_ords.shape[1]}, n_dim = {n_dim}')
-            SC0 = SC
+            SC0 = _very_deep_copy(SC)
             bpm_ind = np.where(bpm_ords[n_dim, j_bpm] == SC.ORD.BPM)[0][0]
             m_ord = mag_ords[n_dim, j_bpm]
             if par.switch_off_sextupoles:
@@ -86,6 +87,15 @@ def bba(SC, bpm_ords, mag_ords, **kwargs):
         SC = _fake_measurement(SC, bpm_ords, mag_ords, error_flags)
     return SC, error_flags
 
+
+def _very_deep_copy(SC):
+    new = copy.deepcopy(SC)
+    new.RING = SC.RING.deepcopy()
+    new.IDEALRING = SC.IDEALRING.deepcopy()
+    for ind, element in enumerate(SC.RING):
+        new.RING[ind] = element.deepcopy()
+        new.IDEALRING[ind] = element.deepcopy()
+    return new
 
 def _get_bpm_offset_from_mag(ring, bpm_ords, mag_ords):
     offset = np.full(bpm_ords.shape, np.nan)
@@ -121,10 +131,12 @@ def _data_measurement_tbt(SC, m_ord, bpm_ind, j_bpm, n_dim, par, kick_vec):
     sPos = findspos(SC.RING)
     measDim = 1 - n_dim if par.skewQuadrupole else n_dim
     initialZ0 = SC.INJ.Z0.copy()
+    print(f"Init Z0: {SC.INJ.Z0}")
     nMsteps = kick_vec.shape[1]
     tmpTra = np.full((nMsteps, len(par.magSPvec[n_dim, j_bpm]), par.maxNumOfDownstreamBPMs), np.nan)
 
     BPMpos = np.full((nMsteps, len(par.magSPvec[n_dim, j_bpm])), np.nan)
+    init_setpoint = getattr(SC.RING[m_ord], f"SetPoint{'A' if par.skewQuadrupole else 'B'}")[par.magnet_order]
     if par.plotLines:
         f, ax = plt.subplots(nrows=len(par.magSPvec[n_dim, j_bpm]), num=99)
     for nQ, setpointQ in enumerate(par.magSPvec[n_dim, j_bpm]):
@@ -139,11 +151,15 @@ def _data_measurement_tbt(SC, m_ord, bpm_ind, j_bpm, n_dim, par, kick_vec):
             tmpTra[nKick, nQ, :] = B[measDim, bpm_ind:(bpm_ind + par.maxNumOfDownstreamBPMs)]
 
         if par.plotLines:
-            ax[nQ].rectangle([sPos[m_ord], -1, sPos[m_ord + 1] - sPos[m_ord], 1], facecolor=[0, 0.4470, 0.7410])
+            ax[nQ].add_patch(Rectangle((sPos[m_ord], -1), width=sPos[m_ord + 1] - sPos[m_ord], height =2, facecolor=[0, 0.4470, 0.7410]))
             ax[nQ].set_xlim(sPos[m_ord] + np.array([-10, 10]))
             ax[nQ].set_ylim(1.3 * np.array([-1, 1]))
-    plt.show()
+    if par.plotLines:
+        f.show()
     SC.INJ.Z0 = initialZ0
+    SC = set_magnet_setpoints(SC, np.array([m_ord]), par.skewQuadrupole, par.magnet_order, np.array([init_setpoint]),
+                              method=par.setpoint_method, dipole_compensation=par.dipole_compensation)
+    print(f"Final Z0: {SC.INJ.Z0}")
     return BPMpos, tmpTra
 
 
@@ -236,10 +252,7 @@ def _data_evaluation(SC, bpm_ords, j_bpm, bpm_pos, tmpTra, n_dim, m_ord, par):
         offset_change = np.nansum(tmpCenter * tmpNorm) / np.nansum(tmpNorm)
         Error = 0
     if not par.dipole_compensation and n_dim == 1 and SC.RING[m_ord].NomPolynomB[1] != 0:
-        if 'BendingAngle' in SC.RING[m_ord].keys():
-            B = SC.RING[m_ord].BendingAngle
-        else:
-            B = 0
+        B = getattr(SC.RING[m_ord], 'BendingAngle', 0)
         K = SC.RING[m_ord].NomPolynomB[1]
         L = SC.RING[m_ord].Length
         offset_change = offset_change + B / L / K
@@ -339,55 +352,54 @@ def _get_orbit_bump(SC, cm_ord, bpm_ord, n_dim, par):
 def _plot_bba_step(SC, ax, bpm_ind, n_dim):
     s_pos = findspos(SC.RING)
     bpm_readings, all_elements_positions = all_elements_reading(SC)
-    ax.plot(s_pos[SC.ORD.BPM], 1E3 * bpm_readings[n_dim, :], marker='o')
+    ax.plot(s_pos[SC.ORD.BPM], 1E3 * bpm_readings[n_dim, :len(SC.ORD.BPM)], marker='o')
     ax.plot(s_pos[SC.ORD.BPM[bpm_ind]], 1E3 * bpm_readings[n_dim, bpm_ind], marker='o', markersize=10, markerfacecolor='k')
-    ax.plot(s_pos, 1E3 * all_elements_positions[n_dim, 0, :, 0], linestyle='-')  # TODO 5D
+    ax.plot(s_pos, 1E3 * all_elements_positions[n_dim, 0, :, 0,0], linestyle='-')  # TODO 5D
     return ax
 
 
 def plot_bba_results(SC, init_offset_errors, error_flags, bpm_ind, bpm_ords, mag_ords):
-    plt.rcParams.update({'font.size': 18})
+    plt.rcParams.update({'font.size': 10})
     fom0 = init_offset_errors
     fom = _get_bpm_offset_from_mag(SC.RING, bpm_ords, mag_ords)
     fom[:, bpm_ind + 1:] = np.nan
-    n_steps = 1 if bpm_ords.shape[1] == 1 else 1.1 * np.max(np.abs(fom0)) * np.linspace(-1, 1, np.floor(bpm_ords.shape[1] / 3))
+    n_steps = 1 if bpm_ords.shape[1] == 1 else 1.1 * np.max(np.abs(fom0)) * np.linspace(-1, 1, int(np.floor(bpm_ords.shape[1] / 3)))
     f, ax = plt.subplots(nrows=3, num=90, facecolor="w")
     colors = ['#1f77b4', '#ff7f0e']
     for n_dim in range(bpm_ords.shape[0]):
         a, b = np.histogram(fom[n_dim, :], n_steps)
-        ax[0].plot(1E6 * b, a, linewidth=2)
+        ax[0].plot(1E6 * b[1:], a, linewidth=2)
     a, b = np.histogram(fom0, n_steps)
-    ax[0].plot(1E6 * b, a, 'k-', linewidth=2)
+    ax[0].plot(1E6 * b[1:], a, 'k-', linewidth=2)
     if bpm_ords.shape[0] > 1:
         rmss = 1E6 * np.sqrt(np.nanmean(np.square(fom), axis=1))
-        init_rms = 1E6 * np.sqrt(np.nanmean(np.square(fom)))
+        init_rms = 1E6 * np.sqrt(np.nanmean(np.square(fom0)))
         legends = [f"Horizontal rms: {rmss[0]:.0f}$\\mu m$",
                    f"Vertical rms:  {rmss[1]:.0f}$\\mu m$",
                    f"Initial rms: {init_rms:.0f}$\\mu m$"]
         ax[0].legend(legends)
     ax[0].set_xlabel(r'Final BPM offset w.r.t. magnet [$\mu$m]')
     ax[0].set_ylabel('Number of counts')
-    ax[0].set(box="on")
 
     mask_errors = error_flags == 0
     plabels = ("Horizontal", "Vertical")
     for n_dim in range(bpm_ords.shape[0]):
-        x = np.where(np.in1d(SC.ORD.BPM, bpm_ords[n_dim, :]))
+        x = np.where(np.in1d(SC.ORD.BPM, bpm_ords[n_dim, :]))[0]
         mask = mask_errors[n_dim, :]
         if not np.all(np.isnan(fom[n_dim, mask])):
-            ax[1].plot(x[mask], 1E6 * np.abs(fom[n_dim, mask]), label=plabels[n_dim], marker='O', linewidth=2, color=colors[n_dim])
+            ax[1].plot(x[mask], 1E6 * np.abs(fom[n_dim, mask]), label=plabels[n_dim], marker='o', linewidth=2, color=colors[n_dim])
         if not np.all(np.isnan(fom[n_dim, ~mask])):
             ax[1].plot(x[~mask], 1E6 * np.abs(fom[n_dim, ~mask]), label=f"{plabels[n_dim]} failed", marker='X', linewidth=2, color=colors[n_dim])
         ax[2].plot(x, 1E6 * (fom0[n_dim, :] - fom[n_dim, :]), label=plabels[n_dim], marker='d', linewidth=2)
 
     ax[1].set_ylabel(r'Final offset [$\mu$m]')
     ax[1].set_xlabel('Index of BPM')
-    ax[1].set(xlim=(1, len(SC.ORD.BPM)), box='on')
+    ax[1].set_xlim((1, len(SC.ORD.BPM)))
     ax[1].legend()
 
-    ax[2].set_ylabel(r'Offsets change [$\mu$m]')
+    ax[2].set_ylabel(r' Offset $\Delta$ [$\mu$m]')
     ax[2].set_xlabel('Index of BPM')
-    ax[2].set(xlim=(1, len(SC.ORD.BPM)), box='on')
+    ax[2].set(xlim=(1, len(SC.ORD.BPM)))
     ax[2].legend()
 
     f.show()
