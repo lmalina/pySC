@@ -112,74 +112,34 @@ def SCscaleCircumference(RING, circ, mode='abs'):  # TODO
     return RING
 
 
-def SCgetTransformation(d0Vector, rolls, magTheta, magLength, refPoint='center'):
-    allowed_ref_points = ('center', 'entrance')
-    if refPoint not in allowed_ref_points:
-        raise ValueError(f'Unsupported reference point {refPoint}. Allowed are {allowed_ref_points}.')
-    xAxis = np.array([1, 0, 0])
-    yAxis = np.array([0, 1, 0])
-    zAxis = np.array([0, 0, 1])
-    R0 = rotation(rolls)
-    if refPoint == 'center':
-        RB2 = np.array([[np.cos(magTheta / 2), 0, -np.sin(magTheta / 2)],
-                        [0, 1, 0],
-                        [np.sin(magTheta / 2), 0, np.cos(magTheta / 2)]])
-        RX = np.dot(RB2, np.dot(R0, RB2.T))
-        if magTheta == 0:
-            OO0 = (magLength / 2) * zAxis
-            P0P = -(magLength / 2) * np.dot(RX, zAxis)
-        else:
-            Rc = magLength / magTheta
-            OO0 = Rc * np.sin(magTheta / 2) * np.dot(RB2, zAxis)
-            P0P = -Rc * np.sin(magTheta / 2) * np.dot(RX, np.dot(RB2, zAxis))
-        OP = OO0 + P0P + np.dot(RB2, d0Vector)
-    else:
-        RX = R0
-        OP = d0Vector
+def update_transformation(element):
+    mag_length = getattr(element, "Length", 0)
+    mag_theta = getattr(element, 'BendingAngle', 0)
+    offsets = element.SupportOffset + element.MagnetOffset
+    rolls = np.roll(element.MagnetRoll + element.SupportRoll, -1)  # z,x,y -> x,y,z
+    x_axis = np.array([1, 0, 0])
+    y_axis = np.array([0, 1, 0])
+    z_axis = np.array([0, 0, 1])
+    r_3d = rotation(rolls)
+    ld = np.dot(np.dot(r_3d, z_axis), offsets)
 
-    for face in range(2):
-        if face == 0:
-            R = RX
-            XaxiSxyz = np.dot(R, xAxis)
-            YaxiSxyz = np.dot(R, yAxis)
-            ZaxiSxyz = np.dot(R, zAxis)
-            LD = np.dot(ZaxiSxyz, OP)
-            tmp = OP
-        else:
-            RB = np.array([[np.cos(magTheta), 0, -np.sin(magTheta)],
-                           [0, 1, 0],
-                           [np.sin(magTheta), 0, np.cos(magTheta)]])
-            R = np.dot(RB.T, np.dot(RX.T, RB))
-            XaxiSxyz = np.dot(RB, xAxis)
-            YaxiSxyz = np.dot(RB, yAxis)
-            ZaxiSxyz = np.dot(RB, zAxis)
-            if magTheta == 0:
-                OPp = np.array([0, 0, magLength])
-            else:
-                Rc = magLength / magTheta
-                OPp = np.array([Rc * (np.cos(magTheta) - 1), 0, magLength * np.sin(magTheta) / magTheta])
-            OOp = np.dot(RX, OPp) + OP
-            OpPp = (OPp - OOp)
-            LD = np.dot(ZaxiSxyz, OpPp)
-            tmp = OpPp
-        tD0 = np.array([-np.dot(tmp, XaxiSxyz), 0, -np.dot(tmp, YaxiSxyz), 0, 0, 0])
-        T0 = np.array([LD * R[2, 0] / R[2, 2], R[2, 0], LD * R[2, 1] / R[2, 2], R[2, 1], 0, LD / R[2, 2]])
-        T = T0 + tD0
-        LinMat = np.array(
-            [[R[1, 1] / R[2, 2], LD * R[1, 1] / R[2, 2] ** 2, -R[0, 1] / R[2, 2], -LD * R[0, 1] / R[2, 2] ** 2, 0, 0],
-             [0, R[0, 0], 0, R[1, 0], R[2, 0], 0],
-             [-R[1, 0] / R[2, 2], -LD * R[1, 0] / R[2, 2] ** 2, R[0, 0] / R[2, 2], LD * R[0, 0] / R[2, 2] ** 2, 0, 0],
-             [0, R[0, 1], 0, R[1, 1], R[2, 1], 0],
-             [0, 0, 0, 0, 1, 0],
-             [-R[0, 2] / R[2, 2], -LD * R[0, 2] / R[2, 2] ** 2, -R[1, 2] / R[2, 2], -LD * R[1, 2] / R[2, 2] ** 2, 0,
-              1]])
-        if face == 0:
-            R1 = LinMat
-            T1 = np.dot(np.linalg.inv(R1), T)
-        else:
-            R2 = LinMat
-            T2 = T
-    return T1, T2, R1, R2
+    T = _translation_vector(ld, r_3d, np.dot(r_3d, x_axis), np.dot(r_3d, y_axis), offsets)
+    element.R1 = _r_matrix(ld, r_3d)
+    element.T1 = np.dot(np.linalg.inv(element.R1), T)
+
+    RX = rotation(rolls)
+    RB = rotation([0, -mag_theta, 0])
+    r_3d = np.dot(RB.T, np.dot(RX.T, RB))
+    OPp = np.array([(mag_length * (np.cos(mag_theta) - 1) / mag_theta if mag_theta else 0),
+                    0,
+                    mag_length * (np.sin(mag_theta) / mag_theta if mag_theta else 1)])
+
+    OpPp = OPp - np.dot(RX, OPp) - offsets
+    ld = np.dot(np.dot(RB, z_axis), OpPp)
+
+    element.T2 = _translation_vector(ld, r_3d, np.dot(RB, x_axis), np.dot(RB, y_axis), OpPp)
+    element.R2 = _r_matrix(ld, r_3d)
+    return element
 
 
 def SCmultipolesRead(fname):  # TODO sample of the input anywhere?
@@ -225,57 +185,18 @@ def rotation(rolls):
     return R0
 
 
-def sc_get_transformation(offsets, rolls, magTheta, magLength, refPoint='center'):
-    if refPoint not in ('center', 'entrance'):
-        raise ValueError('Unsupported reference point. Allowed are ''center'' or ''entrance''.')
-    xAxis = np.array([1, 0, 0])
-    yAxis = np.array([0, 1, 0])
-    zAxis = np.array([0, 0, 1])
-    RX = rotation(rolls)
-    OP = offsets[:]
-    if refPoint == 'center':
-        RB2 = rotation([0, -magTheta/2, 0])
-        RX = np.dot(RB2, np.dot(RX, RB2.T))
-        OP = np.dot(RB2, OP) + np.dot(np.eye(3)-RX, np.dot(RB2, zAxis)) * magLength * (1/2 if magTheta == 0 else np.sin(magTheta / 2) / magTheta)
+def _translation_vector(ld, r3d, xaxis_xyz, yaxis_xyz, offsets):
+    tD0 = np.array([-np.dot(offsets, xaxis_xyz), 0, -np.dot(offsets, yaxis_xyz), 0, 0, 0])
+    T0 = np.array([ld * r3d[2, 0] / r3d[2, 2], r3d[2, 0], ld * r3d[2, 1] / r3d[2, 2], r3d[2, 1], 0, ld / r3d[2, 2]])
+    return T0 + tD0
 
-    for face in range(2):
-        if face == 0:
-            R = RX
-            XaxiSxyz = np.dot(R, xAxis)
-            YaxiSxyz = np.dot(R, yAxis)
-            ZaxiSxyz = np.dot(R, zAxis)
-            LD = np.dot(ZaxiSxyz, OP)
-            tmp = OP
-        else:
-            RB = rotation([0, -magTheta, 0])
-            R = np.dot(RB.T, np.dot(RX.T, RB))
-            XaxiSxyz = np.dot(RB, xAxis)
-            YaxiSxyz = np.dot(RB, yAxis)
-            ZaxiSxyz = np.dot(RB, zAxis)
-            if magTheta == 0:
-                OPp = np.array([0, 0, magLength])
-            else:
-                Rc = magLength / magTheta
-                OPp = np.array([Rc * (np.cos(magTheta) - 1), 0, magLength * np.sin(magTheta) / magTheta])
-            OOp = np.dot(RX, OPp) + OP
-            OpPp = (OPp - OOp)
-            LD = np.dot(ZaxiSxyz, OpPp)
-            tmp = OpPp
-        tD0 = np.array([-np.dot(tmp, XaxiSxyz), 0, -np.dot(tmp, YaxiSxyz), 0, 0, 0])
-        T0 = np.array([LD * R[2, 0] / R[2, 2], R[2, 0], LD * R[2, 1] / R[2, 2], R[2, 1], 0, LD / R[2, 2]])
-        T = T0 + tD0
-        LinMat = np.array(
-            [[R[1, 1] / R[2, 2], LD * R[1, 1] / R[2, 2] ** 2, -R[0, 1] / R[2, 2], -LD * R[0, 1] / R[2, 2] ** 2, 0, 0],
-             [0, R[0, 0], 0, R[1, 0], R[2, 0], 0],
-             [-R[1, 0] / R[2, 2], -LD * R[1, 0] / R[2, 2] ** 2, R[0, 0] / R[2, 2], LD * R[0, 0] / R[2, 2] ** 2, 0, 0],
-             [0, R[0, 1], 0, R[1, 1], R[2, 1], 0],
-             [0, 0, 0, 0, 1, 0],
-             [-R[0, 2] / R[2, 2], -LD * R[0, 2] / R[2, 2] ** 2, -R[1, 2] / R[2, 2], -LD * R[1, 2] / R[2, 2] ** 2, 0,
-              1]])
-        if face == 0:
-            R1 = LinMat
-            T1 = np.dot(np.linalg.inv(R1), T)
-        else:
-            R2 = LinMat
-            T2 = T
-    return T1, T2, R1, R2
+
+def _r_matrix(ld, r3d):
+    return np.array([
+        [r3d[1, 1] / r3d[2, 2], ld * r3d[1, 1] / r3d[2, 2] ** 2, -r3d[0, 1] / r3d[2, 2], -ld * r3d[0, 1] / r3d[2, 2] ** 2, 0, 0],
+        [0, r3d[0, 0], 0, r3d[1, 0], r3d[2, 0], 0],
+        [-r3d[1, 0] / r3d[2, 2], -ld * r3d[1, 0] / r3d[2, 2] ** 2, r3d[0, 0] / r3d[2, 2], ld * r3d[0, 0] / r3d[2, 2] ** 2, 0, 0],
+        [0, r3d[0, 1], 0, r3d[1, 1], r3d[2, 1], 0],
+        [0, 0, 0, 0, 1, 0],
+        [-r3d[0, 2] / r3d[2, 2], -ld * r3d[0, 2] / r3d[2, 2] ** 2, -r3d[1, 2] / r3d[2, 2], -ld * r3d[1, 2] / r3d[2, 2] ** 2, 0, 1]
+    ])
