@@ -400,7 +400,14 @@ class SimulatedCommissioning:
             vertical section offset uncertainties `dX` and `dY`, respectively, to the start points. When
             the support errors are applied the section endpoints will get the same offset as the start points::
 
-                SC.register_support(Section=ords, Offset=[dX, dY, 0])
+                SC.register_support(Section=ords, Offset=np.array([dX, dY, 0]))
+
+            Registers the section start- end endpoints defined in `ords` and assigns the horizontal and
+            vertical section offset uncertainties `dX` and `dY`, respectively, to the start points. When
+            the support errors are applied the section endpoints will get the same offset as the start points.
+            Also set a 4.2 sigmas cutoff::
+
+                SC.register_support(Section=ords, Offset=[np.array([dX, dY, 0]), 4.2])
 
             Registers the girder start end endpoints defined in `ords`, assigns the roll uncertainty `dPhi`
             and the horizontal and vertical girder offset uncertainties `dX1` and `dY1`, respectively to the
@@ -408,9 +415,9 @@ class SimulatedCommissioning:
             girder start- and endpoints will get random offset errors and the resulting yaw and pitch angles
             are calculated accordingly::
 
-                SC.register_support(Girder=ords,
-                                    Offset=[dX1, dY1, 0; dX2, dY2, 0],
-                                    Roll=[dPhi, 0, 0])
+                SC.register_support(Girder=ords
+                                    Offset=np.array([dX1, dY1, 0; dX2, dY2, 0]),
+                                    Roll=np.array([dPhi, 0, 0]))
 
             Registers the girder start end endpoints defined in `ords` and assigns the horizontal,
             vertical and longitudinal girder offset uncertainties `dX`, `dY` and `dZ`, respectively, and the
