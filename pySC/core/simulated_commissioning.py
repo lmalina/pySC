@@ -156,7 +156,7 @@ class SimulatedCommissioning:
                 SC = SCregisterCAVs(SC,ords, FrequencyOffset=1E3, TimeLagOffset=0.3);
 
         See also:
-            *SCgetOrds*, *SCsanityCheck*, *SCapplyErrors*
+            *SCgetOrds*, *SC.verify_structure*, *SC.apply_errors*
 
         """
         self._check_kwargs(kwargs, RF_ERROR_FIELDS)
@@ -305,7 +305,7 @@ class SimulatedCommissioning:
                                         CalErrorA=[1E-2, 2E-3, 0])
 
         See Also:
-            *SCgetOrds*, *SCupdateMagnets*, *SCsanityCheck*, *SCapplyErrors*, *SCregisterSupport*
+            *SCgetOrds*, *SC.update_magnets*, *SC.verify_structure*, *SC.apply_errors*, *SC.register_support*
 
         """
         self._check_kwargs(kwargs, MAGNET_TYPE_FIELDS + MAGNET_ERROR_FIELDS)
@@ -401,7 +401,8 @@ class SimulatedCommissioning:
                 SC = SC.register_support(SC,'Girder',ords,'Offset',[dX dY dZ],'Roll',[az ax ay]);
 
         See Also:
-            *SCgetOrds*, *SCupdateSupport*, *SCgetSupportOffset*, *SCplotSupport*, *SCapplyErrors*, *SCregisterMagnets*, *SCgetTransformation*
+            *SCgetOrds*, *SC.update_support*, *SC.support_offset_and_roll*, *SCplotSupport*, *SC.apply_errors*,
+            *SC.register_magnets*, *SCgetTransformation*
 
         """
         if support_type not in SUPPORT_TYPES:
@@ -460,7 +461,7 @@ class SimulatedCommissioning:
                 RING = SC.set_systematic_multipole_errors(RING, ords, BA, 1, False);
 
         See Also:
-            *SCmultipolesRead*, *SCupdateMagnets*, *SC.set_random_multipole_errors*
+            *pySC.utils.sc_tools.SCmultipolesRead*, *SC.update_magnets*, *SC.set_random_multipole_errors*
         """
         if BA.ndim != 2 or BA.shape[1] != 2:
             raise ValueError("BA has to  be numpy.array of shape N x 2.")
@@ -496,7 +497,7 @@ class SimulatedCommissioning:
                 RING = SC.set_random_multipole_errors(RING, ords, BA);
 
         See Also:
-            *SCmultipolesRead*, *SCupdateMagnets*, *SC.set_systematic_multipole_errors*
+            *pySC.utils.sc_tools.SCmultipolesRead*, *SC.update_magnets*, *SC.set_systematic_multipole_errors*
         """
         if BA.ndim != 2 or BA.shape[1] != 2:
             raise ValueError("BA has to  be numpy.array of shape N x 2.")
@@ -527,7 +528,8 @@ class SimulatedCommissioning:
             nsigmas: Number of sigmas at which the Gaussian distribution of errors is truncated
 
         See Also:
-            *SC.register_magnets*, *SC.register_support*, *SC.register_bpms*, *SC.register_cavities*, *SCrampUpErrors*
+            *SC.register_magnets*, *SC.register_support*, *SC.register_bpms*, *SC.register_cavities*,
+            *pySC.correction.ramp_errors.SCrampUpErrors*
         """
         # RF
         for ind in intersect(self.ORD.RF, self.SIG.RF.keys()):
@@ -663,7 +665,7 @@ class SimulatedCommissioning:
             offset_magnets: If true, magnet offsets are updated.
 
         See Also:
-            *SC.register_support*, *SCgetSupportOffset*, *SCgetSupportRoll*, *SCplotSupport*
+            *SC.register_support*, *SC.support_offset_and_roll*, *SCplotSupport*
 
         """
         s_pos = findspos(self.RING)
@@ -757,7 +759,7 @@ class SimulatedCommissioning:
 
     def verify_structure(self):
         """
-        Performs a sanity check on the current `SC` structure adn returns warnings if things look fishy.
+        Performs a sanity check on the current `SC` structure and returns warnings if things look fishy.
         If you find something that is missing please contact us.
 
         See Also:
