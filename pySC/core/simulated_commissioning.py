@@ -450,7 +450,7 @@ class SimulatedCommissioning:
             skewness: if False apply errors to normal fields (PolynomB). if True apply errors to skew fields (PolynomA)
 
         Examples:
-            Defines random multipole components for the 'QF' magnet and adds it to the field offsets of all magnets named 'QF'::
+            Defines systematic multipole components for the 'QF' magnet and adds it to the field offsets of all magnets named 'QF'::
 
                 ords = SCgetOrds(SC.RING,'QF');
                 BA = [0 1E-5;...
@@ -460,7 +460,7 @@ class SimulatedCommissioning:
                 RING = SC.set_systematic_multipole_errors(RING, ords, BA, 1, False);
 
         See Also:
-            *SCmultipolesRead*, *SCupdateMagnets*
+            *SCmultipolesRead*, *SCupdateMagnets*, *SC.set_random_multipole_errors*
         """
         if BA.ndim != 2 or BA.shape[1] != 2:
             raise ValueError("BA has to  be numpy.array of shape N x 2.")
@@ -475,6 +475,29 @@ class SimulatedCommissioning:
                 setattr(self.RING[ord], attr_name, syspol)
 
     def set_random_multipole_errors(self, ords: ndarray, BA):
+        """
+        Applies multipole errors specified in `AB` in the lattice elements `ords` of `RING` depending on
+        the specified options.
+        It randomly generates multipole components with a 2-sigma truncated Gaussian distribution from each of the `BA`
+        entries. The final multipole errors are stored in the PolynomA/BOffset of the lattice elements.
+
+        Args:
+            ords: Ordinates of the considered magnets.
+            BA: [N x 2] array of PolynomA/B multipole errors.
+
+        Examples:
+            Defines random multipole components for the 'QF' magnet and adds it to the field offsets of all magnets named 'QF'::
+
+                ords = SCgetOrds(SC.RING,'QF');
+                BA = [0 1E-5;...
+                      0 1E-4;...
+                      0 0;...
+                      0 1E-2];
+                RING = SC.set_random_multipole_errors(RING, ords, BA);
+
+        See Also:
+            *SCmultipolesRead*, *SCupdateMagnets*, *SC.set_systematic_multipole_errors*
+        """
         if BA.ndim != 2 or BA.shape[1] != 2:
             raise ValueError("BA has to  be numpy.array of shape N x 2.")
         for ord in ords:
