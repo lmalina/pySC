@@ -16,6 +16,7 @@ from numpy import ndarray
 
 from pySC.core.beam import beam_transmission, bpm_reading, generate_bunches
 from pySC.core.simulated_commissioning import SimulatedCommissioning
+from pySC.core.classes import DotDict
 from pySC.core.lattice_setting import (set_cavity_setpoints, set_magnet_setpoints,
                                        set_cm_setpoints, get_cm_setpoints, SCcronoff as cronoff)
 from pySC.correction.bba import bba
@@ -36,7 +37,7 @@ from pySC.plotting.plot_phase_space import plot_phase_space
 from pySC.plotting.plot_support import plot_support
 from pySC.utils import logging_tools
 from pySC.utils.sc_tools import SCgetOrds as get_ords, SCgetPinv as get_pinv, SCrandnc as randnc, \
-    SCscaleCircumference as scale_circumference, SCgetTransformation as transform, SCmultipolesRead as read_multipoles
+    SCscaleCircumference as scale_circumference, update_transformation, SCmultipolesRead as read_multipoles
 
 LOGGER = logging_tools.get_logger(__name__)
 LOGGER.warn("Matlab_index imported: \n"
@@ -166,7 +167,14 @@ def SCgetSupportRoll(SC: SimulatedCommissioning, s: ndarray) -> ndarray:
 
 
 def SCgetTransformation(dx, dy, dz, ax, ay, az, magTheta, magLength, refPoint='center'):
-    return transform(np.array([dx, dy, dz]), np.array([ax, ay, az]), magTheta, magLength, refPoint=refPoint)
+    if refPoint == 'center':
+        raise NotImplementedError("framework works with 'entrance' reference point")
+    fake_element = DotDict(
+        dict(Length=magLength, BendingAngle=magTheta, SupportOffset=np.zeros(3), SupportRoll=np.zeros(3),
+             MagnetOffset=np.array([dx, dy, dz]),
+             MagnetRoll=np.roll(np.array([ax, ay, az]), 1)))  # inside the function, it will be rolled back
+    fake_element = update_transformation(fake_element)
+    return fake_element.T1, fake_element.T2, fake_element.R1, fake_element.R2
 
 
 def SCinit(RING: Lattice) -> SimulatedCommissioning:

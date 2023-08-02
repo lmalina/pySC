@@ -19,7 +19,7 @@ from pySC.core.constants import (BPM_ERROR_FIELDS, RF_ERROR_FIELDS, RF_PROPERTIE
 from pySC.utils import logging_tools
 from pySC.utils.at_wrapper import findspos
 from pySC.utils.classdef_tools import update_double_ordinates, add_padded, intersect, randn_cutoff, s_interpolation
-from pySC.utils.sc_tools import SCrandnc, SCscaleCircumference, SCgetTransformation
+from pySC.utils.sc_tools import SCrandnc, SCscaleCircumference, update_transformation
 
 LOGGER = logging_tools.get_logger(__name__)
 
@@ -252,12 +252,7 @@ class SimulatedCommissioning:
                 for i, ind in enumerate(self.ORD.Magnet):
                     setattr(self.RING[ind], "SupportOffset", offsets[:, i])
                     setattr(self.RING[ind], "SupportRoll", rolls[:, i])
-                    magLength = self.RING[ind].Length
-                    magTheta = self.RING[ind].BendingAngle if hasattr(self.RING[ind], 'BendingAngle') else 0
-                    magnet_offsets = self.RING[ind].SupportOffset + self.RING[ind].MagnetOffset
-                    magnet_rolls = np.roll(self.RING[ind].MagnetRoll + self.RING[ind].SupportRoll, -1)  # z,x,y -> x,y,z
-                    self.RING[ind].T1, self.RING[ind].T2, self.RING[ind].R1, self.RING[ind].R2 = SCgetTransformation(
-                        magnet_offsets, magnet_rolls, magTheta, magLength, refPoint="entrance")
+                    self.RING[ind] = update_transformation(self.RING[ind])
                     if hasattr(self.RING[ind], 'MasterOf'):
                         for child_ind in self.RING[ind].MasterOf:
                             for field in ("T1", "T2", "R1", "R2"):
