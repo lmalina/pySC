@@ -691,6 +691,26 @@ class SimulatedCommissioning:
                 LOGGER.warning('SC: No BPMs have been registered!')
 
     def support_offset_and_roll(self, s_locations: ndarray) -> Tuple[ndarray, ndarray]:
+        """
+        This function evaluates the total offsets, roll, pitch and yaw angles of the support structures that have
+        been defined via *SC.register_support* at the longitudinal positions `s` by linearly interpolating
+        between support structure start- and endpoints (girder + sections + plinths, if registered).
+        Note that this calculation may not provide the proper values if magnets with non-zero bending
+        angle are within the support structure because it does not account for the rotation of the
+        local coordinate system along the beam trajectory.
+
+        Args:
+            s_locations: Array of s-positions at which the offset is evaluated.
+
+        Returns:
+
+            [3,length(s)]-array containing the [dx/dy/dz] total support structure offsets at `s`.
+
+            [3,length(s)]-array containing the [az/ax/ay] total support structure rolls at `s`.
+
+        See Also:
+            *SC.register_support*, *SC.update_support*, *SCplotSupport*
+        """
         s_pos = findspos(self.RING)
         ring_length = s_pos[-1]
         off0 = np.zeros((3, len(s_pos)))
@@ -736,6 +756,13 @@ class SimulatedCommissioning:
         return off0, roll0
 
     def verify_structure(self):
+        """
+        Performs a sanity check on the current `SC` structure adn returns warnings if things look fishy.
+        If you find something that is missing please contact us.
+
+        See Also:
+            *SC.register_magnets*, *SC.register_bpms*, *SC.register_cavities*
+        """
         # BPMs
         if n_bpms := len(self.ORD.BPM) == 0:
             LOGGER.warning('No BPMs registered. Use ''register_bpms''.')
