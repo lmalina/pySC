@@ -446,8 +446,8 @@ class SimulatedCommissioning:
         Args:
             ords: Ordinates of the considered magnets.
             BA: [N x 2] array of PolynomA/B multipole errors.
-            order: Numeric value defining the order of the considered magnet: [1,2,3,...] => [dip,quad,sext,...]
-            skewness: ???
+            order: Numeric value defining the order of the considered magnet: [0,1,2,...] => [dip,quad,sext,...]
+            skewness: if False apply errors to normal fields (PolynomB). if True apply errors to skew fields (PolynomA)
 
         Examples:
             Defines random multipole components for the 'QF' magnet and adds it to the field offsets of all magnets named 'QF'::
@@ -457,7 +457,7 @@ class SimulatedCommissioning:
                       0 1E-4;...
                       0 0;...
                       0 1E-2];
-                RING = SC.set_systematic_multipole_errors(RING,ords,BA);
+                RING = SC.set_systematic_multipole_errors(RING, ords, BA, 1, False);
 
         See Also:
             *SCmultipolesRead*, *SCupdateMagnets*
