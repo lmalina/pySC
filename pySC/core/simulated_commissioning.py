@@ -30,9 +30,20 @@ class SimulatedCommissioning:
     lattice error sources and errors, injection settings and its errors.
     The class is initialized from ``at.Lattice``.
 
-    register functions assign uncertainties
-    SC.applyErrors functions apply those sigmas to specific elements in the lattice
-    SC.update transfer the information to the AT elements fields
+    SC.register* functions assign uncertainties
+    SC.apply_errors functions apply those sigmas to specific elements in the lattice
+    SC.update* functions transfer the information to the AT elements fields
+
+    Examples:
+
+        >>> import at
+        >>> SC = SimulatedCommissioning(at.Lattice(at.Monitor('BPM'))
+        >>> SC.register_bpms(np.array(0), Offset=2e-6*np.ones(2))
+        >>> print(SC.ORD)
+        0
+        >>> print(SC.SIG.BPM[0].Offset)
+        >>> SC.apply_errors()
+        >>> SC.update
 
     """
     def __init__(self, ring: Lattice):
@@ -48,8 +59,9 @@ class SimulatedCommissioning:
         self.plot: bool = False
 
     def register_bpms(self, ords: ndarray, **kwargs):
-        """registers BPMs specified by the locations `BPMords` in the `SC` structure and initializes all required fields
-        in the lattice elements. The ordinates of all registered BPMs are stored in `SC.ORD.BPM`.
+        """registers BPMs specified by the locations `ords` (element indices in the lattice) in the `SC` structure and
+        initializes all required fields in the lattice elements. The ordinates of all registered BPMs are stored in
+        `SC.ORD.BPM`.
 
         Args:
             ords:  BPM ordinates in the lattice structure.
@@ -57,15 +69,15 @@ class SimulatedCommissioning:
 
         The BPM fields in the lattice elements are:
             Noise:
-                [1 x 2] array of hor./ver. turn-by-turn BPM noise uncertanties (sigmas)
+                2 elements array of hor./ver. turn-by-turn BPM noise uncertainties (sigmas)
             NoiseCO:
-                [1 x 2] array of hor./ver. orbit BPM noise uncertanties (sigmas)
+                2 elements array of hor./ver. orbit BPM noise uncertainties (sigmas)
             CalError:
-                [1 x 2] array of hor./ver. BPM calibration errors uncertanties (sigmas)
+                2 elements array of hor./ver. BPM calibration errors uncertainties (sigmas)
             Offset:
-                [1 x 2] array of individual hor./ver. BPM offsets uncertanties (sigmas)
+                2 elements array of individual hor./ver. BPM offsets uncertainties (sigmas)
             SupportOffset:
-                [1 x 2] array of hor./ver. BPM offsets which result from the corresponding girder offset at the location of the BPMs, see *SCupdateSupport*.
+                2 elements array of hor./ver. BPM offsets which result from the corresponding girder offset at the location of the BPMs, see *SCupdateSupport*.
             Roll:
                 BPM roll around z-axis w.r.t. the support structure
             SupportRoll:
@@ -76,20 +88,25 @@ class SimulatedCommissioning:
         Examples:
             Identify the ordinates of all elements named `BPM` and registers them as BPMs in `SC`::
 
-                ords = SCgetOrds(SC.RING,'BPM');
-                SC = SC.register_bpms(ords);
+                ords = SCgetOrds(SC.RING,'BPM')
+                SC.register_bpms(ords)
 
-            Register the BPMs specified in `ords` in `SC` and set the uncertanty of the offset to `500um` in
-            both planes. A subsequent call of *SCapplyErrors* would generate a random BPM offset errors with
+            Register the BPMs specified in `ords` in `SC` and set the uncertainty of the offset to `500um` in
+            both planes. A subsequent call of *SC.apply_errors* would generate a random BPM offset errors with
             `sigma=500um`::
 
-                SC = SC.register_bpms(SC, ords, Offset=500E-6*[1, 1]);
+                SC.register_bpms(ords, Offset=500E-6*np.ones(2))
 
-            Register the BPMs specified in `ords` in `SC` and set the uncertanty of the offset to `500um` in
+            Register the BPMs specified in `ords` in `SC` and set the uncertainty of the offset to `500um` in
+            both planes. A subsequent call of *SC.apply_errors* would generate a random BPM offset errors with
+            `sigma=500um` and a cutoff at 3 sigmas for this error::
+
+                SC.register_bpms(ords, Offset=[500E-6*np.ones(2), 3])
+
+            Register the BPMs specified in `ords` in `SC` and set the uncertainty of the offset to `500um` in
             both planes and a calibration error of the sum signal of 20%::
 
-                SC = SC.register_bpms(SC,ords, Offset=500E-6*[1, 1], SumError=0.2);
-
+                SC.register_bpms(ords, Offset=500E-6*np.ones(2), SumError=0.2)
 
         See also:
             *SCgetBPMreading*, *SCgetOrds*, *SC.sanity_check*, *SC.apply_errors*, *SC.register_support*, *SC.update_support*
@@ -111,14 +128,14 @@ class SimulatedCommissioning:
             self.RING[ind].SumError = 0
 
     def register_cavities(self, ords: ndarray, **kwargs):
-        """Register cavities specified in `CAVords` in `SC` by initializing all required fields in the
-        corresponding cavity lattice elements and storing the ordinates in `SC.ORD.Cavity`.
+        """Register cavities specified in `ords` in `SC` by initializing all required fields in the
+        corresponding cavity lattice elements and storing the ordinates in `SC.ORD.RF`.
 
         Args:
             ords: Cavity ordinates in the lattice structure.
             **kwargs: any of the fields listed below
 
-        The additional fields in the lattice elements are:
+        Keyword Args:
             VoltageSetPoint:
                 Setpoint of cavity voltage
             VoltageOffset:
@@ -141,19 +158,19 @@ class SimulatedCommissioning:
         Examples:
             Identify the ordinates of all elements named `'CAV'` and register them as cavities in `SC`::
 
-                ords = SCgetOrds(SC.RING,'CAV');
-                SC = SC.register_cavities(SC,ords);
+                ords = SCgetOrds(SC.RING, 'CAV')
+                SC.register_cavities(ords)
 
-            Register the cavities specified in `ords` in `SC` and sets the uncertanty of the frequency offset
-            to 1kHz. A subsequent call of *SCapplyErrors* would generate a random frequncy offset error with `sigma=1kHz`::
+            Register the cavities specified in `ords` in `SC` and sets the uncertainty of the frequency offset
+            to 1kHz. A subsequent call of *SC.apply_errors* would generate a random frequency offset error with `sigma=1kHz`::
 
-                SC = SCregisterCAVs(SC,ords,FrequencyOffset=1E3);
+                SC.register_cavities(ords, FrequencyOffset=1E3)
 
-            Register the cavities specified in `ords` in `SC` and sets the uncertanty of the frequency offset
-            to 1kHz. A subsequent call of *SCapplyErrors* would generate a random frequncy offset error with
+            Register the cavities specified in `ords` in `SC` and sets the uncertainty of the frequency offset
+            to 1kHz. A subsequent call of *SC.apply_errors* would generate a random frequency offset error with
             `sigma=1kHz` and a random timelag offset error ('phase error') with `sigma=0.3m`::
 
-                SC = SCregisterCAVs(SC,ords, FrequencyOffset=1E3, TimeLagOffset=0.3);
+                SC.register_cavities(ords, FrequencyOffset=1E3, TimeLagOffset=0.3)
 
         See also:
             *SCgetOrds*, *SC.verify_structure*, *SC.apply_errors*
@@ -172,14 +189,14 @@ class SimulatedCommissioning:
 
     def register_magnets(self, ords: ndarray, **kwargs):
         """
-        Registers magnets specified by `MAGords` in the `SC` structure and initializes all required fields
+        Registers magnets specified by `ords` in the `SC` structure and initializes all required fields
         in the lattice elements. The ordinates of all registered magnets are stored in `SC.ORD.Magnet`.
 
         Args:
             ords: Magnet ordinates in the lattice structure.
             **kwargs: any of the fields listed below
 
-        The additional `SC` related fields in the lattice elements are:
+        Keyword Args:
             NomPolynomB:
                 Nominal (design) `PolynomB` fields.
             NomPolynomA:
@@ -197,15 +214,15 @@ class SimulatedCommissioning:
             PolynomAOffset (optional):
                 Offset error of the `PolynomA` fields wrt. the corresponding setpoints.
             MagnetOffset:
-                [1 x 3] array of horizontal, vertical and longitudinal magnet offsets (wrt. the support structure).
+                3 element array of horizontal, vertical and longitudinal magnet offsets (wrt. the support structure).
             SupportOffset:
-                [1 x 3] array of horizontal, vertical and longitudinal  support structure offsets (if support structure is
+                3 element array of horizontal, vertical and longitudinal  support structure offsets (if support structure is
                 registered).
             MagnetRoll:
-                [1x3] array [az,ax,ay] defineing magnet roll (around z-axis), pitch (roll around x-axis) and yaw (roll around
+                3 element array [az,ax,ay] defineing magnet roll (around z-axis), pitch (roll around x-axis) and yaw (roll around
                 y-axis); all wrt. the support structure.
             SupportRoll:
-                [1x3] array [az,ax,ay] defineing support structure roll (around z-axis), pitch (roll around x-axis) and yaw (roll
+                3 element array [az,ax,ay] defineing support structure roll (around z-axis), pitch (roll around x-axis) and yaw (roll
                 around y-axis); all wrt. the design coordinate frame (if support structure is registered).
             BendingAngleError (optional):
                 Error of the main bending field (corresponding uncertainty defined with `BendingAngle`).
@@ -226,7 +243,7 @@ class SimulatedCommissioning:
                 Array of ordinates to which the corresponding magnet acts as master (split magnets).
                 The magnets at ordinates `ords` are identified as a split magnets each with `N` childs as specified in
                 the corresponding value which must be a [`N` x `length(ords)`] array.
-                The field calculation in *SCupdateMagnets* uses the setpoints and errors of the master magnet to
+                The field calculation in *SC.update_magnets* uses the setpoints and errors of the master magnet to
                 calculate the child fields.
                 The relative bending angle error of the master magnet e.g. is applied
                 on the corresponding child bending angle appropriately.
@@ -240,69 +257,72 @@ class SimulatedCommissioning:
             Identify the ordinates of all elements named `QF` and register them in `SC`::
 
                 ords = SCgetOrds(SC.RING, 'QF');
-                SC = SC.register_magnets(SC, ords);
+                SC.register_magnets(ords);
 
             Register the magnets specified in `ords` in `SC` and set the uncertainty of
             the quadrupole component to 1E-3 and 30um horizontal and vertical offset::
 
-                SC = SC.register_magnets(SC,ords,
-                                        CalErrorB=[0 1E-3],
-                                        MagnetOffset=[30E-6, 30E-6 0])
+                SC.register_magnets(ords,
+                                    CalErrorB=np.array([0, 1E-3]),
+                                    MagnetOffset=np.array([30E-6, 30E-6 0]))
 
             Register the magnets specified in `ords` in `SC` and set the uncertainty of
             the quadrupole component to 1E-3, 30um horizontal and vertical offset and
             100um longitudinal offset::
 
-                SC = SC.register_magnets(SC,ords,
-                                        CalErrorB=[0 1E-3],
-                                        MagnetOffset=[30E-6, 30E-6, 100E-6])
+                SC.register_magnets(ords,
+                                    CalErrorB=np.array([0, 1E-3]),
+                                    MagnetOffset=np.array([30E-6, 30E-6, 100E-6]))
 
             Register the magnets specified in `ords` in `SC` and set the uncertainty of
             the roll, pitch and yaw angle to 100urad::
 
-                SC = SC.register_magnets(SC,ords, Roll=[100E-6, 100E-6, 100E-6])
+                SC.register_magnets(ords, Roll=np.array([100E-6, 100E-6, 100E-6]))
+
+            Register the magnets specified in `ords` in `SC` and set the uncertainty of
+            the roll, pitch and yaw angle to 100urad and 3.4 sigmas cutoff::
+
+                SC.register_magnets(ords, Roll=[100E-6*np.ones(3), 3.4])
 
             Register split magnets.
             Identify the magnets named `BENDa` ([`1xN`] array `masterOrds`) and the
             magnets named `BENDb` and `BENDc` ([`2xN`] array `childOrds`) and register
             the `masterOrds` as the master magnets of the children in the corresponding
             columns of `childOrds`.
-            The uncertanty of the bending angle is set to 1E-4::
+            The uncertainty of the bending angle is set to 1E-4::
 
                 masterOrds = SCgetOrds(SC.RING,'BENDa')
                 childOrds  = numpy.concatenate(SCgetOrds(SC.RING,'BENDb'),
                                                SCgetOrds(SC.RING,'BENDc'))
-                SC = SC.register_magnets(SC,
-                                        masterOrds, BendingAngle=1E-4,
+                SC.register_magnets(masterOrds, BendingAngle=1E-4,
                                         MasterOf=childOrds)
 
             Register the magnets specified in `ords` in `SC` as combined function magnets
-            and sets the uncertanty of the quadrupole component to 1E-3::
+            and sets the uncertainty of the quadrupole component to 1E-3::
 
-                SC = SC.register_magnets(SC,ords, CF=1, CalErrorB=[0, 1E-3])
+                SC.register_magnets(SC,ords, CF=1, CalErrorB=np.array([0, 1E-3]))
 
-            Register the magnets specified in `ords` in `SC` and set the uncertanty of
-            the skew quadrupole component to 2E-3 and the uncertanty of the sextupole
+            Register the magnets specified in `ords` in `SC` and set the uncertainty of
+            the skew quadrupole component to 2E-3 and the uncertainty of the sextupole
             component to 1E-3::
 
-                SC = SC.register_magnets(SC,ords, CalErrorA=[0, 2E-3, 0], CalErrorB=[0, 0, 1E-3])
+                SC.register_magnets(ords, CalErrorA=np.array([0, 2E-3, 0]), CalErrorB=np.array([0, 0, 1E-3]))
 
             Register the magnets specified in `ords` in `SC` as horizontal and vertical
-            CMs, set their dipole uncertanties to 5% and 1%, respectively and define no CM limits::
+            CMs, set their dipole uncertainties to 5% and 1%, respectively and define no CM limits::
 
-                SC = SC.register_magnets(SC,ords, HCM=Inf, VCM=Inf, CalErrorB=5E-2, CalErrorA=1E-2)
+                SC.register_magnets(ords, HCM=Inf, VCM=Inf, CalErrorB=5E-2, CalErrorA=1E-2)
 
             Register the magnets specified in `ords` in `SC` as horizontal and vertical
-            CMs, set their uncertanties to 5% and 1%, respectively and their limits to 1
-            mrad. Furthermore, set the uncertanty of the skew quadrupole component to
-            2E-3 and the uncertanty of the sextupole component to 1E-3::
+            CMs, set their uncertainties to 5% and 1%, respectively and their limits to 1
+            mrad. Furthermore, set the uncertainty of the skew quadrupole component to
+            2E-3 and the uncertainty of the sextupole component to 1E-3::
 
-                SC = SC.register_magnets(SC,
-                                        ords,
-                                        HCM=1E-3,
-                                        VCM=1E-3,
-                                        CalErrorB=[5E-2, 0, 1E-3],
-                                        CalErrorA=[1E-2, 2E-3, 0])
+                SC.register_magnets(ords,
+                                    HCM=1E-3,
+                                    VCM=1E-3,
+                                    CalErrorB=np.array([5E-2, 0, 1E-3]),
+                                    CalErrorA=np.array([1E-2, 2E-3, 0]))
 
         See Also:
             *SCgetOrds*, *SC.update_magnets*, *SC.verify_structure*, *SC.apply_errors*, *SC.register_support*
@@ -352,15 +372,15 @@ class SimulatedCommissioning:
             Offset:
                 A [1x3] array defining horizontal, vertical and longitudinal offset uncertainties for the start
                 points or [2x3] array defining horizontal, vertical and longitudinal offset uncertainties for
-                the start end endpoints. If end points have dedicated uncertainties, *SCapplyErrors* applies
+                the start end endpoints. If end points have dedicated uncertainties, *SC.apply_errors* applies
                 random offset errors of both start end endpoints of the corresponding support structure,
                 effectively tilting the support structure.
-                If only start points have asigned uncertainties, *SCapplyErrors* applies to the support
+                If only start points have asigned uncertainties, *SC.apply_errors* applies to the support
                 structure endpoints the same offset error as to the start points, resulting in a paraxial
                 translation of the element. Only in this case dedicated `'Roll'` uncertainties may be given which
                 then tilt the structure around it's center.
                 The actual magnet or BPM offsets resulting from the support structure offsets is calculated in
-                *SCupdateSupport* by interpolating on a straight line between girder start- and endpoints. Note
+                *SC.update_support* by interpolating on a straight line between girder start- and endpoints. Note
                 that the coordinate system change due to bending magnets are ignored in this calculation. Thus,
                 the accuracy of the result is limited if dipole magnets are involved. This may be particularly
                 true in case of large sections and/or longitudinal offsets.
@@ -374,13 +394,13 @@ class SimulatedCommissioning:
             girder start points. When the support errors are applied the girder endpoints will get the same
             offset error as the start points, resulting in a paraxial translation of the girder::
 
-                SC = SC.register_support(SC, Girder=ords, Offset=[dX, dY, dZ])
+                SC.register_support(Girder=ords, Offset=[dX, dY, dZ])
 
             Registers the section start- end endpoints defined in `ords` and assigns the horizontal and
             vertical section offset uncertainties `dX` and `dY`, respectively, to the start points. When
             the support errors are applied the section endpoints will get the same offset as the start points::
 
-                SC = SC.register_support(SC, Section=ords, Offset=[dX, dY, 0])
+                SC.register_support(Section=ords, Offset=[dX, dY, 0])
 
             Registers the girder start end endpoints defined in `ords`, assigns the roll uncertainty `dPhi`
             and the horizontal and vertical girder offset uncertainties `dX1` and `dY1`, respectively to the
@@ -388,9 +408,9 @@ class SimulatedCommissioning:
             girder start- and endpoints will get random offset errors and the resulting yaw and pitch angles
             are calculated accordingly::
 
-                SC = SC.register_support(SC, Girder=ords,
-                                        Offset=[dX1, dY1, 0; dX2, dY2, 0],
-                                        Roll=[dPhi, 0, 0])
+                SC.register_support(Girder=ords,
+                                    Offset=[dX1, dY1, 0; dX2, dY2, 0],
+                                    Roll=[dPhi, 0, 0])
 
             Registers the girder start end endpoints defined in `ords` and assigns the horizontal,
             vertical and longitudinal girder offset uncertainties `dX`, `dY` and `dZ`, respectively, and the
@@ -398,7 +418,7 @@ class SimulatedCommissioning:
             the girders will experience a paraxial translation according to the offsets plus the proper
             rotations around the three x-, y- and z-axes::
 
-                SC = SC.register_support(SC,'Girder',ords,'Offset',[dX dY dZ],'Roll',[az ax ay]);
+                SC.register_support(Girder=ords,Offset=np.array([dX dY dZ]),Roll=np.array([az ax ay]));
 
         See Also:
             *SCgetOrds*, *SC.update_support*, *SC.support_offset_and_roll*, *SCplotSupport*, *SC.apply_errors*,
@@ -453,11 +473,11 @@ class SimulatedCommissioning:
         Examples:
             Defines systematic multipole components for the 'QF' magnet and adds it to the field offsets of all magnets named 'QF'::
 
-                ords = SCgetOrds(SC.RING,'QF');
-                BA = [0 1E-5;...
-                      0 1E-4;...
-                      0 0;...
-                      0 1E-2];
+                ords = SCgetOrds(SC.RING,'QF')
+                BA = np.array([0, 1E-5;
+                               0, 1E-4;
+                               0, 0;
+                               0, 1E-2])
                 RING = SC.set_systematic_multipole_errors(RING, ords, BA, 1, False);
 
         See Also:
@@ -484,17 +504,17 @@ class SimulatedCommissioning:
 
         Args:
             ords: Ordinates of the considered magnets.
-            BA: [N x 2] array of PolynomA/B multipole errors.
+            BA: [N x 2] array of PolynomB/A multipole errors. [normal, skew] components.
 
         Examples:
             Defines random multipole components for the 'QF' magnet and adds it to the field offsets of all magnets named 'QF'::
 
-                ords = SCgetOrds(SC.RING,'QF');
-                BA = [0 1E-5;...
-                      0 1E-4;...
-                      0 0;...
-                      0 1E-2];
-                RING = SC.set_random_multipole_errors(RING, ords, BA);
+                ords = SCgetOrds(SC.RING,'QF')
+                BA = np.array([0, 1E-5;
+                               0, 1E-4;
+                               0, 0;
+                               0, 1E-2])
+                RING = SC.set_random_multipole_errors(RING, ords, BA)
 
         See Also:
             *pySC.utils.sc_tools.SCmultipolesRead*, *SC.update_magnets*, *SC.set_systematic_multipole_errors*
@@ -512,7 +532,7 @@ class SimulatedCommissioning:
     def apply_errors(self, nsigmas: float = 2):
         """
         Applies errors to cavities, injection trajectory, BPMs, circumference,
-        support structures and magnets if the corresponding uncertanties defined in
+        support structures and magnets if the corresponding uncertainties defined in
         `SC.SIG` are set. For example, for a magnet with ordinate `ord` every field
         defined in `SC.SIG.Mag{ord}` will be used to generate a random number using a
         Gaussian distribution with a cutoff (see option below) and `sigma` being the
