@@ -1,6 +1,6 @@
 """
 Simulated Commissioning
--------------
+------------------------
 
 This module contains the main data structure of ``pySC`` package
 built up around the ``at.Lattice`` under study.
@@ -171,6 +171,143 @@ class SimulatedCommissioning:
                 setattr(self.RING[ind], f"{field}CalError", 0)
 
     def register_magnets(self, ords: ndarray, **kwargs):
+        """
+        Registers magnets specified by `MAGords` in the `SC` structure and initializes all required fields
+        in the lattice elements. The ordinates of all registered magnets are stored in `SC.ORD.Magnet`.
+
+        Args:
+            ords: Magnet ordinates in the lattice structure.
+            **kwargs: any of the fields listed below
+
+        The additional `SC` related fields in the lattice elements are:
+            NomPolynomB:
+                Nominal (design) `PolynomB` fields.
+            NomPolynomA:
+                Nominal (design) `PolynomA` fields.
+            SetPointB:
+                Setpoints for the `PolynomB` fields.
+            SetPointA:
+                Setpoints for the `PolynomA` fields.
+            CalErrorB:
+                Calibration error of the `PolynomB` fields wrt. the corresponding setpoints.
+            CalErrorA:
+                Calibration error of the `PolynomA` fields wrt. the corresponding setpoints.
+            PolynomBOffset (optional):
+                Offset error of the `PolynomB` fields wrt. the corresponding setpoints.
+            PolynomAOffset (optional):
+                Offset error of the `PolynomA` fields wrt. the corresponding setpoints.
+            MagnetOffset:
+                [1 x 3] array of horizontal, vertical and longitudinal magnet offsets (wrt. the support structure).
+            SupportOffset:
+                [1 x 3] array of horizontal, vertical and longitudinal  support structure offsets (if support structure is
+                registered).
+            MagnetRoll:
+                [1x3] array [az,ax,ay] defineing magnet roll (around z-axis), pitch (roll around x-axis) and yaw (roll around
+                y-axis); all wrt. the support structure.
+            SupportRoll:
+                [1x3] array [az,ax,ay] defineing support structure roll (around z-axis), pitch (roll around x-axis) and yaw (roll
+                around y-axis); all wrt. the design coordinate frame (if support structure is registered).
+            BendingAngleError (optional):
+                Error of the main bending field (corresponding uncertainty defined with `BendingAngle`).
+            CF (optional):
+                Flag identifying the corresponding magnet as a combined function dipole/quadrupole. That implies that the
+                bending angle depends on the quadrupole setpoint. A variation from the design value will therefore result in a
+                bending angle error which is added to the `PolynomB[0]` field.
+            HCM (optional):
+                Flag identifying the corresponding magnet as a horizontal corrector magnet. The corresponding value is the
+                horizontal CM limit and stored in `SC.RING[ords].CMlimit[0]`. E.g. set limit to `Inf`.
+            VCM (optional):
+                Flag identifying the corresponding magnet as a vertical corrector magnet. The corresponding value is the
+                vertical CM limit and stored in `SC.RING[ords].CMlimit[1]`. E.g. set limit to `Inf`.
+            SkewQuad (optional):
+                Flag identifying the corresponding magnet as a skew quadrupole corrector magnet. The corresponding value
+                is the skew quadrupole limit and stored in `SC.RING[ords].SkewLimit`. E.g. set limit to `Inf`.
+            MasterOf (optional):
+                Array of ordinates to which the corresponding magnet acts as master (split magnets).
+                The magnets at ordinates `ords` are identified as a split magnets each with `N` childs as specified in
+                the corresponding value which must be a [`N` x `length(ords)`] array.
+                The field calculation in *SCupdateMagnets* uses the setpoints and errors of the master magnet to
+                calculate the child fields.
+                The relative bending angle error of the master magnet e.g. is applied
+                on the corresponding child bending angle appropriately.
+                Split quadrupole magnets with different design gradients, however, can
+                currently not be updated correctly.
+
+        If CMs or skew quadrupole correctors are specified, the ordinates are also
+        stored in the corresponding fields `SC.ORD.CM` and `SC.ORD.SkewQuad`, respectively.
+
+        Examples:
+            Identify the ordinates of all elements named `QF` and register them in `SC`::
+
+                ords = SCgetOrds(SC.RING, 'QF');
+                SC = SC.register_magnets(SC, ords);
+
+            Register the magnets specified in `ords` in `SC` and set the uncertainty of
+            the quadrupole component to 1E-3 and 30um horizontal and vertical offset::
+
+                SC = SC.register_magnets(SC,ords,
+                                        CalErrorB=[0 1E-3],
+                                        MagnetOffset=[30E-6, 30E-6 0])
+
+            Register the magnets specified in `ords` in `SC` and set the uncertainty of
+            the quadrupole component to 1E-3, 30um horizontal and vertical offset and
+            100um longitudinal offset::
+
+                SC = SC.register_magnets(SC,ords,
+                                        CalErrorB=[0 1E-3],
+                                        MagnetOffset=[30E-6, 30E-6, 100E-6])
+
+            Register the magnets specified in `ords` in `SC` and set the uncertainty of
+            the roll, pitch and yaw angle to 100urad::
+
+                SC = SC.register_magnets(SC,ords, Roll=[100E-6, 100E-6, 100E-6])
+
+            Register split magnets.
+            Identify the magnets named `BENDa` ([`1xN`] array `masterOrds`) and the
+            magnets named `BENDb` and `BENDc` ([`2xN`] array `childOrds`) and register
+            the `masterOrds` as the master magnets of the children in the corresponding
+            columns of `childOrds`.
+            The uncertanty of the bending angle is set to 1E-4::
+
+                masterOrds = SCgetOrds(SC.RING,'BENDa')
+                childOrds  = numpy.concatenate(SCgetOrds(SC.RING,'BENDb'),
+                                               SCgetOrds(SC.RING,'BENDc'))
+                SC = SC.register_magnets(SC,
+                                        masterOrds, BendingAngle=1E-4,
+                                        MasterOf=childOrds)
+
+            Register the magnets specified in `ords` in `SC` as combined function magnets
+            and sets the uncertanty of the quadrupole component to 1E-3::
+
+                SC = SC.register_magnets(SC,ords, CF=1, CalErrorB=[0, 1E-3])
+
+            Register the magnets specified in `ords` in `SC` and set the uncertanty of
+            the skew quadrupole component to 2E-3 and the uncertanty of the sextupole
+            component to 1E-3::
+
+                SC = SC.register_magnets(SC,ords, CalErrorA=[0, 2E-3, 0], CalErrorB=[0, 0, 1E-3])
+
+            Register the magnets specified in `ords` in `SC` as horizontal and vertical
+            CMs, set their dipole uncertanties to 5% and 1%, respectively and define no CM limits::
+
+                SC = SC.register_magnets(SC,ords, HCM=Inf, VCM=Inf, CalErrorB=5E-2, CalErrorA=1E-2)
+
+            Register the magnets specified in `ords` in `SC` as horizontal and vertical
+            CMs, set their uncertanties to 5% and 1%, respectively and their limits to 1
+            mrad. Furthermore, set the uncertanty of the skew quadrupole component to
+            2E-3 and the uncertanty of the sextupole component to 1E-3::
+
+                SC = SC.register_magnets(SC,
+                                        ords,
+                                        HCM=1E-3,
+                                        VCM=1E-3,
+                                        CalErrorB=[5E-2, 0, 1E-3],
+                                        CalErrorA=[1E-2, 2E-3, 0])
+
+        See Also:
+            *SCgetOrds*, *SCupdateMagnets*, *SCsanityCheck*, *SCapplyErrors*, *SCregisterSupport*
+
+        """
         self._check_kwargs(kwargs, MAGNET_TYPE_FIELDS + MAGNET_ERROR_FIELDS)
         nvpairs = {key: value for key, value in kwargs.items() if key not in MAGNET_TYPE_FIELDS}
         self.ORD.Magnet = np.unique(np.concatenate((self.ORD.Magnet, ords)))
