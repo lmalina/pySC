@@ -510,12 +510,24 @@ class SimulatedCommissioning:
 
     def apply_errors(self, nsigmas: float = 2):
         """
+        Applies errors to cavities, injection trajectory, BPMs, circumference,
+        support structures and magnets if the corresponding uncertanties defined in
+        `SC.SIG` are set. For example, for a magnet with ordinate `ord` every field
+        defined in `SC.SIG.Mag{ord}` will be used to generate a random number using a
+        Gaussian distribution with a cutoff (see option below) and `sigma` being the
+        value of the uncertainty field. The number will be stored in the
+        corresponding field of the lattice structure, thus `SC.RING{ord}`. An
+        exeption are bending angle errors which are stored in the `BendingAngleError`
+        field. See examples in the SC.register* functions for more details.
+
         *SC.apply_errors* uses the fields of `SC.SIG` to
         randomly generate errors and applies them to the corresponding fields in `SC.RING`.
 
         Args:
-            nsigmas: number of sigmas for cuttoff of gaussian error distributions
+            nsigmas: Number of sigmas at which the Gaussian distribution of errors is truncated
 
+        See Also:
+            *SC.register_magnets*, *SC.register_support*, *SC.register_bpms*, *SC.register_cavities*, *SCrampUpErrors*
         """
         # RF
         for ind in intersect(self.ORD.RF, self.SIG.RF.keys()):
@@ -591,6 +603,17 @@ class SimulatedCommissioning:
                 setattr(self.RING[ordPair[1]], f"{support_type}Offset", offsets1)
 
     def update_cavities(self, ords: ndarray = None):
+        """
+        Updates the cavity fields `Voltage`, `Frequency` and `TimeLag` in `SC.RING` as specified in `ords`.
+        If no ordinates are given explicitly, all registered cavities defined in `SC.ORD.Cavity` are
+        updated. For each cavity and each field, the setpoints, calibration errors and offsets are considered.
+
+        Args:
+            ords: Cavity ordinates to be updated.
+
+        See Also:
+            *SC.register_cavities*, *SC.apply_errors*
+        """
         for ind in (self.ORD.RF if ords is None else ords):
             for field in RF_PROPERTIES:
                 setattr(self.RING[ind], field,
@@ -599,6 +622,30 @@ class SimulatedCommissioning:
                         + getattr(self.RING[ind], f"{field}Offset"))
 
     def update_magnets(self, ords: ndarray = None):
+        """
+        Updates the magnets specified in `RING` as specified in `ords`. If no ordinates are given
+        explicitly, all registered magnets defined in `SC.ORD.Magnet` are updated. For each magnet the
+        setpoints (`SetPointA/B`) and calibration errors (`CalErrorA/B`) are evaluated.
+        If systematic multipole components are specified, e.g. in `SysPolBFromB` for systematic
+        PolynomB-multipoles induced by PolynomB entries, the corresponding multipole components are scaled
+        by the current magnet excitation and added, as well as static field offsets (if specified in
+        `PolynomA/BOffset`).
+        If the considered magnet has a bending angle error (from pure bending angle eror or due to a
+        combined function magnet), the corresponding horizontal dipole magnetic field is calculated and
+        added to the PolynomB(1) term. It is thereby assured that a dipole error doesn't alter the
+        coordinate system.
+        If the considered magnet is registered as a slpit magnet (`'MasterOf'`), the errors and setpoints
+        of the master magnet are applied to the fields of the child magnets. Note that split quadrupole
+        magnets with different gradients, however, or split CMs can currently not be updated correctly.
+
+        Args:
+            ords: Magnets ordinates to be updated.
+
+        See Also:
+            *SC.register_magnets*, *SC.apply_errors*, *SC.set_systematic_multipole_errors*,
+            *SC.set_random_multipole_errors*, *SCsetMags2SetPoints*, *SCsetCMs2SetPoints*
+
+        """
         for ind in (self.ORD.Magnet if ords is None else ords):
             self._update_magnets(ind, ind)
             if hasattr(self.RING[ind], 'MasterOf'):
@@ -606,6 +653,19 @@ class SimulatedCommissioning:
                     self._update_magnets(ind, child_ind)
 
     def update_supports(self, offset_bpms: bool = True, offset_magnets: bool = True):
+        """
+        This function updates the offsets and rolls of the elements in `SC.RING`
+        based on the current support errors, by setting the lattice fields `T1`, `T2`, and
+        `R1`, `R2` for magnets and the fields `SupportOffset` and `SupportRoll` for BPMs.
+
+        Keyword Args:
+            offset_bpms: If true, BPM offsets are updated.
+            offset_magnets: If true, magnet offsets are updated.
+
+        See Also:
+            *SC.register_support*, *SCgetSupportOffset*, *SCgetSupportRoll*, *SCplotSupport*
+
+        """
         s_pos = findspos(self.RING)
         if offset_magnets:
             if len(self.ORD.Magnet):
