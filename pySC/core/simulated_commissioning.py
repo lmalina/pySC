@@ -29,6 +29,11 @@ class SimulatedCommissioning:
     The main structure of ``pySC``, which holds all the information about
     lattice error sources and errors, injection settings and its errors.
     The class is initialized from ``at.Lattice``.
+
+    register functions assign uncertainties
+    SC.applyErrors functions apply those sigmas to specific elements in the lattice
+    SC.update transfer the information to the AT elements fields
+
     """
     def __init__(self, ring: Lattice):
         self.RING: Lattice = ring.deepcopy()
@@ -43,84 +48,51 @@ class SimulatedCommissioning:
         self.plot: bool = False
 
     def register_bpms(self, ords: ndarray, **kwargs):
-        """
-        register_bpms - Registers BPMs in SC
+        """registers BPMs specified by the locations `BPMords` in the `SC` structure and initializes all required fields
+        in the lattice elements. The ordinates of all registered BPMs are stored in `SC.ORD.BPM`.
 
-        SYNOPSIS
-        --------
-        'SC.register_BPMs(BPM_ords [, sigmas])`
+        Args:
+            ords:  BPM ordinates in the lattice structure.
+            **kwargs: arbitrary BPM fields
 
+        The BPM fields in the lattice elements are:
+            Noise:
+                [1 x 2] array of hor./ver. turn-by-turn BPM noise uncertanties (sigmas)
+            NoiseCO:
+                [1 x 2] array of hor./ver. orbit BPM noise uncertanties (sigmas)
+            CalError:
+                [1 x 2] array of hor./ver. BPM calibration errors uncertanties (sigmas)
+            Offset:
+                [1 x 2] array of individual hor./ver. BPM offsets uncertanties (sigmas)
+            SupportOffset:
+                [1 x 2] array of hor./ver. BPM offsets which result from the corresponding girder offset at the location of the BPMs, see *SCupdateSupport*.
+            Roll:
+                BPM roll around z-axis w.r.t. the support structure
+            SupportRoll:
+                BPM roll around z-axis which results from the corresponding support structure roll at the location of the BPMs, see *SCupdateSupport*.
+            SumError:
+                Calibration error of the sum signal. The sum signal is used to determine the beam loss location with a cutoff as defined `SC.INJ.beamLostAt`.
 
-        DESCRIPTION
-        -----------
-        Registers BPMs specified by `BPMords` in the `SC` structure and initializes all required fields
-        in the lattice elements. The ordinates of all registered BPMs are stored in `SC.ORD.BPM`. The
-        BPM realated fields in the lattice elements are:
+        Examples:
+            Identify the ordinates of all elements named `BPM` and registers them as BPMs in `SC`::
 
+                ords = SCgetOrds(SC.RING,'BPM');
+                SC = SC.register_bpms(ords);
 
-        `Noise`:: [1 x 2] array of hor./ver. turn-by-turn BPM noise
+            Register the BPMs specified in `ords` in `SC` and set the uncertanty of the offset to `500um` in
+            both planes. A subsequent call of *SCapplyErrors* would generate a random BPM offset errors with
+            `sigma=500um`::
 
-        `NoiseCO`:: [1 x 2] array of hor./ver. orbit BPM noise
+                SC = SC.register_bpms(SC, ords, Offset=500E-6*[1, 1]);
 
-        `CalError`:: [1 x 2] array of hor./ver. BPM calibration errors
+            Register the BPMs specified in `ords` in `SC` and set the uncertanty of the offset to `500um` in
+            both planes and a calibration error of the sum signal of 20%::
 
-        `Offset`:: [1 x 2] array of individual hor./ver. BPM offsets
-        `SupportOffset`:: [1 x 2] array of hor./ver. BPM offsets which result from the corresponding girder offset at the location of the BPMs, see *SCupdateSupport*.
-
-        `Roll`:: BPM roll around z-axis w.r.t. the support structure
-
-        `SupportRoll`:: BPM roll around z-axis which results from the corresponding support structure roll at the location of the BPMs, see *SCupdateSupport*.
-
-        `SumError`:: Calibration error of the sum signal. The sum signal is used to determine the beam loss location with a cutoff as defined `SC.INJ.beamLostAt`.
-
-        INPUTS
-        ------
-        `SC`::       SC base structure.
-
-        `BPMords`::  BPM ordinates in the lattice structure.
-
-        UNCERTAINTIES
-        -------------
-        Additional name/vale-pairs are interpreted as uncertainties and passed to the sigma structure
-        `SC.SIG` for the corresponding BPM. The function *SCapplyErrors* uses the fields of `SC.SIG` to
-        randomly generate errors and applies them to the corresponding fields in `SC.RING`.
-        By default a 2 sigma cutoff is applied. The user can specify a different cutoff by giving the
-        uncertainty as a cell structure, e.g. {[1x2],nSig}, with nSig being the cutoff (see examples
-        below).
-
-        RETURN VALUE
-        ------------
-        `SC`::
-            The base structure containing required information of all BPMs.
-
-        EXAMPLES
-        --------
-        Identify the ordinates of all elements named `BPM` and registers them as BPMs in `SC`::
-
-            ords = SCgetOrds(SC.RING,'BPM');
-            SC = SCregisterBPMs(SC,ords);
+                SC = SC.register_bpms(SC,ords, Offset=500E-6*[1, 1], SumError=0.2);
 
 
-        Register the BPMs specified in `ords` in `SC` and set the uncertanty of the offset to `500um` in
-        both planes. A subsequent call of *SCapplyErrors* would generate a random BPM offset errors with
-        `sigma=500um`::
-
-            SC = SCregisterBPMs(SC,ords,'Offset',500E-6*[1 1]);
-
-        Register the BPMs specified in `ords` in `SC` and set the uncertanty of the offset to `500um` in
-        both planes and a calibration error of the sum signal of 20%::
-
-            SC = SCregisterBPMs(SC,ords,'Offset',500E-6*[1 1],'SumError',0.2);
-
-        Register the BPMs specified in `ords` in `SC` and set the uncertanty of the offset to `500um` in
-        both planes. A subsequent call of *SCapplyErrors* would generate a random BPM offset errors with
-        `sigma=500um` with a 3 sigma cutoff::
-
-            SC = SCregisterBPMs(SC,ords,'Offset',{500E-6*[1 1],3});
-
-        SEE ALSO
-        --------
-        *SCgetBPMreading*, *SCgetOrds*, *SCsanityCheck*, *SCapplyErrors*, *SCregisterSupport*, *SCupdateSupport*
+        See also:
+            *SCgetBPMreading*, *SCgetOrds*, *SC.sanity_check*, *SC.apply_errors*, *SC.register_support*, *SC.update_support*
         """
         self._check_kwargs(kwargs, BPM_ERROR_FIELDS)
         self.ORD.BPM = np.unique(np.concatenate((self.ORD.BPM, ords)))
@@ -139,6 +111,54 @@ class SimulatedCommissioning:
             self.RING[ind].SumError = 0
 
     def register_cavities(self, ords: ndarray, **kwargs):
+        """Register cavities specified in `CAVords` in `SC` by initializing all required fields in the
+        corresponding cavity lattice elements and storing the ordinates in `SC.ORD.Cavity`.
+
+        Args:
+            ords: Cavity ordinates in the lattice structure.
+            **kwargs: any of the fields listed below
+
+        The additional fields in the lattice elements are:
+            VoltageSetPoint:
+                Setpoint of cavity voltage
+            VoltageOffset:
+                Offset of cavity voltage wrt. to the setpoint
+            VoltageCalError:
+                Calibration error of cavity voltage wrt. to the setpoint
+            FrequencySetPoint:
+                Setpoint of cavity frequency
+            FrequencyOffset:
+                Offset of cavity frequency wrt. to the setpoint
+            FrequencyCalError:
+                Calibration error of cavity frequency wrt. to the setpoint
+            TimeLagSetPoint:
+                Setpoint of cavity phase (`TimeLag`)
+            TimeLagOffset:
+                Offset of cavity phase wrt. to the setpoint
+            TimeLagCalError:
+                Calibration error of cavity phase wrt. to the setpoint
+
+        Examples:
+            Identify the ordinates of all elements named `'CAV'` and register them as cavities in `SC`::
+
+                ords = SCgetOrds(SC.RING,'CAV');
+                SC = SC.register_cavities(SC,ords);
+
+            Register the cavities specified in `ords` in `SC` and sets the uncertanty of the frequency offset
+            to 1kHz. A subsequent call of *SCapplyErrors* would generate a random frequncy offset error with `sigma=1kHz`::
+
+                SC = SCregisterCAVs(SC,ords,FrequencyOffset=1E3);
+
+            Register the cavities specified in `ords` in `SC` and sets the uncertanty of the frequency offset
+            to 1kHz. A subsequent call of *SCapplyErrors* would generate a random frequncy offset error with
+            `sigma=1kHz` and a random timelag offset error ('phase error') with `sigma=0.3m`::
+
+                SC = SCregisterCAVs(SC,ords, FrequencyOffset=1E3, TimeLagOffset=0.3);
+
+        See also:
+            *SCgetOrds*, *SCsanityCheck*, *SCapplyErrors*
+
+        """
         self._check_kwargs(kwargs, RF_ERROR_FIELDS)
         self.ORD.RF = np.unique(np.concatenate((self.ORD.RF, ords)))
         for ind in np.unique(ords):
@@ -235,6 +255,14 @@ class SimulatedCommissioning:
                         if hasattr(self.RING[ord], attr_name) else randBA[:, ind])
 
     def apply_errors(self, nsigmas: float = 2):
+        """
+        *SC.apply_errors* uses the fields of `SC.SIG` to
+        randomly generate errors and applies them to the corresponding fields in `SC.RING`.
+
+        Args:
+            nsigmas: number of sigmas for cuttoff of gaussian error distributions
+
+        """
         # RF
         for ind in intersect(self.ORD.RF, self.SIG.RF.keys()):
             for field in self.SIG.RF[ind]:
