@@ -338,6 +338,72 @@ class SimulatedCommissioning:
             self._optional_magnet_fields(ind, ords, **kwargs)
 
     def register_supports(self, support_ords: ndarray, support_type: str, **kwargs):
+        """Initializes magnet support structures such as sections, plinths and girders in SC. The function
+        input be given as name-value pairs, starting with the structure type and structure ordinates
+        defining start-end endpoints. Optional arguments are set as the uncertainties of e.g. girder
+        offsets in the sigma structure `SC.SIG.Support`.
+
+        Args:
+            support_ords: [2xN] array of ordinates defining start and end locations of `N` registered support structures
+            support_type: String specifying the support structure type. Valid are 'Plinth', 'Girder' or 'Section'
+            **kwargs: any of those listed below
+
+        Keyword Args:
+            Offset:
+                A [1x3] array defining horizontal, vertical and longitudinal offset uncertainties for the start
+                points or [2x3] array defining horizontal, vertical and longitudinal offset uncertainties for
+                the start end endpoints. If end points have dedicated uncertainties, *SCapplyErrors* applies
+                random offset errors of both start end endpoints of the corresponding support structure,
+                effectively tilting the support structure.
+                If only start points have asigned uncertainties, *SCapplyErrors* applies to the support
+                structure endpoints the same offset error as to the start points, resulting in a paraxial
+                translation of the element. Only in this case dedicated `'Roll'` uncertainties may be given which
+                then tilt the structure around it's center.
+                The actual magnet or BPM offsets resulting from the support structure offsets is calculated in
+                *SCupdateSupport* by interpolating on a straight line between girder start- and endpoints. Note
+                that the coordinate system change due to bending magnets are ignored in this calculation. Thus,
+                the accuracy of the result is limited if dipole magnets are involved. This may be particularly
+                true in case of large sections and/or longitudinal offsets.
+            Roll:
+                [1x3] array [az,ax,ay] defining roll (around z-axis), pitch (roll around x-axis) and yaw (roll
+                around y-axis) angle uncertainties.
+
+        Examples:
+            Registers the girder start end endpoints defined in `ords` and assigns the horizontal,
+            vertical and longitudinal girder offset uncertainties `dX`, `dY` and `dZ`, respectively, to the
+            girder start points. When the support errors are applied the girder endpoints will get the same
+            offset error as the start points, resulting in a paraxial translation of the girder::
+
+                SC = SC.register_support(SC, Girder=ords, Offset=[dX, dY, dZ])
+
+            Registers the section start- end endpoints defined in `ords` and assigns the horizontal and
+            vertical section offset uncertainties `dX` and `dY`, respectively, to the start points. When
+            the support errors are applied the section endpoints will get the same offset as the start points::
+
+                SC = SC.register_support(SC, Section=ords, Offset=[dX, dY, 0])
+
+            Registers the girder start end endpoints defined in `ords`, assigns the roll uncertainty `dPhi`
+            and the horizontal and vertical girder offset uncertainties `dX1` and `dY1`, respectively to the
+            start points and `dX2` and `dY2` to the endpoints. When the support errors are applied, all
+            girder start- and endpoints will get random offset errors and the resulting yaw and pitch angles
+            are calculated accordingly::
+
+                SC = SC.register_support(SC, Girder=ords,
+                                        Offset=[dX1, dY1, 0; dX2, dY2, 0],
+                                        Roll=[dPhi, 0, 0])
+
+            Registers the girder start end endpoints defined in `ords` and assigns the horizontal,
+            vertical and longitudinal girder offset uncertainties `dX`, `dY` and `dZ`, respectively, and the
+            roll, pitch and yaw angle uncertainties `az`, `ax` and `ay`. When the support errors are applied
+            the girders will experience a paraxial translation according to the offsets plus the proper
+            rotations around the three x-, y- and z-axes::
+
+                SC = SC.register_support(SC,'Girder',ords,'Offset',[dX dY dZ],'Roll',[az ax ay]);
+
+        See Also:
+            *SCgetOrds*, *SCupdateSupport*, *SCgetSupportOffset*, *SCplotSupport*, *SCapplyErrors*, *SCregisterMagnets*, *SCgetTransformation*
+
+        """
         if support_type not in SUPPORT_TYPES:
             raise ValueError(f'Unknown support type ``{support_type}`` found. Allowed are {SUPPORT_TYPES}.')
         self._check_kwargs(kwargs, SUPPORT_ERROR_FIELDS)
@@ -368,6 +434,34 @@ class SimulatedCommissioning:
                         self.SIG.Support[ord_pair[1]][f"{support_type}{key}"] = value[1, :]
 
     def set_systematic_multipole_errors(self, ords: ndarray, BA, order: int, skewness: bool):
+        """
+        Applies multipole errors specified in `AB` in the lattice elements `ords` of `RING` depending on
+        the specified options.
+        It sets the systematic multipoles of the field component defined by option `'order'` and `'type'`.
+        It is required that the `BA` entries are normalized by that component, e.g. `BA[1, 0]=1` for skew-quadrupole
+        systematic multipoles.
+        The systematic multipoles are from now on scaled with the current magnet excitation and added to the
+        PolynomA/B fields.
+
+        Args:
+            ords: Ordinates of the considered magnets.
+            BA: [N x 2] array of PolynomA/B multipole errors.
+            order: Numeric value defining the order of the considered magnet: [1,2,3,...] => [dip,quad,sext,...]
+            skewness: ???
+
+        Examples:
+            Defines random multipole components for the 'QF' magnet and adds it to the field offsets of all magnets named 'QF'::
+
+                ords = SCgetOrds(SC.RING,'QF');
+                BA = [0 1E-5;...
+                      0 1E-4;...
+                      0 0;...
+                      0 1E-2];
+                RING = SC.set_systematic_multipole_errors(RING,ords,BA);
+
+        See Also:
+            *SCmultipolesRead*, *SCupdateMagnets*
+        """
         if BA.ndim != 2 or BA.shape[1] != 2:
             raise ValueError("BA has to  be numpy.array of shape N x 2.")
         ind, source = (1, "A") if skewness else (0, "B")
