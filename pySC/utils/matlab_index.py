@@ -266,7 +266,7 @@ def SCscaleCircumference(RING, circ, /, *, mode='abs'):
 
 def SCsetCavs2SetPoints(SC: SimulatedCommissioning, CAVords: ndarray, type: str, setpoints: ndarray, /, *,
                         mode: str = 'abs') -> SimulatedCommissioning:
-    return set_cavity_setpoints(SC, ords=CAVords, type=type, setpoints=setpoints, method=mode)
+    return set_cavity_setpoints(SC, ords=CAVords, param=type, setpoints=setpoints, method=mode)
 
 
 def SCsetCMs2SetPoints(SC: SimulatedCommissioning, CMords: ndarray, setpoints: ndarray, nDim: int, /, *,
