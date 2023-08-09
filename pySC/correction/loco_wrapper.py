@@ -103,9 +103,9 @@ def apply_lattice_correction(SC, fit_parameters, dipole_compensation=True, dampi
             setpoint = fit_parameters.OrigValues[n_group] + damping * (
                     fit_parameters.IdealValues[n_group] - fit_parameters.Values[n_group])
             if field == 'SetPointB':  # Normal quadrupole
-                SC = set_magnet_setpoints(SC, ord, False, 1, setpoint, dipole_compensation=dipole_compensation)
+                SC = set_magnet_setpoints(SC, ord, setpoint, False, 1, dipole_compensation=dipole_compensation)
             elif field == 'SetPointA':  # Skew quadrupole
-                SC = set_magnet_setpoints(SC, ord, True, 1, setpoint)
+                SC = set_magnet_setpoints(SC, ord, setpoint, True, 1)
     SC = SC.update_magnets(SC.ORD.Magnet)
     return SC
 

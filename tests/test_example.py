@@ -8,7 +8,7 @@ from pySC.core.beam import bpm_reading, beam_transmission
 from pySC.correction.tune import tune_scan
 from pySC.lattice_properties.response_model import SCgetModelRM, SCgetModelDispersion
 from pySC.utils.sc_tools import SCgetOrds, SCgetPinv
-from pySC.core.lattice_setting import set_magnet_setpoints, SCcronoff
+from pySC.core.lattice_setting import set_magnet_setpoints, switch_cavity_and_radiation
 from pySC.correction.rf import SCsynchPhaseCorrection, SCsynchEnergyCorrection
 
 
@@ -64,9 +64,9 @@ def test_example(at_lattice):
 
     sc.apply_errors()
 
-    sc.RING = SCcronoff(sc.RING, 'cavityoff')
+    sc.RING = switch_cavity_and_radiation(sc.RING, 'cavityoff')
     sext_ords = SCgetOrds(sc.RING, 'SF|SD')
-    sc = set_magnet_setpoints(sc, sext_ords, False, 2, np.array([0.0]), method='abs')
+    sc = set_magnet_setpoints(sc, sext_ords, 0.0, False, 2, method='abs')
     rm1 = SCgetModelRM(sc, sc.ORD.BPM, sc.ORD.CM, nTurns=1)
     rm2 = SCgetModelRM(sc, sc.ORD.BPM, sc.ORD.CM, nTurns=2)
     minv1 = SCgetPinv(rm1, alpha=50)
@@ -83,11 +83,11 @@ def test_example(at_lattice):
     sc = SCfeedbackBalance(sc, minv2, maxsteps=32, eps=eps)
 
     # Turning on the sextupoles
-    for S in np.linspace(0.1, 1, 5):
-        sc = set_magnet_setpoints(sc, sext_ords, False, 2, np.array([S]), method='rel')
+    for rel_setting in np.linspace(0.1, 1, 5):
+        sc = set_magnet_setpoints(sc, sext_ords, rel_setting, False, 2, method='rel')
         sc = SCfeedbackBalance(sc, minv2, maxsteps=32, eps=eps)
 
-    sc.RING = SCcronoff(sc.RING, 'cavityon')
+    sc.RING = switch_cavity_and_radiation(sc.RING, 'cavityon')
 
     # RF cavity correction
     sc.INJ.nTurns = 5
@@ -112,7 +112,7 @@ def test_example(at_lattice):
         if np.mean(B0rms) < np.mean(Brms):
             break
         sc = cur
-    sc.RING = SCcronoff(sc.RING, 'cavityon')
+    sc.RING = switch_cavity_and_radiation(sc.RING, 'cavityon')
     max_turns, fraction_survived = beam_transmission(sc, nParticles=100, nTurns=200, plot=True)
     sc, _, _, _ = tune_scan(sc, np.vstack((SCgetOrds(sc.RING, 'QF'), SCgetOrds(sc.RING, 'QD'))),
                             np.outer(np.ones(2), 1 + np.linspace(-0.01, 0.01, 51)), do_plot=False, nParticles=50,
