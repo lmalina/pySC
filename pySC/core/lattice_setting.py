@@ -5,154 +5,141 @@ Lattice setting
 This module contains the 'machine-based' functions to interact with lattice under study.
 """
 import numpy as np
-from typing import Tuple
+from typing import Union, List
 
 from at import Lattice
 from numpy import ndarray
 
-from pySC.core.constants import SETTING_METHODS, SETTING_ABS, SETTING_REL, SETTING_ADD
+from pySC.core.constants import SETTING_METHODS, SETTING_ABS, SETTING_REL, SETTING_ADD, NUM_TO_AB
 from pySC.core.simulated_commissioning import SimulatedCommissioning
+from pySC.utils.at_wrapper import atgetfieldvalues
 from pySC.utils import logging_tools
 
 LOGGER = logging_tools.get_logger(__name__)
+SETPOINT = "SetPoint"
 
 
-def set_cavity_setpoints(SC: SimulatedCommissioning, ords: ndarray, type: str, setpoints: ndarray,
-                         method: str = SETTING_ABS) -> SimulatedCommissioning:
-    new_setpoints = _check_input_and_setpoints(method, ords, setpoints)
-    setpoint_str = f"{type}SetPoint"
-    for i, ord in enumerate(ords):
-        new_setpoint = new_setpoints[i]
-        if method == SETTING_REL:
-            new_setpoint *= getattr(SC.RING[ord], setpoint_str)
-        if method == SETTING_ADD:
-            new_setpoint += getattr(SC.RING[ord], setpoint_str)
-        setattr(SC.RING[ord], setpoint_str, new_setpoint)
-    SC.update_cavities(ords)
+def set_cavity_setpoints(SC: SimulatedCommissioning,
+                         ords: Union[int, List[int], ndarray],
+                         setpoints: Union[float, List[float], ndarray],
+                         param: str, method: str = SETTING_ABS) -> SimulatedCommissioning:
+    ords_1d, setpoints_1d = _check_input_and_setpoints(method, ords, setpoints)
+    setpoint_str = f"{param}{SETPOINT}"
+    if method == SETTING_REL:
+        setpoints_1d *= atgetfieldvalues(SC.RING, ords_1d, setpoint_str)
+    if method == SETTING_ADD:
+        setpoints_1d += atgetfieldvalues(SC.RING, ords_1d, setpoint_str)
+    for i, ord in enumerate(ords_1d):
+        setattr(SC.RING[ord], setpoint_str, setpoints_1d[i])
+    SC.update_cavities(ords_1d)
     return SC
 
 
 def switch_rf(ring: Lattice, ords: ndarray, state: bool) -> Lattice:
-    cavs = [i for i in ords if hasattr(ring[i], 'Frequency')]
+    cavs = [i for i in np.ravel(np.array([ords], dtype=int)) if hasattr(ring[i], 'Frequency')]
     for ind in cavs:
         ring[ind].PassMethod = 'RFCavityPass' if state else 'IdentityPass'
     return ring
 
 
-def get_cm_setpoints(SC: SimulatedCommissioning, ords: ndarray, skewness: bool) -> ndarray:
-    setpoints = np.nan*np.ones(len(ords))
+def get_cm_setpoints(SC: SimulatedCommissioning, ords: Union[int, List[int], ndarray], skewness: bool) -> ndarray:
+    ords_1d = np.ravel(np.array([ords], dtype=int))
     order = 0
-    ndim = 1 if skewness else 0
-    for i, ord in enumerate(ords):
-        if SC.RING[ord].PassMethod == 'CorrectorPass':
-            norm_by = np.array([1, 1])
-        else:
+    ndim = int(skewness)
+    letter = NUM_TO_AB[ndim]
+    setpoints = atgetfieldvalues(SC.RING, ords_1d, f"{SETPOINT}{letter}", order)
+    for i, ord1d in enumerate(ords_1d):
+        if SC.RING[ord1d].PassMethod != 'CorrectorPass':
             # positive setpoint -> positive kick -> negative horizontal field
-            norm_by = np.array([-1, 1]) * SC.RING[ord].Length
-        if skewness:
-            setpoints[i] = SC.RING[ord].SetPointA[order] * norm_by[ndim]
-        else:
-            setpoints[i] = SC.RING[ord].SetPointB[order] * norm_by[ndim]
+            setpoints[i] *= (-1) ** (ndim + 1) * SC.RING[ord1d].Length
     return setpoints
 
 
-def set_cm_setpoints(SC: SimulatedCommissioning, ords: ndarray, setpoints: ndarray, skewness: bool,
-                     method: str = SETTING_ABS) -> Tuple[SimulatedCommissioning, ndarray]:
-    new_setpoints = _check_input_and_setpoints(method, ords, setpoints)
+def set_cm_setpoints(SC: SimulatedCommissioning,
+                     ords: Union[int, List[int], ndarray],
+                     setpoints: Union[float, List[float], ndarray],
+                     skewness: bool, method: str = SETTING_ABS) -> SimulatedCommissioning:
+    # TODO corrector does not have PolynomA/B in at?
+    ords_1d, setpoints_1d = _check_input_and_setpoints(method, ords, setpoints)
     order = 0
-    ndim = 1 if skewness else 0
-    for i, ord in enumerate(ords):
-        if SC.RING[ord].PassMethod == 'CorrectorPass':
-            norm_by = np.array([1, 1])
-        else:
-            # positive setpoint -> positive kick -> negative horizontal field
-            norm_by = np.array([-1, 1]) * SC.RING[ord].Length
+    ndim = int(skewness)
+    letter = NUM_TO_AB[ndim]
+    for i, ord in enumerate(ords_1d):
+        # positive setpoint -> positive kick -> negative horizontal field
+        norm_by = (-1) ** (ndim + 1) * SC.RING[ord].Length if SC.RING[ord].PassMethod != 'CorrectorPass' else 1
         if method == SETTING_REL:
-            new_setpoints[i] *= (SC.RING[ord].SetPointA[order] if skewness else SC.RING[ord].SetPointB[order]) * norm_by[ndim]
+            setpoints_1d[i] *= getattr(SC.RING[ord], f"{SETPOINT}{letter}")[order] * norm_by
         if method == SETTING_ADD:
-            new_setpoints[i] += (SC.RING[ord].SetPointA[order] if skewness else SC.RING[ord].SetPointB[order]) * norm_by[ndim]
-
-        if hasattr(SC.RING[ord], 'CMlimit') and abs(new_setpoints[i]) > abs(SC.RING[ord].CMlimit[ndim]):
+            setpoints_1d[i] += getattr(SC.RING[ord], f"{SETPOINT}{letter}")[order] * norm_by
+        if hasattr(SC.RING[ord], 'CMlimit') and abs(setpoints_1d[i]) > abs(SC.RING[ord].CMlimit[ndim]):
             LOGGER.info(f'CM (ord: {ord} / dim: {ndim}) is clipping')
-            new_setpoints[i] = np.sign(new_setpoints[i]) * SC.RING[ord].CMlimit[ndim]
-        if skewness:
-            SC.RING[ord].SetPointA[order] = new_setpoints[i] / norm_by[ndim]
-        else:
-            SC.RING[ord].SetPointB[order] = new_setpoints[i] / norm_by[ndim]
-    SC.update_magnets(ords)
-    return SC, new_setpoints
+            setpoints_1d[i] = np.sign(setpoints_1d[i]) * SC.RING[ord].CMlimit[ndim]
+        getattr(SC.RING[ord], f"{SETPOINT}{letter}")[order] = setpoints_1d[i] / norm_by
 
-
-def set_magnet_setpoints(SC: SimulatedCommissioning, ords: ndarray, skewness: bool, order: int, setpoints: ndarray,
-                         method: str = SETTING_ABS, dipole_compensation: bool = False) -> SimulatedCommissioning:
-    new_setpoints = _check_input_and_setpoints(method, ords, setpoints)
-    for i, ord in enumerate(ords):
-        if method == SETTING_REL:
-            new_setpoints[i] *= SC.RING[ord].NomPolynomA[order] if skewness else SC.RING[ord].NomPolynomB[order]
-        if method == SETTING_ADD:
-            new_setpoints[i] += SC.RING[ord].SetPointA[order] if skewness else SC.RING[ord].SetPointB[order]
-        if skewness and order == 1:  # skew quad
-            if hasattr(SC.RING[ord], 'SkewQuadLimit') and abs(new_setpoints[i]) > abs(SC.RING[ord].SkewQuadLimit):
-                LOGGER.info(f'SC:SkewLim \n Skew quadrupole (ord: {ord}) is clipping')
-                new_setpoints[i] = np.sign(new_setpoints[i]) * SC.RING[ord].SkewQuadLimit
-        # TODO should check CF magnets
-        if dipole_compensation and order == 1:  # quad  # TODO check also skewness?
-            SC = _dipole_compensation(SC, ord, new_setpoints[i])
-        if skewness:
-            SC.RING[ord].SetPointA[order] = new_setpoints[i]
-        else:
-            SC.RING[ord].SetPointB[order] = new_setpoints[i]
-    SC.update_magnets(ords)
+    SC.update_magnets(ords_1d)
     return SC
 
 
-def SCcronoff(ring: Lattice, *args: str) -> Lattice:  # TODO some at methods do that?
+def set_magnet_setpoints(SC: SimulatedCommissioning,
+                         ords: Union[int, List[int], ndarray],
+                         setpoints: Union[float, List[float], ndarray],
+                         skewness: bool, order: int, method: str = SETTING_ABS,
+                         dipole_compensation: bool = False) -> SimulatedCommissioning:
+    ords_1d, setpoints_1d = _check_input_and_setpoints(method, ords, setpoints)
+    letter = NUM_TO_AB[int(skewness)]
+    if method == SETTING_REL:
+        setpoints_1d *= atgetfieldvalues(SC.RING, ords_1d, f"NomPolynom{letter}", order)
+    if method == SETTING_ADD:
+        setpoints_1d += atgetfieldvalues(SC.RING, ords_1d, f"{SETPOINT}{letter}", order)
+    for i, ord in enumerate(ords_1d):
+        if skewness and order == 1 and getattr(SC.RING[ord], 'SkewQuadLimit', np.inf) < np.abs(setpoints_1d[i]):
+            LOGGER.info(f'SkewLim \n Skew quadrupole (ord: {ord}) is clipping')
+            setpoints_1d[i] = np.sign(setpoints_1d[i]) * SC.RING[ord].SkewQuadLimit
+        # TODO should check CF magnets
+        if dipole_compensation and order == 1:  # quad  # TODO check also skewness?
+            SC = _dipole_compensation(SC, ord, setpoints_1d[i])
+        getattr(SC.RING[ord], f"{SETPOINT}{letter}")[order] = setpoints_1d[i]
+
+    SC.update_magnets(ords_1d)
+    return SC
+
+
+def switch_cavity_and_radiation(ring: Lattice, *args: str) -> Lattice:  # TODO some at methods do that?
     valid_args = ('radiationoff', 'radiationon', 'cavityoff', 'cavityon')
     if invalid_args := [arg for arg in args if arg not in valid_args]:
         raise ValueError(f"Unknown arguments found: {invalid_args}"
                          f"Available options are: {valid_args}")
-    for mode in args:
-        if mode == 'radiationoff':
-            for ind in range(len(ring)):
-                if ring[ind].PassMethod == 'BndMPoleSymplectic4RadPass':
-                    ring[ind].PassMethod = 'BndMPoleSymplectic4Pass'
-                elif ring[ind].PassMethod == 'BndMPoleSymplectic4E2RadPass':
-                    ring[ind].PassMethod = 'BndMPoleSymplectic4E2Pass'
-                elif ring[ind].PassMethod == 'StrMPoleSymplectic4RadPass':
-                    ring[ind].PassMethod = 'StrMPoleSymplectic4Pass'
-        elif mode == 'radiationon':
-            for ind in range(len(ring)):
-                if ring[ind].PassMethod == 'BndMPoleSymplectic4Pass':
-                    ring[ind].PassMethod = 'BndMPoleSymplectic4RadPass'
-                elif ring[ind].PassMethod == 'BndMPoleSymplectic4E2Pass':
-                    ring[ind].PassMethod = 'BndMPoleSymplectic4E2RadPass'
-                elif ring[ind].PassMethod == 'StrMPoleSymplectic4Pass':
-                    ring[ind].PassMethod = 'StrMPoleSymplectic4RadPass'
-        elif mode == 'cavityoff':
-            for ind in range(len(ring)):
-                if hasattr(ring[ind], 'Frequency'):
-                    ring[ind].PassMethod = 'IdentityPass'
-        elif mode == 'cavityon':
-            for ind in range(len(ring)):
-                if hasattr(ring[ind], 'Frequency'):
-                    ring[ind].PassMethod = 'RFCavityPass'
+    non_rad_pass_methods = ['BndMPoleSymplectic4Pass', 'BndMPoleSymplectic4E2Pass', 'StrMPoleSymplectic4Pass']
+    rad_pass_methods = [method.replace("Pass", "RadPass") for method in non_rad_pass_methods]
+
+    if 'radiationoff' in args:
+        for ind in range(len(ring)):
+            if ring[ind].PassMethod in rad_pass_methods:
+                ring[ind].PassMethod = ring[ind].PassMethod.replace("Rad", "")
+    elif 'radiationon' in args:
+        for ind in range(len(ring)):
+            if ring[ind].PassMethod in non_rad_pass_methods:
+                ring[ind].PassMethod = ring[ind].PassMethod.replace("Pass", "RadPass")
+    if 'cavityoff' in args:
+        return switch_rf(ring, np.arange(len(ring)), False)
+    elif 'cavityon' in args:
+        return switch_rf(ring, np.arange(len(ring)), True)
     return ring
 
 
 def _dipole_compensation(SC, ord, setpoint):
-    if not (hasattr(SC.RING[ord], 'BendingAngle') and SC.RING[ord].BendingAngle != 0 and ord in SC.ORD.CM[0]):
-        return SC
-    ideal_kick_difference = ((setpoint - (SC.RING[ord].SetPointB[1] - SC.RING[ord].NomPolynomB[1])) /
-                             SC.RING[ord].NomPolynomB[1] - 1) * SC.RING[ord].BendingAngle / SC.RING[ord].Length
-    SC, _ = set_cm_setpoints(SC, ord, ideal_kick_difference * SC.RING[ord].Length, skewness=False, method=SETTING_ADD)
+    if getattr(SC.RING[ord], 'BendingAngle', 0) != 0 and ord in SC.ORD.HCM:
+        return set_cm_setpoints(
+            SC, ord, (setpoint - SC.RING[ord].SetPointB[1]) / SC.RING[ord].NomPolynomB[1] * SC.RING[ord].BendingAngle,
+            skewness=False, method=SETTING_ADD)
     return SC
 
 
 def _check_input_and_setpoints(method, ords, setpoints):
     if method not in SETTING_METHODS:
         raise ValueError(f'Unsupported setpoint method: {method}. Allowed options are: {SETTING_METHODS}.')
-    if len(setpoints) not in (1, len(ords)) or np.prod(setpoints.shape) > len(ords):
+    ords_1d = np.ravel(np.array([ords], dtype=int))
+    setpoints_1d = np.ravel(np.array([setpoints]))
+    if len(setpoints_1d) not in (1, len(ords_1d)):
         raise ValueError(f'Setpoints have to have length of 1 or matching to the length or ordinates.')
-    if len(setpoints) == 1:
-        return np.repeat(setpoints, len(ords))
-    return setpoints.copy()
+    return ords_1d, (np.repeat(setpoints_1d, len(ords_1d)) if len(setpoints_1d) == 1 else setpoints_1d)
