@@ -29,7 +29,6 @@ def correct_rf_phase(SC, cav_ords=None, bpm_ords=None, n_steps=15, plotResults=F
     lamb = SPEED_OF_LIGHT / SC.RING[cav_ords[0]].FrequencySetPoint
     test_vec = 1 / 2 * lamb * np.linspace(-1, 1, n_steps)
 
-    # Main loop
     for step in range(n_steps):
         SC = set_cavity_setpoints(SC, cav_ords, test_vec[step], 'TimeLag', 'add')
         bpm_shift[step], bpm_shift_err[step], TBTdE = _get_tbt_energy_shift(SC, bpm_ords)
@@ -37,13 +36,7 @@ def correct_rf_phase(SC, cav_ords=None, bpm_ords=None, n_steps=15, plotResults=F
         if plotProgress:
             _fun_plot_progress(TBTdE, bpm_shift, test_vec, phase=True)
 
-    # Check data
-    mask = ~np.isnan(bpm_shift)
-    if np.sum(~np.isnan(bpm_shift)) < 6:
-        raise RuntimeError('Not enough data points for fit.')
-    test_vec = test_vec[mask]
-    bpm_shift = bpm_shift[mask]
-    bpm_shift_err = bpm_shift_err[mask]
+    test_vec, bpm_shift, bpm_shift_err = _check_data(test_vec, bpm_shift, bpm_shift_err)
 
     # Fit sinusoidal function to data
     (param, param_cov) = curve_fit(_sin_fit_fun, test_vec / lamb, bpm_shift, sigma=bpm_shift_err, absolute_sigma=True,
@@ -60,33 +53,12 @@ def correct_rf_phase(SC, cav_ords=None, bpm_ords=None, n_steps=15, plotResults=F
     if np.isnan(delta_phi):
         raise RuntimeError('SCsynchPhaseCorrection: ERROR (NaN phase)')
 
-    initial = _fold_phase((findorbit6(SC.RING)[0][5] - SC.INJ.Z0[5]) / lamb, lamb)
     SC = set_cavity_setpoints(SC, cav_ords, delta_phi, 'TimeLag', 'add')
-    final = _fold_phase((findorbit6(SC.RING)[0][5] - SC.INJ.Z0[5]) / lamb, lamb)
     LOGGER.debug(f'Time lag correction step: {delta_phi[0]:.3f} m\n')
-    LOGGER.debug(f'Static phase error corrected from {initial * 360:.0f} deg to {final * 360:.1f} deg')
-
     if plotResults:
-        plt.plot(test_vec / lamb * 360, bpm_shift, 'o', color='red', label="data")
-        plt.plot(test_vec / lamb * 360, sol(test_vec), '--', color='blue', label="fit")
-        plt.plot(initial / lamb * 360, sol(initial), 'rD', markersize=12, label="Initial time lag")
-        plt.plot(delta_phi / lamb * 360, 0, 'kX', markersize=12, label="Final time lag")
-        plt.xlabel("RF phase [deg]")
-        plt.ylabel("BPM change [m]")
-        plt.legend()
-        plt.show()
-
+        _plot_results((test_vec, bpm_shift, bpm_shift_err), sol, delta_phi, x_scale=360 / lamb, phase=True)
     return SC
 
-
-def get_phase_and_energy_error(SC, cav_ords):
-    lamb = SPEED_OF_LIGHT / SC.RING[cav_ords[0]].Frequency
-    orbit6 = findorbit6(SC.RING)[0]
-    phase_error = _fold_phase((orbit6[5] - SC.INJ.Z0[5]) / lamb, lamb)
-    energy_error = SC.INJ.Z0[4] - orbit6[4]
-    LOGGER.info(f'Static phase error {phase_error * 360:.0f} deg')
-    LOGGER.info(f'Energy error {1E2 * energy_error:.2f}%')
-    return phase_error, energy_error
 
 def correct_rf_frequency(SC, cav_ords=None, bpm_ords=None, f_range=(-1E3, 1E3), n_steps=15, plotResults=False,
                          plotProgress=False):
@@ -105,33 +77,52 @@ def correct_rf_frequency(SC, cav_ords=None, bpm_ords=None, f_range=(-1E3, 1E3), 
         if plotProgress:
             _fun_plot_progress(TBTdE, bpm_shift, test_vec, phase=False)
 
-    # Check data
-    mask = ~np.isnan(bpm_shift)
-    if np.sum(~np.isnan(bpm_shift)) < 3:
-        raise RuntimeError('Not enough data points for fit.')
-
+    test_vec, bpm_shift, bpm_shift_err = _check_data(test_vec, bpm_shift, bpm_shift_err, min_num_points=3)
     # Fit linear function to data
-    p, pcov = np.polyfit(test_vec[mask], bpm_shift[mask], 1, w=1 / bpm_shift_err[mask], cov="unscaled")
+    p, pcov = np.polyfit(test_vec, bpm_shift, 1, w=1 / bpm_shift_err, cov="unscaled")
     delta_f = -p[1] / p[0]
     if np.isnan(delta_f):
         raise RuntimeError('SCsynchEnergyCorrection: ERROR (NaN frequency)')
 
-    initial = SC.INJ.Z0[4] - findorbit6(SC.RING)[0][4]
     SC = set_cavity_setpoints(SC, cav_ords, delta_f, 'Frequency', 'add')
-    final = SC.INJ.Z0[4] - findorbit6(SC.RING)[0][4]
     LOGGER.info(f'Frequency correction step: {1E-3 * delta_f:.2f} kHz')
-    LOGGER.info(f'Energy error corrected from {1E2 * initial:.2f}% to {1E2 * final:.2f}%')
-
+    sol = lambda x: x * p[0] + p[1]
     if plotResults:
-        f, ax = plt.subplots(nrows=1)
-        ax.plot(1E-3 * test_vec, 1E6 * bpm_shift, 'o', label='Measurement')
-        ax.plot(1E-3 * test_vec, 1E6 * (test_vec * p[0] + p[1]), '--', label='Fit')
-        ax.plot(1E-3 * delta_f, 0, 'kX', markersize=16, label='dE correction')
-        ax.xlabel(r'$\Delta f$ [$kHz$]')
-        ax.ylabel(r'$<\Delta x>$ [$\mu$m/turn]')
-        f.show()
-
+        _plot_results((test_vec, bpm_shift, bpm_shift_err), sol, delta_f, x_scale=1e-3, phase=False)
     return SC
+
+
+def _plot_results(data, fit, corrected, x_scale, phase=True):
+    test_vec, bpm_shift, bpm_shift_err = data
+    f, ax = plt.subplots(nrows=1)
+    y_scale = 1e6
+    ax.errorbar(x_scale * test_vec, y_scale * bpm_shift, yerr=y_scale * bpm_shift_err, fmt='o', color='red',
+                label="Measurement")
+    ax.plot(x_scale * test_vec, y_scale * fit(test_vec), '--', color='blue', label='Fit')
+    ax.plot(x_scale * 0, y_scale * fit(0), 'rD', markersize=12, label="Initial")
+    ax.plot(x_scale * corrected, y_scale * 0, 'kX', markersize=16, label='Corrected')
+    ax.set_xlabel(("RF phase [deg]" if phase else r'$\Delta f$ [$kHz$]'))
+    ax.set_ylabel(r'$\overline{\Delta x}$ [$\mu$m / turn]')
+    ax.legend()
+    f.tight_layout()
+    f.show()
+
+
+def get_phase_and_energy_error(SC, cav_ords):
+    lamb = SPEED_OF_LIGHT / SC.RING[cav_ords[0]].Frequency
+    orbit6 = findorbit6(SC.RING)[0]
+    phase_error = _fold_phase((orbit6[5] - SC.INJ.Z0[5]) / lamb, lamb)
+    energy_error = SC.INJ.Z0[4] - orbit6[4]
+    LOGGER.info(f'Static phase error {phase_error * 360:.0f} deg')
+    LOGGER.info(f'Energy error {1E2 * energy_error:.2f}%')
+    return phase_error, energy_error
+
+
+def _check_data(test_vec, bpm_shift, bpm_shift_err, min_num_points=6):
+    mask = ~np.isnan(bpm_shift)
+    if np.sum(~np.isnan(bpm_shift)) < min_num_points:
+        raise RuntimeError('Not enough data points for fit.')
+    return test_vec[mask], bpm_shift[mask], bpm_shift_err[mask]
 
 
 def _get_tbt_energy_shift(SC, bpm_ords):
