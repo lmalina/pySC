@@ -9,7 +9,7 @@ from pySC.correction.tune import tune_scan
 from pySC.lattice_properties.response_model import SCgetModelRM, SCgetModelDispersion
 from pySC.utils.sc_tools import SCgetOrds, SCgetPinv
 from pySC.core.lattice_setting import set_magnet_setpoints, switch_cavity_and_radiation
-from pySC.correction.rf import SCsynchPhaseCorrection, SCsynchEnergyCorrection
+from pySC.correction.rf import correct_rf_phase, correct_rf_frequency
 
 
 def test_example(at_lattice):
@@ -91,8 +91,8 @@ def test_example(at_lattice):
 
     # RF cavity correction
     sc.INJ.nTurns = 5
-    sc = SCsynchPhaseCorrection(sc, nSteps=15)
-    sc = SCsynchEnergyCorrection(sc, f_range=4E3 * np.array([-1, 1]), nSteps=15)
+    sc = correct_rf_phase(sc, n_steps=15)
+    sc = correct_rf_frequency(sc, n_steps=15, f_range=4E3 * np.array([-1, 1]))
 
     sc = SCpseudoBBA(sc, np.tile(sc.ORD.BPM, (2, 1)), np.tile(SCgetOrds(sc.RING, 'QF|QD'), (2, 1)), np.array([50E-6]))
 

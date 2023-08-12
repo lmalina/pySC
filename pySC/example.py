@@ -15,7 +15,7 @@ from pySC.plotting.plot_phase_space import plot_phase_space
 from pySC.plotting.plot_support import plot_support
 from pySC.plotting.plot_lattice import plot_lattice
 from pySC.core.lattice_setting import set_magnet_setpoints, switch_cavity_and_radiation
-from pySC.correction.rf import SCsynchPhaseCorrection, SCsynchEnergyCorrection
+from pySC.correction.rf import correct_rf_phase, correct_rf_frequency, phase_and_energy_error
 from pySC.utils import logging_tools
 
 LOGGER = logging_tools.get_logger(__name__)
@@ -40,9 +40,8 @@ def create_at_lattice() -> Lattice:
     rfc = at.RFCavity('RFCav', energy=2.5E9, voltage=2e6, frequency=500653404.8599995, harmonic_number=167, length=0)
     new_ring.insert(0, rfc)
     new_ring.enable_6d()
-    new_ring.set_cavity_phase()
-    new_ring.set_rf_frequency()
-
+    at.set_cavity_phase(new_ring)
+    at.set_rf_frequency(new_ring)
     return new_ring
 
 
