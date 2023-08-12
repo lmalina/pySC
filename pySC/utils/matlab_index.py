@@ -24,7 +24,7 @@ from pySC.correction.injection_fit import fit_injection_trajectory, fit_injectio
 from pySC.correction.orbit_trajectory import SCfeedbackFirstTurn as first_turn, SCfeedbackStitch as stitch, \
     SCfeedbackRun as frun, SCfeedbackBalance as fbalance, SCpseudoBBA as pseudo_bba
 from pySC.correction.ramp_errors import SCrampUpErrors as ramp_up_errors
-from pySC.correction.rf import SCsynchPhaseCorrection as synch_phase_corr, SCsynchEnergyCorrection as synch_energy_corr
+from pySC.correction.rf import correct_rf_phase, correct_rf_frequency
 from pySC.correction.tune import tune_scan
 from pySC.lattice_properties.apertures import SCdynamicAperture as dynamic_aperture, \
     SCmomentumAperture as momentum_aperture
@@ -313,8 +313,8 @@ def SCsynchEnergyCorrection(SC, /, *, cavOrd=None, f_range=(-1E3, 1E3), nSteps=1
                             plotProgress=False, verbose=False):
     init_nturns = SC.INJ.nTurns
     SC.INJ.nTurns = nTurns
-    SC = synch_energy_corr(SC, cavOrd=cavOrd, f_range=f_range, nSteps=nSteps, minTurns=minTurns,
-                           plotResults=plotResults, plotProgress=plotProgress, )
+    SC = correct_rf_frequency(SC, cav_ords=cavOrd, f_range=f_range, n_steps=nSteps, minTurns=minTurns,
+                           plot_results=plotResults, plot_progress=plotProgress, )
     SC.INJ.nTurns = init_nturns
     return SC
 
@@ -323,7 +323,7 @@ def SCsynchPhaseCorrection(SC, /, *, cavOrd=None, nSteps=15, nTurns=20, plotResu
                            verbose=False):
     init_nturns = SC.INJ.nTurns
     SC.INJ.nTurns = nTurns
-    SC = synch_phase_corr(SC, cavOrd=cavOrd, nSteps=nSteps, plotResults=plotResults, plotProgress=plotProgress, )
+    SC = correct_rf_phase(SC, cav_ords=cavOrd, n_steps=nSteps, plot_results=plotResults, plot_progress=plotProgress, )
     SC.INJ.nTurns = init_nturns
     return SC
 
