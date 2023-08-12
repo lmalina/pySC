@@ -174,11 +174,11 @@ def _data_measurement_orb(SC, mOrd, BPMind, j_bpm, n_dim, par, CMords, cm_vec):
     if par.plotLines:
         f, ax = plt.subplots(nrows=len(par.magSPvec[n_dim, j_bpm]), num=99)
     for nQ, setpointQ in enumerate(par.magSPvec[n_dim, j_bpm]):
-        SC = set_magnet_setpoints(SC, mOrd, par.skewQuadrupole, par.magnet_order, setpointQ, method=par.setpoint_method,
+        SC = set_magnet_setpoints(SC, mOrd, setpointQ, par.skewQuadrupole, par.magnet_order,  method=par.setpoint_method,
                                   dipole_compensation=par.dipole_compensation)
         for nKick in range(nMsteps):
             for nD in range(2):
-                SC, _ = set_cm_setpoints(SC, CMords[nD], cm_vec[nD][nKick, :], bool(nD), method='abs')
+                SC = set_cm_setpoints(SC, CMords[nD], cm_vec[nD][nKick, :], bool(nD), method='abs')
             B = bpm_reading(SC)
             if par.plotLines:
                 ax[nQ] = _plot_bba_step(SC, ax[nQ], BPMind, n_dim)

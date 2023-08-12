@@ -142,11 +142,9 @@ if __name__ == "__main__":
     # RF cavity correction
     SC.INJ.nTurns = 5
     for nIter in range(2):
-        SC = SCsynchPhaseCorrection(SC, nSteps=25, plotResults=False, plotProgress=False)
-
-        SC = SCsynchEnergyCorrection(SC, f_range=40E3 * np.array([-1, 1]),  # Frequency range [kHz]
-                                         nSteps=15,  # Number of frequency steps
-                                         plotResults=False, plotProgress=False)
+        SC = correct_rf_phase(SC, n_steps=25, plot_results=False, plot_progress=False)
+        SC = correct_rf_frequency(SC, n_steps=15, f_range=40E3 * np.array([-1, 1]), plot_results=False,
+                                  plot_progress=False)
 
     # Plot phasespace after RF correction
     plot_phase_space(SC, nParticles=10, nTurns=100)
