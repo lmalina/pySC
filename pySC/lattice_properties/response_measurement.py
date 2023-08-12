@@ -36,9 +36,8 @@ def response_matrix(SC, amp, bpm_ords, cm_ords, mode='fixedKick', n_steps=2, fit
                 gradient = np.vstack((np.zeros((n_steps - 1, len(bref))), gradient.T))
                 for n_step in range(n_steps):
                     if cm_step_vec[n_step] != 0 and cm_step_vec[n_step] != max_step:
-                        SC, real_cm_setpoint[n_step] = set_cm_setpoints(SC, cm_ords[n_dim][nCM],
-                                                                        cmstart[nCM] + cm_step_vec[n_step],
-                                                                        skewness=bool(n_dim))
+                        SC = set_cm_setpoints(SC, cm_ords[n_dim][nCM], cmstart[nCM] + cm_step_vec[n_step], skewness=bool(n_dim))
+                        real_cm_setpoint[n_step] = get_cm_setpoints(SC, cm_ords[n_dim][nCM], skewness=bool(n_dim))
                         gradient[n_step, :] = np.ravel(bpm_reading(SC, bpm_ords=bpm_ords)) - bref
                 dCM = real_cm_setpoint - cmstart[nCM]
                 cm_steps[n_dim][:, nCM] = dCM
@@ -52,7 +51,7 @@ def response_matrix(SC, amp, bpm_ords, cm_ords, mode='fixedKick', n_steps=2, fit
                     rm[nBPM, i] = np.polyfit(x, y, fit_order)[fit_order - 1]
                     error[nBPM, i] = np.sqrt(np.mean((rm[nBPM, i] * x - y).T ** 2))
             i = i + 1
-            SC, _ = set_cm_setpoints(SC, cm_ords[n_dim][nCM], cmstart[nCM], skewness=bool(n_dim))
+            SC = set_cm_setpoints(SC, cm_ords[n_dim][nCM], cmstart[nCM], skewness=bool(n_dim))
     rm[np.isnan(rm)] = 0
     LOGGER.debug(' done.')
     return rm, error, cm_steps
@@ -62,9 +61,9 @@ def dispersion(SC, rf_step, bpm_ords=None, cav_ords=None, n_steps=2):
     bpm_ords, cav_ords = _check_ords(SC, bpm_ords, cav_ords)
     bref = np.ravel(bpm_reading(SC, bpm_ords=bpm_ords))
     if n_steps == 2:
-        SC = set_cavity_setpoints(SC, cav_ords, 'Frequency', rf_step, 'add')
+        SC = set_cavity_setpoints(SC, cav_ords, rf_step, 'Frequency', 'add')
         B = np.ravel(bpm_reading(SC, bpm_ords=bpm_ords))
-        SC = set_cavity_setpoints(SC, cav_ords, 'Frequency', -rf_step, 'add')
+        SC = set_cavity_setpoints(SC, cav_ords, -rf_step, 'Frequency', 'add')
         return (B - bref) / rf_step
     rf_steps = np.zeros((len(cav_ords), n_steps))
     for n_cav, cav_ord in enumerate(cav_ords):
@@ -72,9 +71,9 @@ def dispersion(SC, rf_step, bpm_ords=None, cav_ords=None, n_steps=2):
     dB = np.zeros((n_steps, *np.shape(bref)))
     rf0 = atgetfieldvalues(SC.RING, cav_ords, "FrequencySetPoint")
     for nStep in range(n_steps):
-        SC = set_cavity_setpoints(SC, cav_ords, 'Frequency', rf_steps[:, nStep], 'abs')
+        SC = set_cavity_setpoints(SC, cav_ords, rf_steps[:, nStep], 'Frequency', 'abs')
         dB[nStep, :] = np.ravel(bpm_reading(SC, bpm_ords=bpm_ords)) - bref
-    SC = set_cavity_setpoints(SC, cav_ords, 'Frequency', rf0, 'abs')
+    SC = set_cavity_setpoints(SC, cav_ords, rf0, 'Frequency', 'abs')
     return np.linalg.lstsq(np.linspace(-rf_step, rf_step, n_steps), dB)[0]
 
 
@@ -108,9 +107,10 @@ def _kick_amplitude(SC, bref, bpm_ords, cm_ord, amp, skewness: bool, mode):
 
 
 def _try_setpoint(SC, bpm_ords, cm_ord, cmstart, max_step, skewness):
-    SC, real_cm_setpoint = set_cm_setpoints(SC, cm_ord, cmstart + max_step, skewness)
+    SC = set_cm_setpoints(SC, cm_ord, cmstart + max_step, skewness)
+    real_cm_setpoint = get_cm_setpoints(SC, cm_ord, skewness)
     if real_cm_setpoint != (cmstart + max_step):
         LOGGER.debug('CM  clipped. Using different CM direction.')
         max_step *= -1
-        SC, _ = set_cm_setpoints(SC, cm_ord, cmstart + max_step, skewness)
+        SC = set_cm_setpoints(SC, cm_ord, cmstart + max_step, skewness)
     return SC, max_step, np.ravel(bpm_reading(SC, bpm_ords=bpm_ords))

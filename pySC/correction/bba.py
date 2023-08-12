@@ -65,7 +65,7 @@ def bba(SC, bpm_ords, mag_ords, **kwargs):
             bpm_ind = np.where(bpm_ords[n_dim, j_bpm] == SC.ORD.BPM)[0][0]
             m_ord = mag_ords[n_dim, j_bpm]
             if par.switch_off_sextupoles:
-                SC = set_magnet_setpoints(SC, m_ord, skewness=False, order=2, setpoints=np.zeros(1), method='abs')
+                SC = set_magnet_setpoints(SC, m_ord, setpoints=np.zeros(1), skewness=False, order=2,  method='abs')
                 SC = SCfeedbackRun(SC, par.RMstruct.MinvCO, BPMords=par.RMstruct.BPMords, CMords=par.RMstruct.CMords,
                                    target=0, maxsteps=50, scaleDisp=par.RMstruct.scaleDisp, eps=1E-6)
             if par.mode == 'ORB':
@@ -140,7 +140,7 @@ def _data_measurement_tbt(SC, m_ord, bpm_ind, j_bpm, n_dim, par, kick_vec):
     if par.plotLines:
         f, ax = plt.subplots(nrows=len(par.magSPvec[n_dim, j_bpm]), num=99)
     for nQ, setpointQ in enumerate(par.magSPvec[n_dim, j_bpm]):
-        SC = set_magnet_setpoints(SC, np.array([m_ord]), par.skewQuadrupole, par.magnet_order, np.array([setpointQ]),
+        SC = set_magnet_setpoints(SC, m_ord, setpointQ, par.skewQuadrupole, par.magnet_order,
                                   method=par.setpoint_method, dipole_compensation=par.dipole_compensation)
         for nKick in range(nMsteps):
             SC.INJ.Z0[2 * n_dim:2 * n_dim + 2] = initialZ0[2 * n_dim:2 * n_dim + 2] + kick_vec[:, nKick]
@@ -157,7 +157,7 @@ def _data_measurement_tbt(SC, m_ord, bpm_ind, j_bpm, n_dim, par, kick_vec):
     if par.plotLines:
         f.show()
     SC.INJ.Z0 = initialZ0
-    SC = set_magnet_setpoints(SC, np.array([m_ord]), par.skewQuadrupole, par.magnet_order, np.array([init_setpoint]),
+    SC = set_magnet_setpoints(SC, m_ord, init_setpoint, par.skewQuadrupole, par.magnet_order,
                               method="abs", dipole_compensation=par.dipole_compensation)
     print(f"Final Z0: {SC.INJ.Z0}")
     return BPMpos, tmpTra
@@ -303,7 +303,7 @@ def _scan_phase_advance(SC, bpm_ind, n_dim, kick_vec0, par):
     all_bpm_ranges = np.zeros(len(q_vec))
     for nQ in range(len(q_vec)):
         LOGGER.debug(f'BBA-BPM range too small, try to change phase advance with quad ord {q_ord} to {q_vec[nQ]:.2f} of nom. SP.')
-        SC = set_magnet_setpoints(SC, np.array([q_ord]), False, 1, np.array([q_vec[nQ]]), method='rel', dipole_compensation=True)
+        SC = set_magnet_setpoints(SC, q_ord, q_vec[nQ], False, 1, method='rel', dipole_compensation=True)
         kick_vec, bpm_range = _scale_injection_to_reach_bpm(SC, bpm_ind, n_dim, kick_vec0)
         if bpm_range >= par.BBABPMtarget:
             LOGGER.debug(f'Change phase advance with quad ord {q_ord} successful. BBA-BPM range = {1E6 * bpm_range:.0f} um.')
@@ -313,11 +313,11 @@ def _scan_phase_advance(SC, bpm_ind, n_dim, kick_vec0, par):
     if all_bpm_ranges[-1] < np.max(all_bpm_ranges):
         LOGGER.debug(f'Changing phase advance of quad with ord {q_ord} NOT succesfull, '
                      f'returning to best value with BBA-BPM range = {1E6 * max(all_bpm_ranges):.0f}um.')
-        SC = set_magnet_setpoints(SC, np.array([q_ord]), False, 1, np.array([np.max(q_vec)]), method='rel', dipole_compensation=True)
+        SC = set_magnet_setpoints(SC, q_ord, np.max(q_vec), False, 1, method='rel', dipole_compensation=True)
         kick_vec, _ = _scale_injection_to_reach_bpm(SC, bpm_ind, n_dim, kick_vec0)
         return SC, kick_vec
     LOGGER.debug(f'Changing phase advance of quad with ord {q_ord} NOT succesfull, returning to initial setpoint.')
-    SC = set_magnet_setpoints(SC, np.array([q_ord]), False, 1, np.array([q0]), method='abs', dipole_compensation=True)
+    SC = set_magnet_setpoints(SC, q_ord, q0, False, 1, method='abs', dipole_compensation=True)
     kick_vec, _ = _scale_injection_to_reach_bpm(SC, bpm_ind, n_dim, kick_vec0)
     return SC, kick_vec
 

@@ -14,8 +14,8 @@ from pySC.correction.loco_wrapper import (loco_model, loco_fit_parameters, apply
 from pySC.plotting.plot_phase_space import plot_phase_space
 from pySC.plotting.plot_support import plot_support
 from pySC.plotting.plot_lattice import plot_lattice
-from pySC.core.lattice_setting import set_magnet_setpoints, SCcronoff
-from pySC.correction.rf import SCsynchPhaseCorrection, SCsynchEnergyCorrection
+from pySC.core.lattice_setting import set_magnet_setpoints, switch_cavity_and_radiation
+from pySC.correction.rf import correct_rf_phase, correct_rf_frequency, phase_and_energy_error
 from pySC.utils import logging_tools
 
 LOGGER = logging_tools.get_logger(__name__)
@@ -40,9 +40,8 @@ def create_at_lattice() -> Lattice:
     rfc = at.RFCavity('RFCav', energy=2.5E9, voltage=2e6, frequency=500653404.8599995, harmonic_number=167, length=0)
     new_ring.insert(0, rfc)
     new_ring.enable_6d()
-    new_ring.set_cavity_phase()
-    new_ring.set_rf_frequency()
-
+    at.set_cavity_phase(new_ring)
+    at.set_rf_frequency(new_ring)
     return new_ring
 
 
@@ -107,9 +106,9 @@ if __name__ == "__main__":
     # SC.verify_structure()
     plot_support(SC)
 
-    SC.RING = SCcronoff(SC.RING, 'cavityoff')
+    SC.RING = switch_cavity_and_radiation(SC.RING, 'cavityoff')
     sextOrds = SCgetOrds(SC.RING, 'SF|SD')
-    SC = set_magnet_setpoints(SC, sextOrds, False, 2, np.array([0.0]), method='abs')
+    SC = set_magnet_setpoints(SC, sextOrds, 0.0, False, 2, method='abs')
     RM1 = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, nTurns=1)
     RM2 = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, nTurns=2)
     Minv1 = SCgetPinv(RM1, alpha=50)
@@ -128,14 +127,14 @@ if __name__ == "__main__":
     SC = SCfeedbackBalance(SC, Minv2, maxsteps=32, eps=eps)
 
     # Turning on the sextupoles
-    for S in np.linspace(0.1, 1, 5):
-        SC = set_magnet_setpoints(SC, sextOrds, False, 2, np.array([S]), method='rel')
+    for rel_setting in np.linspace(0.1, 1, 5):
+        SC = set_magnet_setpoints(SC, sextOrds, rel_setting, False, 2, method='rel')
         try:
             SC = SCfeedbackBalance(SC, Minv2, maxsteps=32, eps=eps)
         except RuntimeError:
             pass
 
-    SC.RING = SCcronoff(SC.RING, 'cavityon')
+    SC.RING = switch_cavity_and_radiation(SC.RING, 'cavityon')
 
     # Plot initial phasespace
     plot_phase_space(SC, nParticles=10, nTurns=100)
@@ -174,7 +173,7 @@ if __name__ == "__main__":
         if np.mean(B0rms) < np.mean(Brms):
             break
         SC = CUR
-    SC.RING = SCcronoff(SC.RING, 'cavityon')
+    SC.RING = switch_cavity_and_radiation(SC.RING, 'cavityon')
     plot_phase_space(SC, nParticles=10, nTurns=1000)
     maxTurns, lostCount = beam_transmission(SC, nParticles=100, nTurns=200, plot=True)
     SC, _, _, _ = tune_scan(SC, np.vstack((SCgetOrds(SC.RING, 'QF'), SCgetOrds(SC.RING, 'QD'))),

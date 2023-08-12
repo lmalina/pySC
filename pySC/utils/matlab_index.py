@@ -18,13 +18,13 @@ from pySC.core.beam import beam_transmission, bpm_reading, generate_bunches
 from pySC.core.simulated_commissioning import SimulatedCommissioning
 from pySC.core.classes import DotDict
 from pySC.core.lattice_setting import (set_cavity_setpoints, set_magnet_setpoints,
-                                       set_cm_setpoints, get_cm_setpoints, SCcronoff as cronoff)
+                                       set_cm_setpoints, get_cm_setpoints, switch_cavity_and_radiation)
 from pySC.correction.bba import bba
 from pySC.correction.injection_fit import fit_injection_trajectory, fit_injection_drift
 from pySC.correction.orbit_trajectory import SCfeedbackFirstTurn as first_turn, SCfeedbackStitch as stitch, \
     SCfeedbackRun as frun, SCfeedbackBalance as fbalance, SCpseudoBBA as pseudo_bba
 from pySC.correction.ramp_errors import SCrampUpErrors as ramp_up_errors
-from pySC.correction.rf import SCsynchPhaseCorrection as synch_phase_corr, SCsynchEnergyCorrection as synch_energy_corr
+from pySC.correction.rf import correct_rf_phase, correct_rf_frequency
 from pySC.correction.tune import tune_scan
 from pySC.lattice_properties.apertures import SCdynamicAperture as dynamic_aperture, \
     SCmomentumAperture as momentum_aperture
@@ -55,7 +55,7 @@ def SCBBA(SC, BPMords, magOrds, **kwargs):
 
 
 def SCcronoff(ring: Lattice, *args: str) -> Lattice:
-    return cronoff(ring, *args)
+    return switch_cavity_and_radiation(ring, *args)
 
 
 def SCdynamicAperture(RING, dE, /, *, bounds=np.array([0, 1e-3]), nturns=1000, thetas=np.linspace(0, 2 * np.pi, 16),
@@ -266,7 +266,7 @@ def SCscaleCircumference(RING, circ, /, *, mode='abs'):
 
 def SCsetCavs2SetPoints(SC: SimulatedCommissioning, CAVords: ndarray, type: str, setpoints: ndarray, /, *,
                         mode: str = 'abs') -> SimulatedCommissioning:
-    return set_cavity_setpoints(SC, ords=CAVords, type=type, setpoints=setpoints, method=mode)
+    return set_cavity_setpoints(SC, ords=CAVords, setpoints=setpoints, param=type, method=mode)
 
 
 def SCsetCMs2SetPoints(SC: SimulatedCommissioning, CMords: ndarray, setpoints: ndarray, nDim: int, /, *,
@@ -275,7 +275,8 @@ def SCsetCMs2SetPoints(SC: SimulatedCommissioning, CMords: ndarray, setpoints: n
                 "Transition concerns nDim 1 -> horizontal, 2-> vertical.")
     if nDim not in (1, 2):
         raise ValueError("Function expects nDim 1 (hor) or 2 (ver)")
-    return set_cm_setpoints(SC, ords=CMords, setpoints=setpoints, skewness=(nDim == 2), method=mode)
+    SC = set_cm_setpoints(SC, ords=CMords, setpoints=setpoints, skewness=(nDim == 2), method=mode)
+    return SC, get_cm_setpoints(SC, ords=CMords, skewness=(nDim == 2))
 
 
 def SCsetMags2SetPoints(SC: SimulatedCommissioning, MAGords: ndarray, type: int, order: int, setpoints: ndarray, /, *,
@@ -286,7 +287,7 @@ def SCsetMags2SetPoints(SC: SimulatedCommissioning, MAGords: ndarray, type: int,
     if type not in (1, 2):
         raise ValueError("Function expects type 1 (skew) or 2 (normal)")
 
-    return set_magnet_setpoints(SC, ords=MAGords, skewness=(type == 1), order=order - 1, setpoints=setpoints,
+    return set_magnet_setpoints(SC, ords=MAGords, setpoints=setpoints, skewness=(type == 1), order=order - 1,
                                 method=method, dipole_compensation=dipCompensation)
 
 
@@ -312,8 +313,8 @@ def SCsynchEnergyCorrection(SC, /, *, cavOrd=None, f_range=(-1E3, 1E3), nSteps=1
                             plotProgress=False, verbose=False):
     init_nturns = SC.INJ.nTurns
     SC.INJ.nTurns = nTurns
-    SC = synch_energy_corr(SC, cavOrd=cavOrd, f_range=f_range, nSteps=nSteps, minTurns=minTurns,
-                           plotResults=plotResults, plotProgress=plotProgress, )
+    SC = correct_rf_frequency(SC, cav_ords=cavOrd, f_range=f_range, n_steps=nSteps, minTurns=minTurns,
+                           plot_results=plotResults, plot_progress=plotProgress, )
     SC.INJ.nTurns = init_nturns
     return SC
 
@@ -322,7 +323,7 @@ def SCsynchPhaseCorrection(SC, /, *, cavOrd=None, nSteps=15, nTurns=20, plotResu
                            verbose=False):
     init_nturns = SC.INJ.nTurns
     SC.INJ.nTurns = nTurns
-    SC = synch_phase_corr(SC, cavOrd=cavOrd, nSteps=nSteps, plotResults=plotResults, plotProgress=plotProgress, )
+    SC = correct_rf_phase(SC, cav_ords=cavOrd, n_steps=nSteps, plot_results=plotResults, plot_progress=plotProgress, )
     SC.INJ.nTurns = init_nturns
     return SC
 
