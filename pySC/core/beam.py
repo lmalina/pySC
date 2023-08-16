@@ -11,7 +11,7 @@ from matplotlib import pyplot as plt
 from numpy import ndarray
 
 from pySC.core.simulated_commissioning import SimulatedCommissioning
-from pySC.core.constants import TRACK_ORB, TRACK_PORB
+from pySC.core.constants import TRACK_ORB, TRACK_PORB, TRACK_TBT
 from pySC.utils.sc_tools import SCrandnc
 from pySC.utils.at_wrapper import atgetfieldvalues, atpass, findorbit6, findspos
 import warnings
@@ -21,7 +21,7 @@ warnings.filterwarnings("ignore", message='Mean of empty slice')
 LOGGER = logging_tools.get_logger(__name__)
 
 
-def bpm_reading(SC: SimulatedCommissioning, bpm_ords: ndarray = None) -> ndarray:
+def bpm_reading(SC: SimulatedCommissioning, bpm_ords: ndarray = None, calculate_errors: bool = False) -> Tuple:
     """
     Calculates BPM readings with current injection setup `SC.INJ` and included all BPM uncertainties.
     Included uncertainties are offsets, rolls, calibration errors, and position noise.
@@ -33,25 +33,46 @@ def bpm_reading(SC: SimulatedCommissioning, bpm_ords: ndarray = None) -> ndarray
         SC: SimulatedCommissioning instance
         bpm_ords: array of element indices of registered BPMs for which to calculate readings
             (for convenience, otherwise `SC.ORD.BPM` is used)
+        calculate_errors: If true orbit errors are calculated
 
     Returns:
         Array of horizontal and vertical BPM readings (2, T x B) for T turns and B BPMs
+        Array of fractional transmission (eq. BPM sum signal) (2, T x B) for T turns and B BPMs
+        Optionally, in TBT mode and calculate_errors is True:
+            Array of measured errors for horizontal and vertical BPM readings (2, T x B) for T turns and B BPMs
     """
-    all_bpm_orbits_4d = np.full((2, len(SC.ORD.BPM), SC.INJ.nTurns, SC.INJ.nShots), np.nan)
+    bpm_inds = np.arange(len(SC.ORD.BPM), dtype=int) if bpm_ords is None else _only_registered_bpms(SC, bpm_ords)
+    bpm_orbits_4d = np.full((2, len(bpm_inds), SC.INJ.nTurns, SC.INJ.nShots), np.nan)
+    bpm_sums_4d = np.full((2, len(bpm_inds), SC.INJ.nTurns, SC.INJ.nShots), np.nan)
     for shot_num in range(SC.INJ.nShots):
-        tracking_4d = _tracking(SC, SC.ORD.BPM)
-        all_bpm_orbits_4d[:, :, :, shot_num] = _real_bpm_reading(SC, tracking_4d)
+        tracking_4d = _tracking(SC, SC.ORD.BPM[bpm_inds])
+        bpm_orbits_4d[:, :, :, shot_num], bpm_sums_4d[:, :, :, shot_num] = _real_bpm_reading(SC, tracking_4d, bpm_inds)
 
-    mean_bpm_orbits_3d = np.nanmean(all_bpm_orbits_4d, axis=3)  # mean_bpm_orbits_3d is 3D (dim, BPM, turn)
+    # mean_bpm_orbits_3d is 3D (dim, BPM, turn)
+    mean_bpm_orbits_3d = np.average(np.ma.array(bpm_orbits_4d, mask=np.isnan(bpm_orbits_4d)),
+                                    weights=np.ma.array(bpm_sums_4d, mask=np.isnan(bpm_sums_4d)), axis=3)
+    # averaging "charge" also when the beam did not reach the location
+    mean_bpm_sums_3d = np.nansum(bpm_sums_4d, axis=3) / SC.INJ.nShots
+
     if SC.plot:
-        _plot_bpm_reading(SC, mean_bpm_orbits_3d)
+        _plot_bpm_reading(SC, mean_bpm_orbits_3d, bpm_inds)
     if SC.INJ.trackMode == TRACK_PORB:   # ORB averaged over low amount of turns
-        mean_bpm_orbits_3d = np.nanmean(mean_bpm_orbits_3d, axis=2, keepdims=True)
-    if bpm_ords is not None:
-        ind = _only_registered_bpms(SC, bpm_ords)
-        mean_bpm_orbits_3d = mean_bpm_orbits_3d[:, ind, :]
-    # Organising the array 2 x (nturns x nbpms) sorted by "arrival time"
-    return _reshape_3d_to_matlab_like_2d(mean_bpm_orbits_3d)
+        mean_bpm_orbits_3d = np.average(np.ma.array(mean_bpm_orbits_3d, mask=np.isnan(mean_bpm_orbits_3d)),
+                                        weights=np.ma.array(mean_bpm_sums_3d, mask=np.isnan(mean_bpm_sums_3d)), axis=2,
+                                        keepdims=True)
+        mean_bpm_sums_3d = np.nansum(mean_bpm_sums_3d, axis=2, keepdims=True) / SC.INJ.nTurns
+    if calculate_errors and SC.INJ.trackMode == TRACK_TBT:
+        bpm_orbits_4d[np.sum(np.isnan(bpm_orbits_4d), axis=3) > 0, :] = np.nan
+        squared_orbit_diffs = np.square(bpm_orbits_4d - mean_bpm_orbits_3d)
+        err_bpm_orbits_3d = np.sqrt(np.average(np.ma.array(squared_orbit_diffs), mask=np.isnan(bpm_orbits_4d),
+                                   weights=np.ma.array(bpm_sums_4d, mask=np.isnan(bpm_orbits_4d)), axis=3))
+        # Organising the array 2 x (nturns x nbpms) sorted by "arrival time"
+        # TODO keep in 3D when the response matrices are changed
+        return (_reshape_3d_to_matlab_like_2d(mean_bpm_orbits_3d),
+                _reshape_3d_to_matlab_like_2d(mean_bpm_sums_3d),
+                _reshape_3d_to_matlab_like_2d(err_bpm_orbits_3d))
+    return (_reshape_3d_to_matlab_like_2d(mean_bpm_orbits_3d),
+            _reshape_3d_to_matlab_like_2d(mean_bpm_sums_3d))
 
 
 def all_elements_reading(SC: SimulatedCommissioning) -> Tuple[ndarray, ndarray]:
@@ -75,13 +96,13 @@ def all_elements_reading(SC: SimulatedCommissioning) -> Tuple[ndarray, ndarray]:
     all_bpm_orbits_4d = np.full((2, len(SC.ORD.BPM), SC.INJ.nTurns, SC.INJ.nShots), np.nan)
     for shot_num in range(SC.INJ.nShots):
         tracking_4d = _tracking(SC, np.arange(n_refs))
-        all_bpm_orbits_4d[:, :, :, shot_num] = _real_bpm_reading(SC, tracking_4d[:, :, SC.ORD.BPM, :])
+        all_bpm_orbits_4d[:, :, :, shot_num] = _real_bpm_reading(SC, tracking_4d[:, :, SC.ORD.BPM, :])[0]
         tracking_4d[:, np.isnan(tracking_4d[0, :])] = np.nan
         all_readings_5d[:, :, :, :, shot_num] = tracking_4d[:, :, :, :]
 
     mean_bpm_orbits_3d = np.nanmean(all_bpm_orbits_4d, axis=3)  # mean_bpm_orbits_3d is 3D (dim, BPM, turn)
     if SC.plot:
-        _plot_bpm_reading(SC, mean_bpm_orbits_3d, all_readings_5d)
+        _plot_bpm_reading(SC, mean_bpm_orbits_3d, None, all_readings_5d)
     return _reshape_3d_to_matlab_like_2d(mean_bpm_orbits_3d), all_readings_5d
 
 
@@ -159,21 +180,25 @@ def plot_transmission(ax, fraction_survived, n_turns, beam_lost_at):
     return ax
 
 
-def _real_bpm_reading(SC, track_mat):  # track_mat should be only x,y over all particles only at BPM positions
-    nBpms, nTurns = track_mat.shape[2:]
-    bpm_noise = np.transpose(atgetfieldvalues(SC.RING, SC.ORD.BPM, ('NoiseCO' if SC.INJ.trackMode == 'ORB' else "Noise")))
-    bpm_noise = bpm_noise[:, :, np.newaxis] * SCrandnc(2, (2, nBpms, nTurns))
-    bpm_offset = np.transpose(atgetfieldvalues(SC.RING, SC.ORD.BPM, 'Offset') + atgetfieldvalues(SC.RING, SC.ORD.BPM, 'SupportOffset'))
-    bpm_cal_error = np.transpose(atgetfieldvalues(SC.RING, SC.ORD.BPM, 'CalError'))
-    bpm_roll = np.squeeze(atgetfieldvalues(SC.RING, SC.ORD.BPM, 'Roll') + atgetfieldvalues(SC.RING, SC.ORD.BPM, 'SupportRoll'))
-    bpm_sum_error = np.transpose(atgetfieldvalues(SC.RING, SC.ORD.BPM, 'SumError'))[:, np.newaxis] * SCrandnc(2, (nBpms, nTurns))
+def _real_bpm_reading(SC, track_mat, bpm_inds=None):  # track_mat should be only x,y over all particles only at BPM positions
+    n_bpms, nTurns = track_mat.shape[2:]
+    bpm_ords = SC.ORD.BPM if bpm_inds is None else SC.ORD.BPM[bpm_inds]
+    bpm_noise = np.transpose(atgetfieldvalues(SC.RING, bpm_ords, ('NoiseCO' if SC.INJ.trackMode == 'ORB' else "Noise")))
+    bpm_noise = bpm_noise[:, :, np.newaxis] * SCrandnc(2, (2, n_bpms, nTurns))
+    bpm_offset = np.transpose(atgetfieldvalues(SC.RING, bpm_ords, 'Offset') + atgetfieldvalues(SC.RING, bpm_ords, 'SupportOffset'))
+    bpm_cal_error = np.transpose(atgetfieldvalues(SC.RING, bpm_ords, 'CalError'))
+    bpm_roll = np.squeeze(atgetfieldvalues(SC.RING, bpm_ords, 'Roll') + atgetfieldvalues(SC.RING, bpm_ords, 'SupportRoll'), axis=1)
+    bpm_sum_error = np.transpose(atgetfieldvalues(SC.RING, bpm_ords, 'SumError'))[:, np.newaxis] * SCrandnc(2, (n_bpms, nTurns))
     # averaging the X and Y positions at BPMs over particles
     mean_orbit = np.nanmean(track_mat, axis=1)
-    beam_lost = np.nonzero(np.mean(np.isnan(track_mat[0, :, :, :]), axis=0) * (1 + bpm_sum_error) > SC.INJ.beamLostAt)
+    transmission = np.mean(~np.isnan(track_mat[0, :, :, :]), axis=0) * (1 + bpm_sum_error)
+    beam_lost = np.nonzero(transmission < 1 - SC.INJ.beamLostAt)
     mean_orbit[:, beam_lost[0], beam_lost[1]] = np.nan
+    transmission[beam_lost[0], beam_lost[1]] = np.nan
 
     rolled_mean_orbit = np.einsum("ijk,jkl->ikl", _rotation_matrix(bpm_roll), mean_orbit)
-    return (rolled_mean_orbit - bpm_offset[:, :, np.newaxis]) * (1 + bpm_cal_error[:, :, np.newaxis]) + bpm_noise
+    return ((rolled_mean_orbit - bpm_offset[:, :, np.newaxis]) * (1 + bpm_cal_error[:, :, np.newaxis]) +
+            bpm_noise / transmission), np.tile(transmission, (2, 1, 1))
 
 
 def _rotation_matrix(a):
@@ -186,14 +211,19 @@ def _tracking(SC: SimulatedCommissioning, refs: ndarray) -> ndarray:
     #  lattice_pass output:            (6, N, R, T) coordinates of N particles at R reference points for T turns.
     #  findorbit second output value:  (R, 6) closed orbit vector at each specified location
     if SC.INJ.trackMode == TRACK_ORB:
-        return np.transpose(findorbit6(SC.RING, refs, keep_lattice=False)[1])[[0, 2], :].reshape(2, 1, len(refs), 1)
-    return atpass(SC.RING, generate_bunches(SC), SC.INJ.nTurns, refs, keep_lattice=False)[[0, 2], :, :, :]
+        pos = np.transpose(findorbit6(SC.RING, refs, keep_lattice=False)[1])[[0, 2], :].reshape(2, 1, len(refs), 1)
+    else:
+        pos = atpass(SC.RING, generate_bunches(SC), SC.INJ.nTurns, refs, keep_lattice=False)[[0, 2], :, :, :]
+    pos[1, np.isnan(pos[0, :, :, :])] = np.nan
+    return pos
 
 
 def _only_registered_bpms(SC: SimulatedCommissioning, bpm_ords: ndarray) -> ndarray:
     ind = np.where(np.isin(SC.ORD.BPM, bpm_ords))[0]
     if len(ind) != len(bpm_ords):
         LOGGER.warning('Not all specified ordinates are registered BPMs.')
+    if not len(ind):
+        raise ValueError("No registered BPMs specified.")
     return ind
 
 
@@ -202,17 +232,17 @@ def _reshape_3d_to_matlab_like_2d(mean_bpm_orbits_3d: ndarray) -> ndarray:
     return np.transpose(mean_bpm_orbits_3d, axes=(0, 2, 1)).reshape((2, np.prod(mean_bpm_orbits_3d.shape[1:])))
 
 
-def _plot_bpm_reading(SC, bpm_orbits_3d, all_readings_5d=None):
+def _plot_bpm_reading(SC, bpm_orbits_3d, bpm_inds=None, all_readings_5d=None):
     ap_ords, apers = _get_ring_aperture(SC)
     fig, ax = plt.subplots(num=1, nrows=2, ncols=1, sharex="all", figsize=(8, 6), dpi=100, facecolor="w")
     s_pos = findspos(SC.RING)
     circumference = s_pos[-1]
-
+    bpms = SC.ORD.BPM if bpm_inds is None else SC.ORD.BPM[bpm_inds]
     if all_readings_5d is not None:
         x = np.ravel(np.arange(SC.INJ.nTurns)[:, np.newaxis] * circumference + s_pos)
         ax = _plot_all_trajectories(ax, x, all_readings_5d)
     for n_dim in range(2):
-        x = np.ravel(np.arange(SC.INJ.nTurns)[:, np.newaxis] * circumference + s_pos[SC.ORD.BPM])
+        x = np.ravel(np.arange(SC.INJ.nTurns)[:, np.newaxis] * circumference + s_pos[bpms])
         y = 1E3 * np.ravel(bpm_orbits_3d[n_dim, :, :].T)
         ax[n_dim].plot(x, y, 'ro', label="BPM reading")
         if len(ap_ords):
