@@ -17,7 +17,7 @@ with README.open("r") as docs:
 # Dependencies for the package itself
 DEPENDENCIES = [
     "numpy>=1.22.0",
-    "scipy>=1.8.0"
+    "scipy>=1.8.0",
     "matplotlib>=3.5.0",
     "accelerator-toolbox>=0.4.0"
 
