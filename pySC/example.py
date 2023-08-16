@@ -1,5 +1,8 @@
 import at
 import numpy as np
+import pySC
+from pySC.correction.bba import bba, _get_bpm_offset_from_mag
+
 from at import Lattice
 from pySC.utils.at_wrapper import atloco
 from pySC.core.simulated_commissioning import SimulatedCommissioning
@@ -126,6 +129,26 @@ if __name__ == "__main__":
     # SC = SCfeedbackRun(SC, Minv2, target=300E-6, maxsteps=30, eps=eps)
     SC = SCfeedbackBalance(SC, Minv2, maxsteps=32, eps=eps)
 
+    # plot_cm_strengths(SC)
+    # Performing BBA
+    SC.INJ.nParticles = 1
+    quadOrds = np.tile(SCgetOrds(SC.RING, 'QF|QD'), (2, 1))[:, :10]
+    BPMords = np.tile(SC.ORD.BPM, (2, 1))[:, :10]
+
+    init_offsets = _get_bpm_offset_from_mag(SC.RING, BPMords, quadOrds)
+    SC, error_flags, offset_changes = bba(SC, BPMords, quadOrds, fakeMeasForFailures=False, BBABPMtarget=1000E-6,
+                          quadOrdPhaseAdvance=SCgetOrds(SC.RING, 'QF|QD')[0],
+                          quadStrengthPhaseAdvance=np.array([0.95, 0.8, 1.05]), outlierRejectionAt=1e-3, plotResults=True)
+    final_offsets = _get_bpm_offset_from_mag(SC.RING, BPMords, quadOrds)
+    print(offset_changes)
+    print(error_flags)
+    print("Offsets:")
+    print(init_offsets)
+    print(final_offsets)
+
+    print(np.std(init_offsets))
+    print(np.std(final_offsets))
+
     # Turning on the sextupoles
     for rel_setting in np.linspace(0.1, 1, 5):
         SC = set_magnet_setpoints(SC, sextOrds, rel_setting, False, 2, method='rel')
@@ -201,3 +224,5 @@ if __name__ == "__main__":
                                                  [SCgetOrds(SC.RING, 'QF'), False, 'individual', 1E-3],
                                                  [SCgetOrds(SC.RING, 'QD'), False, 'individual', 1E-4],
                                                  [SC.ORD.SkewQuad, True, 'individual', 1E-3])
+
+at.get_acceptance(SC.RING,('x', 'y') ,(15,15), (0.05,0.05), refpts=0)
