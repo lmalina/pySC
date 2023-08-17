@@ -168,7 +168,7 @@ If SC.plot is True the reading is plotted.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pySC.core.beam.bpm_reading">
-<span class="sig-prename descclassname"><span class="pre">pySC.core.beam.</span></span><span class="sig-name descname"><span class="pre">bpm_reading</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">SC</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning" title="pySC.core.simulated_commissioning.SimulatedCommissioning"><span class="pre">SimulatedCommissioning</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">bpm_ords</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/pySC/core/beam.html#bpm_reading"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pySC.core.beam.bpm_reading" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">pySC.core.beam.</span></span><span class="sig-name descname"><span class="pre">bpm_reading</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">SC</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning" title="pySC.core.simulated_commissioning.SimulatedCommissioning"><span class="pre">SimulatedCommissioning</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">bpm_ords</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calculate_errors</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span></span></span><a class="reference internal" href="../_modules/pySC/core/beam.html#bpm_reading"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pySC.core.beam.bpm_reading" title="Permalink to this definition"></a></dt>
 <dd><p>Calculates BPM readings with current injection setup <cite>SC.INJ</cite> and included all BPM uncertainties.
 Included uncertainties are offsets, rolls, calibration errors, and position noise.
 When the beam is lost following <cite>SC.INJ.beamLostAt</cite> criteria with sum signal errors included,
@@ -180,10 +180,17 @@ If SC.plot is True the reading is plotted.</p>
 <li><p><strong>SC</strong> -- SimulatedCommissioning instance</p></li>
 <li><p><strong>bpm_ords</strong> -- array of element indices of registered BPMs for which to calculate readings
 (for convenience, otherwise <cite>SC.ORD.BPM</cite> is used)</p></li>
+<li><p><strong>calculate_errors</strong> -- If true orbit errors are calculated</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Array of horizontal and vertical BPM readings (2, T x B) for T turns and B BPMs</p>
+<dd class="field-even"><p><p>Array of horizontal and vertical BPM readings (2, T x B) for T turns and B BPMs
+Array of fractional transmission (eq. BPM sum signal) (2, T x B) for T turns and B BPMs
+Optionally, in TBT mode and calculate_errors is True:</p>
+<blockquote>
+<div><p>Array of measured errors for horizontal and vertical BPM readings (2, T x B) for T turns and B BPMs</p>
+</div></blockquote>
+</p>
 </dd>
 </dl>
 </dd></dl>
