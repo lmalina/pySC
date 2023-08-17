@@ -142,11 +142,11 @@ if __name__ == "__main__":
     # RF cavity correction
     SC.INJ.nTurns = 5
     for nIter in range(2):
-        SC = SCsynchPhaseCorrection(SC, nSteps=25, plotResults=False, plotProgress=False)
+        SC = correct_rf_phase(SC, n_steps=25, plot_results=False, plot_progress=False)
 
-        SC = SCsynchEnergyCorrection(SC, f_range=40E3 * np.array([-1, 1]),  # Frequency range [kHz]
-                                         nSteps=15,  # Number of frequency steps
-                                         plotResults=False, plotProgress=False)
+        SC = correct_rf_frequency(SC, f_range=40E3 * np.array([-1, 1]),  # Frequency range [kHz]
+                                         n_steps=15,  # Number of frequency steps
+                                         plot_results=False, plot_progress=False)
 
     # Plot phasespace after RF correction
     plot_phase_space(SC, nParticles=10, nTurns=100)
@@ -168,8 +168,8 @@ if __name__ == "__main__":
             CUR = SCfeedbackRun(SC, MinvCO, target=0, maxsteps=50, scaleDisp=1E8)
         except RuntimeError:
             break
-        B0rms = np.sqrt(np.mean(np.square(bpm_reading(SC)), axis=1))
-        Brms = np.sqrt(np.mean(np.square(bpm_reading(CUR)), axis=1))
+        B0rms = np.sqrt(np.mean(np.square(bpm_reading(SC)[0]), axis=1))
+        Brms = np.sqrt(np.mean(np.square(bpm_reading(CUR)[0]), axis=1))
         if np.mean(B0rms) < np.mean(Brms):
             break
         SC = CUR

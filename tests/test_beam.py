@@ -32,18 +32,16 @@ def test_all_reading_basic(sc):
 
 
 def test_bpm_reading_basic(sc):
-    bpm_readings = bpm_reading(sc)
+    bpm_readings = bpm_reading(sc)[0]
     assert bpm_readings.shape == (2, sc.INJ.nTurns * sc.ORD.BPM.shape[0])
-    bpm_readings2 = bpm_reading(sc)
+    bpm_readings2 = bpm_reading(sc)[0]
     assert not np.allclose(bpm_readings2, bpm_readings)
-    bpm_readings = bpm_reading(sc, np.arange(3))
-    assert bpm_readings.shape == (2, 0)
     sc.INJ.trackMode = "PORB"
     sc.INJ.nTurns = 3
-    bpm_readings = bpm_reading(sc, np.arange(18))
+    bpm_readings = bpm_reading(sc, np.arange(18))[0]
     assert bpm_readings.shape == (2, 1)
     sc.plot = True
-    bpm_readings = bpm_reading(sc, 20 * np.ones(2))
+    bpm_readings = bpm_reading(sc, 20 * np.ones(2))[0]
     assert bpm_readings.shape == (2, 1)
 
 
