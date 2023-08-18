@@ -110,7 +110,7 @@ def SCgetBeamTransmission(SC: SimulatedCommissioning, /, *, nParticles: int = No
 
 
 def SCgetBPMreading(SC, /, *, BPMords=None):
-    return bpm_reading(SC, bpm_ords=BPMords)
+    return bpm_reading(SC, bpm_ords=BPMords)[0]
 
 
 def SCgetCMSetPoints(SC: SimulatedCommissioning, CMords: ndarray, nDim: int) -> ndarray:
@@ -200,7 +200,7 @@ def SCparticlesIn3D(*args):
 def SCplotBPMreading(SC, B=None, T=None):
     init_plot = SC.plot
     SC.plot = True
-    bpm_reading(SC)
+    _ = bpm_reading(SC)[0]
     SC.plot = init_plot
     return SC
 

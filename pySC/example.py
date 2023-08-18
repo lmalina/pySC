@@ -189,8 +189,8 @@ if __name__ == "__main__":
             CUR = SCfeedbackRun(SC, MinvCO, target=0, maxsteps=50, scaleDisp=1E8)
         except RuntimeError:
             break
-        B0rms = np.sqrt(np.mean(np.square(bpm_reading(SC)), axis=1))
-        Brms = np.sqrt(np.mean(np.square(bpm_reading(CUR)), axis=1))
+        B0rms = np.sqrt(np.mean(np.square(bpm_reading(SC)[0]), axis=1))
+        Brms = np.sqrt(np.mean(np.square(bpm_reading(CUR)[0]), axis=1))
         if np.mean(B0rms) < np.mean(Brms):
             break
         SC = CUR

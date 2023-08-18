@@ -107,8 +107,8 @@ def test_example(at_lattice):
             cur = SCfeedbackRun(sc, minv_co, target=0, maxsteps=50, scaleDisp=1E8)
         except RuntimeError:
             break
-        B0rms = np.sqrt(np.mean(np.square(bpm_reading(sc)), axis=1))
-        Brms = np.sqrt(np.mean(np.square(bpm_reading(cur)), axis=1))
+        B0rms = np.sqrt(np.mean(np.square(bpm_reading(sc)[0]), axis=1))
+        Brms = np.sqrt(np.mean(np.square(bpm_reading(cur)[0]), axis=1))
         if np.mean(B0rms) < np.mean(Brms):
             break
         sc = cur

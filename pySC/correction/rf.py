@@ -116,7 +116,7 @@ def _check_data(test_vec, bpm_shift, bpm_shift_err, min_num_points=6):
 
 
 def _get_tbt_energy_shift(SC, bpm_ords):
-    bpm_readings = bpm_reading(SC, bpm_ords)
+    bpm_readings = bpm_reading(SC, bpm_ords)[0]
     x_reading = np.reshape(bpm_readings[0, :], (SC.INJ.nTurns, len(bpm_ords)))
     mean_tbt = np.mean(x_reading - x_reading[0, :], axis=1)
     mean_tbt_err = np.std(x_reading, axis=1) / np.sqrt(x_reading.shape[1])

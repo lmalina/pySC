@@ -192,7 +192,7 @@ def _check_ords(SC, Mplus, reference, BPMords, CMords):
 
 
 def _bpm_reading_and_logging(SC, BPMords, ind_history=None, orb_history=None):
-    bpm_readings = bpm_reading(SC, bpm_ords=BPMords)
+    bpm_readings = bpm_reading(SC, bpm_ords=BPMords)[0]
     bpms_reached = ~np.isnan(bpm_readings[0])
     if ind_history is None or orb_history is None:
         return bpm_readings, [np.sum(bpms_reached)], [np.sqrt(np.mean(np.square(bpm_readings[:, bpms_reached]), axis=1))]
