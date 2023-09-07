@@ -50,7 +50,7 @@ def bpm_reading(SC: SimulatedCommissioning, bpm_ords: ndarray = None, calculate_
 
     # mean_bpm_orbits_3d is 3D (dim, BPM, turn)
     mean_bpm_orbits_3d = np.average(np.ma.array(bpm_orbits_4d, mask=np.isnan(bpm_orbits_4d)),
-                                    weights=np.ma.array(bpm_sums_4d, mask=np.isnan(bpm_sums_4d)), axis=3)
+                                    weights=np.ma.array(bpm_sums_4d, mask=np.isnan(bpm_sums_4d)), axis=3).filled(np.nan)
     # averaging "charge" also when the beam did not reach the location
     mean_bpm_sums_3d = np.nansum(bpm_sums_4d, axis=3) / SC.INJ.nShots
 
@@ -59,13 +59,13 @@ def bpm_reading(SC: SimulatedCommissioning, bpm_ords: ndarray = None, calculate_
     if SC.INJ.trackMode == TRACK_PORB:   # ORB averaged over low amount of turns
         mean_bpm_orbits_3d = np.average(np.ma.array(mean_bpm_orbits_3d, mask=np.isnan(mean_bpm_orbits_3d)),
                                         weights=np.ma.array(mean_bpm_sums_3d, mask=np.isnan(mean_bpm_sums_3d)), axis=2,
-                                        keepdims=True)
+                                        keepdims=True).filled(np.nan)
         mean_bpm_sums_3d = np.nansum(mean_bpm_sums_3d, axis=2, keepdims=True) / SC.INJ.nTurns
     if calculate_errors and SC.INJ.trackMode == TRACK_TBT:
         bpm_orbits_4d[np.sum(np.isnan(bpm_orbits_4d), axis=3) > 0, :] = np.nan
         squared_orbit_diffs = np.square(bpm_orbits_4d - mean_bpm_orbits_3d)
         err_bpm_orbits_3d = np.sqrt(np.average(np.ma.array(squared_orbit_diffs), mask=np.isnan(bpm_orbits_4d),
-                                   weights=np.ma.array(bpm_sums_4d, mask=np.isnan(bpm_orbits_4d)), axis=3))
+                                   weights=np.ma.array(bpm_sums_4d, mask=np.isnan(bpm_orbits_4d)), axis=3)).filled(np.nan)
         # Organising the array 2 x (nturns x nbpms) sorted by "arrival time"
         # TODO keep in 3D when the response matrices are changed
         return (_reshape_3d_to_matlab_like_2d(mean_bpm_orbits_3d),
