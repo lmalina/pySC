@@ -225,9 +225,9 @@ def plot_bpm_offsets_from_magnets(SC, bpm_ords, mag_ords, error_flags):
         x = np.where(np.in1d(SC.ORD.BPM, bpm_ords[n_dim, :]))[0]
         mask = ~error_flags[n_dim, :]
         if not np.all(np.isnan(fom[n_dim, mask])):
-            ax[n_dim + 1].plot(x[mask], 1E6 * fom[n_dim, mask], label=plabels[n_dim], fmt='bo')
+            ax[n_dim + 1].plot(x[mask], 1E6 * fom[n_dim, mask], 'bo', label=plabels[n_dim])
         if not np.all(np.isnan(fom[n_dim, ~mask])):
-            ax[n_dim + 1].plot(x[~mask], 1E6 * fom[n_dim, ~mask], label=f"{plabels[n_dim]} failed", fmt='rX')
+            ax[n_dim + 1].plot(x[~mask], 1E6 * fom[n_dim, ~mask], 'rX', label=f"{plabels[n_dim]} failed")
 
         ax[n_dim + 1].set_ylabel(r'Offset [$\mu$m]')
         ax[n_dim + 1].set_xlabel('Index of BPM')
