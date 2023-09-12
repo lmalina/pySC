@@ -14,7 +14,7 @@ def fit_injection_drift(SC: SimulatedCommissioning, n_dims: ndarray = np.array([
     # uses SC.INJ.nShots
     s_pos = findspos(SC.RING)
     bpm_inds = np.arange(2, dtype=int) + len(SC.ORD.BPM) - 1
-    bref = bpm_reading(SC)[:, bpm_inds]
+    bref = bpm_reading(SC)[0][:, bpm_inds]
     s_bpm = np.array([s_pos[SC.ORD.BPM[-1]] - s_pos[-1], s_pos[SC.ORD.BPM[0]]])
     delta_z0 = _fit_bpm_data(s_bpm, bref)
     if np.sum(np.isnan(delta_z0)):
@@ -37,7 +37,7 @@ def fit_injection_drift(SC: SimulatedCommissioning, n_dims: ndarray = np.array([
 def fit_injection_trajectory(SC: SimulatedCommissioning, bpm_inds: ndarray = np.array([0, 1, 2]), plot: bool = False):
     # uses SC.INJ.nShots
     s_pos = findspos(SC.RING)
-    bref = bpm_reading(SC)[:, bpm_inds]
+    bref = bpm_reading(SC)[0][:, bpm_inds]
     delta_z0 = np.zeros(6)
     delta_z0[0:4] = -fmin(_merit_function, np.zeros(4), args=(SC, bref, SC.ORD.BPM[bpm_inds]))
     if np.sum(np.isnan(delta_z0)):
@@ -47,7 +47,7 @@ def fit_injection_trajectory(SC: SimulatedCommissioning, bpm_inds: ndarray = np.
     if plot:
         fig, ax = plt.subplots(nrows=2, num=342, sharex="all")
         SC.INJ.Z0 += delta_z0
-        bnew = bpm_reading(SC)[:, bpm_inds]
+        bnew = bpm_reading(SC)[0][:, bpm_inds]
         SC.INJ.Z0 -= delta_z0
         s_bpm = s_pos[SC.ORD.BPM[bpm_inds]]
         for n_dim in range(2):

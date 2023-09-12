@@ -32,10 +32,10 @@ def tune_scan(SC, quad_ords, rel_quad_changes, target=1, n_points=60, do_plot=Fa
     ords = np.hstack(quad_ords)
     for q1, q2 in inds.T:
         q_setpoints = np.hstack((np.ones(nq[0]) * rel_quad_changes[0][q1], np.ones(nq[1]) * rel_quad_changes[1][q2]))
-        SC = set_magnet_setpoints(SC, ords, False, 1, q_setpoints, method='rel')
+        SC = set_magnet_setpoints(SC, ords, q_setpoints, False, 1, method='rel')
         max_turns[q1, q2], surviving_fraction = beam_transmission(SC, nParticles=nParticles, nTurns=nTurns)
         transmission[q1, q2, :] = 1 * surviving_fraction
-        SC = set_magnet_setpoints(SC, ords, False, 1, 1 / q_setpoints, method='rel')
+        SC = set_magnet_setpoints(SC, ords, 1 / q_setpoints, False, 1, method='rel')
 
         if do_plot:
             f, ax = plot_scan(transmission[:, :, -1], max_turns, first_quads, rel_quad_changes)
@@ -48,7 +48,7 @@ def tune_scan(SC, quad_ords, rel_quad_changes, target=1, n_points=60, do_plot=Fa
             LOGGER.info(f'Transmission target reached with:\n'
                         f'    {first_quads[0]} SetPoint: {setpoints[0]:.4f}\n'
                         f'    {first_quads[1]} SetPoint: {setpoints[1]:.4f}')
-            SC = set_magnet_setpoints(SC, ords, False, 1, q_setpoints, method='rel')
+            SC = set_magnet_setpoints(SC, ords, q_setpoints, False, 1, method='rel')
             return SC, setpoints, max_turns, transmission
 
     testTrans = np.zeros(n_points)
@@ -71,7 +71,7 @@ def tune_scan(SC, quad_ords, rel_quad_changes, target=1, n_points=60, do_plot=Fa
                        f'    {first_quads[0]} SetPoint: {setpoints[0]:.4f}\n'
                        f'    {first_quads[1]} SetPoint: {setpoints[0]:.4f}')
     q_setpoints = np.hstack((setpoints[0] * np.ones(nq[0]), setpoints[1] * np.ones(nq[1])))
-    SC = set_magnet_setpoints(SC, ords, False, 1, q_setpoints, method='rel')
+    SC = set_magnet_setpoints(SC, ords, q_setpoints, False, 1, method='rel')
     return SC, setpoints, max_turns, transmission
 
 
@@ -118,13 +118,13 @@ def fit_tune(SC, q_ords, target_tune=None, xtol=1E-4, ftol=1E-3, fit_integer=Tru
             SP0[nFam][n] = SC.RING[q_ords[nFam][n]].SetPointB[1]
     fun = lambda x: _fit_tune_fun(SC, q_ords, x, SP0, target_tune, fit_integer)
     sol = fmin(fun, xtol=xtol, ftol=ftol)
-    SC = set_magnet_setpoints(SC, q_ords, False, 1, sol + SP0, method='abs', dipole_compensation=True)
+    SC = set_magnet_setpoints(SC, q_ords, sol + SP0, False, 1, method='abs', dipole_compensation=True)
     LOGGER.debug(f'       Final tune: [{tune(SC, fit_integer)}]\n  Setpoints change: [{sol}]')
     return SC
 
 
 def _fit_tune_fun(SC, q_ords, setpoints, init_setpoints, target, fit_integer):
-    SC = set_magnet_setpoints(SC, q_ords, False, 1, setpoints + init_setpoints, method='abs', dipole_compensation=True)
+    SC = set_magnet_setpoints(SC, q_ords, setpoints + init_setpoints, False, 1, method='abs', dipole_compensation=True)
     nu = tune(SC, fit_integer)
     return np.sqrt(np.mean((nu - target) ** 2))
 
