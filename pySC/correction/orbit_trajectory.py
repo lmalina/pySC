@@ -14,7 +14,59 @@ from pySC.utils.sc_tools import SCrandnc
 LOGGER = logging_tools.get_logger(__name__)
 
 
-def SCfeedbackFirstTurn(SC, Mplus, reference=None, CMords=None, BPMords=None, maxsteps=100, nRepro=3, wiggle_after=20, wiggle_steps=32, wiggle_range=(500E-6, 1000E-6)):
+def SCfeedbackFirstTurn(SC, Mplus, reference=None, CMords=None, BPMords=None,
+                        maxsteps=100, nRepro=3, wiggle_after=20, wiggle_steps=32,
+                        wiggle_range=(500E-6, 1000E-6)):
+    """
+    achieves one-turn transmission
+
+    Achieves a first turn in `SC.RING`.  This algorithm is based on the idea that
+    repeated trajectory corrections calculated via a suitably regularized
+    pseudo-inverse trajectory-response matrix `Mplus` will drive the BPM readings
+    and CM settings to a fixed point.
+
+    lim_{n->oo}  B_n = const. , with B_{n+1}  = Phi(Mplus . B_{n} ),     (1)
+
+    where mapping Phi maps corrector kicks to BPM-readings.
+    The RMS-values of both, BPM readings and CM settings, are determined by the
+    regularization of Mplus.  Successively - during the course of repeated
+    application of (1) - more and more transmission is achieved throughout the
+    ring, more magnets are traversed near their magnetic center (which is hopefully
+    at least somewhere near the BPM zero-point), resulting in decreased kicks.
+    If, however, the beam encounters a heavily displaced quadrupole magnet this
+    approach is bound to fail as correction towards the center of the last
+    reached BPM does no good, really. In this case the magnet has to be cleared
+    using other means than linear algebra.  In this approach the kicks of an
+    increasing number of the last reached CMs are deterministically ``wiggled''
+    until transmission to the next BPM is achieved. Then, application of (1) is
+    resumed.
+
+    Args:
+        SC: SC base structure.
+        Mplus: Pseudo-inverse trajectory-response matrix.
+        reference: (None) target orbit in the format `[x_1 ... x_n y_1 ...y_n]`, where
+                   [x_i,y_i]` is the target position at the i-th BPM.
+        CMords: List of CM ordinates to be used for correction (SC.ORD.CM)
+        BPMords: List of BPM ordinates at which the reading should be evaluated (SC.ORD.BPM)
+        maxsteps: break, if this number of correction steps have been performed (default = 100)
+        nRepro: (default 3)
+        wiggle_after: Number of iterations without increased transmission to start wiggling. (default = 20)
+        wiggle_steps: Number of wiggle steps to perform, before incresing the number. (default = 64)
+        wiggle_range: Range ([min,max] in rad) within which to wiggle the CMs. (default = (500E-6, 1000E-6))
+
+    Return type:
+        SC:
+            SC-structure with corrected `SC.RING`.
+        ERROR:
+            Error value.
+            `0` = All fine.
+            `1` = 'maxsteps' was reached, without producing full transmission.
+            `2` = No BPM readings to begin with.
+
+    See Also:
+        *SCgetPinv*, *SCfeedbackRun*, *SCfeedbackStitch*, *SCfeedbackBalance*, *SCgetBPMreading*, *SCsetCMs2SetPoints*
+
+    """
     LOGGER.debug('SCfeedbackFirstTurn: Start')
     BPMords, CMords, reference = _check_ords(SC, Mplus, reference, BPMords, CMords)
     bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords)  # Inject...

@@ -751,7 +751,7 @@ class SimulatedCommissioning:
         Args:
             s_locations: Array of s-positions at which the offset is evaluated.
 
-        Returns:
+        Return type:
 
             [3,length(s)]-array containing the [dx/dy/dz] total support structure offsets at `s`.
 
