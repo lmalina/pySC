@@ -23,6 +23,38 @@ def set_cavity_setpoints(SC: SimulatedCommissioning,
                          ords: Union[int, List[int], ndarray],
                          setpoints: Union[float, List[float], ndarray],
                          param: str, method: str = SETTING_ABS) -> SimulatedCommissioning:
+    """
+    Set RF properties to setpoints
+    
+    Set the setpoints of `Voltage`, `Frequency` or `TimeLag` as specified in "param" of the rf
+    cavities specified in `ords`. If only a single setpoint is given for multiple cavities,
+    the setpoint is applied to all cavities.
+
+    Args:
+        SC: SC base structure
+        ords: Array of cavity ordinates in the lattice structure (SC.ORD.RF)
+        setpoints: Setpoints (array or single value for all cavities)
+        param: String ('Voltage', 'Frequency' or 'TimeLag') specifying which cavity field should be set.
+        method: 'abs' (default), Use absolute setpoint
+                'rel', Use relative setpoint to current value
+                'add', Add setpoints to current value
+        
+    Returns:
+        The modified SC structure.
+    
+    Examples:
+        Sets the time lag of all cavities registered in SC to zero::
+            
+            SC = set_cavity_setpoints(SC, ords=SC.ORD.Cavity,
+                                      setpoint=0, param='TimeLag')
+        
+        Adds 1kHz to the frequency of the first cavity::
+            
+            SC = set_cavity_setpoints(SC, ords=SC.ORD.Cavity(1),
+                                      setpoint=1E3, param='Frequency',
+                                      method='add')
+    
+    """
     ords_1d, setpoints_1d = _check_input_and_setpoints(method, ords, setpoints)
     setpoint_str = f"{param}{SETPOINT}"
     if method == SETTING_REL:
@@ -43,6 +75,20 @@ def switch_rf(ring: Lattice, ords: ndarray, state: bool) -> Lattice:
 
 
 def get_cm_setpoints(SC: SimulatedCommissioning, ords: Union[int, List[int], ndarray], skewness: bool) -> ndarray:
+    """
+
+    Return current CM setpoints
+
+    Reads the setpoints of the CMs specified in `ords` in the dimension `skewness`.
+
+    Args:
+        SC: SC base structure
+        ords: Array of CM ordinates in the lattice structure (ex: SC.ORD.CM[0])
+        skewness: boolean specifying CM dimension ([False|True] -> [hor|ver])
+
+    Returns:
+        CM setpoints [rad]
+    """
     ords_1d = np.ravel(np.array([ords], dtype=int))
     order = 0
     ndim = int(skewness)
@@ -59,6 +105,43 @@ def set_cm_setpoints(SC: SimulatedCommissioning,
                      ords: Union[int, List[int], ndarray],
                      setpoints: Union[float, List[float], ndarray],
                      skewness: bool, method: str = SETTING_ABS) -> SimulatedCommissioning:
+    """
+    Sets dipole corrector magnets to different setpoints
+
+    Sets horizontal or vertical CMs as specified in `CMords` and `nDim`, respectively, to `setpoints`
+    [rad] and updates the magnetic fields. If the corresponding setpoint exceeds the CM limit
+    specified in the corresponding lattice field `CMlimit`, the CM is clipped to that value
+    and a warning is being printed (to switch off, use `warning('off','SC:CM1'))`. Positive setpoints
+    will results in kicks in the positive horizontal or vertical direction.
+
+    Args:
+        SC: SC base structure
+        ords:  Array of CM ordinates in the lattice structure (ex: SC.ORD.CM[0])
+        setpoints:  CM setpoints (array or single value for all CMs) [rad]
+        skewness: boolean specifying CM dimension ([False|True] -> [hor|ver])
+        method: 'abs' (default), Use absolute setpoint
+                'rel', Use relative setpoint to current value
+                'add', Add setpoints to current value
+
+    Returns:
+
+        The lattice structure with modified and applied setpoints
+
+        The list of acutal setpoints applied to the magnets after possible clipping [rad]
+
+    Examples:
+        Set all registered horizontal CMs to zero::
+
+            SC = SCsetCMs2SetPoints(SC, ords=SC.ORD.CM[0],
+                                    skewness=False, setpoints=0)
+
+        Add 10urad to the fourth registered vertical CM::
+
+            SC = SCsetCMs2SetPoints(SC, ords=SC.ORD.CM[1][4],
+                                    setpoints=1E-5, skewness=True,
+                                    method='add');
+
+    """
     # TODO corrector does not have PolynomA/B in at?
     ords_1d, setpoints_1d = _check_input_and_setpoints(method, ords, setpoints)
     order = 0
@@ -85,6 +168,51 @@ def set_magnet_setpoints(SC: SimulatedCommissioning,
                          setpoints: Union[float, List[float], ndarray],
                          skewness: bool, order: int, method: str = SETTING_ABS,
                          dipole_compensation: bool = False) -> SimulatedCommissioning:
+    """
+    Sets magnets to setpoints
+
+    Sets magnets (except CMs) as specified in `MAGords` to `setpoints` while `order` and `type` defines
+    which field entry should be used (see below). The setpoints may be given relative to their nominal
+    value or in absolute terms. If the considered quadrupole is a combined function magnet with
+    non-zero bending angle and the kick compensation flag is switched on, the appropriate bending
+    angle difference is calculated and the horizontal CM setpoint is changed accordingly to compensate
+    for that dipole kick difference.
+    If the setpoint of a skew quadrupole exceeds the limit specified in the corresponding lattice
+    field `SkewQuadLimit`, the setpoint is clipped to that value and a warning is being printed (to
+    switch off, use `warning('off','SC:SkewLim')`)
+
+    Args:
+        SC: SC base structure
+        ords:  Array of CM ordinates in the lattice structure (ex: SC.ORD.CM[0])
+        setpoints:  CM setpoints (array or single value for all CMs) [rad]
+        skewness: boolean specifying CM dimension ([False|True] -> [hor|ver])
+        method: 'abs' (default), Use absolute setpoint
+                'rel', Use relative setpoint to current value
+                'add', Add setpoints to current value
+        order: Numeric value defining the order of the considered magnet: [0,1,2,...] => [dip,quad,sext,...]
+        dipole_compensation: (default = False) Used for combined function magnets. If this flag is set and if there is a horizontal CM
+                            registered in the considered magnet, the CM is used to compensate the bending angle difference
+                            if the applied quadrupole setpoints differs from the design value.
+
+    Returns:
+        The base structure containing lattice with modified and applied setpoints.
+
+    Examples:
+        Identify the ordinates of all elements named `'SF'` and switch their sextupole component off::
+
+            ords = SCgetOrds(SC.RING,'SF')
+            SC = set_magnet_setpoints(SC, ords=ords,
+                                      skewness=False, order=2, setpoints=0.0,
+                                      method='abs')
+
+        Identify the ordinates of all elements named `QF` and `QD` and set their quadrupole component to 99% of their design value::
+
+            ords = SCgetOrds(SC.RING,'QF|QD')
+            SC = set_magnet_setpoints(SC, ords=ords,
+                                      skewness=False, order=1, setpoints=0.99,
+                                      method='rel')
+
+    """
     ords_1d, setpoints_1d = _check_input_and_setpoints(method, ords, setpoints)
     letter = NUM_TO_AB[int(skewness)]
     if method == SETTING_REL:
