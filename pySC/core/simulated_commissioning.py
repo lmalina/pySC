@@ -45,22 +45,24 @@ class SimulatedCommissioning:
         >>> SC.apply_errors()
         >>> SC.update
 
-        The properties of the class are:
-            RING:
-                the AT ring lattice
-            IDEALRING:
-                the ideal AT ring lattice
-            INJ:
-                Class for definition of injection properties.
-                See Also *pySC.core.classes.Injection*
-            SIG:
-                Class to store the error sigmas of errors.
-                This parameter is set via *SC.register_magnets*, *SC.register_bpms*, *SC.register_cavities*
-            ORD:
-                Class to store the index in the lattice of elements concerned by errors
-                This parameter is set via *SC.register_magnets*, *SC.register_bpms*, *SC.register_cavities*
-            plot:
-                (default=False) a boolean flag to trigger plots
+    The properties of the class are:
+        RING:
+            the AT ring lattice
+        IDEALRING:
+            the ideal AT ring lattice
+        INJ:
+            Class for definition of injection properties.
+            See Also *pySC.core.classes.Injection*
+        SIG:
+            Class to store the error sigma's.
+            This parameter is set via *SC.register_magnets*, *SC.register_bpms*, *SC.register_cavities*
+            See Also *pySC.core.classes.Sigmas*
+        ORD:
+            Class to store the index in the lattice of elements concerned by errors
+            This parameter is set via *SC.register_magnets*, *SC.register_bpms*, *SC.register_cavities*
+            See Also *pySC.core.classes.Indices*
+        plot:
+            (default=False) a boolean flag to trigger plots
     """
     def __init__(self, ring: Lattice):
         self.RING: Lattice = ring.deepcopy()

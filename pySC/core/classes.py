@@ -92,7 +92,26 @@ class Injection:
 
 
 class Indices(DotDict):
+    """
+    indexes of magnets, rf, BPMs, correctors girder plinths and sections in the AT lattice
 
+    Args:
+        BPM: numpy.array of integers. index of beam position monitors
+        RF: numpy.array of integers. index of RF cavities
+        Magnet: numpy.array of integers. index of magnets
+        SkewQuad: numpy.array of integers. index of skew quadrupoles
+        HCM: numpy.array of integers. index of horizontal correctors
+        VCM: numpy.array of integers. index of vertical correctors
+        Girder: numpy.array of 2 element tuples. (start, end) start and end index of Girders
+        Plinth: numpy.array of 2 element tuples. (start, end) start and end index of Plinths
+        Section: numpy.array of 2 element tuples. (start, end) start and end index of Sections
+
+    Examples:
+        get BPM indexes::
+
+            SC.ORD.BPM
+
+    """
     def __init__(self):
         super(Indices, self).__init__()
         self.BPM: ndarray = np.array([], dtype=int)
@@ -111,7 +130,26 @@ class Indices(DotDict):
 
 
 class Sigmas(DotDict):
+    """
+    stores the defined rms (sigma) of errors assigned to BPM, RF, magnets, supports and injection
 
+    Args:
+         BPM: errors sigma's in BPMs
+         Magnet: errors sigma's in Magnets
+         RF: errors sigma's in RF
+         Support: errors sigma's in Supports
+         randomInjectionZ: numpy.array of 6 elements defining sigmas of random errors
+                           for the input coordinates x, x', y, y', delta and ct
+         staticInjectionZ: numpy.array of 6 elements defining an offset
+                           for the input coordinates x, x', y, y', delta and ct
+         Circumference: float. Circumference error
+
+    Examples:
+        get BPM sigmas from SimualtedCommissioning::
+
+            SC.SIG.BPM
+
+    """
     def __init__(self):
         super(Sigmas, self).__init__()
         self.BPM: DotDict = DotDict()
