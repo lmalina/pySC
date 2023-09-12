@@ -10,6 +10,47 @@ from pySC.utils import logging_tools
 LOGGER = logging_tools.get_logger(__name__)
 
 def SCgetModelRM(SC, BPMords, CMords, trackMode='TBT', Z0=np.zeros(6), nTurns=1, dkick=1e-5, useIdealRing=True):
+    """
+    Determine the lattice response matrix based on current setpoints.
+
+    SCgetModelRM calculates the reponse matrix `RM` with the BPMs at the ordinates `BPMords`
+    and corrector magnets at ordinates `CMords` using the current magnet setpoints without any
+    roll/alignment/calibration errors. `CMords` is a 2-cell array containing the two lists for the
+    horizontal and vertical CMs respectively.
+    This routine can determine the turn-by-turn RM, as well as the orbit-RM; see option 'trackMode'.
+
+    Args:
+        SC:
+            SimulatedCommissioning class instance
+        BPMords:
+            Index of BPMs in SC.RING (SC.ORD.BPM)
+        CMords:
+            Index of Correctors Magnets in SC.RING (SC.ORD.CM)
+        trackMode:
+            (default = 'TBT') If `TBT` the turn-by-turn RM is calculated.
+            If `ORB` the orbit RM is calculated, using `at.findorbit6`
+        Z0:
+            (default = numpy.zeros(6)) Initial condition for tracking.
+            In `ORB`-mode this is used as the initial guess for `findorbit6`.
+        nTurns:
+            (default = 1) Number of turns over which to determine the TBT-RM. Ignored if in `ORB`-mode.
+        dkick:
+            (default = 1e-5) Kick [rad] to be added when numerically determining the partial derivatives.
+        useIdealRing:
+            (default = True) If True, the design lattice specified in `SC.IDEALRING` is used.
+
+    Returns:
+        RM:
+            The response matrix given in [m/rad].
+        RING:
+            The idealised RING structure, which was used to determine the RM.
+
+    Examples:
+        Compute a response matrix::
+
+            RM1 = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, nTurns=1)
+
+    """
     LOGGER.info('Calculating model response matrix')
     track_methods = dict(TBT=atpass, ORB=orbpass)
     if trackMode not in track_methods.keys():
