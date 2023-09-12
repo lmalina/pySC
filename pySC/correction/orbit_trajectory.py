@@ -55,13 +55,7 @@ def SCfeedbackFirstTurn(SC, Mplus, reference=None, CMords=None, BPMords=None,
         wiggle_range: Range ([min,max] in rad) within which to wiggle the CMs. (default = (500E-6, 1000E-6))
 
     Returns:
-
         SC-structure with corrected `SC.RING`
-
-        Error value. `0` = All fine.
-
-    See Also:
-        *SCgetPinv*, *SCfeedbackRun*, *SCfeedbackStitch*, *SCfeedbackBalance*, *bpm_reading*
 
     """
     LOGGER.debug('SCfeedbackFirstTurn: Start')
@@ -97,7 +91,6 @@ def SCfeedbackFirstTurn(SC, Mplus, reference=None, CMords=None, BPMords=None,
 
 def SCfeedbackStitch(SC, Mplus, reference=None, CMords=None, BPMords=None, nBPMs=4, maxsteps=30, nRepro=3, wiggle_steps=32, wiggle_range=(500E-6, 1000E-6)):
     """
-
     Achieves 2-turn transmission
 
     The purpose of this function is to go from 1-turn transmission to 2-turn
@@ -130,7 +123,7 @@ def SCfeedbackStitch(SC, Mplus, reference=None, CMords=None, BPMords=None, nBPMs
 
             RM2 = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, nTurns=2)
             Minv2 = SCgetPinv(RM2, alpha=10)
-            SC.INJ.nTurns = 2;
+            SC.INJ.nTurns = 2
             SC.INJ.nTurns = 2
             SC = SCfeedbackStitch(SC, Minv2, nBPMs=3, maxsteps=20)
 
@@ -190,7 +183,7 @@ def SCfeedbackBalance(SC, Mplus, reference=None, CMords=None, BPMords=None, eps=
     Generates a period-1 closed orbit, after two-turn transmission has been
     achieved. This is done by iteratively applying correction steps, calculated
     based on the pseudo-inverse two-turn trajectory response matrix `Mplus`.  The
-    trajectory in the first turn is corrected towards the reference orbit `R0`,
+    trajectory in the first turn is corrected towards the reference orbit `reference`,
     whereas the trajectory in the second turn is corrected towards the trajectory
     measured in the first turn; this approach seems to be more stable than the
     directly application of the two-turn TRM to the two-turn BPM readings.
@@ -254,11 +247,11 @@ def SCfeedbackRun(SC, Mplus, reference=None, CMords=None, BPMords=None, eps=1e-4
 
     Iteratively applies orbit corrections using the pseudoinverse of the
     trajectory response matrix `Mplus`, until a break-condition specified by one
-    of the 'OPTIONS' is met.
+    of 'eps', 'target' or 'maxsteps' is met.
     The dispersion can be included, thus the rf frequency as a correction
     parameter. If the dispersion is to be included, `Mplus` has to have the size
-    `(length(SC.ORD.CM{1}) + length(SC.ORD.CM{2}) + 1) x length(SC.ORD.BPM)`, otherwise the size
-    `(length(SC.ORD.CM{1}) + length(SC.ORD.CM{2})) x length(SC.ORD.BPM)`, or correspondingly if the CM
+    `(len(SC.ORD.CM[0]) + len(SC.ORD.CM[1]) + 1) x len(SC.ORD.BPM)`, otherwise the size
+    `(len(SC.ORD.CM[0]) + len(SC.ORD.CM[1])) x len(SC.ORD.BPM)`, or correspondingly if the CM
     and/or BPM ordinates for the correction is explicitly given (see options below). `SC.RING` is
     assumed to be a lattice with transmission through all considered turns. This routine will
     also return, if transmission is lost.

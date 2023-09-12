@@ -46,12 +46,12 @@ def set_cavity_setpoints(SC: SimulatedCommissioning,
         Sets the time lag of all cavities registered in SC to zero::
             
             SC = set_cavity_setpoints(SC, ords=SC.ORD.Cavity,
-                                      setpoint=0, param='TimeLag')
+                                      setpoints=0, param='TimeLag')
         
         Adds 1kHz to the frequency of the first cavity::
             
             SC = set_cavity_setpoints(SC, ords=SC.ORD.Cavity(1),
-                                      setpoint=1E3, param='Frequency',
+                                      setpoints=1E3, param='Frequency',
                                       method='add')
     
     """
@@ -108,7 +108,7 @@ def set_cm_setpoints(SC: SimulatedCommissioning,
     """
     Sets dipole corrector magnets to different setpoints
 
-    Sets horizontal or vertical CMs as specified in `CMords` and `nDim`, respectively, to `setpoints`
+    Sets horizontal or vertical CMs as specified in `ords` and `skewness`, respectively, to `setpoints`
     [rad] and updates the magnetic fields. If the corresponding setpoint exceeds the CM limit
     specified in the corresponding lattice field `CMlimit`, the CM is clipped to that value
     and a warning is being printed (to switch off, use `warning('off','SC:CM1'))`. Positive setpoints
@@ -132,12 +132,12 @@ def set_cm_setpoints(SC: SimulatedCommissioning,
     Examples:
         Set all registered horizontal CMs to zero::
 
-            SC = SCsetCMs2SetPoints(SC, ords=SC.ORD.CM[0],
+            SC = set_cm_setpoints(SC, ords=SC.ORD.CM[0],
                                     skewness=False, setpoints=0)
 
         Add 10urad to the fourth registered vertical CM::
 
-            SC = SCsetCMs2SetPoints(SC, ords=SC.ORD.CM[1][4],
+            SC = set_cm_setpoints(SC, ords=SC.ORD.CM[1][4],
                                     setpoints=1E-5, skewness=True,
                                     method='add');
 
@@ -171,7 +171,7 @@ def set_magnet_setpoints(SC: SimulatedCommissioning,
     """
     Sets magnets to setpoints
 
-    Sets magnets (except CMs) as specified in `MAGords` to `setpoints` while `order` and `type` defines
+    Sets magnets (except CMs) as specified in `ords` to `setpoints` while `order` and `skewness` defines
     which field entry should be used (see below). The setpoints may be given relative to their nominal
     value or in absolute terms. If the considered quadrupole is a combined function magnet with
     non-zero bending angle and the kick compensation flag is switched on, the appropriate bending
