@@ -115,14 +115,16 @@ def switch_cavity_and_radiation(ring: Lattice, *args: str) -> Lattice:  # TODO s
     Args:
         ring:
             AT lattice, for example SC.RING
-        *args:
+        "radiationoff": turn OFF radiation.  Priority is given to the *OFF modes.
+        "radiationon": turn ON radiation.  Priority is given to the *OFF modes.
+        "cavityoff": turn OFF cavity.  Priority is given to the *OFF modes.
+        "cavityon" : turn ON cavity.  Priority is given to the *OFF modes.
 
     Returns:
-        RING:
+        ring:
             The modified base AT structure lattice.
 
     Examples:
-
         Switch cavities and radiation in `SC.RING` off.::
 
             SC.RING = switch_cavity_and_radiation(SC.RING, 'cavityoff', 'radiationoff')
