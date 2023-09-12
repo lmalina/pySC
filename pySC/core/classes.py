@@ -33,6 +33,33 @@ class DotDict(dict):
 
 
 class Injection:
+    """
+    Define injection parameters for "pySC"
+
+    properties of this class are:
+        beamLostAt:
+            (default=1) Relative amount of partcles which may be lost before BPM reading is NaN
+        Z0ideal:
+            (default=numpy.zeros(6)) Design injected trajectory
+        Z0:
+            (default=numpy.zeros(6)) Injetced trajectory
+        beamSize:
+            (default=numpy.zeros((6,6))) Injected bunch beam size
+        randomInjectionZ:
+             (default=numpy.zeros((6,6)))  Injected beam random trajectory jitter
+        nParticles:
+            (default=1) Number of particles per bunch
+        nTurns:
+            (default=1) Number of turns for tracking
+        nShots:
+            (default=1) Number of injections for averaging BPM reading
+        trackMode:
+            (default='TBT') Tracking mode can be one of:
+                TBT (Turn By Turn),
+                ORB (Closed Orbit),
+                PORB (pseudo Closed Orbit) turn-by-turn tracking with trajectories averaged over the turns
+
+    """
     def __init__(self):
         self.beamLostAt: float = 1.0
         self.Z0ideal: ndarray = np.zeros(6)
