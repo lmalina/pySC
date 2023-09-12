@@ -146,6 +146,20 @@ def SCgetModelDispersion(SC, BPMords, CAVords, trackMode='ORB', Z0=np.zeros(6), 
 
 
 def SCgetModelRING(SC: SimulatedCommissioning, includeAperture: bool =False) -> Lattice:
+    """
+    Returns a model lattice based on current setpoints
+
+    This function calculates a model lattice based on the setpoints of `SC.RING`. Misalignments,
+    lattice errors and dipole fields are excluded.
+
+    Args:
+        SC: SimulatedCommissioning class instance
+        includeAperture: (default=False) If true, the returned model ring includes the aperture
+
+    Returns:
+        The idealised RING structure
+
+    """
     ring = SC.IDEALRING.deepcopy()
     for ord in range(len(SC.RING)):
         if hasattr(SC.RING[ord], 'SetPointA') and hasattr(SC.RING[ord], 'SetPointB'):
