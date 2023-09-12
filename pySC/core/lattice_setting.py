@@ -105,6 +105,29 @@ def set_magnet_setpoints(SC: SimulatedCommissioning,
 
 
 def switch_cavity_and_radiation(ring: Lattice, *args: str) -> Lattice:  # TODO some at methods do that?
+    """
+    switch cavity / radiation to on / off
+
+    Depending on `mode` switch_cavity_and_radiation switches the cavities / the radiation in `RING` on or off.
+    Possible `mode`s are "radiationoff", "radiationon", "cavityoff", "cavityon".
+    Multiple modes can be specified.
+
+    Args:
+        ring:
+            AT lattice, for example SC.RING
+        *args:
+
+    Returns:
+        RING:
+            The modified base AT structure lattice.
+
+    Examples:
+
+        Switch cavities and radiation in `SC.RING` off.::
+
+            SC.RING = switch_cavity_and_radiation(SC.RING, 'cavityoff', 'radiationoff')
+    """
+
     valid_args = ('radiationoff', 'radiationon', 'cavityoff', 'cavityon')
     if invalid_args := [arg for arg in args if arg not in valid_args]:
         raise ValueError(f"Unknown arguments found: {invalid_args}"
