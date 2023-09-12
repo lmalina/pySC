@@ -45,6 +45,22 @@ class SimulatedCommissioning:
         >>> SC.apply_errors()
         >>> SC.update
 
+        The properties of the class are:
+            RING:
+                the AT ring lattice
+            IDEALRING:
+                the ideal AT ring lattice
+            INJ:
+                Class for definition of injection properties.
+                See Also *pySC.core.classes.Injection*
+            SIG:
+                Class to store the error sigmas of errors.
+                This parameter is set via *SC.register_magnets*, *SC.register_bpms*, *SC.register_cavities*
+            ORD:
+                Class to store the index in the lattice of elements concerned by errors
+                This parameter is set via *SC.register_magnets*, *SC.register_bpms*, *SC.register_cavities*
+            plot:
+                (default=False) a boolean flag to trigger plots
     """
     def __init__(self, ring: Lattice):
         self.RING: Lattice = ring.deepcopy()
@@ -207,12 +223,16 @@ class SimulatedCommissioning:
                 Setpoints for the `PolynomA` fields.
             CalErrorB:
                 Calibration error of the `PolynomB` fields wrt. the corresponding setpoints.
+                Each element of the numpy.array is the error for the corresponding element in 'PolynomB'
             CalErrorA:
                 Calibration error of the `PolynomA` fields wrt. the corresponding setpoints.
+                Each element of the numpy.array is the error for the corresponding element in 'PolynomA'
             PolynomBOffset (optional):
                 Offset error of the `PolynomB` fields wrt. the corresponding setpoints.
+                Each element of the numpy.array is the error for the corresponding element in 'PolynomB'
             PolynomAOffset (optional):
                 Offset error of the `PolynomA` fields wrt. the corresponding setpoints.
+                Each element of the numpy.array is the error for the corresponding element in 'PolynomA'
             MagnetOffset:
                 3 element array of horizontal, vertical and longitudinal magnet offsets (wrt. the support structure).
             SupportOffset:
