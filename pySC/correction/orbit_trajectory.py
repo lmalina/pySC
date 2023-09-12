@@ -54,17 +54,14 @@ def SCfeedbackFirstTurn(SC, Mplus, reference=None, CMords=None, BPMords=None,
         wiggle_steps: Number of wiggle steps to perform, before incresing the number. (default = 64)
         wiggle_range: Range ([min,max] in rad) within which to wiggle the CMs. (default = (500E-6, 1000E-6))
 
-    Return type:
-        SC:
-            SC-structure with corrected `SC.RING`.
-        ERROR:
-            Error value.
-            `0` = All fine.
-            `1` = 'maxsteps' was reached, without producing full transmission.
-            `2` = No BPM readings to begin with.
+    Returns:
+
+        SC-structure with corrected `SC.RING`
+
+        Error value. `0` = All fine.
 
     See Also:
-        *SCgetPinv*, *SCfeedbackRun*, *SCfeedbackStitch*, *SCfeedbackBalance*, *SCgetBPMreading*, *SCsetCMs2SetPoints*
+        *SCgetPinv*, *SCfeedbackRun*, *SCfeedbackStitch*, *SCfeedbackBalance*, *bpm_reading*
 
     """
     LOGGER.debug('SCfeedbackFirstTurn: Start')
@@ -99,6 +96,45 @@ def SCfeedbackFirstTurn(SC, Mplus, reference=None, CMords=None, BPMords=None,
 
 
 def SCfeedbackStitch(SC, Mplus, reference=None, CMords=None, BPMords=None, nBPMs=4, maxsteps=30, nRepro=3, wiggle_steps=32, wiggle_range=(500E-6, 1000E-6)):
+    """
+
+    Achieves 2-turn transmission
+
+    The purpose of this function is to go from 1-turn transmission to 2-turn
+    transmission. This is done by applying orbit correction based on the pseudo
+    inverse trajectory response matrix 'Mplus' applied to the first BPMs in
+    the 'SC.RING'. The reading of the BPMs in the second turn is corrected
+    towards the reading of these BPMs in the first turn. This approach has been
+    seen to be more stable than the direct application of the two-turn inverse
+    response matrix to the two-turn BPM data.
+
+    Args:
+        SC: SC base structure.
+        Mplus: Pseudo-inverse trajectory-response matrix.
+        reference: (None) target orbit in the format `[x_1 ... x_n y_1 ...y_n]`, where
+                   [x_i,y_i]` is the target position at the i-th BPM.
+        CMords: List of CM ordinates to be used for correction (SC.ORD.CM)
+        BPMords: List of BPM ordinates at which the reading should be evaluated (SC.ORD.BPM)
+        maxsteps: break, if this number of correction steps have been performed (default = 100)
+        nRepro: (default 3)
+        wiggle_steps: Number of wiggle steps to perform, before incresing the number. (default = 64)
+        wiggle_range: Range ([min,max] in rad) within which to wiggle the CMs. (default = (500E-6, 1000E-6))
+
+    Returns:
+        SC-structure with corrected `SC.RING`.
+
+    Examples:
+        Calculate the 2-turn response matrix and get the pseudo inverse using a Tikhonov regularization
+        parameter of 10. Switch the injection pattern to 2 turns and apply the stitching using the first
+        three BPMs, a maximum of 20 steps and print debug information::
+
+            RM2 = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, nTurns=2)
+            Minv2 = SCgetPinv(RM2, alpha=10)
+            SC.INJ.nTurns = 2;
+            SC.INJ.nTurns = 2
+            SC = SCfeedbackStitch(SC, Minv2, nBPMs=3, maxsteps=20)
+
+    """
     LOGGER.debug('SCfeedbackStitch: Start')
     if SC.INJ.nTurns != 2:
         raise ValueError("Stitching works only with two turns.")
@@ -148,6 +184,34 @@ def SCfeedbackStitch(SC, Mplus, reference=None, CMords=None, BPMords=None, nBPMs
 
 
 def SCfeedbackBalance(SC, Mplus, reference=None, CMords=None, BPMords=None, eps=1e-4, maxsteps=10, nRepro=3):
+    """
+    balance two-turn BPM readings
+
+    Generates a period-1 closed orbit, after two-turn transmission has been
+    achieved. This is done by iteratively applying correction steps, calculated
+    based on the pseudo-inverse two-turn trajectory response matrix `Mplus`.  The
+    trajectory in the first turn is corrected towards the reference orbit `R0`,
+    whereas the trajectory in the second turn is corrected towards the trajectory
+    measured in the first turn; this approach seems to be more stable than the
+    directly application of the two-turn TRM to the two-turn BPM readings.
+    It converges to a state where BPM readings in both turns are very similar,
+    indicating a period-1 closed orbit.
+
+    Args:
+        SC: SC base structure.
+        Mplus: Pseudo-inverse trajectory-response matrix.
+        reference: (None) target orbit in the format `[x_1 ... x_n y_1 ...y_n]`, where
+                   [x_i,y_i]` is the target position at the i-th BPM.
+        CMords: List of CM ordinates to be used for correction (SC.ORD.CM)
+        BPMords: List of BPM ordinates at which the reading should be evaluated (SC.ORD.BPM)
+        maxsteps: break, if this number of correction steps have been performed (default = 100)
+        nRepro: (default 3)
+        eps: break, if the coefficient of variation of the RMS BPM reading is below this value
+
+    Returns:
+        SC-structure with corrected `SC.RING`
+
+    """
     LOGGER.debug('SCfeedbackBalance: Start')
     if SC.INJ.nTurns != 2:
         raise ValueError("Balancing works only with two turns.")
@@ -185,6 +249,52 @@ def SCfeedbackBalance(SC, Mplus, reference=None, CMords=None, BPMords=None, eps=
 
 
 def SCfeedbackRun(SC, Mplus, reference=None, CMords=None, BPMords=None, eps=1e-4, target=0, maxsteps=30, nRepro=3, scaleDisp=0):
+    """
+    iterative orbit correction
+
+    Iteratively applies orbit corrections using the pseudoinverse of the
+    trajectory response matrix `Mplus`, until a break-condition specified by one
+    of the 'OPTIONS' is met.
+    The dispersion can be included, thus the rf frequency as a correction
+    parameter. If the dispersion is to be included, `Mplus` has to have the size
+    `(length(SC.ORD.CM{1}) + length(SC.ORD.CM{2}) + 1) x length(SC.ORD.BPM)`, otherwise the size
+    `(length(SC.ORD.CM{1}) + length(SC.ORD.CM{2})) x length(SC.ORD.BPM)`, or correspondingly if the CM
+    and/or BPM ordinates for the correction is explicitly given (see options below). `SC.RING` is
+    assumed to be a lattice with transmission through all considered turns. This routine will
+    also return, if transmission is lost.
+
+    Args:
+        SC: SC base structure.
+        Mplus: Pseudo-inverse trajectory-response matrix.
+        reference: (None) target orbit in the format `[x_1 ... x_n y_1 ...y_n]`, where
+                   [x_i,y_i]` is the target position at the i-th BPM.
+        CMords: List of CM ordinates to be used for correction (SC.ORD.CM)
+        BPMords: List of BPM ordinates at which the reading should be evaluated (SC.ORD.BPM)
+        maxsteps: break, if this number of correction steps have been performed (default = 100)
+        nRepro: (default 3)
+        eps: break, if the coefficient of variation of the RMS BPM reading is below this value
+        target: (default =0 ) break, if the RMS BPM reading reaches this value
+        scaleDisp: (default =0 ) Scaling factor for and flag indicating if the dispersion is included in the response matrix
+
+    Returns:
+        SC-structure with corrected `SC.RING`
+
+    Examples:
+
+        Switch to orbit mode, get the model response matrix and dispersion. Calculate the psudo-inverse
+        while scaling the dispersion by 1E7 and using a Tikhonov regularization parameter of 10.
+        Finally, apply  and apply orbit feedback including dispersion::
+
+            SC.INJ.trackMode = 'ORB'
+            MCO = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, trackMode='ORB')
+            eta = SCgetModelDispersion(SC, SC.ORD.BPM, SC.ORD.Cavity,
+                                       trackMode='ORB', Z0=np.zeros(6),
+                                       nTurns=1, rfStep=1E3,
+                                       useIdealRing=True)
+            MinvCO = SCgetPinv(np.column_stack((MCO, 1E8 * eta)), alpha=10)
+            SC = SCfeedbackRun(SC, MinvCO, target=0, maxsteps=50, scaleDisp=1E8)
+
+    """
     LOGGER.debug('SCfeedbackRun: Start')
     BPMords, CMords, reference = _check_ords(SC, Mplus, reference, BPMords, CMords)
     bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords)  # Inject ...

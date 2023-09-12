@@ -94,6 +94,35 @@ def orbpass(RING, Z0,  nTurns, REFPTS):
 
 
 def SCgetModelDispersion(SC, BPMords, CAVords, trackMode='ORB', Z0=np.zeros(6), nTurns=1, rfStep=1E3, useIdealRing=True):
+    """
+    Calculates the lattice dispersion based on current setpoints
+
+    Calculates the dispersion at the ordinates `BPMords` by changing the frequency of the rf cavities
+    specified in `CAVords` using the current magnet setpoints without any roll/alignment/calibration
+    errors. Optionally the design lattice is used.
+
+    Args:
+        SC:
+            SimulatedCommissioning class instance
+        BPMords:
+            Index of BPMs in SC.RING (SC.ORD.BPM)
+        CAVords:
+            Index of RF Cavities in SC.RING (SC.ORD.CM)
+        trackMode:
+            (default = 'TBT') If `TBT` the turn-by-turn RM is calculated.
+            If `ORB` the orbit RM is calculated, using `at.findorbit6`
+        Z0:
+            (default = numpy.zeros(6)) Initial condition for tracking.
+            In `ORB`-mode this is used as the initial guess for `findorbit6`.
+        nTurns:
+            (default = 1) Number of turns over which to determine the TBT-RM. Ignored if in `ORB`-mode.
+        rfStep: (default = 1e3) Change of rf frequency [Hz]
+        useIdealRing: (default=False) If true, the design lattice specified in `SC.IDEALRING` is used.
+
+    Returns:
+        The dispersion given in [m/Hz].
+
+    """
     LOGGER.info('Calculating model dispersion')
     track_methods = dict(TBT=atpass, ORB=orbpass)
     if trackMode not in track_methods.keys():
