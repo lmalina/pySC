@@ -13,7 +13,7 @@ def SCgetModelRM(SC, BPMords, CMords, trackMode='TBT', Z0=np.zeros(6), nTurns=1,
     """
     Determine the lattice response matrix based on current setpoints.
 
-    SCgetModelRM calculates the reponse matrix `RM` with the BPMs at the ordinates `BPMords`
+    SCgetModelRM calculates the response matrix `RM` with the BPMs at the ordinates `BPMords`
     and corrector magnets at ordinates `CMords` using the current magnet setpoints without any
     roll/alignment/calibration errors. `CMords` is a 2-cell array containing the two lists for the
     horizontal and vertical CMs respectively.
@@ -38,12 +38,11 @@ def SCgetModelRM(SC, BPMords, CMords, trackMode='TBT', Z0=np.zeros(6), nTurns=1,
             (default = 1e-5) Kick [rad] to be added when numerically determining the partial derivatives.
         useIdealRing:
             (default = True) If True, the design lattice specified in `SC.IDEALRING` is used.
+            If False, the model lattice is used SCgetModelRING(SC).
 
     Return type:
         RM:
             The response matrix given in [m/rad].
-        RING:
-            The idealised RING structure, which was used to determine the RM.
 
     Examples:
         Compute a response matrix::

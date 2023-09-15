@@ -55,11 +55,11 @@ class SimulatedCommissioning:
             See Also *pySC.core.classes.Injection*
         SIG:
             Class to store the error sigma's.
-            This parameter is set via *SC.register_magnets*, *SC.register_bpms*, *SC.register_cavities*
+            This parameter is set via *register_magnets*, *register_bpms*, *register_cavities*, *register_supports*
             See Also *pySC.core.classes.Sigmas*
         ORD:
             Class to store the index in the lattice of elements concerned by errors
-            This parameter is set via *SC.register_magnets*, *SC.register_bpms*, *SC.register_cavities*
+            This parameter is set via *register_magnets*, *register_bpms*, *register_cavities*, *register_supports*
             See Also *pySC.core.classes.Indices*
         plot:
             (default=False) a boolean flag to trigger plots
@@ -77,8 +77,8 @@ class SimulatedCommissioning:
         self.plot: bool = False
 
     def register_bpms(self, ords: ndarray, **kwargs):
-        """registers BPMs specified by the locations `ords` (element indices in the lattice) in the `SC` structure and
-        initializes all required fields in the lattice elements. The ordinates of all registered BPMs are stored in
+        """registers BPMs specified by the `ords` (element indices in the lattice) in the `SC` class instance
+        and initializes all required fields in the lattice elements. The ordinates of all registered BPMs are stored in
         `SC.ORD.BPM`.
 
         Args:
@@ -94,12 +94,8 @@ class SimulatedCommissioning:
                 2 elements array of hor./ver. BPM calibration errors uncertainties (sigmas)
             Offset:
                 2 elements array of individual hor./ver. BPM offsets uncertainties (sigmas)
-            SupportOffset:
-                2 elements array of hor./ver. BPM offsets which result from the corresponding girder offset at the location of the BPMs, see *SCupdateSupport*.
             Roll:
                 BPM roll around z-axis w.r.t. the support structure
-            SupportRoll:
-                BPM roll around z-axis which results from the corresponding support structure roll at the location of the BPMs, see *SCupdateSupport*.
             SumError:
                 Calibration error of the sum signal. The sum signal is used to determine the beam loss location with a cutoff as defined `SC.INJ.beamLostAt`.
 
@@ -215,53 +211,33 @@ class SimulatedCommissioning:
             **kwargs: any of the fields listed below
 
         Keyword Args:
-            NomPolynomB:
-                Nominal (design) `PolynomB` fields.
-            NomPolynomA:
-                Nominal (design) `PolynomA` fields.
-            SetPointB:
-                Setpoints for the `PolynomB` fields.
-            SetPointA:
-                Setpoints for the `PolynomA` fields.
             CalErrorB:
                 Calibration error of the `PolynomB` fields wrt. the corresponding setpoints.
                 Each element of the numpy.array is the error for the corresponding element in 'PolynomB'
             CalErrorA:
                 Calibration error of the `PolynomA` fields wrt. the corresponding setpoints.
                 Each element of the numpy.array is the error for the corresponding element in 'PolynomA'
-            PolynomBOffset (optional):
-                Offset error of the `PolynomB` fields wrt. the corresponding setpoints.
-                Each element of the numpy.array is the error for the corresponding element in 'PolynomB'
-            PolynomAOffset (optional):
-                Offset error of the `PolynomA` fields wrt. the corresponding setpoints.
-                Each element of the numpy.array is the error for the corresponding element in 'PolynomA'
             MagnetOffset:
                 3 element array of horizontal, vertical and longitudinal magnet offsets (wrt. the support structure).
-            SupportOffset:
-                3 element array of horizontal, vertical and longitudinal  support structure offsets (if support structure is
-                registered).
             MagnetRoll:
                 3 element array [az,ax,ay] defineing magnet roll (around z-axis), pitch (roll around x-axis) and yaw (roll around
                 y-axis); all wrt. the support structure.
-            SupportRoll:
-                3 element array [az,ax,ay] defineing support structure roll (around z-axis), pitch (roll around x-axis) and yaw (roll
-                around y-axis); all wrt. the design coordinate frame (if support structure is registered).
-            BendingAngleError (optional):
+            BendingAngleError :
                 Error of the main bending field (corresponding uncertainty defined with `BendingAngle`).
-            CF (optional):
+            CF :
                 Flag identifying the corresponding magnet as a combined function dipole/quadrupole. That implies that the
                 bending angle depends on the quadrupole setpoint. A variation from the design value will therefore result in a
                 bending angle error which is added to the `PolynomB[0]` field.
-            HCM (optional):
+            HCM :
                 Flag identifying the corresponding magnet as a horizontal corrector magnet. The corresponding value is the
                 horizontal CM limit and stored in `SC.RING[ords].CMlimit[0]`. E.g. set limit to `Inf`.
-            VCM (optional):
+            VCM :
                 Flag identifying the corresponding magnet as a vertical corrector magnet. The corresponding value is the
                 vertical CM limit and stored in `SC.RING[ords].CMlimit[1]`. E.g. set limit to `Inf`.
-            SkewQuad (optional):
+            SkewQuad :
                 Flag identifying the corresponding magnet as a skew quadrupole corrector magnet. The corresponding value
                 is the skew quadrupole limit and stored in `SC.RING[ords].SkewLimit`. E.g. set limit to `Inf`.
-            MasterOf (optional):
+            MasterOf :
                 Array of ordinates to which the corresponding magnet acts as master (split magnets).
                 The magnets at ordinates `ords` are identified as a split magnets each with `N` childs as specified in
                 the corresponding value which must be a [`N` x `length(ords)`] array.

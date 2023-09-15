@@ -18,7 +18,7 @@ def SCfeedbackFirstTurn(SC, Mplus, reference=None, CMords=None, BPMords=None,
                         maxsteps=100, nRepro=3, wiggle_after=20, wiggle_steps=32,
                         wiggle_range=(500E-6, 1000E-6)):
     """
-    achieves one-turn transmission
+    Achieves one-turn transmission
 
     Achieves a first turn in `SC.RING`.  This algorithm is based on the idea that
     repeated trajectory corrections calculated via a suitably regularized
@@ -42,7 +42,7 @@ def SCfeedbackFirstTurn(SC, Mplus, reference=None, CMords=None, BPMords=None,
     resumed.
 
     Args:
-        SC: SC base structure.
+        SC: SimulatedCommissioning class instance.
         Mplus: Pseudo-inverse trajectory-response matrix.
         reference: (None) target orbit in the format `[x_1 ... x_n y_1 ...y_n]`, where
                    [x_i,y_i]` is the target position at the i-th BPM.
@@ -102,7 +102,7 @@ def SCfeedbackStitch(SC, Mplus, reference=None, CMords=None, BPMords=None, nBPMs
     response matrix to the two-turn BPM data.
 
     Args:
-        SC: SC base structure.
+        SC: SimulatedCommissioning class instance.
         Mplus: Pseudo-inverse trajectory-response matrix.
         reference: (None) target orbit in the format `[x_1 ... x_n y_1 ...y_n]`, where
                    [x_i,y_i]` is the target position at the i-th BPM.
@@ -119,11 +119,10 @@ def SCfeedbackStitch(SC, Mplus, reference=None, CMords=None, BPMords=None, nBPMs
     Examples:
         Calculate the 2-turn response matrix and get the pseudo inverse using a Tikhonov regularization
         parameter of 10. Switch the injection pattern to 2 turns and apply the stitching using the first
-        three BPMs, a maximum of 20 steps and print debug information::
+        three BPMs, for a maximum of 20 steps::
 
             RM2 = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, nTurns=2)
             Minv2 = SCgetPinv(RM2, alpha=10)
-            SC.INJ.nTurns = 2
             SC.INJ.nTurns = 2
             SC = SCfeedbackStitch(SC, Minv2, nBPMs=3, maxsteps=20)
 
@@ -191,7 +190,7 @@ def SCfeedbackBalance(SC, Mplus, reference=None, CMords=None, BPMords=None, eps=
     indicating a period-1 closed orbit.
 
     Args:
-        SC: SC base structure.
+        SC: SimulatedCommissioning class instance.
         Mplus: Pseudo-inverse trajectory-response matrix.
         reference: (None) target orbit in the format `[x_1 ... x_n y_1 ...y_n]`, where
                    [x_i,y_i]` is the target position at the i-th BPM.
@@ -250,14 +249,14 @@ def SCfeedbackRun(SC, Mplus, reference=None, CMords=None, BPMords=None, eps=1e-4
     of 'eps', 'target' or 'maxsteps' is met.
     The dispersion can be included, thus the rf frequency as a correction
     parameter. If the dispersion is to be included, `Mplus` has to have the size
-    `(len(SC.ORD.CM[0]) + len(SC.ORD.CM[1]) + 1) x len(SC.ORD.BPM)`, otherwise the size
-    `(len(SC.ORD.CM[0]) + len(SC.ORD.CM[1])) x len(SC.ORD.BPM)`, or correspondingly if the CM
+    `(len(SC.ORD.HCM) + len(SC.ORD.VCM) + 1) x len(SC.ORD.BPM)`, otherwise the size
+    `(len(SC.ORD.HCM) + len(SC.ORD.VCM)) x len(SC.ORD.BPM)`, or correspondingly if the CM
     and/or BPM ordinates for the correction is explicitly given (see options below). `SC.RING` is
     assumed to be a lattice with transmission through all considered turns. This routine will
-    also return, if transmission is lost.
+    also return, if transmission is lost (RuntimeError).
 
     Args:
-        SC: SC base structure.
+        SC: SimulatedCommissioning class instance.
         Mplus: Pseudo-inverse trajectory-response matrix.
         reference: (None) target orbit in the format `[x_1 ... x_n y_1 ...y_n]`, where
                    [x_i,y_i]` is the target position at the i-th BPM.

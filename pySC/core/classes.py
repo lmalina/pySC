@@ -42,11 +42,13 @@ class Injection:
         Z0ideal:
             (default=numpy.zeros(6)) Design injected trajectory
         Z0:
-            (default=numpy.zeros(6)) Injetced trajectory
+            (default=numpy.zeros(6)) Injected trajectory
         beamSize:
             (default=numpy.zeros((6,6))) Injected bunch beam size
         randomInjectionZ:
-             (default=numpy.zeros((6,6)))  Injected beam random trajectory jitter
+             (default=numpy.zeros(6))  Injected beam random trajectory jitter
+        staticInjectionZ:
+             (default=numpy.zeros(6))  Injected beam static trajectory offset
         nParticles:
             (default=1) Number of particles per bunch
         nTurns:
