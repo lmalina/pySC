@@ -63,7 +63,7 @@ def test_example(at_lattice):
     sc.RING[sc.ORD.Magnet[50]].EApertures = np.array([6E-3, 3E-3])
 
     sc.apply_errors()
-
+    sc.verify_structure()
     sc.RING = switch_cavity_and_radiation(sc.RING, 'cavityoff')
     sext_ords = SCgetOrds(sc.RING, 'SF|SD')
     sc.set_magnet_setpoints(sext_ords, 0.0, False, 2, method='abs')

@@ -106,7 +106,7 @@ if __name__ == "__main__":
 
     plot_lattice(SC, s_range=np.array([0, 20]))
     SC.apply_errors()
-    # SC.verify_structure()
+    SC.verify_structure()
     plot_support(SC)
 
     SC.RING = switch_cavity_and_radiation(SC.RING, 'cavityoff')
