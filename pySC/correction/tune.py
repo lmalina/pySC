@@ -39,10 +39,6 @@ def tune_scan(SC, quad_ords, rel_quad_changes, target=1, n_points=60, do_plot=Fa
 		Relative setpoints which satisfied the target condition if reached, or the values which resulted in best transmission
 		Number of achieved turns
 		Turn-by-turn particle loss
-	Error:
-		`0`: Beam transmission target reached.
-		`1`: Beam transmission or number of turns increased, target not reached.
-		`2`: Unable to increase beam transmission.
 
 	see also: *bpm_reading*, *generate_bunches*
 	"""
