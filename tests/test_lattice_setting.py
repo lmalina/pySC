@@ -61,12 +61,12 @@ def test_check_input_and_setpoints():
         assert_equal(setps1d, wanted_setpoints)
     # check also empty ord
     wanted_ord, wanted_setpoint = np.array([], dtype=int), np.array([])
-    ord1d, setp1d = _check_input_and_setpoints(SETTING_REL, [], 1.0)
+    ord1d, setp1d = check_input_and_setpoints(SETTING_REL, [], 1.0)
     assert_equal(ord1d, wanted_ord)
     assert_equal(setp1d, wanted_setpoint)
 
 def test_set_magnet_setpoints_empty(unit_sc):
-    unit_sc = set_magnet_setpoints(unit_sc, [], 1.0, False, 1, method=SETTING_REL)
+    unit_sc.set_magnet_setpoints([], 1.0, False, 1, method=SETTING_REL)
 
 
 def test_set_magnet_setpoints(unit_sc):

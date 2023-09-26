@@ -9,7 +9,6 @@ from pySC.core.constants import TRACK_TBT, NUM_TO_AB, SETTING_REL, SETTING_ABS
 from pySC.utils.stats import weighted_mean, weighted_error, effective_sample_size, weights_from_errors
 from pySC.utils.at_wrapper import atgetfieldvalues, findspos
 from pySC.correction.orbit_trajectory import SCfeedbackRun
-from pySC.core.lattice_setting import set_cm_setpoints, set_magnet_setpoints, get_cm_setpoints
 
 
 LOGGER = logging_tools.get_logger(__name__)
@@ -40,10 +39,10 @@ def trajectory_bba(SC, bpm_ords, mag_ords, **kwargs):
             bpm_ind = np.where(bpm_ords[n_dim, j_bpm] == SC.ORD.BPM)[0][0]
             m_ord = mag_ords[n_dim, j_bpm]
             set_ind = np.argmax(bpm_ranges[:, bpm_ind])
-            SC = set_magnet_setpoints(SC, par.q_ord_phase, quads_strengths[set_ind], False, 1, method=SETTING_REL, dipole_compensation=True)
+            SC.set_magnet_setpoints(par.q_ord_phase, quads_strengths[set_ind], False, 1, method=SETTING_REL, dipole_compensation=True)
             bpm_pos, downstream_trajectories = _data_measurement_tbt(SC, m_ord, bpm_ind, j_bpm, n_dim, scalings[set_ind], par)
             if len(q0):
-                SC = set_magnet_setpoints(SC, par.q_ord_phase, q0, False, 1, method=SETTING_ABS, dipole_compensation=True)
+                SC.set_magnet_setpoints(par.q_ord_phase, q0, False, 1, method=SETTING_ABS, dipole_compensation=True)
             bba_offsets[n_dim, j_bpm], bba_offset_errors[n_dim, j_bpm] = _data_evaluation(SC, bpm_pos, downstream_trajectories, par.magnet_strengths[n_dim, j_bpm], n_dim, m_ord, par)
     SC = apply_bpm_offsets(SC, bpm_ords, bba_offsets, bba_offset_errors)
     if par.plot_results:
@@ -249,8 +248,8 @@ def _data_measurement_tbt(SC, m_ord, bpm_ind, j_bpm, n_dim, scaling, par):
     bpm_pos = np.full((par.n_steps, len(par.magnet_strengths[n_dim, j_bpm])), np.nan)
     init_setpoint = getattr(SC.RING[m_ord], f"SetPoint{NUM_TO_AB[int(par.skewness)]}")[par.magnet_order]
     for n_q, setpoint_q in enumerate(par.magnet_strengths[n_dim, j_bpm]):
-        SC = set_magnet_setpoints(SC, m_ord, setpoint_q, par.skewness, par.magnet_order,
-                                  method=par.setpoint_method, dipole_compensation=par.dipole_compensation)
+        SC.set_magnet_setpoints(m_ord, setpoint_q, par.skewness, par.magnet_order,
+                                method=par.setpoint_method, dipole_compensation=par.dipole_compensation)
         for step in range(par.n_steps):
             SC.INJ.Z0[2 * n_dim:2 * n_dim + 2] = initial_z0[2 * n_dim:2 * n_dim + 2] + kick_vec[:, step]
             bpm_readings = bpm_reading(SC)[0]
@@ -258,8 +257,8 @@ def _data_measurement_tbt(SC, m_ord, bpm_ind, j_bpm, n_dim, scaling, par):
             trajectories[step, n_q, :] = bpm_readings[meas_dim, bpm_ind:(bpm_ind + par.num_downstream_bpms)]
 
     SC.INJ.Z0 = initial_z0
-    SC = set_magnet_setpoints(SC, m_ord, init_setpoint, par.skewness, par.magnet_order,
-                              method=SETTING_ABS, dipole_compensation=par.dipole_compensation)
+    SC.set_magnet_setpoints(m_ord, init_setpoint, par.skewness, par.magnet_order,
+                            method=SETTING_ABS, dipole_compensation=par.dipole_compensation)
     return bpm_pos, trajectories
 
 
@@ -269,10 +268,10 @@ def _phase_advance_injection_scan(SC, n_dim, last_bpm_ind, par):
     bpm_ranges = np.zeros((n_setpoints, len(SC.ORD.BPM)))
     scalings = np.zeros(n_setpoints)
     for i, q_scale in enumerate(par.q_ord_setpoints):
-        SC = set_magnet_setpoints(SC, par.q_ord_phase, q_scale, False, 1, method=SETTING_REL, dipole_compensation=True)
+        SC.set_magnet_setpoints(par.q_ord_phase, q_scale, False, 1, method=SETTING_REL, dipole_compensation=True)
         scalings[i], bpm_ranges[i] = _scale_injection_to_reach_bpms(SC, n_dim, last_bpm_ind, par.max_injection_pos_angle)
     if len(q0):
-        SC = set_magnet_setpoints(SC, par.q_ord_phase, q0, False, 1, method=SETTING_ABS, dipole_compensation=True)
+        SC.set_magnet_setpoints(par.q_ord_phase, q0, False, 1, method=SETTING_ABS, dipole_compensation=True)
     return par.q_ord_setpoints, scalings, bpm_ranges
 
 
@@ -316,11 +315,11 @@ def _data_measurement_orb(SC, m_ord, bpm_ind, j_bpm, n_dim, par, cm_ords, cm_vec
     orbits = np.full((n_msteps, len(par.magnet_strengths[n_dim, j_bpm]), len(SC.ORD.BPM)), np.nan)
     bpm_pos = np.full((n_msteps, len(par.magnet_strengths[n_dim, j_bpm])), np.nan)
     for n_q, setpoint_q in enumerate(par.magnet_strengths[n_dim, j_bpm]):
-        SC = set_magnet_setpoints(SC, m_ord, setpoint_q, par.skewness, par.magnet_order, method=par.setpoint_method,
-                                  dipole_compensation=par.dipole_compensation)
+        SC.set_magnet_setpoints(m_ord, setpoint_q, par.skewness, par.magnet_order, method=par.setpoint_method,
+                                dipole_compensation=par.dipole_compensation)
         for step in range(n_msteps):
             for n_d in range(2):
-                SC = set_cm_setpoints(SC, cm_ords[n_d], cm_vec[n_d][step, :], bool(n_d), method=SETTING_ABS)
+                SC.set_cm_setpoints(cm_ords[n_d], cm_vec[n_d][step, :], bool(n_d), method=SETTING_ABS)
             bpm_readings = bpm_reading(SC)[0]
             bpm_pos[step, n_q] = bpm_readings[n_dim, bpm_ind]
             orbits[step, n_q, :] = bpm_readings[meas_dim, :]
@@ -349,8 +348,8 @@ def _get_orbit_bump(SC, cm_ord, bpm_ord, n_dim, par):  # TODO
     cm_vec = []
     factor = np.linspace(-1, 1, par.n_steps)
     for n_dim in range(2):
-        vec0 = get_cm_setpoints(SC, cm_ords[n_dim], skewness=bool(n_dim))
-        vec1 = get_cm_setpoints(CUR, cm_ords[n_dim], skewness=bool(n_dim))
+        vec0 = SC.get_cm_setpoints(cm_ords[n_dim], skewness=bool(n_dim))
+        vec1 = CUR.get_cm_setpoints(cm_ords[n_dim], skewness=bool(n_dim))
         cm_vec.append(vec0 + np.outer(factor, vec0 - vec1))
 
     return cm_ords, cm_vec
