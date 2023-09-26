@@ -26,6 +26,11 @@ def atpass(ring: Lattice, init_pos: ndarray, nturns: int, refpts: ndarray, keep_
                            keep_lattice=keep_lattice)
 
 
+def patpass(ring: Lattice, init_pos: ndarray, nturns: int, refpts: ndarray, keep_lattice: bool = False):
+    return at.patpass(lattice=ring.copy(), r_in=init_pos.copy(), nturns=nturns, refpts=refpts,
+                      keep_lattice=keep_lattice)
+
+
 def atgetfieldvalues(ring: Lattice, refpts: ndarray, attrname: str, index: int = None):
     return at.get_value_refpts(ring, refpts, attrname, index)
 

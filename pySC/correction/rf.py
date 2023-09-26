@@ -10,7 +10,6 @@ from scipy.optimize import curve_fit, fsolve
 
 from pySC.utils.at_wrapper import findorbit6
 from pySC.core.beam import bpm_reading
-from pySC.core.lattice_setting import set_cavity_setpoints
 from pySC.utils import logging_tools
 from pySC.core.constants import SPEED_OF_LIGHT
 
@@ -31,9 +30,9 @@ def correct_rf_phase(SC, cav_ords=None, bpm_ords=None, n_steps=15, plot_results=
     test_vec = lamb * np.linspace(-0.5, 0.5, n_steps)
 
     for step in range(n_steps):
-        SC = set_cavity_setpoints(SC, cav_ords, test_vec[step], 'TimeLag', 'add')
+        SC.set_cavity_setpoints(cav_ords, test_vec[step], 'TimeLag', 'add')
         bpm_shift[step], bpm_shift_err[step], mean_tbt_orbit = _get_tbt_energy_shift(SC, bpm_ords)
-        SC = set_cavity_setpoints(SC, cav_ords, -test_vec[step], 'TimeLag', 'add')
+        SC.set_cavity_setpoints(cav_ords, -test_vec[step], 'TimeLag', 'add')
         if plot_progress:
             _plot_progress((test_vec, bpm_shift, bpm_shift_err), mean_tbt_orbit,  phase=True)
 
@@ -55,7 +54,7 @@ def correct_rf_phase(SC, cav_ords=None, bpm_ords=None, n_steps=15, plot_results=
     if np.isnan(delta_phi):  # TODO does this ever happen?
         raise RuntimeError('RF phase correction unsuccessful: NaN phase')
 
-    SC = set_cavity_setpoints(SC, cav_ords, delta_phi, 'TimeLag', 'add')
+    SC.set_cavity_setpoints(cav_ords, delta_phi, 'TimeLag', 'add')
     LOGGER.info(f'Time lag correction step: {delta_phi[0]:.3f} m\n')
     if plot_results:
         _plot_results((test_vec, bpm_shift, bpm_shift_err), sol, delta_phi, x_scale=360 / lamb, phase=True)
@@ -73,9 +72,9 @@ def correct_rf_frequency(SC, cav_ords=None, bpm_ords=None, n_steps=15, f_range=(
 
     # Main loop
     for step in range(n_steps):
-        SC = set_cavity_setpoints(SC, cav_ords, test_vec[step], 'Frequency', 'add')
+        SC.set_cavity_setpoints(cav_ords, test_vec[step], 'Frequency', 'add')
         bpm_shift[step], bpm_shift_err[step], mean_tbt_orbit = _get_tbt_energy_shift(SC, bpm_ords)
-        SC = set_cavity_setpoints(SC, cav_ords, -test_vec[step], 'Frequency', 'add')
+        SC.set_cavity_setpoints(cav_ords, -test_vec[step], 'Frequency', 'add')
         if plot_progress:
             _plot_progress((test_vec, bpm_shift, bpm_shift_err), mean_tbt_orbit, phase=False)
 
@@ -89,7 +88,7 @@ def correct_rf_frequency(SC, cav_ords=None, bpm_ords=None, n_steps=15, f_range=(
     if np.isnan(delta_f):
         raise RuntimeError('RF frequency correction unsuccessful: NaN frequency')
 
-    SC = set_cavity_setpoints(SC, cav_ords, delta_f, 'Frequency', 'add')
+    SC.set_cavity_setpoints(cav_ords, delta_f, 'Frequency', 'add')
     LOGGER.info(f'Frequency correction step: {1E-3 * delta_f:.2f} kHz')
     sol = lambda x: x * param[0] + param[1]
     if plot_results:

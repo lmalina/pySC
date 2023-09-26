@@ -10,7 +10,6 @@ from matplotlib.gridspec import GridSpec
 from scipy.optimize import fmin
 
 from pySC.core.beam import beam_transmission, plot_transmission
-from pySC.core.lattice_setting import set_magnet_setpoints
 from pySC.utils import logging_tools
 from pySC.utils.at_wrapper import atlinopt
 
@@ -19,6 +18,29 @@ LOGGER = logging_tools.get_logger(__name__)
 
 def tune_scan(SC, quad_ords, rel_quad_changes, target=1, n_points=60, do_plot=False, nParticles=None, nTurns=None,
               full_scan=False):
+    """
+    Varies two quadrupole families to improve beam transmission, on a grid of relative setpoints specified in
+    `rel_quad_changes` in a spiral-like pattern to increase the beam transmission.
+    
+    Args:
+        SC: SimulatedCommissioning instance
+        quad_ords: [1x2] array of quadrupole ordinates {`[1 x NQ1],[1 x NQ2]`}
+        rel_quad_changes: [1x2] cell array of quadrupole setpoints {`[SP1_1,...,SP1_N1],[SP2_1,...,SP2_N2]`} with `N2=N1`
+        target(int, optional): Transmission target at `nTurns`
+        n_points(int, optional): Number of points for the scan
+        nParticles(int, optional): Number of particles used for tracking (for convenience, otherwise `SC.INJ.nParticles` is used)
+        nTurns(int, optional): Number of turns used for tracking (for convenience, otherwise `SC.INJ.nTurns` is used)
+
+        full_scan( bool , optional): If false, the scan finishes as soon as the target is reached
+        do_plot( bool , optional): If true, beam transmission is plotted at every step
+    Returns:
+        Updated SC structure with applied setpoints for maximised beam transmission
+        Relative setpoints which satisfied the target condition if reached, or the values which resulted in best transmission
+        Number of achieved turns
+        Turn-by-turn particle loss
+
+    see also: *bpm_reading*, *generate_bunches*
+    """
     if nParticles is None:
         nParticles = SC.INJ.nParticles
     if nTurns is None:
@@ -32,10 +54,10 @@ def tune_scan(SC, quad_ords, rel_quad_changes, target=1, n_points=60, do_plot=Fa
     ords = np.hstack(quad_ords)
     for q1, q2 in inds.T:
         q_setpoints = np.hstack((np.ones(nq[0]) * rel_quad_changes[0][q1], np.ones(nq[1]) * rel_quad_changes[1][q2]))
-        SC = set_magnet_setpoints(SC, ords, q_setpoints, False, 1, method='rel')
+        SC.set_magnet_setpoints(ords, q_setpoints, False, 1, method='rel')
         max_turns[q1, q2], surviving_fraction = beam_transmission(SC, nParticles=nParticles, nTurns=nTurns)
         transmission[q1, q2, :] = 1 * surviving_fraction
-        SC = set_magnet_setpoints(SC, ords, 1 / q_setpoints, False, 1, method='rel')
+        SC.set_magnet_setpoints(ords, 1 / q_setpoints, False, 1, method='rel')
 
         if do_plot:
             f, ax = plot_scan(transmission[:, :, -1], max_turns, first_quads, rel_quad_changes)
@@ -48,7 +70,7 @@ def tune_scan(SC, quad_ords, rel_quad_changes, target=1, n_points=60, do_plot=Fa
             LOGGER.info(f'Transmission target reached with:\n'
                         f'    {first_quads[0]} SetPoint: {setpoints[0]:.4f}\n'
                         f'    {first_quads[1]} SetPoint: {setpoints[1]:.4f}')
-            SC = set_magnet_setpoints(SC, ords, q_setpoints, False, 1, method='rel')
+            SC.set_magnet_setpoints(ords, q_setpoints, False, 1, method='rel')
             return SC, setpoints, max_turns, transmission
 
     testTrans = np.zeros(n_points)
@@ -71,7 +93,7 @@ def tune_scan(SC, quad_ords, rel_quad_changes, target=1, n_points=60, do_plot=Fa
                        f'    {first_quads[0]} SetPoint: {setpoints[0]:.4f}\n'
                        f'    {first_quads[1]} SetPoint: {setpoints[0]:.4f}')
     q_setpoints = np.hstack((setpoints[0] * np.ones(nq[0]), setpoints[1] * np.ones(nq[1])))
-    SC = set_magnet_setpoints(SC, ords, q_setpoints, False, 1, method='rel')
+    SC.set_magnet_setpoints(ords, q_setpoints, False, 1, method='rel')
     return SC, setpoints, max_turns, transmission
 
 
@@ -118,13 +140,13 @@ def fit_tune(SC, q_ords, target_tune=None, xtol=1E-4, ftol=1E-3, fit_integer=Tru
             SP0[nFam][n] = SC.RING[q_ords[nFam][n]].SetPointB[1]
     fun = lambda x: _fit_tune_fun(SC, q_ords, x, SP0, target_tune, fit_integer)
     sol = fmin(fun, xtol=xtol, ftol=ftol)
-    SC = set_magnet_setpoints(SC, q_ords, sol + SP0, False, 1, method='abs', dipole_compensation=True)
+    SC.set_magnet_setpoints(q_ords, sol + SP0, False, 1, method='abs', dipole_compensation=True)
     LOGGER.debug(f'       Final tune: [{tune(SC, fit_integer)}]\n  Setpoints change: [{sol}]')
     return SC
 
 
 def _fit_tune_fun(SC, q_ords, setpoints, init_setpoints, target, fit_integer):
-    SC = set_magnet_setpoints(SC, q_ords, setpoints + init_setpoints, False, 1, method='abs', dipole_compensation=True)
+    SC.set_magnet_setpoints(q_ords, setpoints + init_setpoints, False, 1, method='abs', dipole_compensation=True)
     nu = tune(SC, fit_integer)
     return np.sqrt(np.mean((nu - target) ** 2))
 
