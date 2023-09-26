@@ -1,5 +1,6 @@
 import numpy as np
 
+from pySC.core.constants import SETTING_METHODS
 from pySC.utils.sc_tools import SCrandnc
 
 
@@ -48,3 +49,13 @@ def s_interpolation(off, s, ord1, f1, ord2, f2):
             off[ind1] = np.interp(C + s[ind1], np.array([s1[n], s2[n] + C]), np.array([f1[n], f2[n]]))
             off[ord1[n]:] = np.interp(s[ord1[n]:], np.array([s1[n], s2[n] + C]), np.array([f1[n], f2[n]]))
     return off
+
+
+def check_input_and_setpoints(method, ords, setpoints):
+    if method not in SETTING_METHODS:
+        raise ValueError(f'Unsupported setpoint method: {method}. Allowed options are: {SETTING_METHODS}.')
+    ords_1d = np.ravel(np.array([ords], dtype=int))
+    setpoints_1d = np.ravel(np.array([setpoints]))
+    if len(setpoints_1d) not in (1, len(ords_1d)):
+        raise ValueError(f'Setpoints have to have length of 1 or matching to the length or ordinates.')
+    return ords_1d, (np.repeat(setpoints_1d, len(ords_1d)) if len(setpoints_1d) == 1 else setpoints_1d)

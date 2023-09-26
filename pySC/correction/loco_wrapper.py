@@ -2,7 +2,6 @@ import numpy as np
 
 from pySC.core.classes import DotDict
 from pySC.lattice_properties.response_measurement import response_matrix, dispersion
-from pySC.core.lattice_setting import set_magnet_setpoints
 from pySC.utils import logging_tools
 
 LOGGER = logging_tools.get_logger(__name__)
@@ -103,9 +102,9 @@ def apply_lattice_correction(SC, fit_parameters, dipole_compensation=True, dampi
             setpoint = fit_parameters.OrigValues[n_group] + damping * (
                     fit_parameters.IdealValues[n_group] - fit_parameters.Values[n_group])
             if field == 'SetPointB':  # Normal quadrupole
-                SC = set_magnet_setpoints(SC, ord, setpoint, False, 1, dipole_compensation=dipole_compensation)
+                SC.set_magnet_setpoints(ord, setpoint, False, 1, dipole_compensation=dipole_compensation)
             elif field == 'SetPointA':  # Skew quadrupole
-                SC = set_magnet_setpoints(SC, ord, setpoint, True, 1)
+                SC.set_magnet_setpoints(ord, setpoint, True, 1)
     SC = SC.update_magnets(SC.ORD.Magnet)
     return SC
 
