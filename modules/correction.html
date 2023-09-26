@@ -78,6 +78,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#rf">RF</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pySC.correction.rf.phase_and_energy_error"><code class="docutils literal notranslate"><span class="pre">phase_and_energy_error()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#tune">Tune</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pySC.correction.tune.tune_scan"><code class="docutils literal notranslate"><span class="pre">tune_scan()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="lattice_properties.html">Lattice properties</a><ul>
@@ -313,6 +314,35 @@ three BPMs, for a maximum of 20 steps:</p>
 <h2>Tune<a class="headerlink" href="#tune" title="Permalink to this heading"></a></h2>
 <p>This module contains functions to correct betatron tunes.</p>
 </section>
+<dl class="py function">
+<dt class="sig sig-object py" id="pySC.correction.tune.tune_scan">
+<span class="sig-prename descclassname"><span class="pre">pySC.correction.tune.</span></span><span class="sig-name descname"><span class="pre">tune_scan</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">SC</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quad_ords</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rel_quad_changes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_points</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">60</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">do_plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nParticles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nTurns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">full_scan</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pySC/correction/tune.html#tune_scan"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pySC.correction.tune.tune_scan" title="Permalink to this definition"></a></dt>
+<dd><p>Varies two quadrupole families to improve beam transmission, on a grid of relative setpoints specified in
+<cite>rel_quad_changes</cite> in a spiral-like pattern to increase the beam transmission.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>SC</strong> -- SimulatedCommissioning instance</p></li>
+<li><p><strong>quad_ords</strong> -- [1x2] array of quadrupole ordinates {<cite>[1 x NQ1],[1 x NQ2]</cite>}</p></li>
+<li><p><strong>rel_quad_changes</strong> -- [1x2] cell array of quadrupole setpoints {<cite>[SP1_1,…,SP1_N1],[SP2_1,…,SP2_N2]</cite>} with <cite>N2=N1</cite></p></li>
+<li><p><strong>target</strong> (<em>int</em><em>, </em><em>optional</em>) -- Transmission target at <cite>nTurns</cite></p></li>
+<li><p><strong>n_points</strong> (<em>int</em><em>, </em><em>optional</em>) -- Number of points for the scan</p></li>
+<li><p><strong>nParticles</strong> (<em>int</em><em>, </em><em>optional</em>) -- Number of particles used for tracking (for convenience, otherwise <cite>SC.INJ.nParticles</cite> is used)</p></li>
+<li><p><strong>nTurns</strong> (<em>int</em><em>, </em><em>optional</em>) -- Number of turns used for tracking (for convenience, otherwise <cite>SC.INJ.nTurns</cite> is used)</p></li>
+<li><p><strong>full_scan</strong> (<em>bool</em><em> , </em><em>optional</em>) -- If false, the scan finishes as soon as the target is reached</p></li>
+<li><p><strong>do_plot</strong> (<em>bool</em><em> , </em><em>optional</em>) -- If true, beam transmission is plotted at every step</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Updated SC structure with applied setpoints for maximised beam transmission
+Relative setpoints which satisfied the target condition if reached, or the values which resulted in best transmission
+Number of achieved turns
+Turn-by-turn particle loss</p>
+</dd>
+</dl>
+<p>see also: <em>bpm_reading</em>, <em>generate_bunches</em></p>
+</dd></dl>
+
 </section>
 
 
