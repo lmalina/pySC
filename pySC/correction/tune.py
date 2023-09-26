@@ -19,12 +19,13 @@ LOGGER = logging_tools.get_logger(__name__)
 
 def tune_scan(SC, quad_ords, rel_quad_changes, target=1, n_points=60, do_plot=False, nParticles=None, nTurns=None, full_scan=False):
 	"""
-	Varies two quadrupole families to improve beam transmission, on a grid of relative setpoints 	specified in `rel_quad_changes` in a spiral-like pattern to increase the beam transmission.
+	Varies two quadrupole families to improve beam transmission, on a grid of relative setpoints specified in
+	`rel_quad_changes` in a spiral-like pattern to increase the beam transmission.
 
 	Args:
 		SC: SimulatedCommissioning instance
 		quad_ords: [1x2] array of quadrupole ordinates {`[1 x NQ1],[1 x NQ2]`}
-		rel_quad_changes: [1x2]` cell array of quadrupole setpoints {`[SP1_1,...,SP1_N1],[SP2_1,...,SP2_N2]`} with `N2=N1`
+		rel_quad_changes: [1x2] cell array of quadrupole setpoints {`[SP1_1,...,SP1_N1],[SP2_1,...,SP2_N2]`} with `N2=N1`
 		target(int, optional): Transmission target at `nTurns`
 		n_points(int, optional): Number of points for the scan
 		nParticles(int, optional): Number of particles used for tracking (for convenience, otherwise `SC.INJ.nParticles` is used)
