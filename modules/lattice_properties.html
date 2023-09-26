@@ -56,25 +56,40 @@
 <li class="toctree-l2"><a class="reference internal" href="core_functions.html#pySC.core.beam.bpm_reading"><code class="docutils literal notranslate"><span class="pre">bpm_reading()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="core_functions.html#pySC.core.beam.generate_bunches"><code class="docutils literal notranslate"><span class="pre">generate_bunches()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="core_functions.html#lattice-setting">Lattice setting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_functions.html#pySC.core.lattice_setting.get_cm_setpoints"><code class="docutils literal notranslate"><span class="pre">get_cm_setpoints()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_functions.html#pySC.core.lattice_setting.set_cavity_setpoints"><code class="docutils literal notranslate"><span class="pre">set_cavity_setpoints()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_functions.html#pySC.core.lattice_setting.set_cm_setpoints"><code class="docutils literal notranslate"><span class="pre">set_cm_setpoints()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_functions.html#pySC.core.lattice_setting.set_magnet_setpoints"><code class="docutils literal notranslate"><span class="pre">set_magnet_setpoints()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_functions.html#pySC.core.lattice_setting.switch_cavity_and_radiation"><code class="docutils literal notranslate"><span class="pre">switch_cavity_and_radiation()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="core_structure.html">Core structure</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="core_structure.html#simulated-commissioning">Simulated Commissioning</a></li>
 <li class="toctree-l2"><a class="reference internal" href="core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning"><code class="docutils literal notranslate"><span class="pre">SimulatedCommissioning</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="core_structure.html#sub-classes">Sub-classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_structure.html#subclasses">Subclasses</a></li>
 <li class="toctree-l2"><a class="reference internal" href="core_structure.html#pySC.core.classes.DotDict"><code class="docutils literal notranslate"><span class="pre">DotDict</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="core_structure.html#pySC.core.classes.Indices"><code class="docutils literal notranslate"><span class="pre">Indices</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_structure.html#pySC.core.classes.Injection"><code class="docutils literal notranslate"><span class="pre">Injection</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="core_structure.html#pySC.core.classes.Sigmas"><code class="docutils literal notranslate"><span class="pre">Sigmas</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="correction.html">Correction algorithms</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="correction.html#trajectory-and-orbit">Trajectory and Orbit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="correction.html#pySC.correction.orbit_trajectory.SCfeedbackBalance"><code class="docutils literal notranslate"><span class="pre">SCfeedbackBalance()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="correction.html#pySC.correction.orbit_trajectory.SCfeedbackFirstTurn"><code class="docutils literal notranslate"><span class="pre">SCfeedbackFirstTurn()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="correction.html#pySC.correction.orbit_trajectory.SCfeedbackRun"><code class="docutils literal notranslate"><span class="pre">SCfeedbackRun()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="correction.html#pySC.correction.orbit_trajectory.SCfeedbackStitch"><code class="docutils literal notranslate"><span class="pre">SCfeedbackStitch()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="correction.html#rf">RF</a></li>
 <li class="toctree-l2"><a class="reference internal" href="correction.html#pySC.correction.rf.phase_and_energy_error"><code class="docutils literal notranslate"><span class="pre">phase_and_energy_error()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="correction.html#tune">Tune</a></li>
 </ul>
 </li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Lattice properties</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Lattice properties</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#pySC.lattice_properties.response_model.SCgetModelDispersion"><code class="docutils literal notranslate"><span class="pre">SCgetModelDispersion()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pySC.lattice_properties.response_model.SCgetModelRING"><code class="docutils literal notranslate"><span class="pre">SCgetModelRING()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pySC.lattice_properties.response_model.SCgetModelRM"><code class="docutils literal notranslate"><span class="pre">SCgetModelRM()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="logging.html">Logging</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="logging.html#pySC.utils.logging_tools.DebugMode"><code class="docutils literal notranslate"><span class="pre">DebugMode</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="logging.html#pySC.utils.logging_tools.MaxFilter"><code class="docutils literal notranslate"><span class="pre">MaxFilter</span></code></a></li>
@@ -119,6 +134,89 @@
              
   <section id="module-pySC.lattice_properties.response_model">
 <span id="lattice-properties"></span><h1>Lattice properties<a class="headerlink" href="#module-pySC.lattice_properties.response_model" title="Permalink to this heading"></a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="pySC.lattice_properties.response_model.SCgetModelDispersion">
+<span class="sig-prename descclassname"><span class="pre">pySC.lattice_properties.response_model.</span></span><span class="sig-name descname"><span class="pre">SCgetModelDispersion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">SC</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">BPMords</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">CAVords</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trackMode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ORB'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Z0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">array([0.,</span> <span class="pre">0.,</span> <span class="pre">0.,</span> <span class="pre">0.,</span> <span class="pre">0.,</span> <span class="pre">0.])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nTurns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rfStep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">useIdealRing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pySC/lattice_properties/response_model.html#SCgetModelDispersion"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pySC.lattice_properties.response_model.SCgetModelDispersion" title="Permalink to this definition"></a></dt>
+<dd><p>Calculates the lattice dispersion based on current setpoints</p>
+<p>Calculates the dispersion at the ordinates <cite>BPMords</cite> by changing the frequency of the rf cavities
+specified in <cite>CAVords</cite> using the current magnet setpoints without any roll/alignment/calibration
+errors. Optionally the design lattice is used.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>SC</strong> -- SimulatedCommissioning class instance</p></li>
+<li><p><strong>BPMords</strong> -- Index of BPMs in SC.RING (SC.ORD.BPM)</p></li>
+<li><p><strong>CAVords</strong> -- Index of RF Cavities in SC.RING (SC.ORD.CM)</p></li>
+<li><p><strong>trackMode</strong> -- (default = ‘TBT’) If <cite>TBT</cite> the turn-by-turn RM is calculated.
+If <cite>ORB</cite> the orbit RM is calculated, using <cite>at.findorbit6</cite></p></li>
+<li><p><strong>Z0</strong> -- (default = numpy.zeros(6)) Initial condition for tracking.
+In <cite>ORB</cite>-mode this is used as the initial guess for <cite>findorbit6</cite>.</p></li>
+<li><p><strong>nTurns</strong> -- (default = 1) Number of turns over which to determine the TBT-RM. Ignored if in <cite>ORB</cite>-mode.</p></li>
+<li><p><strong>rfStep</strong> -- (default = 1e3) Change of rf frequency [Hz]</p></li>
+<li><p><strong>useIdealRing</strong> -- (default=False) If true, the design lattice specified in <cite>SC.IDEALRING</cite> is used.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The dispersion given in [m/Hz].</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pySC.lattice_properties.response_model.SCgetModelRING">
+<span class="sig-prename descclassname"><span class="pre">pySC.lattice_properties.response_model.</span></span><span class="sig-name descname"><span class="pre">SCgetModelRING</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">SC</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning" title="pySC.core.simulated_commissioning.SimulatedCommissioning"><span class="pre">SimulatedCommissioning</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">includeAperture</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Lattice</span></span></span><a class="reference internal" href="../_modules/pySC/lattice_properties/response_model.html#SCgetModelRING"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pySC.lattice_properties.response_model.SCgetModelRING" title="Permalink to this definition"></a></dt>
+<dd><p>Returns a model lattice based on current setpoints</p>
+<p>This function calculates a model lattice based on the setpoints of <cite>SC.RING</cite>. Misalignments,
+lattice errors and dipole fields are excluded.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>SC</strong> -- SimulatedCommissioning class instance</p></li>
+<li><p><strong>includeAperture</strong> -- (default=False) If true, the returned model ring includes the aperture</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The idealised RING structure</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pySC.lattice_properties.response_model.SCgetModelRM">
+<span class="sig-prename descclassname"><span class="pre">pySC.lattice_properties.response_model.</span></span><span class="sig-name descname"><span class="pre">SCgetModelRM</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">SC</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">BPMords</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">CMords</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trackMode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'TBT'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Z0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">array([0.,</span> <span class="pre">0.,</span> <span class="pre">0.,</span> <span class="pre">0.,</span> <span class="pre">0.,</span> <span class="pre">0.])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nTurns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dkick</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">useIdealRing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pySC/lattice_properties/response_model.html#SCgetModelRM"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pySC.lattice_properties.response_model.SCgetModelRM" title="Permalink to this definition"></a></dt>
+<dd><p>Determine the lattice response matrix based on current setpoints.</p>
+<p>SCgetModelRM calculates the response matrix <cite>RM</cite> with the BPMs at the ordinates <cite>BPMords</cite>
+and corrector magnets at ordinates <cite>CMords</cite> using the current magnet setpoints without any
+roll/alignment/calibration errors. <cite>CMords</cite> is a 2-cell array containing the two lists for the
+horizontal and vertical CMs respectively.
+This routine can determine the turn-by-turn RM, as well as the orbit-RM; see option ‘trackMode’.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>SC</strong> -- SimulatedCommissioning class instance</p></li>
+<li><p><strong>BPMords</strong> -- Index of BPMs in SC.RING (SC.ORD.BPM)</p></li>
+<li><p><strong>CMords</strong> -- Index of Correctors Magnets in SC.RING (SC.ORD.CM)</p></li>
+<li><p><strong>trackMode</strong> -- (default = ‘TBT’) If <cite>TBT</cite> the turn-by-turn RM is calculated.
+If <cite>ORB</cite> the orbit RM is calculated, using <cite>at.findorbit6</cite></p></li>
+<li><p><strong>Z0</strong> -- (default = numpy.zeros(6)) Initial condition for tracking.
+In <cite>ORB</cite>-mode this is used as the initial guess for <cite>findorbit6</cite>.</p></li>
+<li><p><strong>nTurns</strong> -- (default = 1) Number of turns over which to determine the TBT-RM. Ignored if in <cite>ORB</cite>-mode.</p></li>
+<li><p><strong>dkick</strong> -- (default = 1e-5) Kick [rad] to be added when numerically determining the partial derivatives.</p></li>
+<li><p><strong>useIdealRing</strong> -- (default = True) If True, the design lattice specified in <cite>SC.IDEALRING</cite> is used.
+If False, the model lattice is used SCgetModelRING(SC).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The response matrix given in [m/rad].</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>Compute a response matrix:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">RM1</span> <span class="o">=</span> <span class="n">SCgetModelRM</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">SC</span><span class="o">.</span><span class="n">ORD</span><span class="o">.</span><span class="n">BPM</span><span class="p">,</span> <span class="n">SC</span><span class="o">.</span><span class="n">ORD</span><span class="o">.</span><span class="n">CM</span><span class="p">,</span> <span class="n">nTurns</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
 </section>
 
 

@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pySC.lattice_properties.response_model &mdash; pySC 0.1.0 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js?v=2389946f"></script>
+        <script src="../../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/pySC_logo.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                0.1
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Modules</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/core_functions.html">Core functions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_functions.html#beam">Beam</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_functions.html#pySC.core.beam.all_elements_reading"><code class="docutils literal notranslate"><span class="pre">all_elements_reading()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_functions.html#pySC.core.beam.beam_transmission"><code class="docutils literal notranslate"><span class="pre">beam_transmission()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_functions.html#pySC.core.beam.bpm_reading"><code class="docutils literal notranslate"><span class="pre">bpm_reading()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_functions.html#pySC.core.beam.generate_bunches"><code class="docutils literal notranslate"><span class="pre">generate_bunches()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_functions.html#lattice-setting">Lattice setting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_functions.html#pySC.core.lattice_setting.get_cm_setpoints"><code class="docutils literal notranslate"><span class="pre">get_cm_setpoints()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_functions.html#pySC.core.lattice_setting.set_cavity_setpoints"><code class="docutils literal notranslate"><span class="pre">set_cavity_setpoints()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_functions.html#pySC.core.lattice_setting.set_cm_setpoints"><code class="docutils literal notranslate"><span class="pre">set_cm_setpoints()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_functions.html#pySC.core.lattice_setting.set_magnet_setpoints"><code class="docutils literal notranslate"><span class="pre">set_magnet_setpoints()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_functions.html#pySC.core.lattice_setting.switch_cavity_and_radiation"><code class="docutils literal notranslate"><span class="pre">switch_cavity_and_radiation()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/core_structure.html">Core structure</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_structure.html#simulated-commissioning">Simulated Commissioning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning"><code class="docutils literal notranslate"><span class="pre">SimulatedCommissioning</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_structure.html#subclasses">Subclasses</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_structure.html#pySC.core.classes.DotDict"><code class="docutils literal notranslate"><span class="pre">DotDict</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_structure.html#pySC.core.classes.Indices"><code class="docutils literal notranslate"><span class="pre">Indices</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_structure.html#pySC.core.classes.Injection"><code class="docutils literal notranslate"><span class="pre">Injection</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_structure.html#pySC.core.classes.Sigmas"><code class="docutils literal notranslate"><span class="pre">Sigmas</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/correction.html">Correction algorithms</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/correction.html#trajectory-and-orbit">Trajectory and Orbit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/correction.html#pySC.correction.orbit_trajectory.SCfeedbackBalance"><code class="docutils literal notranslate"><span class="pre">SCfeedbackBalance()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/correction.html#pySC.correction.orbit_trajectory.SCfeedbackFirstTurn"><code class="docutils literal notranslate"><span class="pre">SCfeedbackFirstTurn()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/correction.html#pySC.correction.orbit_trajectory.SCfeedbackRun"><code class="docutils literal notranslate"><span class="pre">SCfeedbackRun()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/correction.html#pySC.correction.orbit_trajectory.SCfeedbackStitch"><code class="docutils literal notranslate"><span class="pre">SCfeedbackStitch()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/correction.html#rf">RF</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/correction.html#pySC.correction.rf.phase_and_energy_error"><code class="docutils literal notranslate"><span class="pre">phase_and_energy_error()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/correction.html#tune">Tune</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/lattice_properties.html">Lattice properties</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/lattice_properties.html#pySC.lattice_properties.response_model.SCgetModelDispersion"><code class="docutils literal notranslate"><span class="pre">SCgetModelDispersion()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/lattice_properties.html#pySC.lattice_properties.response_model.SCgetModelRING"><code class="docutils literal notranslate"><span class="pre">SCgetModelRING()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/lattice_properties.html#pySC.lattice_properties.response_model.SCgetModelRM"><code class="docutils literal notranslate"><span class="pre">SCgetModelRM()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/logging.html">Logging</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/logging.html#pySC.utils.logging_tools.DebugMode"><code class="docutils literal notranslate"><span class="pre">DebugMode</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/logging.html#pySC.utils.logging_tools.MaxFilter"><code class="docutils literal notranslate"><span class="pre">MaxFilter</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/logging.html#pySC.utils.logging_tools.file_handler"><code class="docutils literal notranslate"><span class="pre">file_handler()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/logging.html#pySC.utils.logging_tools.get_logger"><code class="docutils literal notranslate"><span class="pre">get_logger()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/logging.html#pySC.utils.logging_tools.stream_handler"><code class="docutils literal notranslate"><span class="pre">stream_handler()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">Utils</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/utils.html#at-wrapper">AT wrapper</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/utils.html#pySC.utils.sc_tools.SCgetOrds"><code class="docutils literal notranslate"><span class="pre">SCgetOrds()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/utils.html#pySC.utils.sc_tools.SCgetPinv"><code class="docutils literal notranslate"><span class="pre">SCgetPinv()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/utils.html#pySC.utils.sc_tools.SCrandnc"><code class="docutils literal notranslate"><span class="pre">SCrandnc()</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySC</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pySC.lattice_properties.response_model</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pySC.lattice_properties.response_model</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">at</span> <span class="kn">import</span> <span class="n">Lattice</span>
+
+<span class="kn">from</span> <span class="nn">pySC.core.simulated_commissioning</span> <span class="kn">import</span> <span class="n">SimulatedCommissioning</span>
+<span class="kn">from</span> <span class="nn">pySC.utils.at_wrapper</span> <span class="kn">import</span> <span class="n">atpass</span><span class="p">,</span> <span class="n">findorbit6</span>
+<span class="kn">from</span> <span class="nn">pySC.core.constants</span> <span class="kn">import</span> <span class="n">NUM_TO_AB</span><span class="p">,</span> <span class="n">RF_PROPERTIES</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">from</span> <span class="nn">pySC.utils</span> <span class="kn">import</span> <span class="n">logging_tools</span>
+
+<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging_tools</span><span class="o">.</span><span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SCgetModelRM"><a class="viewcode-back" href="../../../modules/lattice_properties.html#pySC.lattice_properties.response_model.SCgetModelRM">[docs]</a><span class="k">def</span> <span class="nf">SCgetModelRM</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">BPMords</span><span class="p">,</span> <span class="n">CMords</span><span class="p">,</span> <span class="n">trackMode</span><span class="o">=</span><span class="s1">&#39;TBT&#39;</span><span class="p">,</span> <span class="n">Z0</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">6</span><span class="p">),</span> <span class="n">nTurns</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">dkick</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">,</span> <span class="n">useIdealRing</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Determine the lattice response matrix based on current setpoints.</span>
+
+<span class="sd">    SCgetModelRM calculates the response matrix `RM` with the BPMs at the ordinates `BPMords`</span>
+<span class="sd">    and corrector magnets at ordinates `CMords` using the current magnet setpoints without any</span>
+<span class="sd">    roll/alignment/calibration errors. `CMords` is a 2-cell array containing the two lists for the</span>
+<span class="sd">    horizontal and vertical CMs respectively.</span>
+<span class="sd">    This routine can determine the turn-by-turn RM, as well as the orbit-RM; see option &#39;trackMode&#39;.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        SC:</span>
+<span class="sd">            SimulatedCommissioning class instance</span>
+<span class="sd">        BPMords:</span>
+<span class="sd">            Index of BPMs in SC.RING (SC.ORD.BPM)</span>
+<span class="sd">        CMords:</span>
+<span class="sd">            Index of Correctors Magnets in SC.RING (SC.ORD.CM)</span>
+<span class="sd">        trackMode:</span>
+<span class="sd">            (default = &#39;TBT&#39;) If `TBT` the turn-by-turn RM is calculated.</span>
+<span class="sd">            If `ORB` the orbit RM is calculated, using `at.findorbit6`</span>
+<span class="sd">        Z0:</span>
+<span class="sd">            (default = numpy.zeros(6)) Initial condition for tracking.</span>
+<span class="sd">            In `ORB`-mode this is used as the initial guess for `findorbit6`.</span>
+<span class="sd">        nTurns:</span>
+<span class="sd">            (default = 1) Number of turns over which to determine the TBT-RM. Ignored if in `ORB`-mode.</span>
+<span class="sd">        dkick:</span>
+<span class="sd">            (default = 1e-5) Kick [rad] to be added when numerically determining the partial derivatives.</span>
+<span class="sd">        useIdealRing:</span>
+<span class="sd">            (default = True) If True, the design lattice specified in `SC.IDEALRING` is used.</span>
+<span class="sd">            If False, the model lattice is used SCgetModelRING(SC).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The response matrix given in [m/rad].</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        Compute a response matrix::</span>
+
+<span class="sd">            RM1 = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, nTurns=1)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Calculating model response matrix&#39;</span><span class="p">)</span>
+    <span class="n">track_methods</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">TBT</span><span class="o">=</span><span class="n">atpass</span><span class="p">,</span> <span class="n">ORB</span><span class="o">=</span><span class="n">orbpass</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">trackMode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">track_methods</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Unknown track mode </span><span class="si">{</span><span class="n">trackMode</span><span class="si">}</span><span class="s1">. Valid values are </span><span class="si">{</span><span class="n">track_methods</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">ring</span> <span class="o">=</span> <span class="n">SC</span><span class="o">.</span><span class="n">IDEALRING</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">()</span> <span class="k">if</span> <span class="n">useIdealRing</span> <span class="k">else</span> <span class="n">SCgetModelRING</span><span class="p">(</span><span class="n">SC</span><span class="p">)</span>
+    <span class="n">trackmethod</span> <span class="o">=</span> <span class="n">track_methods</span><span class="p">[</span><span class="n">trackMode</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">trackMode</span> <span class="o">==</span> <span class="s1">&#39;ORB&#39;</span><span class="p">:</span>
+        <span class="n">nTurns</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">nBPM</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">BPMords</span><span class="p">)</span>
+    <span class="n">nCM</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">CMords</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">CMords</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">RM</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="mi">2</span> <span class="o">*</span> <span class="n">nBPM</span> <span class="o">*</span> <span class="n">nTurns</span><span class="p">,</span> <span class="n">nCM</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+    <span class="n">Ta</span> <span class="o">=</span> <span class="n">trackmethod</span><span class="p">(</span><span class="n">ring</span><span class="p">,</span> <span class="n">Z0</span><span class="p">,</span>  <span class="n">nTurns</span><span class="p">,</span> <span class="n">BPMords</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">Ta</span><span class="p">)):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Initial trajectory/orbit is NaN. Aborting. &#39;</span><span class="p">)</span>
+
+    <span class="n">cnt</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">nDim</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">CMord</span> <span class="ow">in</span> <span class="n">CMords</span><span class="p">[</span><span class="n">nDim</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">ring</span><span class="p">[</span><span class="n">CMord</span><span class="p">]</span><span class="o">.</span><span class="n">PassMethod</span> <span class="o">==</span> <span class="s1">&#39;CorrectorPass&#39;</span><span class="p">:</span>
+                <span class="n">KickNominal</span> <span class="o">=</span> <span class="n">ring</span><span class="p">[</span><span class="n">CMord</span><span class="p">]</span><span class="o">.</span><span class="n">KickAngle</span><span class="p">[</span><span class="n">nDim</span><span class="p">]</span>
+                <span class="n">ring</span><span class="p">[</span><span class="n">CMord</span><span class="p">]</span><span class="o">.</span><span class="n">KickAngle</span><span class="p">[</span><span class="n">nDim</span><span class="p">]</span> <span class="o">=</span> <span class="n">KickNominal</span> <span class="o">+</span> <span class="n">dkick</span>
+                <span class="n">TdB</span> <span class="o">=</span> <span class="n">trackmethod</span><span class="p">(</span><span class="n">ring</span><span class="p">,</span> <span class="n">Z0</span><span class="p">,</span> <span class="n">nTurns</span><span class="p">,</span> <span class="n">BPMords</span><span class="p">)</span>
+                <span class="n">ring</span><span class="p">[</span><span class="n">CMord</span><span class="p">]</span><span class="o">.</span><span class="n">KickAngle</span><span class="p">[</span><span class="n">nDim</span><span class="p">]</span> <span class="o">=</span> <span class="n">KickNominal</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">PolynomNominal</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">ring</span><span class="p">[</span><span class="n">CMord</span><span class="p">],</span> <span class="sa">f</span><span class="s2">&quot;Polynom</span><span class="si">{</span><span class="n">NUM_TO_AB</span><span class="p">[</span><span class="n">nDim</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">delta</span> <span class="o">=</span> <span class="n">dkick</span> <span class="o">/</span> <span class="n">ring</span><span class="p">[</span><span class="n">CMord</span><span class="p">]</span><span class="o">.</span><span class="n">Length</span>
+                <span class="n">changed_polynom</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">PolynomNominal</span><span class="p">[:])</span>
+                <span class="n">changed_polynom</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="n">nDim</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">delta</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="n">ring</span><span class="p">[</span><span class="n">CMord</span><span class="p">],</span> <span class="sa">f</span><span class="s2">&quot;Polynom</span><span class="si">{</span><span class="n">NUM_TO_AB</span><span class="p">[</span><span class="n">nDim</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">changed_polynom</span><span class="p">[:])</span>
+                <span class="n">TdB</span> <span class="o">=</span> <span class="n">trackmethod</span><span class="p">(</span><span class="n">ring</span><span class="p">,</span> <span class="n">Z0</span><span class="p">,</span> <span class="n">nTurns</span><span class="p">,</span> <span class="n">BPMords</span><span class="p">)</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="n">ring</span><span class="p">[</span><span class="n">CMord</span><span class="p">],</span> <span class="sa">f</span><span class="s2">&quot;Polynom</span><span class="si">{</span><span class="n">NUM_TO_AB</span><span class="p">[</span><span class="n">nDim</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">PolynomNominal</span><span class="p">[:])</span>
+            <span class="n">dTdB</span> <span class="o">=</span> <span class="p">(</span><span class="n">TdB</span> <span class="o">-</span> <span class="n">Ta</span><span class="p">)</span> <span class="o">/</span> <span class="n">dkick</span>
+            <span class="n">RM</span><span class="p">[:,</span> <span class="n">cnt</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">dTdB</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="p">:],</span> <span class="n">axes</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">))),</span>
+                                         <span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">dTdB</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="p">:],</span> <span class="n">axes</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)))))</span>
+            <span class="n">cnt</span> <span class="o">=</span> <span class="n">cnt</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">RM</span></div>
+
+
+<span class="k">def</span> <span class="nf">orbpass</span><span class="p">(</span><span class="n">RING</span><span class="p">,</span> <span class="n">Z0</span><span class="p">,</span>  <span class="n">nTurns</span><span class="p">,</span> <span class="n">REFPTS</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">findorbit6</span><span class="p">(</span><span class="n">RING</span><span class="p">,</span> <span class="n">REFPTS</span><span class="p">)[</span><span class="mi">1</span><span class="p">])[[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">],</span> <span class="p">:]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">REFPTS</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="SCgetModelDispersion"><a class="viewcode-back" href="../../../modules/lattice_properties.html#pySC.lattice_properties.response_model.SCgetModelDispersion">[docs]</a><span class="k">def</span> <span class="nf">SCgetModelDispersion</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">BPMords</span><span class="p">,</span> <span class="n">CAVords</span><span class="p">,</span> <span class="n">trackMode</span><span class="o">=</span><span class="s1">&#39;ORB&#39;</span><span class="p">,</span> <span class="n">Z0</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">6</span><span class="p">),</span> <span class="n">nTurns</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">rfStep</span><span class="o">=</span><span class="mf">1E3</span><span class="p">,</span> <span class="n">useIdealRing</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculates the lattice dispersion based on current setpoints</span>
+
+<span class="sd">    Calculates the dispersion at the ordinates `BPMords` by changing the frequency of the rf cavities</span>
+<span class="sd">    specified in `CAVords` using the current magnet setpoints without any roll/alignment/calibration</span>
+<span class="sd">    errors. Optionally the design lattice is used.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        SC:</span>
+<span class="sd">            SimulatedCommissioning class instance</span>
+<span class="sd">        BPMords:</span>
+<span class="sd">            Index of BPMs in SC.RING (SC.ORD.BPM)</span>
+<span class="sd">        CAVords:</span>
+<span class="sd">            Index of RF Cavities in SC.RING (SC.ORD.CM)</span>
+<span class="sd">        trackMode:</span>
+<span class="sd">            (default = &#39;TBT&#39;) If `TBT` the turn-by-turn RM is calculated.</span>
+<span class="sd">            If `ORB` the orbit RM is calculated, using `at.findorbit6`</span>
+<span class="sd">        Z0:</span>
+<span class="sd">            (default = numpy.zeros(6)) Initial condition for tracking.</span>
+<span class="sd">            In `ORB`-mode this is used as the initial guess for `findorbit6`.</span>
+<span class="sd">        nTurns:</span>
+<span class="sd">            (default = 1) Number of turns over which to determine the TBT-RM. Ignored if in `ORB`-mode.</span>
+<span class="sd">        rfStep: (default = 1e3) Change of rf frequency [Hz]</span>
+<span class="sd">        useIdealRing: (default=False) If true, the design lattice specified in `SC.IDEALRING` is used.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The dispersion given in [m/Hz].</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Calculating model dispersion&#39;</span><span class="p">)</span>
+    <span class="n">track_methods</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">TBT</span><span class="o">=</span><span class="n">atpass</span><span class="p">,</span> <span class="n">ORB</span><span class="o">=</span><span class="n">orbpass</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">trackMode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">track_methods</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Unknown track mode </span><span class="si">{</span><span class="n">trackMode</span><span class="si">}</span><span class="s1">. Valid values are </span><span class="si">{</span><span class="n">track_methods</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">ring</span> <span class="o">=</span> <span class="n">SC</span><span class="o">.</span><span class="n">IDEALRING</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">()</span> <span class="k">if</span> <span class="n">useIdealRing</span> <span class="k">else</span> <span class="n">SCgetModelRING</span><span class="p">(</span><span class="n">SC</span><span class="p">)</span>
+    <span class="n">trackmethod</span> <span class="o">=</span> <span class="n">track_methods</span><span class="p">[</span><span class="n">trackMode</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">trackMode</span> <span class="o">==</span> <span class="s1">&#39;ORB&#39;</span><span class="p">:</span>
+        <span class="n">nTurns</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="n">Ta</span> <span class="o">=</span> <span class="n">trackmethod</span><span class="p">(</span><span class="n">ring</span><span class="p">,</span> <span class="n">Z0</span><span class="p">,</span>  <span class="n">nTurns</span><span class="p">,</span> <span class="n">BPMords</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">Ta</span><span class="p">)):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Initial trajectory/orbit is NaN. Aborting. &#39;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="nb">ord</span> <span class="ow">in</span> <span class="n">CAVords</span><span class="p">:</span>  <span class="c1"># Single point with all cavities with the same frequency shift</span>
+        <span class="n">ring</span><span class="p">[</span><span class="nb">ord</span><span class="p">]</span><span class="o">.</span><span class="n">Frequency</span> <span class="o">+=</span> <span class="n">rfStep</span>
+    <span class="n">TdB</span> <span class="o">=</span> <span class="n">trackmethod</span><span class="p">(</span><span class="n">ring</span><span class="p">,</span> <span class="n">Z0</span><span class="p">,</span>  <span class="n">nTurns</span><span class="p">,</span> <span class="n">BPMords</span><span class="p">)</span>
+    <span class="n">dTdB</span> <span class="o">=</span> <span class="p">(</span><span class="n">TdB</span> <span class="o">-</span> <span class="n">Ta</span><span class="p">)</span> <span class="o">/</span> <span class="n">rfStep</span>
+    <span class="n">eta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">dTdB</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="p">:],</span> <span class="n">axes</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">))),</span>
+                          <span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">dTdB</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="p">:],</span> <span class="n">axes</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)))))</span>
+    <span class="k">return</span> <span class="n">eta</span></div>
+
+
+<div class="viewcode-block" id="SCgetModelRING"><a class="viewcode-back" href="../../../modules/lattice_properties.html#pySC.lattice_properties.response_model.SCgetModelRING">[docs]</a><span class="k">def</span> <span class="nf">SCgetModelRING</span><span class="p">(</span><span class="n">SC</span><span class="p">:</span> <span class="n">SimulatedCommissioning</span><span class="p">,</span> <span class="n">includeAperture</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Lattice</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns a model lattice based on current setpoints</span>
+
+<span class="sd">    This function calculates a model lattice based on the setpoints of `SC.RING`. Misalignments,</span>
+<span class="sd">    lattice errors and dipole fields are excluded.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        SC: SimulatedCommissioning class instance</span>
+<span class="sd">        includeAperture: (default=False) If true, the returned model ring includes the aperture</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The idealised RING structure</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ring</span> <span class="o">=</span> <span class="n">SC</span><span class="o">.</span><span class="n">IDEALRING</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">()</span>
+    <span class="k">for</span> <span class="nb">ord</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="nb">ord</span><span class="p">],</span> <span class="s1">&#39;SetPointA&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="nb">ord</span><span class="p">],</span> <span class="s1">&#39;SetPointB&#39;</span><span class="p">):</span>
+            <span class="n">ring</span><span class="p">[</span><span class="nb">ord</span><span class="p">]</span><span class="o">.</span><span class="n">PolynomA</span> <span class="o">=</span> <span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="nb">ord</span><span class="p">]</span><span class="o">.</span><span class="n">SetPointA</span>
+            <span class="n">ring</span><span class="p">[</span><span class="nb">ord</span><span class="p">]</span><span class="o">.</span><span class="n">PolynomB</span> <span class="o">=</span> <span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="nb">ord</span><span class="p">]</span><span class="o">.</span><span class="n">SetPointB</span>
+            <span class="n">ring</span><span class="p">[</span><span class="nb">ord</span><span class="p">]</span><span class="o">.</span><span class="n">PolynomA</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="n">ring</span><span class="p">[</span><span class="nb">ord</span><span class="p">]</span><span class="o">.</span><span class="n">PolynomB</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">if</span> <span class="n">includeAperture</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s1">&#39;EApertures&#39;</span> <span class="ow">in</span> <span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="nb">ord</span><span class="p">]:</span>
+                <span class="n">ring</span><span class="p">[</span><span class="nb">ord</span><span class="p">]</span><span class="o">.</span><span class="n">EApertures</span> <span class="o">=</span> <span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="nb">ord</span><span class="p">]</span><span class="o">.</span><span class="n">EApertures</span>
+            <span class="k">if</span> <span class="s1">&#39;RApertures&#39;</span> <span class="ow">in</span> <span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="nb">ord</span><span class="p">]:</span>
+                <span class="n">ring</span><span class="p">[</span><span class="nb">ord</span><span class="p">]</span><span class="o">.</span><span class="n">RApertures</span> <span class="o">=</span> <span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="nb">ord</span><span class="p">]</span><span class="o">.</span><span class="n">RApertures</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">ORD</span><span class="o">.</span><span class="n">RF</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="nb">ord</span><span class="p">],</span> <span class="s1">&#39;Frequency&#39;</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">RF_PROPERTIES</span><span class="p">:</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="n">ring</span><span class="p">[</span><span class="nb">ord</span><span class="p">],</span> <span class="n">field</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="nb">ord</span><span class="p">],</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2">SetPoint&quot;</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">ring</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

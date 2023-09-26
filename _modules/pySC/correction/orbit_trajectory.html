@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pySC.correction.orbit_trajectory &mdash; pySC 0.1.0 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js?v=2389946f"></script>
+        <script src="../../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/pySC_logo.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                0.1
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Modules</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/core_functions.html">Core functions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_functions.html#beam">Beam</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_functions.html#pySC.core.beam.all_elements_reading"><code class="docutils literal notranslate"><span class="pre">all_elements_reading()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_functions.html#pySC.core.beam.beam_transmission"><code class="docutils literal notranslate"><span class="pre">beam_transmission()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_functions.html#pySC.core.beam.bpm_reading"><code class="docutils literal notranslate"><span class="pre">bpm_reading()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_functions.html#pySC.core.beam.generate_bunches"><code class="docutils literal notranslate"><span class="pre">generate_bunches()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_functions.html#lattice-setting">Lattice setting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_functions.html#pySC.core.lattice_setting.get_cm_setpoints"><code class="docutils literal notranslate"><span class="pre">get_cm_setpoints()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_functions.html#pySC.core.lattice_setting.set_cavity_setpoints"><code class="docutils literal notranslate"><span class="pre">set_cavity_setpoints()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_functions.html#pySC.core.lattice_setting.set_cm_setpoints"><code class="docutils literal notranslate"><span class="pre">set_cm_setpoints()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_functions.html#pySC.core.lattice_setting.set_magnet_setpoints"><code class="docutils literal notranslate"><span class="pre">set_magnet_setpoints()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_functions.html#pySC.core.lattice_setting.switch_cavity_and_radiation"><code class="docutils literal notranslate"><span class="pre">switch_cavity_and_radiation()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/core_structure.html">Core structure</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_structure.html#simulated-commissioning">Simulated Commissioning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning"><code class="docutils literal notranslate"><span class="pre">SimulatedCommissioning</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_structure.html#subclasses">Subclasses</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_structure.html#pySC.core.classes.DotDict"><code class="docutils literal notranslate"><span class="pre">DotDict</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_structure.html#pySC.core.classes.Indices"><code class="docutils literal notranslate"><span class="pre">Indices</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_structure.html#pySC.core.classes.Injection"><code class="docutils literal notranslate"><span class="pre">Injection</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_structure.html#pySC.core.classes.Sigmas"><code class="docutils literal notranslate"><span class="pre">Sigmas</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/correction.html">Correction algorithms</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/correction.html#trajectory-and-orbit">Trajectory and Orbit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/correction.html#pySC.correction.orbit_trajectory.SCfeedbackBalance"><code class="docutils literal notranslate"><span class="pre">SCfeedbackBalance()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/correction.html#pySC.correction.orbit_trajectory.SCfeedbackFirstTurn"><code class="docutils literal notranslate"><span class="pre">SCfeedbackFirstTurn()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/correction.html#pySC.correction.orbit_trajectory.SCfeedbackRun"><code class="docutils literal notranslate"><span class="pre">SCfeedbackRun()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/correction.html#pySC.correction.orbit_trajectory.SCfeedbackStitch"><code class="docutils literal notranslate"><span class="pre">SCfeedbackStitch()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/correction.html#rf">RF</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/correction.html#pySC.correction.rf.phase_and_energy_error"><code class="docutils literal notranslate"><span class="pre">phase_and_energy_error()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/correction.html#tune">Tune</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/lattice_properties.html">Lattice properties</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/lattice_properties.html#pySC.lattice_properties.response_model.SCgetModelDispersion"><code class="docutils literal notranslate"><span class="pre">SCgetModelDispersion()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/lattice_properties.html#pySC.lattice_properties.response_model.SCgetModelRING"><code class="docutils literal notranslate"><span class="pre">SCgetModelRING()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/lattice_properties.html#pySC.lattice_properties.response_model.SCgetModelRM"><code class="docutils literal notranslate"><span class="pre">SCgetModelRM()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/logging.html">Logging</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/logging.html#pySC.utils.logging_tools.DebugMode"><code class="docutils literal notranslate"><span class="pre">DebugMode</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/logging.html#pySC.utils.logging_tools.MaxFilter"><code class="docutils literal notranslate"><span class="pre">MaxFilter</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/logging.html#pySC.utils.logging_tools.file_handler"><code class="docutils literal notranslate"><span class="pre">file_handler()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/logging.html#pySC.utils.logging_tools.get_logger"><code class="docutils literal notranslate"><span class="pre">get_logger()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/logging.html#pySC.utils.logging_tools.stream_handler"><code class="docutils literal notranslate"><span class="pre">stream_handler()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">Utils</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/utils.html#at-wrapper">AT wrapper</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/utils.html#pySC.utils.sc_tools.SCgetOrds"><code class="docutils literal notranslate"><span class="pre">SCgetOrds()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/utils.html#pySC.utils.sc_tools.SCgetPinv"><code class="docutils literal notranslate"><span class="pre">SCgetPinv()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/utils.html#pySC.utils.sc_tools.SCrandnc"><code class="docutils literal notranslate"><span class="pre">SCrandnc()</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySC</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pySC.correction.orbit_trajectory</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pySC.correction.orbit_trajectory</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Trajectory and Orbit</span>
+<span class="sd">-------------</span>
+
+<span class="sd">This module contains functions to correct trajectory (first turns(s)) and orbit.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">pySC.core.beam</span> <span class="kn">import</span> <span class="n">bpm_reading</span>
+<span class="kn">from</span> <span class="nn">pySC.core.lattice_setting</span> <span class="kn">import</span> <span class="n">set_cavity_setpoints</span><span class="p">,</span> <span class="n">set_cm_setpoints</span>
+<span class="kn">from</span> <span class="nn">pySC.utils</span> <span class="kn">import</span> <span class="n">logging_tools</span>
+<span class="kn">from</span> <span class="nn">pySC.utils.sc_tools</span> <span class="kn">import</span> <span class="n">SCrandnc</span>
+
+<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging_tools</span><span class="o">.</span><span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="SCfeedbackFirstTurn"><a class="viewcode-back" href="../../../modules/correction.html#pySC.correction.orbit_trajectory.SCfeedbackFirstTurn">[docs]</a><span class="k">def</span> <span class="nf">SCfeedbackFirstTurn</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">Mplus</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">CMords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">BPMords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                        <span class="n">maxsteps</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">nRepro</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">wiggle_after</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">wiggle_steps</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
+                        <span class="n">wiggle_range</span><span class="o">=</span><span class="p">(</span><span class="mf">500E-6</span><span class="p">,</span> <span class="mf">1000E-6</span><span class="p">)):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Achieves one-turn transmission</span>
+
+<span class="sd">    Achieves a first turn in `SC.RING`.  This algorithm is based on the idea that</span>
+<span class="sd">    repeated trajectory corrections calculated via a suitably regularized</span>
+<span class="sd">    pseudo-inverse trajectory-response matrix `Mplus` will drive the BPM readings</span>
+<span class="sd">    and CM settings to a fixed point.</span>
+
+<span class="sd">    lim_{n-&gt;oo}  B_n = const. , with B_{n+1}  = Phi(Mplus . B_{n} ),     (1)</span>
+
+<span class="sd">    where mapping Phi maps corrector kicks to BPM-readings.</span>
+<span class="sd">    The RMS-values of both, BPM readings and CM settings, are determined by the</span>
+<span class="sd">    regularization of Mplus.  Successively - during the course of repeated</span>
+<span class="sd">    application of (1) - more and more transmission is achieved throughout the</span>
+<span class="sd">    ring, more magnets are traversed near their magnetic center (which is hopefully</span>
+<span class="sd">    at least somewhere near the BPM zero-point), resulting in decreased kicks.</span>
+<span class="sd">    Otherwise,if trajectory correction cannot proceed further to next BPM</span>
+<span class="sd">    the kicks of an increasing number of the last reached CMs are deterministically ``wiggled&#39;&#39;</span>
+<span class="sd">    until transmission to the next BPM is achieved. Then, application of (1) is resumed.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        SC: SimulatedCommissioning class instance.</span>
+<span class="sd">        Mplus: Pseudo-inverse trajectory-response matrix.</span>
+<span class="sd">        reference: (None) target orbit in the format `[x_1 ... x_n y_1 ...y_n]`, where</span>
+<span class="sd">                   [x_i,y_i]` is the target position at the i-th BPM.</span>
+<span class="sd">        CMords: List of CM ordinates to be used for correction (SC.ORD.CM)</span>
+<span class="sd">        BPMords: List of BPM ordinates at which the reading should be evaluated (SC.ORD.BPM)</span>
+<span class="sd">        maxsteps: break, if this number of correction steps have been performed (default = 100)</span>
+<span class="sd">        nRepro: (default 3)</span>
+<span class="sd">        wiggle_after: Number of iterations without increased transmission to start wiggling. (default = 20)</span>
+<span class="sd">        wiggle_steps: Number of wiggle steps to perform, before incresing the number. (default = 64)</span>
+<span class="sd">        wiggle_range: Range ([min,max] in rad) within which to wiggle the CMs. (default = (500E-6, 1000E-6))</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        SimulatedCommissioning class instance with corrected `SC.RING`</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;SCfeedbackFirstTurn: Start&#39;</span><span class="p">)</span>
+    <span class="n">BPMords</span><span class="p">,</span> <span class="n">CMords</span><span class="p">,</span> <span class="n">reference</span> <span class="o">=</span> <span class="n">_check_ords</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">Mplus</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">BPMords</span><span class="p">,</span> <span class="n">CMords</span><span class="p">)</span>
+    <span class="n">bpm_readings</span><span class="p">,</span> <span class="n">transmission_history</span><span class="p">,</span> <span class="n">rms_orbit_history</span> <span class="o">=</span> <span class="n">_bpm_reading_and_logging</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">BPMords</span><span class="o">=</span><span class="n">BPMords</span><span class="p">)</span>  <span class="c1"># Inject...</span>
+
+    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">maxsteps</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">transmission_history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;SCfeedbackFirstTurn: FAIL (no BPM reading to begin with)&#39;</span><span class="p">)</span>
+        
+        <span class="c1"># Set BPM readings</span>
+        <span class="n">measurement</span> <span class="o">=</span> <span class="n">bpm_readings</span><span class="p">[:,</span> <span class="p">:]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">reference</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">measurement</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">measurement</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c1"># Correction step</span>
+        <span class="n">dphi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">Mplus</span><span class="p">,</span> <span class="p">(</span><span class="n">measurement</span> <span class="o">-</span> <span class="n">reference</span><span class="p">))</span>
+        <span class="n">lastCMh</span> <span class="o">=</span> <span class="n">_get_last_cm</span><span class="p">(</span><span class="n">transmission_history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">BPMords</span><span class="p">,</span> <span class="n">CMords</span><span class="p">[</span><span class="mi">0</span><span class="p">])[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">lastCMv</span> <span class="o">=</span> <span class="n">_get_last_cm</span><span class="p">(</span><span class="n">transmission_history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">BPMords</span><span class="p">,</span> <span class="n">CMords</span><span class="p">[</span><span class="mi">1</span><span class="p">])[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>         
+        <span class="n">SC</span> <span class="o">=</span> <span class="n">set_cm_setpoints</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">CMords</span><span class="p">[</span><span class="mi">0</span><span class="p">][:</span><span class="n">lastCMh</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span> <span class="o">-</span><span class="n">dphi</span><span class="p">[:</span><span class="n">lastCMh</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span> <span class="n">skewness</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;add&#39;</span><span class="p">)</span>
+        <span class="n">SC</span> <span class="o">=</span> <span class="n">set_cm_setpoints</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">CMords</span><span class="p">[</span><span class="mi">1</span><span class="p">][:</span><span class="n">lastCMv</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span> <span class="o">-</span><span class="n">dphi</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">CMords</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span><span class="nb">len</span><span class="p">(</span><span class="n">CMords</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="n">lastCMv</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span> <span class="n">skewness</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;add&#39;</span><span class="p">)</span>
+        <span class="n">bpm_readings</span><span class="p">,</span> <span class="n">transmission_history</span><span class="p">,</span> <span class="n">rms_orbit_history</span> <span class="o">=</span> <span class="n">_bpm_reading_and_logging</span><span class="p">(</span>
+            <span class="n">SC</span><span class="p">,</span> <span class="n">BPMords</span><span class="o">=</span><span class="n">BPMords</span><span class="p">,</span> <span class="n">ind_history</span><span class="o">=</span><span class="n">transmission_history</span><span class="p">,</span> <span class="n">orb_history</span><span class="o">=</span><span class="n">rms_orbit_history</span><span class="p">)</span>  <span class="c1"># Inject...</span>
+ 
+        <span class="c1"># Check stopping criteria</span>
+        <span class="k">if</span> <span class="n">_is_repro</span><span class="p">(</span><span class="n">transmission_history</span><span class="p">,</span> <span class="n">nRepro</span><span class="p">)</span> <span class="ow">and</span> <span class="n">transmission_history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">bpm_readings</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>   <span class="c1"># last three the same and full transmission</span>
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;SCfeedbackFirstTurn: Success&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">SC</span>
+        <span class="k">if</span> <span class="n">_is_repro</span><span class="p">(</span><span class="n">transmission_history</span><span class="p">,</span> <span class="n">wiggle_after</span><span class="p">):</span>
+            <span class="n">SC</span> <span class="o">=</span> <span class="n">_wiggling</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">BPMords</span><span class="p">,</span> <span class="n">CMords</span><span class="p">,</span> <span class="n">transmission_history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">angle_range</span><span class="o">=</span><span class="n">wiggle_range</span><span class="p">,</span> <span class="n">num_angle_steps</span><span class="o">=</span><span class="n">wiggle_steps</span><span class="p">,</span> <span class="n">nRepro</span><span class="o">=</span><span class="n">nRepro</span><span class="p">)</span>
+
+    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;SCfeedbackFirstTurn: FAIL (maxsteps reached)&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SCfeedbackStitch"><a class="viewcode-back" href="../../../modules/correction.html#pySC.correction.orbit_trajectory.SCfeedbackStitch">[docs]</a><span class="k">def</span> <span class="nf">SCfeedbackStitch</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">Mplus</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">CMords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">BPMords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nBPMs</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">maxsteps</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">nRepro</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">wiggle_steps</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">wiggle_range</span><span class="o">=</span><span class="p">(</span><span class="mf">500E-6</span><span class="p">,</span> <span class="mf">1000E-6</span><span class="p">)):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Achieves 2-turn transmission</span>
+
+<span class="sd">    The purpose of this function is to go from 1-turn transmission to 2-turn</span>
+<span class="sd">    transmission. This is done by applying orbit correction based on the pseudo</span>
+<span class="sd">    inverse trajectory response matrix &#39;Mplus&#39; applied to the first BPMs in</span>
+<span class="sd">    the &#39;SC.RING&#39;. The reading of the BPMs in the second turn is corrected</span>
+<span class="sd">    towards the reading of these BPMs in the first turn. This approach has been</span>
+<span class="sd">    seen to be more stable than the direct application of the two-turn inverse</span>
+<span class="sd">    response matrix to the two-turn BPM data.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        SC: SimulatedCommissioning class instance.</span>
+<span class="sd">        Mplus: Pseudo-inverse trajectory-response matrix.</span>
+<span class="sd">        reference: (None) target orbit in the format `[x_1 ... x_n y_1 ...y_n]`, where</span>
+<span class="sd">                   [x_i,y_i]` is the target position at the i-th BPM.</span>
+<span class="sd">        CMords: List of CM ordinates to be used for correction (SC.ORD.CM)</span>
+<span class="sd">        BPMords: List of BPM ordinates at which the reading should be evaluated (SC.ORD.BPM)</span>
+<span class="sd">        maxsteps: break, if this number of correction steps have been performed (default = 100)</span>
+<span class="sd">        nRepro: (default 3)</span>
+<span class="sd">        wiggle_steps: Number of wiggle steps to perform, before incresing the number. (default = 64)</span>
+<span class="sd">        wiggle_range: Range ([min,max] in rad) within which to wiggle the CMs. (default = (500E-6, 1000E-6))</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        SimulatedCommissioning class instance with corrected `SC.RING`</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        Calculate the 2-turn response matrix and get the pseudo inverse using a Tikhonov regularization</span>
+<span class="sd">        parameter of 10. Switch the injection pattern to 2 turns and apply the stitching using the first</span>
+<span class="sd">        three BPMs, for a maximum of 20 steps::</span>
+
+<span class="sd">            RM2 = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, nTurns=2)</span>
+<span class="sd">            Minv2 = SCgetPinv(RM2, alpha=10)</span>
+<span class="sd">            SC.INJ.nTurns = 2</span>
+<span class="sd">            SC = SCfeedbackStitch(SC, Minv2, nBPMs=3, maxsteps=20)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;SCfeedbackStitch: Start&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">SC</span><span class="o">.</span><span class="n">INJ</span><span class="o">.</span><span class="n">nTurns</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Stitching works only with two turns.&quot;</span><span class="p">)</span>
+    <span class="n">BPMords</span><span class="p">,</span> <span class="n">CMords</span><span class="p">,</span> <span class="n">reference</span> <span class="o">=</span> <span class="n">_check_ords</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">Mplus</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">BPMords</span><span class="p">,</span> <span class="n">CMords</span><span class="p">)</span>
+    <span class="n">bpm_readings</span><span class="p">,</span> <span class="n">transmission_history</span><span class="p">,</span> <span class="n">rms_orbit_history</span> <span class="o">=</span> <span class="n">_bpm_reading_and_logging</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">BPMords</span><span class="o">=</span><span class="n">BPMords</span><span class="p">)</span>  <span class="c1"># Inject...</span>
+    <span class="n">transmission_limit</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">BPMords</span><span class="p">)</span><span class="o">+</span><span class="n">nBPMs</span>
+    <span class="k">if</span> <span class="n">transmission_history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">BPMords</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Stitching works only with full 1st turn transmission.&quot;</span><span class="p">)</span>
+    
+    <span class="c1"># Check if minimum transmission for algorithm to work is reached</span>
+    <span class="k">if</span> <span class="n">transmission_history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">transmission_limit</span><span class="p">:</span>
+        <span class="n">SC</span> <span class="o">=</span> <span class="n">_wiggling</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">BPMords</span><span class="p">,</span> <span class="n">CMords</span><span class="p">,</span> <span class="n">transmission_limit</span><span class="p">,</span> <span class="n">angle_range</span><span class="o">=</span><span class="n">wiggle_range</span><span class="p">,</span> <span class="n">num_angle_steps</span><span class="o">=</span><span class="n">wiggle_steps</span><span class="p">,</span> <span class="n">nRepro</span><span class="o">=</span><span class="n">nRepro</span><span class="p">)</span>
+        <span class="n">bpm_readings</span><span class="p">,</span> <span class="n">transmission_history</span><span class="p">,</span> <span class="n">rms_orbit_history</span> <span class="o">=</span> <span class="n">_bpm_reading_and_logging</span><span class="p">(</span>
+            <span class="n">SC</span><span class="p">,</span> <span class="n">BPMords</span><span class="o">=</span><span class="n">BPMords</span><span class="p">,</span> <span class="n">ind_history</span><span class="o">=</span><span class="n">transmission_history</span><span class="p">,</span> <span class="n">orb_history</span><span class="o">=</span><span class="n">rms_orbit_history</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">transmission_history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">transmission_limit</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Not enough transmission for stitching to work.&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Prepare reference</span>
+    <span class="n">reference</span> <span class="o">=</span> <span class="n">reference</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">bpm_readings</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+    <span class="n">reference</span><span class="p">[:,</span> <span class="nb">len</span><span class="p">(</span><span class="n">BPMords</span><span class="p">):]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">reference</span> <span class="o">=</span><span class="n">reference</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">Mplus</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    
+    <span class="c1"># Main loop</span>
+    <span class="k">for</span> <span class="n">steps</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">maxsteps</span><span class="p">):</span>
+        <span class="c1"># Set BPM readings</span>
+        <span class="n">delta_b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">BPMords</span><span class="p">)))</span>
+        <span class="n">delta_b</span><span class="p">[</span><span class="mi">0</span><span class="p">][:</span><span class="n">nBPMs</span><span class="p">]</span> <span class="o">=</span> <span class="n">bpm_readings</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="nb">len</span><span class="p">(</span><span class="n">BPMords</span><span class="p">):</span><span class="nb">len</span><span class="p">(</span><span class="n">BPMords</span><span class="p">)</span><span class="o">+</span><span class="n">nBPMs</span><span class="p">]</span> <span class="o">-</span> <span class="n">bpm_readings</span><span class="p">[</span><span class="mi">0</span><span class="p">][:</span><span class="n">nBPMs</span><span class="p">]</span>
+        <span class="n">delta_b</span><span class="p">[</span><span class="mi">1</span><span class="p">][:</span><span class="n">nBPMs</span><span class="p">]</span> <span class="o">=</span> <span class="n">bpm_readings</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="nb">len</span><span class="p">(</span><span class="n">BPMords</span><span class="p">):</span><span class="nb">len</span><span class="p">(</span><span class="n">BPMords</span><span class="p">)</span><span class="o">+</span><span class="n">nBPMs</span><span class="p">]</span> <span class="o">-</span> <span class="n">bpm_readings</span><span class="p">[</span><span class="mi">1</span><span class="p">][:</span><span class="n">nBPMs</span><span class="p">]</span>
+        <span class="n">measurement</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">bpm_readings</span><span class="p">[:,</span> <span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="n">BPMords</span><span class="p">)],</span> <span class="n">delta_b</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+        <span class="n">measurement</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">measurement</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c1"># Correction step</span>
+        <span class="n">dphi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">Mplus</span><span class="p">,</span> <span class="p">(</span><span class="n">measurement</span> <span class="o">-</span> <span class="n">reference</span><span class="p">))</span>
+        <span class="n">SC</span> <span class="o">=</span> <span class="n">set_cm_setpoints</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">CMords</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="n">dphi</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">CMords</span><span class="p">[</span><span class="mi">0</span><span class="p">])],</span> <span class="n">skewness</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;add&quot;</span><span class="p">)</span>
+        <span class="n">SC</span> <span class="o">=</span> <span class="n">set_cm_setpoints</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">CMords</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="o">-</span><span class="n">dphi</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">CMords</span><span class="p">[</span><span class="mi">0</span><span class="p">]):],</span> <span class="n">skewness</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;add&quot;</span><span class="p">)</span>
+        <span class="n">bpm_readings</span><span class="p">,</span> <span class="n">transmission_history</span><span class="p">,</span> <span class="n">rms_orbit_history</span> <span class="o">=</span> <span class="n">_bpm_reading_and_logging</span><span class="p">(</span>
+            <span class="n">SC</span><span class="p">,</span> <span class="n">BPMords</span><span class="o">=</span><span class="n">BPMords</span><span class="p">,</span> <span class="n">ind_history</span><span class="o">=</span><span class="n">transmission_history</span><span class="p">,</span> <span class="n">orb_history</span><span class="o">=</span><span class="n">rms_orbit_history</span><span class="p">)</span>
+
+        <span class="c1"># Check stopping criteria</span>
+        <span class="k">if</span> <span class="n">transmission_history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">transmission_history</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]:</span>
+            <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;SCfeedbackStitch: FAIL Setback&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">_is_repro</span><span class="p">(</span><span class="n">transmission_history</span><span class="p">,</span> <span class="n">nRepro</span><span class="p">)</span> <span class="ow">and</span> <span class="n">transmission_history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">bpm_readings</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;SCfeedbackStitch: Success&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">SC</span>
+    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;SCfeedbackStitch: FAIL Reached maxsteps&#39;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="SCfeedbackBalance"><a class="viewcode-back" href="../../../modules/correction.html#pySC.correction.orbit_trajectory.SCfeedbackBalance">[docs]</a><span class="k">def</span> <span class="nf">SCfeedbackBalance</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">Mplus</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">CMords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">BPMords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span> <span class="n">maxsteps</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">nRepro</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Balance two-turn BPM readings</span>
+
+<span class="sd">    Generates a period-1 closed orbit, after two-turn transmission has been</span>
+<span class="sd">    achieved. This is done by iteratively applying correction steps, calculated</span>
+<span class="sd">    based on the pseudo-inverse two-turn trajectory response matrix `Mplus`.  The</span>
+<span class="sd">    trajectory in the first turn is corrected towards the reference orbit `reference`,</span>
+<span class="sd">    whereas the trajectory in the second turn is corrected towards the trajectory</span>
+<span class="sd">    measured in the first turn; this approach seems to be more stable than the</span>
+<span class="sd">    directly application of the two-turn TRM to the two-turn BPM readings.</span>
+<span class="sd">    It converges to a state where BPM readings in both turns are very similar,</span>
+<span class="sd">    indicating a period-1 closed orbit.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        SC: SimulatedCommissioning class instance.</span>
+<span class="sd">        Mplus: Pseudo-inverse trajectory-response matrix.</span>
+<span class="sd">        reference: (None) target orbit in the format `[x_1 ... x_n y_1 ...y_n]`, where</span>
+<span class="sd">                   [x_i,y_i]` is the target position at the i-th BPM.</span>
+<span class="sd">        CMords: List of CM ordinates to be used for correction (SC.ORD.CM)</span>
+<span class="sd">        BPMords: List of BPM ordinates at which the reading should be evaluated (SC.ORD.BPM)</span>
+<span class="sd">        maxsteps: break, if this number of correction steps have been performed (default = 100)</span>
+<span class="sd">        nRepro: (default 3)</span>
+<span class="sd">        eps: break, if the coefficient of variation of the RMS BPM reading is below this value</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        SimulatedCommissioning class instance with corrected `SC.RING`</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;SCfeedbackBalance: Start&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">SC</span><span class="o">.</span><span class="n">INJ</span><span class="o">.</span><span class="n">nTurns</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Balancing works only with two turns.&quot;</span><span class="p">)</span>
+    <span class="n">BPMords</span><span class="p">,</span> <span class="n">CMords</span><span class="p">,</span> <span class="n">reference</span> <span class="o">=</span> <span class="n">_check_ords</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">Mplus</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">BPMords</span><span class="p">,</span> <span class="n">CMords</span><span class="p">)</span>
+    <span class="n">bpm_readings</span><span class="p">,</span> <span class="n">transmission_history</span><span class="p">,</span> <span class="n">rms_orbit_history</span> <span class="o">=</span> <span class="n">_bpm_reading_and_logging</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">BPMords</span><span class="o">=</span><span class="n">BPMords</span><span class="p">)</span>  <span class="c1"># Inject...</span>
+    <span class="k">if</span> <span class="n">transmission_history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">bpm_readings</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Balancing works only with full 2 turn transmission.&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Prepare reference</span>
+    <span class="n">reference</span> <span class="o">=</span> <span class="n">reference</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">bpm_readings</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+    <span class="n">reference</span><span class="p">[:,</span> <span class="nb">len</span><span class="p">(</span><span class="n">BPMords</span><span class="p">):]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">reference</span> <span class="o">=</span> <span class="n">reference</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">Mplus</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="c1"># Main loop</span>
+    <span class="k">for</span> <span class="n">steps</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">maxsteps</span><span class="p">):</span>
+        <span class="c1"># Set BPM readings</span>
+        <span class="n">delta_b</span> <span class="o">=</span> <span class="p">[</span><span class="n">bpm_readings</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="nb">len</span><span class="p">(</span><span class="n">BPMords</span><span class="p">):]</span> <span class="o">-</span> <span class="n">bpm_readings</span><span class="p">[</span><span class="mi">0</span><span class="p">][:</span><span class="nb">len</span><span class="p">(</span><span class="n">BPMords</span><span class="p">)],</span> <span class="n">bpm_readings</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="nb">len</span><span class="p">(</span><span class="n">BPMords</span><span class="p">):]</span> <span class="o">-</span> <span class="n">bpm_readings</span><span class="p">[</span><span class="mi">1</span><span class="p">][:</span><span class="nb">len</span><span class="p">(</span><span class="n">BPMords</span><span class="p">)]]</span>
+        <span class="n">measurement</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">bpm_readings</span><span class="p">[:,</span> <span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="n">BPMords</span><span class="p">)],</span> <span class="n">delta_b</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+ 
+        <span class="c1"># Correction step</span>
+        <span class="n">dphi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">Mplus</span><span class="p">,</span> <span class="p">(</span><span class="n">measurement</span> <span class="o">-</span> <span class="n">reference</span><span class="p">))</span>
+        <span class="n">SC</span> <span class="o">=</span> <span class="n">set_cm_setpoints</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">CMords</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="n">dphi</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">CMords</span><span class="p">[</span><span class="mi">0</span><span class="p">])],</span> <span class="n">skewness</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;add&quot;</span><span class="p">)</span>
+        <span class="n">SC</span> <span class="o">=</span> <span class="n">set_cm_setpoints</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">CMords</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="o">-</span><span class="n">dphi</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">CMords</span><span class="p">[</span><span class="mi">0</span><span class="p">]):],</span> <span class="n">skewness</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;add&quot;</span><span class="p">)</span>
+        <span class="n">bpm_readings</span><span class="p">,</span> <span class="n">transmission_history</span><span class="p">,</span> <span class="n">rms_orbit_history</span> <span class="o">=</span> <span class="n">_bpm_reading_and_logging</span><span class="p">(</span>
+            <span class="n">SC</span><span class="p">,</span> <span class="n">BPMords</span><span class="o">=</span><span class="n">BPMords</span><span class="p">,</span> <span class="n">ind_history</span><span class="o">=</span><span class="n">transmission_history</span><span class="p">,</span> <span class="n">orb_history</span><span class="o">=</span><span class="n">rms_orbit_history</span><span class="p">)</span>
+
+        <span class="c1"># Check stopping criteria</span>
+        <span class="k">if</span> <span class="n">transmission_history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">bpm_readings</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;SCfeedbackBalance: FAIL (lost transmission)&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">_is_stable_or_converged</span><span class="p">(</span><span class="n">nRepro</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="n">rms_orbit_history</span><span class="p">):</span>
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;SCfeedbackBalance: Success (converged after </span><span class="si">{</span><span class="n">steps</span><span class="si">}</span><span class="s1"> steps)&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">SC</span>
+
+    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;SCfeedbackBalance: FAIL (maxsteps reached, unstable)&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SCfeedbackRun"><a class="viewcode-back" href="../../../modules/correction.html#pySC.correction.orbit_trajectory.SCfeedbackRun">[docs]</a><span class="k">def</span> <span class="nf">SCfeedbackRun</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">Mplus</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">CMords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">BPMords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">maxsteps</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">nRepro</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">scaleDisp</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    iterative orbit correction</span>
+
+<span class="sd">    Iteratively applies orbit corrections using the pseudoinverse of the</span>
+<span class="sd">    trajectory response matrix `Mplus`, until a break-condition specified by one</span>
+<span class="sd">    of &#39;eps&#39;, &#39;target&#39; or &#39;maxsteps&#39; is met.</span>
+<span class="sd">    The dispersion can be included, thus the rf frequency as a correction</span>
+<span class="sd">    parameter. If the dispersion is to be included, `Mplus` has to have the size</span>
+<span class="sd">    `(len(SC.ORD.HCM) + len(SC.ORD.VCM) + 1) x len(SC.ORD.BPM)`, otherwise the size</span>
+<span class="sd">    `(len(SC.ORD.HCM) + len(SC.ORD.VCM)) x len(SC.ORD.BPM)`, or correspondingly if the CM</span>
+<span class="sd">    and/or BPM ordinates for the correction is explicitly given (see options below). `SC.RING` is</span>
+<span class="sd">    assumed to be a lattice with transmission through all considered turns.</span>
+<span class="sd">    Raises RuntimeError if transmission is lost.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        SC: SimulatedCommissioning class instance.</span>
+<span class="sd">        Mplus: Pseudo-inverse trajectory-response matrix.</span>
+<span class="sd">        reference: (None) target orbit in the format `[x_1 ... x_n y_1 ...y_n]`, where</span>
+<span class="sd">                   [x_i,y_i]` is the target position at the i-th BPM.</span>
+<span class="sd">        CMords: List of CM ordinates to be used for correction (SC.ORD.CM)</span>
+<span class="sd">        BPMords: List of BPM ordinates at which the reading should be evaluated (SC.ORD.BPM)</span>
+<span class="sd">        maxsteps: break, if this number of correction steps have been performed (default = 100)</span>
+<span class="sd">        nRepro: (default 3)</span>
+<span class="sd">        eps: break, if the coefficient of variation of the RMS BPM reading is below this value</span>
+<span class="sd">        target: (default =0 ) break, if the RMS BPM reading reaches this value</span>
+<span class="sd">        scaleDisp: (default =0 ) Scaling factor for and flag indicating if the dispersion is included in the response matrix</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        SimulatedCommissioning class instance with corrected `SC.RING`</span>
+
+<span class="sd">    Examples:</span>
+
+<span class="sd">        Switch to orbit mode, get the model response matrix and dispersion. Calculate the psudo-inverse</span>
+<span class="sd">        while scaling the dispersion by 1E7 and using a Tikhonov regularization parameter of 10.</span>
+<span class="sd">        Finally, apply  and apply orbit feedback including dispersion::</span>
+
+<span class="sd">            SC.INJ.trackMode = &#39;ORB&#39;</span>
+<span class="sd">            MCO = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, trackMode=&#39;ORB&#39;)</span>
+<span class="sd">            eta = SCgetModelDispersion(SC, SC.ORD.BPM, SC.ORD.Cavity,</span>
+<span class="sd">                                       trackMode=&#39;ORB&#39;, Z0=np.zeros(6),</span>
+<span class="sd">                                       nTurns=1, rfStep=1E3,</span>
+<span class="sd">                                       useIdealRing=True)</span>
+<span class="sd">            MinvCO = SCgetPinv(np.column_stack((MCO, 1E8 * eta)), alpha=10)</span>
+<span class="sd">            SC = SCfeedbackRun(SC, MinvCO, target=0, maxsteps=50, scaleDisp=1E8)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;SCfeedbackRun: Start&#39;</span><span class="p">)</span>
+    <span class="n">BPMords</span><span class="p">,</span> <span class="n">CMords</span><span class="p">,</span> <span class="n">reference</span> <span class="o">=</span> <span class="n">_check_ords</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">Mplus</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">BPMords</span><span class="p">,</span> <span class="n">CMords</span><span class="p">)</span>
+    <span class="n">bpm_readings</span><span class="p">,</span> <span class="n">transmission_history</span><span class="p">,</span> <span class="n">rms_orbit_history</span> <span class="o">=</span> <span class="n">_bpm_reading_and_logging</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">BPMords</span><span class="o">=</span><span class="n">BPMords</span><span class="p">)</span>  <span class="c1"># Inject ...</span>
+
+    <span class="c1"># Main loop</span>
+    <span class="k">for</span> <span class="n">steps</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">maxsteps</span><span class="p">):</span>
+        <span class="c1"># Set BPM readings</span>
+        <span class="n">measurement</span> <span class="o">=</span> <span class="n">bpm_readings</span><span class="p">[:,</span> <span class="p">:]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">reference</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+        <span class="c1"># Correction step</span>
+        <span class="n">dphi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">Mplus</span><span class="p">,</span> <span class="p">(</span><span class="n">measurement</span> <span class="o">-</span> <span class="n">reference</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">scaleDisp</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>   <span class="c1"># TODO this is weight</span>
+            <span class="n">SC</span> <span class="o">=</span> <span class="n">set_cavity_setpoints</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">SC</span><span class="o">.</span><span class="n">ORD</span><span class="o">.</span><span class="n">RF</span><span class="p">,</span> <span class="o">-</span><span class="n">scaleDisp</span> <span class="o">*</span> <span class="n">dphi</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="s2">&quot;Frequency&quot;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;add&quot;</span><span class="p">)</span>
+            <span class="n">dphi</span> <span class="o">=</span> <span class="n">dphi</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># TODO the last setpoint is cavity frequency</span>
+        <span class="n">SC</span> <span class="o">=</span> <span class="n">set_cm_setpoints</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">CMords</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="n">dphi</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">CMords</span><span class="p">[</span><span class="mi">0</span><span class="p">])],</span> <span class="n">skewness</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;add&quot;</span><span class="p">)</span>
+        <span class="n">SC</span> <span class="o">=</span> <span class="n">set_cm_setpoints</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">CMords</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="o">-</span><span class="n">dphi</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">CMords</span><span class="p">[</span><span class="mi">0</span><span class="p">]):],</span> <span class="n">skewness</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;add&quot;</span><span class="p">)</span>
+        <span class="n">bpm_readings</span><span class="p">,</span> <span class="n">transmission_history</span><span class="p">,</span> <span class="n">rms_orbit_history</span> <span class="o">=</span> <span class="n">_bpm_reading_and_logging</span><span class="p">(</span>
+            <span class="n">SC</span><span class="p">,</span> <span class="n">BPMords</span><span class="o">=</span><span class="n">BPMords</span><span class="p">,</span> <span class="n">ind_history</span><span class="o">=</span><span class="n">transmission_history</span><span class="p">,</span> <span class="n">orb_history</span><span class="o">=</span><span class="n">rms_orbit_history</span><span class="p">)</span>  <span class="c1"># Inject ...</span>
+
+        <span class="c1"># Check stopping criteria</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">bpm_readings</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:])):</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;SCfeedbackRun: FAIL (lost transmission)&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">max</span><span class="p">(</span><span class="n">rms_orbit_history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">&lt;</span> <span class="n">target</span> <span class="ow">and</span> <span class="n">_is_stable_or_converged</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">nRepro</span><span class="p">,</span> <span class="n">maxsteps</span><span class="p">),</span> <span class="n">eps</span><span class="p">,</span> <span class="n">rms_orbit_history</span><span class="p">):</span>
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SCfeedbackRun: Success (target reached after </span><span class="si">{</span><span class="n">steps</span><span class="si">:</span><span class="s2">d</span><span class="si">}</span><span class="s2"> steps)&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">SC</span>
+        <span class="k">if</span> <span class="n">_is_stable_or_converged</span><span class="p">(</span><span class="n">nRepro</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="n">rms_orbit_history</span><span class="p">):</span>
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SCfeedbackRun: Success (converged after </span><span class="si">{</span><span class="n">steps</span><span class="si">:</span><span class="s2">d</span><span class="si">}</span><span class="s2"> steps)&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">SC</span>
+    <span class="k">if</span> <span class="n">_is_stable_or_converged</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">nRepro</span><span class="p">,</span> <span class="n">maxsteps</span><span class="p">),</span> <span class="n">eps</span><span class="p">,</span> <span class="n">rms_orbit_history</span><span class="p">)</span> <span class="ow">or</span> <span class="n">maxsteps</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;SCfeedbackRun: Success (maxsteps reached)&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">SC</span>
+    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;SCfeedbackRun: FAIL (maxsteps reached, unstable)&quot;</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">SCpseudoBBA</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">BPMords</span><span class="p">,</span> <span class="n">MagOrds</span><span class="p">,</span> <span class="n">postBBAoffset</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+    <span class="c1"># TODO this looks fishy ... assumes BPMs attached to quads?</span>
+    <span class="c1">#  at the same time two separate 2D arrays?</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">postBBAoffset</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">postBBAoffset</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">postBBAoffset</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">BPMords</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)))</span>
+    <span class="k">for</span> <span class="n">nBPM</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">BPMords</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)):</span>
+        <span class="k">for</span> <span class="n">nDim</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+            <span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="n">BPMords</span><span class="p">[</span><span class="n">nDim</span><span class="p">][</span><span class="n">nBPM</span><span class="p">]]</span><span class="o">.</span><span class="n">Offset</span><span class="p">[</span><span class="n">nDim</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="n">MagOrds</span><span class="p">[</span><span class="n">nDim</span><span class="p">][</span><span class="n">nBPM</span><span class="p">]]</span><span class="o">.</span><span class="n">MagnetOffset</span><span class="p">[</span><span class="n">nDim</span><span class="p">]</span>
+                                                         <span class="o">+</span> <span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="n">MagOrds</span><span class="p">[</span><span class="n">nDim</span><span class="p">][</span><span class="n">nBPM</span><span class="p">]]</span><span class="o">.</span><span class="n">SupportOffset</span><span class="p">[</span><span class="n">nDim</span><span class="p">]</span>
+                                                         <span class="o">-</span> <span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="n">BPMords</span><span class="p">[</span><span class="n">nDim</span><span class="p">][</span><span class="n">nBPM</span><span class="p">]]</span><span class="o">.</span><span class="n">SupportOffset</span><span class="p">[</span><span class="n">nDim</span><span class="p">]</span>
+                                                         <span class="o">+</span> <span class="n">postBBAoffset</span><span class="p">[</span><span class="n">nDim</span><span class="p">][</span><span class="n">nBPM</span><span class="p">]</span> <span class="o">*</span> <span class="n">SCrandnc</span><span class="p">(</span><span class="n">sigma</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">SC</span>
+
+
+<span class="k">def</span> <span class="nf">_check_ords</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">Mplus</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">BPMords</span><span class="p">,</span> <span class="n">CMords</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">CMords</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">CMords</span> <span class="o">=</span> <span class="n">SC</span><span class="o">.</span><span class="n">ORD</span><span class="o">.</span><span class="n">CM</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">BPMords</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">BPMords</span> <span class="o">=</span> <span class="n">SC</span><span class="o">.</span><span class="n">ORD</span><span class="o">.</span><span class="n">BPM</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">reference</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">reference</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">Mplus</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">BPMords</span><span class="p">,</span> <span class="n">CMords</span><span class="p">,</span> <span class="n">reference</span>
+
+
+<span class="k">def</span> <span class="nf">_bpm_reading_and_logging</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">BPMords</span><span class="p">,</span> <span class="n">ind_history</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">orb_history</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">bpm_readings</span> <span class="o">=</span> <span class="n">bpm_reading</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">bpm_ords</span><span class="o">=</span><span class="n">BPMords</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">bpms_reached</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">bpm_readings</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">ind_history</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">orb_history</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">bpm_readings</span><span class="p">,</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">bpms_reached</span><span class="p">)],</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">bpm_readings</span><span class="p">[:,</span> <span class="n">bpms_reached</span><span class="p">]),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))]</span>
+    <span class="n">ind_history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">bpms_reached</span><span class="p">))</span>
+    <span class="n">orb_history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">bpm_readings</span><span class="p">[:,</span> <span class="n">bpms_reached</span><span class="p">]),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="n">bpm_readings</span><span class="p">,</span> <span class="n">ind_history</span><span class="p">,</span> <span class="n">orb_history</span>  <span class="c1"># assumes no bad BPMs</span>
+
+
+<span class="k">def</span> <span class="nf">_get_last_cm</span><span class="p">(</span><span class="n">lastBPMidx</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">BPMords</span><span class="p">,</span> <span class="n">CMords</span><span class="p">):</span>  <span class="c1"># Refactored</span>
+    <span class="c1"># Returns last CM ords and index of last CMs</span>
+    <span class="k">if</span> <span class="n">lastBPMidx</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">BPMords</span><span class="p">):</span>  <span class="c1"># If there is no beam loss in the first turn</span>
+        <span class="k">return</span> <span class="n">CMords</span><span class="p">[</span><span class="o">-</span><span class="n">n</span><span class="p">:],</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">CMords</span><span class="p">)</span><span class="o">-</span><span class="n">n</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">CMords</span><span class="p">))</span>  <span class="c1"># ... just return the last n CMs</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">CMords</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">CMords</span> <span class="o">&lt;=</span> <span class="n">BPMords</span><span class="p">[</span><span class="n">lastBPMidx</span><span class="p">])])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;No CM upstream of BPMs&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">CMords</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">CMords</span> <span class="o">&lt;=</span> <span class="n">BPMords</span><span class="p">[</span><span class="n">lastBPMidx</span><span class="p">])[</span><span class="mi">0</span><span class="p">][</span><span class="o">-</span><span class="n">n</span><span class="p">:]],</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">CMords</span> <span class="o">&lt;=</span> <span class="n">BPMords</span><span class="p">[</span><span class="n">lastBPMidx</span><span class="p">])[</span><span class="mi">0</span><span class="p">][</span><span class="o">-</span><span class="n">n</span><span class="p">:]</span>
+
+
+<span class="k">def</span> <span class="nf">_is_repro</span><span class="p">(</span><span class="n">hist</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">hist</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">hist</span><span class="p">[</span><span class="o">-</span><span class="n">n</span><span class="p">:])</span> <span class="o">-</span> <span class="n">hist</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span> <span class="o">==</span> <span class="mi">0</span>
+
+
+<span class="k">def</span> <span class="nf">_golden_donut_diffs</span><span class="p">(</span><span class="n">r0</span><span class="p">,</span> <span class="n">r1</span><span class="p">,</span> <span class="n">n_points</span><span class="p">):</span>
+    <span class="n">r02</span><span class="p">,</span> <span class="n">r12</span> <span class="o">=</span> <span class="n">r0</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">r1</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="n">ints</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n_points</span><span class="p">)</span>
+    <span class="n">phi</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="p">((</span><span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>  <span class="c1"># golden ratio</span>
+    <span class="n">pos_2d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">r02</span> <span class="o">+</span> <span class="p">(</span><span class="n">r12</span> <span class="o">-</span> <span class="n">r02</span><span class="p">)</span> <span class="o">*</span> <span class="n">ints</span> <span class="o">/</span> <span class="p">(</span><span class="n">n_points</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">ints</span> <span class="o">*</span> <span class="n">phi</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">ints</span> <span class="o">*</span> <span class="n">phi</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span> <span class="n">pos_2d</span><span class="p">)),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_is_stable_or_converged</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="n">hist</span><span class="p">):</span>  <span class="c1"># TODO rethink</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">hist</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">hist</span><span class="p">[</span><span class="o">-</span><span class="n">n</span><span class="p">:])</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">hist</span><span class="p">[</span><span class="o">-</span><span class="n">n</span><span class="p">:]))</span> <span class="o">&lt;</span> <span class="n">eps</span>
+
+
+<span class="k">def</span> <span class="nf">_wiggling</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">BPMords</span><span class="p">,</span> <span class="n">CMords</span><span class="p">,</span> <span class="n">transmission_limit</span><span class="p">,</span> <span class="n">angle_range</span><span class="o">=</span><span class="p">(</span><span class="mf">50E-6</span><span class="p">,</span> <span class="mf">200E-6</span><span class="p">),</span> <span class="n">num_angle_steps</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">nums_correctors</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">9</span><span class="p">),</span> <span class="n">nRepro</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+    <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Wiggling&#39;</span><span class="p">)</span>
+    <span class="n">dpts</span> <span class="o">=</span> <span class="n">_golden_donut_diffs</span><span class="p">(</span><span class="n">angle_range</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">angle_range</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">num_angle_steps</span><span class="p">)</span>
+    <span class="n">bpm_readings</span><span class="p">,</span> <span class="n">transmission_history</span><span class="p">,</span> <span class="n">rms_orbit_history</span> <span class="o">=</span> <span class="n">_bpm_reading_and_logging</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">BPMords</span><span class="o">=</span><span class="n">BPMords</span><span class="p">,</span> <span class="n">ind_history</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">orb_history</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>  <span class="c1"># Inject...</span>
+
+    <span class="k">for</span> <span class="n">nWiggleCM</span> <span class="ow">in</span> <span class="n">nums_correctors</span><span class="p">:</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Number of magnets used for wiggling: </span><span class="si">{</span><span class="n">nWiggleCM</span><span class="si">}</span><span class="s1">. </span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">tmpCMordsH</span> <span class="o">=</span> <span class="n">_get_last_cm</span><span class="p">(</span><span class="n">transmission_history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">nWiggleCM</span><span class="p">,</span> <span class="n">BPMords</span><span class="p">,</span> <span class="n">CMords</span><span class="p">[</span><span class="mi">0</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># Last CMs in horz</span>
+        <span class="n">tmpCMordsV</span> <span class="o">=</span> <span class="n">_get_last_cm</span><span class="p">(</span><span class="n">transmission_history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">nWiggleCM</span><span class="p">,</span> <span class="n">BPMords</span><span class="p">,</span> <span class="n">CMords</span><span class="p">[</span><span class="mi">1</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># Last CMs in vert</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dpts</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+            <span class="n">SC</span> <span class="o">=</span> <span class="n">set_cm_setpoints</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">tmpCMordsH</span><span class="p">,</span> <span class="n">dpts</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span><span class="p">],</span> <span class="n">skewness</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;add&#39;</span><span class="p">)</span>
+            <span class="n">SC</span> <span class="o">=</span> <span class="n">set_cm_setpoints</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">tmpCMordsV</span><span class="p">,</span> <span class="n">dpts</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">i</span><span class="p">],</span> <span class="n">skewness</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;add&#39;</span><span class="p">)</span>
+            <span class="n">bpm_readings</span><span class="p">,</span> <span class="n">transmission_history</span><span class="p">,</span> <span class="n">rms_orbit_history</span> <span class="o">=</span> <span class="n">_bpm_reading_and_logging</span><span class="p">(</span>
+                <span class="n">SC</span><span class="p">,</span> <span class="n">BPMords</span><span class="o">=</span><span class="n">BPMords</span><span class="p">,</span> <span class="n">ind_history</span><span class="o">=</span><span class="n">transmission_history</span><span class="p">,</span> <span class="n">orb_history</span><span class="o">=</span><span class="n">rms_orbit_history</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">transmission_history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">transmission_limit</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+                    <span class="n">bpm_readings</span><span class="p">,</span> <span class="n">transmission_history</span><span class="p">,</span> <span class="n">rms_orbit_history</span> <span class="o">=</span> <span class="n">_bpm_reading_and_logging</span><span class="p">(</span>
+                        <span class="n">SC</span><span class="p">,</span> <span class="n">BPMords</span><span class="o">=</span><span class="n">BPMords</span><span class="p">,</span> <span class="n">ind_history</span><span class="o">=</span><span class="n">transmission_history</span><span class="p">,</span> <span class="n">orb_history</span><span class="o">=</span><span class="n">rms_orbit_history</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">_is_repro</span><span class="p">(</span><span class="n">transmission_history</span><span class="p">,</span> <span class="n">nRepro</span><span class="p">):</span>
+                    <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;...completed&#39;</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="n">SC</span>  <span class="c1"># Continue with feedback</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">transmission_history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">transmission_limit</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Wiggling failed&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">SC</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

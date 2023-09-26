@@ -56,25 +56,40 @@
 <li class="toctree-l2"><a class="reference internal" href="core_functions.html#pySC.core.beam.bpm_reading"><code class="docutils literal notranslate"><span class="pre">bpm_reading()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="core_functions.html#pySC.core.beam.generate_bunches"><code class="docutils literal notranslate"><span class="pre">generate_bunches()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="core_functions.html#lattice-setting">Lattice setting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_functions.html#pySC.core.lattice_setting.get_cm_setpoints"><code class="docutils literal notranslate"><span class="pre">get_cm_setpoints()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_functions.html#pySC.core.lattice_setting.set_cavity_setpoints"><code class="docutils literal notranslate"><span class="pre">set_cavity_setpoints()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_functions.html#pySC.core.lattice_setting.set_cm_setpoints"><code class="docutils literal notranslate"><span class="pre">set_cm_setpoints()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_functions.html#pySC.core.lattice_setting.set_magnet_setpoints"><code class="docutils literal notranslate"><span class="pre">set_magnet_setpoints()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_functions.html#pySC.core.lattice_setting.switch_cavity_and_radiation"><code class="docutils literal notranslate"><span class="pre">switch_cavity_and_radiation()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="core_structure.html">Core structure</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="core_structure.html#simulated-commissioning">Simulated Commissioning</a></li>
 <li class="toctree-l2"><a class="reference internal" href="core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning"><code class="docutils literal notranslate"><span class="pre">SimulatedCommissioning</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="core_structure.html#sub-classes">Sub-classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_structure.html#subclasses">Subclasses</a></li>
 <li class="toctree-l2"><a class="reference internal" href="core_structure.html#pySC.core.classes.DotDict"><code class="docutils literal notranslate"><span class="pre">DotDict</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="core_structure.html#pySC.core.classes.Indices"><code class="docutils literal notranslate"><span class="pre">Indices</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_structure.html#pySC.core.classes.Injection"><code class="docutils literal notranslate"><span class="pre">Injection</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="core_structure.html#pySC.core.classes.Sigmas"><code class="docutils literal notranslate"><span class="pre">Sigmas</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Correction algorithms</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#trajectory-and-orbit">Trajectory and Orbit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pySC.correction.orbit_trajectory.SCfeedbackBalance"><code class="docutils literal notranslate"><span class="pre">SCfeedbackBalance()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pySC.correction.orbit_trajectory.SCfeedbackFirstTurn"><code class="docutils literal notranslate"><span class="pre">SCfeedbackFirstTurn()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pySC.correction.orbit_trajectory.SCfeedbackRun"><code class="docutils literal notranslate"><span class="pre">SCfeedbackRun()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pySC.correction.orbit_trajectory.SCfeedbackStitch"><code class="docutils literal notranslate"><span class="pre">SCfeedbackStitch()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#rf">RF</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pySC.correction.rf.phase_and_energy_error"><code class="docutils literal notranslate"><span class="pre">phase_and_energy_error()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#tune">Tune</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="lattice_properties.html">Lattice properties</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lattice_properties.html">Lattice properties</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="lattice_properties.html#pySC.lattice_properties.response_model.SCgetModelDispersion"><code class="docutils literal notranslate"><span class="pre">SCgetModelDispersion()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="lattice_properties.html#pySC.lattice_properties.response_model.SCgetModelRING"><code class="docutils literal notranslate"><span class="pre">SCgetModelRING()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="lattice_properties.html#pySC.lattice_properties.response_model.SCgetModelRM"><code class="docutils literal notranslate"><span class="pre">SCgetModelRM()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="logging.html">Logging</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="logging.html#pySC.utils.logging_tools.DebugMode"><code class="docutils literal notranslate"><span class="pre">DebugMode</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="logging.html#pySC.utils.logging_tools.MaxFilter"><code class="docutils literal notranslate"><span class="pre">MaxFilter</span></code></a></li>
@@ -123,6 +138,171 @@
 <h2>Trajectory and Orbit<a class="headerlink" href="#trajectory-and-orbit" title="Permalink to this heading"></a></h2>
 <p>This module contains functions to correct trajectory (first turns(s)) and orbit.</p>
 </section>
+<dl class="py function">
+<dt class="sig sig-object py" id="pySC.correction.orbit_trajectory.SCfeedbackBalance">
+<span class="sig-prename descclassname"><span class="pre">pySC.correction.orbit_trajectory.</span></span><span class="sig-name descname"><span class="pre">SCfeedbackBalance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">SC</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Mplus</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">CMords</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">BPMords</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxsteps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nRepro</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pySC/correction/orbit_trajectory.html#SCfeedbackBalance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pySC.correction.orbit_trajectory.SCfeedbackBalance" title="Permalink to this definition"></a></dt>
+<dd><p>Balance two-turn BPM readings</p>
+<p>Generates a period-1 closed orbit, after two-turn transmission has been
+achieved. This is done by iteratively applying correction steps, calculated
+based on the pseudo-inverse two-turn trajectory response matrix <cite>Mplus</cite>.  The
+trajectory in the first turn is corrected towards the reference orbit <cite>reference</cite>,
+whereas the trajectory in the second turn is corrected towards the trajectory
+measured in the first turn; this approach seems to be more stable than the
+directly application of the two-turn TRM to the two-turn BPM readings.
+It converges to a state where BPM readings in both turns are very similar,
+indicating a period-1 closed orbit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>SC</strong> -- SimulatedCommissioning class instance.</p></li>
+<li><p><strong>Mplus</strong> -- Pseudo-inverse trajectory-response matrix.</p></li>
+<li><p><strong>reference</strong> -- (None) target orbit in the format <cite>[x_1 … x_n y_1 …y_n]</cite>, where
+[x_i,y_i]` is the target position at the i-th BPM.</p></li>
+<li><p><strong>CMords</strong> -- List of CM ordinates to be used for correction (SC.ORD.CM)</p></li>
+<li><p><strong>BPMords</strong> -- List of BPM ordinates at which the reading should be evaluated (SC.ORD.BPM)</p></li>
+<li><p><strong>maxsteps</strong> -- break, if this number of correction steps have been performed (default = 100)</p></li>
+<li><p><strong>nRepro</strong> -- (default 3)</p></li>
+<li><p><strong>eps</strong> -- break, if the coefficient of variation of the RMS BPM reading is below this value</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>SimulatedCommissioning class instance with corrected <cite>SC.RING</cite></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pySC.correction.orbit_trajectory.SCfeedbackFirstTurn">
+<span class="sig-prename descclassname"><span class="pre">pySC.correction.orbit_trajectory.</span></span><span class="sig-name descname"><span class="pre">SCfeedbackFirstTurn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">SC</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Mplus</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">CMords</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">BPMords</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxsteps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nRepro</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wiggle_after</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wiggle_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wiggle_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0.0005,</span> <span class="pre">0.001)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pySC/correction/orbit_trajectory.html#SCfeedbackFirstTurn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pySC.correction.orbit_trajectory.SCfeedbackFirstTurn" title="Permalink to this definition"></a></dt>
+<dd><p>Achieves one-turn transmission</p>
+<p>Achieves a first turn in <cite>SC.RING</cite>.  This algorithm is based on the idea that
+repeated trajectory corrections calculated via a suitably regularized
+pseudo-inverse trajectory-response matrix <cite>Mplus</cite> will drive the BPM readings
+and CM settings to a fixed point.</p>
+<p>lim_{n-&gt;oo}  B_n = const. , with B_{n+1}  = Phi(Mplus . B_{n} ),     (1)</p>
+<p>where mapping Phi maps corrector kicks to BPM-readings.
+The RMS-values of both, BPM readings and CM settings, are determined by the
+regularization of Mplus.  Successively - during the course of repeated
+application of (1) - more and more transmission is achieved throughout the
+ring, more magnets are traversed near their magnetic center (which is hopefully
+at least somewhere near the BPM zero-point), resulting in decreased kicks.
+Otherwise,if trajectory correction cannot proceed further to next BPM
+the kicks of an increasing number of the last reached CMs are deterministically <a href="#id1"><span class="problematic" id="id2">``</span></a>wiggled’’
+until transmission to the next BPM is achieved. Then, application of (1) is resumed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>SC</strong> -- SimulatedCommissioning class instance.</p></li>
+<li><p><strong>Mplus</strong> -- Pseudo-inverse trajectory-response matrix.</p></li>
+<li><p><strong>reference</strong> -- (None) target orbit in the format <cite>[x_1 … x_n y_1 …y_n]</cite>, where
+[x_i,y_i]` is the target position at the i-th BPM.</p></li>
+<li><p><strong>CMords</strong> -- List of CM ordinates to be used for correction (SC.ORD.CM)</p></li>
+<li><p><strong>BPMords</strong> -- List of BPM ordinates at which the reading should be evaluated (SC.ORD.BPM)</p></li>
+<li><p><strong>maxsteps</strong> -- break, if this number of correction steps have been performed (default = 100)</p></li>
+<li><p><strong>nRepro</strong> -- (default 3)</p></li>
+<li><p><strong>wiggle_after</strong> -- Number of iterations without increased transmission to start wiggling. (default = 20)</p></li>
+<li><p><strong>wiggle_steps</strong> -- Number of wiggle steps to perform, before incresing the number. (default = 64)</p></li>
+<li><p><strong>wiggle_range</strong> -- Range ([min,max] in rad) within which to wiggle the CMs. (default = (500E-6, 1000E-6))</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>SimulatedCommissioning class instance with corrected <cite>SC.RING</cite></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pySC.correction.orbit_trajectory.SCfeedbackRun">
+<span class="sig-prename descclassname"><span class="pre">pySC.correction.orbit_trajectory.</span></span><span class="sig-name descname"><span class="pre">SCfeedbackRun</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">SC</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Mplus</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">CMords</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">BPMords</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxsteps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nRepro</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scaleDisp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pySC/correction/orbit_trajectory.html#SCfeedbackRun"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pySC.correction.orbit_trajectory.SCfeedbackRun" title="Permalink to this definition"></a></dt>
+<dd><p>iterative orbit correction</p>
+<p>Iteratively applies orbit corrections using the pseudoinverse of the
+trajectory response matrix <cite>Mplus</cite>, until a break-condition specified by one
+of ‘eps’, ‘target’ or ‘maxsteps’ is met.
+The dispersion can be included, thus the rf frequency as a correction
+parameter. If the dispersion is to be included, <cite>Mplus</cite> has to have the size
+<cite>(len(SC.ORD.HCM) + len(SC.ORD.VCM) + 1) x len(SC.ORD.BPM)</cite>, otherwise the size
+<cite>(len(SC.ORD.HCM) + len(SC.ORD.VCM)) x len(SC.ORD.BPM)</cite>, or correspondingly if the CM
+and/or BPM ordinates for the correction is explicitly given (see options below). <cite>SC.RING</cite> is
+assumed to be a lattice with transmission through all considered turns.
+Raises RuntimeError if transmission is lost.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>SC</strong> -- SimulatedCommissioning class instance.</p></li>
+<li><p><strong>Mplus</strong> -- Pseudo-inverse trajectory-response matrix.</p></li>
+<li><p><strong>reference</strong> -- (None) target orbit in the format <cite>[x_1 … x_n y_1 …y_n]</cite>, where
+[x_i,y_i]` is the target position at the i-th BPM.</p></li>
+<li><p><strong>CMords</strong> -- List of CM ordinates to be used for correction (SC.ORD.CM)</p></li>
+<li><p><strong>BPMords</strong> -- List of BPM ordinates at which the reading should be evaluated (SC.ORD.BPM)</p></li>
+<li><p><strong>maxsteps</strong> -- break, if this number of correction steps have been performed (default = 100)</p></li>
+<li><p><strong>nRepro</strong> -- (default 3)</p></li>
+<li><p><strong>eps</strong> -- break, if the coefficient of variation of the RMS BPM reading is below this value</p></li>
+<li><p><strong>target</strong> -- (default =0 ) break, if the RMS BPM reading reaches this value</p></li>
+<li><p><strong>scaleDisp</strong> -- (default =0 ) Scaling factor for and flag indicating if the dispersion is included in the response matrix</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>SimulatedCommissioning class instance with corrected <cite>SC.RING</cite></p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>Switch to orbit mode, get the model response matrix and dispersion. Calculate the psudo-inverse
+while scaling the dispersion by 1E7 and using a Tikhonov regularization parameter of 10.
+Finally, apply  and apply orbit feedback including dispersion:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SC</span><span class="o">.</span><span class="n">INJ</span><span class="o">.</span><span class="n">trackMode</span> <span class="o">=</span> <span class="s1">&#39;ORB&#39;</span>
+<span class="n">MCO</span> <span class="o">=</span> <span class="n">SCgetModelRM</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">SC</span><span class="o">.</span><span class="n">ORD</span><span class="o">.</span><span class="n">BPM</span><span class="p">,</span> <span class="n">SC</span><span class="o">.</span><span class="n">ORD</span><span class="o">.</span><span class="n">CM</span><span class="p">,</span> <span class="n">trackMode</span><span class="o">=</span><span class="s1">&#39;ORB&#39;</span><span class="p">)</span>
+<span class="n">eta</span> <span class="o">=</span> <span class="n">SCgetModelDispersion</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">SC</span><span class="o">.</span><span class="n">ORD</span><span class="o">.</span><span class="n">BPM</span><span class="p">,</span> <span class="n">SC</span><span class="o">.</span><span class="n">ORD</span><span class="o">.</span><span class="n">Cavity</span><span class="p">,</span>
+                           <span class="n">trackMode</span><span class="o">=</span><span class="s1">&#39;ORB&#39;</span><span class="p">,</span> <span class="n">Z0</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">6</span><span class="p">),</span>
+                           <span class="n">nTurns</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">rfStep</span><span class="o">=</span><span class="mf">1E3</span><span class="p">,</span>
+                           <span class="n">useIdealRing</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">MinvCO</span> <span class="o">=</span> <span class="n">SCgetPinv</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">((</span><span class="n">MCO</span><span class="p">,</span> <span class="mf">1E8</span> <span class="o">*</span> <span class="n">eta</span><span class="p">)),</span> <span class="n">alpha</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">SC</span> <span class="o">=</span> <span class="n">SCfeedbackRun</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">MinvCO</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">maxsteps</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">scaleDisp</span><span class="o">=</span><span class="mf">1E8</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pySC.correction.orbit_trajectory.SCfeedbackStitch">
+<span class="sig-prename descclassname"><span class="pre">pySC.correction.orbit_trajectory.</span></span><span class="sig-name descname"><span class="pre">SCfeedbackStitch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">SC</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Mplus</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">CMords</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">BPMords</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nBPMs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxsteps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nRepro</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wiggle_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wiggle_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0.0005,</span> <span class="pre">0.001)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pySC/correction/orbit_trajectory.html#SCfeedbackStitch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pySC.correction.orbit_trajectory.SCfeedbackStitch" title="Permalink to this definition"></a></dt>
+<dd><p>Achieves 2-turn transmission</p>
+<p>The purpose of this function is to go from 1-turn transmission to 2-turn
+transmission. This is done by applying orbit correction based on the pseudo
+inverse trajectory response matrix ‘Mplus’ applied to the first BPMs in
+the ‘SC.RING’. The reading of the BPMs in the second turn is corrected
+towards the reading of these BPMs in the first turn. This approach has been
+seen to be more stable than the direct application of the two-turn inverse
+response matrix to the two-turn BPM data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>SC</strong> -- SimulatedCommissioning class instance.</p></li>
+<li><p><strong>Mplus</strong> -- Pseudo-inverse trajectory-response matrix.</p></li>
+<li><p><strong>reference</strong> -- (None) target orbit in the format <cite>[x_1 … x_n y_1 …y_n]</cite>, where
+[x_i,y_i]` is the target position at the i-th BPM.</p></li>
+<li><p><strong>CMords</strong> -- List of CM ordinates to be used for correction (SC.ORD.CM)</p></li>
+<li><p><strong>BPMords</strong> -- List of BPM ordinates at which the reading should be evaluated (SC.ORD.BPM)</p></li>
+<li><p><strong>maxsteps</strong> -- break, if this number of correction steps have been performed (default = 100)</p></li>
+<li><p><strong>nRepro</strong> -- (default 3)</p></li>
+<li><p><strong>wiggle_steps</strong> -- Number of wiggle steps to perform, before incresing the number. (default = 64)</p></li>
+<li><p><strong>wiggle_range</strong> -- Range ([min,max] in rad) within which to wiggle the CMs. (default = (500E-6, 1000E-6))</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>SimulatedCommissioning class instance with corrected <cite>SC.RING</cite></p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>Calculate the 2-turn response matrix and get the pseudo inverse using a Tikhonov regularization
+parameter of 10. Switch the injection pattern to 2 turns and apply the stitching using the first
+three BPMs, for a maximum of 20 steps:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">RM2</span> <span class="o">=</span> <span class="n">SCgetModelRM</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">SC</span><span class="o">.</span><span class="n">ORD</span><span class="o">.</span><span class="n">BPM</span><span class="p">,</span> <span class="n">SC</span><span class="o">.</span><span class="n">ORD</span><span class="o">.</span><span class="n">CM</span><span class="p">,</span> <span class="n">nTurns</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">Minv2</span> <span class="o">=</span> <span class="n">SCgetPinv</span><span class="p">(</span><span class="n">RM2</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">SC</span><span class="o">.</span><span class="n">INJ</span><span class="o">.</span><span class="n">nTurns</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">SC</span> <span class="o">=</span> <span class="n">SCfeedbackStitch</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">Minv2</span><span class="p">,</span> <span class="n">nBPMs</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">maxsteps</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
 <span class="target" id="module-pySC.correction.rf"></span><section id="rf">
 <h2>RF<a class="headerlink" href="#rf" title="Permalink to this heading"></a></h2>
 <p>This module contains functions to correct RF phase and frequency.</p>
