@@ -53,10 +53,6 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/core_functions.html#pySC.core.beam.bpm_reading"><code class="docutils literal notranslate"><span class="pre">bpm_reading()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/core_functions.html#pySC.core.beam.generate_bunches"><code class="docutils literal notranslate"><span class="pre">generate_bunches()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/core_functions.html#lattice-setting">Lattice setting</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_functions.html#pySC.core.lattice_setting.get_cm_setpoints"><code class="docutils literal notranslate"><span class="pre">get_cm_setpoints()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_functions.html#pySC.core.lattice_setting.set_cavity_setpoints"><code class="docutils literal notranslate"><span class="pre">set_cavity_setpoints()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_functions.html#pySC.core.lattice_setting.set_cm_setpoints"><code class="docutils literal notranslate"><span class="pre">set_cm_setpoints()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../modules/core_functions.html#pySC.core.lattice_setting.set_magnet_setpoints"><code class="docutils literal notranslate"><span class="pre">set_magnet_setpoints()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/core_functions.html#pySC.core.lattice_setting.switch_cavity_and_radiation"><code class="docutils literal notranslate"><span class="pre">switch_cavity_and_radiation()</span></code></a></li>
 </ul>
 </li>
@@ -136,66 +132,11 @@
 <span class="sd">This module contains the &#39;machine-based&#39; functions to interact with lattice under study.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span><span class="p">,</span> <span class="n">List</span>
-
 <span class="kn">from</span> <span class="nn">at</span> <span class="kn">import</span> <span class="n">Lattice</span>
 <span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">ndarray</span>
-
-<span class="kn">from</span> <span class="nn">pySC.core.constants</span> <span class="kn">import</span> <span class="n">SETTING_METHODS</span><span class="p">,</span> <span class="n">SETTING_ABS</span><span class="p">,</span> <span class="n">SETTING_REL</span><span class="p">,</span> <span class="n">SETTING_ADD</span><span class="p">,</span> <span class="n">NUM_TO_AB</span>
-<span class="kn">from</span> <span class="nn">pySC.core.simulated_commissioning</span> <span class="kn">import</span> <span class="n">SimulatedCommissioning</span>
-<span class="kn">from</span> <span class="nn">pySC.utils.at_wrapper</span> <span class="kn">import</span> <span class="n">atgetfieldvalues</span>
 <span class="kn">from</span> <span class="nn">pySC.utils</span> <span class="kn">import</span> <span class="n">logging_tools</span>
 
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging_tools</span><span class="o">.</span><span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
-<span class="n">SETPOINT</span> <span class="o">=</span> <span class="s2">&quot;SetPoint&quot;</span>
-
-
-<div class="viewcode-block" id="set_cavity_setpoints"><a class="viewcode-back" href="../../../modules/core_functions.html#pySC.core.lattice_setting.set_cavity_setpoints">[docs]</a><span class="k">def</span> <span class="nf">set_cavity_setpoints</span><span class="p">(</span><span class="n">SC</span><span class="p">:</span> <span class="n">SimulatedCommissioning</span><span class="p">,</span>
-                         <span class="n">ords</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">ndarray</span><span class="p">],</span>
-                         <span class="n">setpoints</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">ndarray</span><span class="p">],</span>
-                         <span class="n">param</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">SETTING_ABS</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SimulatedCommissioning</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Set RF properties to setpoints</span>
-<span class="sd">    </span>
-<span class="sd">    Set the setpoints of `Voltage`, `Frequency` or `TimeLag` as specified in &quot;param&quot; of the rf</span>
-<span class="sd">    cavities specified in `ords`. If only a single setpoint is given for multiple cavities,</span>
-<span class="sd">    the setpoint is applied to all cavities.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        SC: SimulatedCommissioning class instance</span>
-<span class="sd">        ords: Array of cavity ordinates in the lattice structure (SC.ORD.RF)</span>
-<span class="sd">        setpoints: Setpoints (array or single value for all cavities)</span>
-<span class="sd">        param: String (&#39;Voltage&#39;, &#39;Frequency&#39; or &#39;TimeLag&#39;) specifying which cavity field should be set.</span>
-<span class="sd">        method: &#39;abs&#39; (default), Use absolute setpoint</span>
-<span class="sd">                &#39;rel&#39;, Use relative setpoint to nominal value</span>
-<span class="sd">                &#39;add&#39;, Add setpoints to current value</span>
-<span class="sd">        </span>
-<span class="sd">    Returns:</span>
-<span class="sd">        The modified SC structure.</span>
-<span class="sd">    </span>
-<span class="sd">    Examples:</span>
-<span class="sd">        Sets the time lag of all cavities registered in SC to zero::</span>
-<span class="sd">            </span>
-<span class="sd">            SC = set_cavity_setpoints(SC, ords=SC.ORD.Cavity,</span>
-<span class="sd">                                      setpoints=0, param=&#39;TimeLag&#39;)</span>
-<span class="sd">        </span>
-<span class="sd">        Adds 1kHz to the frequency of the first cavity::</span>
-<span class="sd">            </span>
-<span class="sd">            SC = set_cavity_setpoints(SC, ords=SC.ORD.Cavity(1),</span>
-<span class="sd">                                      setpoints=1E3, param=&#39;Frequency&#39;,</span>
-<span class="sd">                                      method=&#39;add&#39;)</span>
-<span class="sd">    </span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">ords_1d</span><span class="p">,</span> <span class="n">setpoints_1d</span> <span class="o">=</span> <span class="n">_check_input_and_setpoints</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">ords</span><span class="p">,</span> <span class="n">setpoints</span><span class="p">)</span>
-    <span class="n">setpoint_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">param</span><span class="si">}{</span><span class="n">SETPOINT</span><span class="si">}</span><span class="s2">&quot;</span>
-    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="n">SETTING_REL</span><span class="p">:</span>
-        <span class="n">setpoints_1d</span> <span class="o">*=</span> <span class="n">atgetfieldvalues</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">,</span> <span class="n">ords_1d</span><span class="p">,</span> <span class="n">setpoint_str</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="n">SETTING_ADD</span><span class="p">:</span>
-        <span class="n">setpoints_1d</span> <span class="o">+=</span> <span class="n">atgetfieldvalues</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">,</span> <span class="n">ords_1d</span><span class="p">,</span> <span class="n">setpoint_str</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="nb">ord</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ords_1d</span><span class="p">):</span>
-        <span class="nb">setattr</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="nb">ord</span><span class="p">],</span> <span class="n">setpoint_str</span><span class="p">,</span> <span class="n">setpoints_1d</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
-    <span class="n">SC</span><span class="o">.</span><span class="n">update_cavities</span><span class="p">(</span><span class="n">ords_1d</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">SC</span></div>
 
 
 <span class="k">def</span> <span class="nf">switch_rf</span><span class="p">(</span><span class="n">ring</span><span class="p">:</span> <span class="n">Lattice</span><span class="p">,</span> <span class="n">ords</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Lattice</span><span class="p">:</span>
@@ -203,165 +144,6 @@
     <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="n">cavs</span><span class="p">:</span>
         <span class="n">ring</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span><span class="o">.</span><span class="n">PassMethod</span> <span class="o">=</span> <span class="s1">&#39;RFCavityPass&#39;</span> <span class="k">if</span> <span class="n">state</span> <span class="k">else</span> <span class="s1">&#39;IdentityPass&#39;</span>
     <span class="k">return</span> <span class="n">ring</span>
-
-
-<div class="viewcode-block" id="get_cm_setpoints"><a class="viewcode-back" href="../../../modules/core_functions.html#pySC.core.lattice_setting.get_cm_setpoints">[docs]</a><span class="k">def</span> <span class="nf">get_cm_setpoints</span><span class="p">(</span><span class="n">SC</span><span class="p">:</span> <span class="n">SimulatedCommissioning</span><span class="p">,</span> <span class="n">ords</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">ndarray</span><span class="p">],</span> <span class="n">skewness</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-
-<span class="sd">    Return current dipole Corrector Magnets (CM) setpoints</span>
-
-<span class="sd">    Reads the setpoints of the CMs specified in `ords` in the dimension `skewness`.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        SC: SimulatedCommissioning class instance</span>
-<span class="sd">        ords: Array of CM ordinates in the lattice structure (ex: SC.ORD.CM[0])</span>
-<span class="sd">        skewness: boolean specifying CM dimension ([False|True] -&gt; [hor|ver])</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        CM setpoints [rad]</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">ords_1d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">ords</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">))</span>
-    <span class="n">order</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">ndim</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">skewness</span><span class="p">)</span>
-    <span class="n">letter</span> <span class="o">=</span> <span class="n">NUM_TO_AB</span><span class="p">[</span><span class="n">ndim</span><span class="p">]</span>
-    <span class="n">setpoints</span> <span class="o">=</span> <span class="n">atgetfieldvalues</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">,</span> <span class="n">ords_1d</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">SETPOINT</span><span class="si">}{</span><span class="n">letter</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">order</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">ord1d</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ords_1d</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="n">ord1d</span><span class="p">]</span><span class="o">.</span><span class="n">PassMethod</span> <span class="o">!=</span> <span class="s1">&#39;CorrectorPass&#39;</span><span class="p">:</span>
-            <span class="c1"># positive setpoint -&gt; positive kick -&gt; negative horizontal field</span>
-            <span class="n">setpoints</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="n">ndim</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="n">ord1d</span><span class="p">]</span><span class="o">.</span><span class="n">Length</span>
-    <span class="k">return</span> <span class="n">setpoints</span></div>
-
-
-<div class="viewcode-block" id="set_cm_setpoints"><a class="viewcode-back" href="../../../modules/core_functions.html#pySC.core.lattice_setting.set_cm_setpoints">[docs]</a><span class="k">def</span> <span class="nf">set_cm_setpoints</span><span class="p">(</span><span class="n">SC</span><span class="p">:</span> <span class="n">SimulatedCommissioning</span><span class="p">,</span>
-                     <span class="n">ords</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">ndarray</span><span class="p">],</span>
-                     <span class="n">setpoints</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">ndarray</span><span class="p">],</span>
-                     <span class="n">skewness</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">SETTING_ABS</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SimulatedCommissioning</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Sets dipole corrector magnets to different setpoints</span>
-
-<span class="sd">    Sets horizontal or vertical CMs as specified in `ords` and `skewness`, respectively, to `setpoints`</span>
-<span class="sd">    [rad] and updates the magnetic fields. If the corresponding setpoint exceeds the CM limit</span>
-<span class="sd">    specified in the corresponding lattice field `CMlimit`, the CM is clipped to that value</span>
-<span class="sd">    and a warning is being printed (to switch off, use `warning(&#39;off&#39;,&#39;SC:CM1&#39;))`. Positive setpoints</span>
-<span class="sd">    will results in kicks in the positive horizontal or vertical direction.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        SC: SimulatedCommissioning class instance</span>
-<span class="sd">        ords:  Array of CM ordinates in the lattice structure (ex: SC.ORD.CM[0])</span>
-<span class="sd">        setpoints:  CM setpoints (array or single value for all CMs) [rad]</span>
-<span class="sd">        skewness: boolean specifying CM dimension ([False|True] -&gt; [hor|ver])</span>
-<span class="sd">        method: &#39;abs&#39; (default), Use absolute setpoint</span>
-<span class="sd">                &#39;rel&#39;, Use relative setpoint to current value</span>
-<span class="sd">                &#39;add&#39;, Add setpoints to current value</span>
-
-<span class="sd">    Returns:</span>
-
-<span class="sd">        The lattice structure with modified and applied setpoints</span>
-
-<span class="sd">    Examples:</span>
-<span class="sd">        Set all registered horizontal CMs to zero::</span>
-
-<span class="sd">            SC = set_cm_setpoints(SC, ords=SC.ORD.HCM,</span>
-<span class="sd">                                    skewness=False, setpoints=0.0)</span>
-
-<span class="sd">        Add 10urad to the fourth registered vertical CM::</span>
-
-<span class="sd">            SC = set_cm_setpoints(SC, ords=SC.ORD.VCM[4],</span>
-<span class="sd">                                    setpoints=1E-5, skewness=True,</span>
-<span class="sd">                                    method=&#39;add&#39;)</span>
-
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># TODO corrector does not have PolynomA/B in at?</span>
-    <span class="n">ords_1d</span><span class="p">,</span> <span class="n">setpoints_1d</span> <span class="o">=</span> <span class="n">_check_input_and_setpoints</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">ords</span><span class="p">,</span> <span class="n">setpoints</span><span class="p">)</span>
-    <span class="n">order</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">ndim</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">skewness</span><span class="p">)</span>
-    <span class="n">letter</span> <span class="o">=</span> <span class="n">NUM_TO_AB</span><span class="p">[</span><span class="n">ndim</span><span class="p">]</span>
-    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="nb">ord</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ords_1d</span><span class="p">):</span>
-        <span class="c1"># positive setpoint -&gt; positive kick -&gt; negative horizontal field</span>
-        <span class="n">norm_by</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="n">ndim</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="nb">ord</span><span class="p">]</span><span class="o">.</span><span class="n">Length</span> <span class="k">if</span> <span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="nb">ord</span><span class="p">]</span><span class="o">.</span><span class="n">PassMethod</span> <span class="o">!=</span> <span class="s1">&#39;CorrectorPass&#39;</span> <span class="k">else</span> <span class="mi">1</span>
-        <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="n">SETTING_REL</span><span class="p">:</span>
-            <span class="n">setpoints_1d</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="nb">ord</span><span class="p">],</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">SETPOINT</span><span class="si">}{</span><span class="n">letter</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)[</span><span class="n">order</span><span class="p">]</span> <span class="o">*</span> <span class="n">norm_by</span>
-        <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="n">SETTING_ADD</span><span class="p">:</span>
-            <span class="n">setpoints_1d</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="nb">ord</span><span class="p">],</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">SETPOINT</span><span class="si">}{</span><span class="n">letter</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)[</span><span class="n">order</span><span class="p">]</span> <span class="o">*</span> <span class="n">norm_by</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="nb">ord</span><span class="p">],</span> <span class="s1">&#39;CMlimit&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">abs</span><span class="p">(</span><span class="n">setpoints_1d</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">&gt;</span> <span class="nb">abs</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="nb">ord</span><span class="p">]</span><span class="o">.</span><span class="n">CMlimit</span><span class="p">[</span><span class="n">ndim</span><span class="p">]):</span>
-            <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;CM (ord: </span><span class="si">{</span><span class="nb">ord</span><span class="si">}</span><span class="s1"> / dim: </span><span class="si">{</span><span class="n">ndim</span><span class="si">}</span><span class="s1">) is clipping&#39;</span><span class="p">)</span>
-            <span class="n">setpoints_1d</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">setpoints_1d</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">*</span> <span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="nb">ord</span><span class="p">]</span><span class="o">.</span><span class="n">CMlimit</span><span class="p">[</span><span class="n">ndim</span><span class="p">]</span>
-        <span class="nb">getattr</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="nb">ord</span><span class="p">],</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">SETPOINT</span><span class="si">}{</span><span class="n">letter</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)[</span><span class="n">order</span><span class="p">]</span> <span class="o">=</span> <span class="n">setpoints_1d</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="n">norm_by</span>
-
-    <span class="n">SC</span><span class="o">.</span><span class="n">update_magnets</span><span class="p">(</span><span class="n">ords_1d</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">SC</span></div>
-
-
-<div class="viewcode-block" id="set_magnet_setpoints"><a class="viewcode-back" href="../../../modules/core_functions.html#pySC.core.lattice_setting.set_magnet_setpoints">[docs]</a><span class="k">def</span> <span class="nf">set_magnet_setpoints</span><span class="p">(</span><span class="n">SC</span><span class="p">:</span> <span class="n">SimulatedCommissioning</span><span class="p">,</span>
-                         <span class="n">ords</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">ndarray</span><span class="p">],</span>
-                         <span class="n">setpoints</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">ndarray</span><span class="p">],</span>
-                         <span class="n">skewness</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">order</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">SETTING_ABS</span><span class="p">,</span>
-                         <span class="n">dipole_compensation</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SimulatedCommissioning</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Sets magnets to setpoints</span>
-
-<span class="sd">    Sets magnets (except CMs) as specified in `ords` to `setpoints` while `order` and `skewness` defines</span>
-<span class="sd">    which field entry should be used (see below). The setpoints may be given relative to their nominal</span>
-<span class="sd">    value or in absolute terms. If the considered quadrupole is a combined function magnet with</span>
-<span class="sd">    non-zero bending angle and the kick compensation flag &#39;dipole_compensation&#39;=True, the appropriate bending</span>
-<span class="sd">    angle difference is calculated and the horizontal CM setpoint is changed accordingly to compensate</span>
-<span class="sd">    for that dipole kick difference.</span>
-<span class="sd">    If the setpoint of a skew quadrupole exceeds the limit specified in the corresponding lattice</span>
-<span class="sd">    field `SkewQuadLimit`, the setpoint is clipped to that value and a warning is logged.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        SC: SimulatedCommissioning class instance</span>
-<span class="sd">        ords:  Array of magnets ordinates in the lattice structure (ex: SC.ORD.HCM) (numpy.array() or list of int [int,int,..])</span>
-<span class="sd">        setpoints:  magnets setpoints (array or single value for all magnets).</span>
-<span class="sd">                    setpoints are assigned to the given order and skewness, i.e. once updated through</span>
-<span class="sd">                    SimulatedCommissioning.apply_errors, they correspond to a single element of PolynomA or PolynomB</span>
-<span class="sd">        skewness: boolean specifying magnet plane ([False|True] -&gt; [PolynomB|PolynomA])</span>
-<span class="sd">        method: &#39;abs&#39; (default), Use absolute setpoint</span>
-<span class="sd">                &#39;rel&#39;, Use relative setpoint to nominal value</span>
-<span class="sd">                &#39;add&#39;, Add setpoints to current value</span>
-<span class="sd">        order: Numeric value defining the order of the considered magnet: [0,1,2,...] =&gt; [dip,quad,sext,...]</span>
-<span class="sd">        dipole_compensation: (default = False) Used for combined function magnets. If this flag is set and if there is a horizontal CM</span>
-<span class="sd">                            registered in the considered magnet, the CM is used to compensate the bending angle difference</span>
-<span class="sd">                            if the applied quadrupole setpoints differs from the design value.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        The SimulatedCommissioning class instance containing lattice with modified and applied setpoints.</span>
-
-<span class="sd">    Examples:</span>
-<span class="sd">        Identify the ordinates of all elements named `&#39;SF&#39;` and switch their sextupole component off::</span>
-
-<span class="sd">            ords = SCgetOrds(SC.RING,&#39;SF&#39;)</span>
-<span class="sd">            SC.register_magnets(ords)</span>
-<span class="sd">            SC = set_magnet_setpoints(SC, ords=ords,</span>
-<span class="sd">                                      skewness=False, order=2, setpoints=0.0,</span>
-<span class="sd">                                      method=&#39;abs&#39;)</span>
-
-<span class="sd">        Identify the ordinates of all elements named `QF` and `QD` and set their quadrupole component to 99% of their design value::</span>
-
-<span class="sd">            ords = SCgetOrds(SC.RING,&#39;QF|QD&#39;)</span>
-<span class="sd">            SC.register_magnets(ords)</span>
-<span class="sd">            SC = set_magnet_setpoints(SC, ords=ords,</span>
-<span class="sd">                                      skewness=False, order=1, setpoints=0.99,</span>
-<span class="sd">                                      method=&#39;rel&#39;)</span>
-
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">ords_1d</span><span class="p">,</span> <span class="n">setpoints_1d</span> <span class="o">=</span> <span class="n">_check_input_and_setpoints</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">ords</span><span class="p">,</span> <span class="n">setpoints</span><span class="p">)</span>
-    <span class="n">letter</span> <span class="o">=</span> <span class="n">NUM_TO_AB</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">skewness</span><span class="p">)]</span>
-    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="n">SETTING_REL</span><span class="p">:</span>
-        <span class="n">setpoints_1d</span> <span class="o">*=</span> <span class="n">atgetfieldvalues</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">,</span> <span class="n">ords_1d</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;NomPolynom</span><span class="si">{</span><span class="n">letter</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">order</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="n">SETTING_ADD</span><span class="p">:</span>
-        <span class="n">setpoints_1d</span> <span class="o">+=</span> <span class="n">atgetfieldvalues</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">,</span> <span class="n">ords_1d</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">SETPOINT</span><span class="si">}{</span><span class="n">letter</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">order</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="nb">ord</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ords_1d</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">skewness</span> <span class="ow">and</span> <span class="n">order</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="nb">ord</span><span class="p">],</span> <span class="s1">&#39;SkewQuadLimit&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">setpoints_1d</span><span class="p">[</span><span class="n">i</span><span class="p">]):</span>
-            <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;SkewLim </span><span class="se">\n</span><span class="s1"> Skew quadrupole (ord: </span><span class="si">{</span><span class="nb">ord</span><span class="si">}</span><span class="s1">) is clipping&#39;</span><span class="p">)</span>
-            <span class="n">setpoints_1d</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">setpoints_1d</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">*</span> <span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="nb">ord</span><span class="p">]</span><span class="o">.</span><span class="n">SkewQuadLimit</span>
-        <span class="c1"># TODO should check CF magnets</span>
-        <span class="k">if</span> <span class="n">dipole_compensation</span> <span class="ow">and</span> <span class="n">order</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>  <span class="c1"># quad  # TODO check also skewness?</span>
-            <span class="n">SC</span> <span class="o">=</span> <span class="n">_dipole_compensation</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="nb">ord</span><span class="p">,</span> <span class="n">setpoints_1d</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
-        <span class="nb">getattr</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="nb">ord</span><span class="p">],</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">SETPOINT</span><span class="si">}{</span><span class="n">letter</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)[</span><span class="n">order</span><span class="p">]</span> <span class="o">=</span> <span class="n">setpoints_1d</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-
-    <span class="n">SC</span><span class="o">.</span><span class="n">update_magnets</span><span class="p">(</span><span class="n">ords_1d</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">SC</span></div>
 
 
 <div class="viewcode-block" id="switch_cavity_and_radiation"><a class="viewcode-back" href="../../../modules/core_functions.html#pySC.core.lattice_setting.switch_cavity_and_radiation">[docs]</a><span class="k">def</span> <span class="nf">switch_cavity_and_radiation</span><span class="p">(</span><span class="n">ring</span><span class="p">:</span> <span class="n">Lattice</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Lattice</span><span class="p">:</span>  <span class="c1"># TODO some at methods do that?</span>
@@ -411,23 +193,6 @@
         <span class="k">return</span> <span class="n">switch_rf</span><span class="p">(</span><span class="n">ring</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ring</span><span class="p">)),</span> <span class="kc">True</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">ring</span></div>
 
-
-<span class="k">def</span> <span class="nf">_dipole_compensation</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="nb">ord</span><span class="p">,</span> <span class="n">setpoint</span><span class="p">):</span>
-    <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="nb">ord</span><span class="p">],</span> <span class="s1">&#39;BendingAngle&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">ord</span> <span class="ow">in</span> <span class="n">SC</span><span class="o">.</span><span class="n">ORD</span><span class="o">.</span><span class="n">HCM</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">set_cm_setpoints</span><span class="p">(</span>
-            <span class="n">SC</span><span class="p">,</span> <span class="nb">ord</span><span class="p">,</span> <span class="p">(</span><span class="n">setpoint</span> <span class="o">-</span> <span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="nb">ord</span><span class="p">]</span><span class="o">.</span><span class="n">SetPointB</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="nb">ord</span><span class="p">]</span><span class="o">.</span><span class="n">NomPolynomB</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="nb">ord</span><span class="p">]</span><span class="o">.</span><span class="n">BendingAngle</span><span class="p">,</span>
-            <span class="n">skewness</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">SETTING_ADD</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">SC</span>
-
-
-<span class="k">def</span> <span class="nf">_check_input_and_setpoints</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">ords</span><span class="p">,</span> <span class="n">setpoints</span><span class="p">):</span>
-    <span class="k">if</span> <span class="n">method</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">SETTING_METHODS</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Unsupported setpoint method: </span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s1">. Allowed options are: </span><span class="si">{</span><span class="n">SETTING_METHODS</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">)</span>
-    <span class="n">ords_1d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">ords</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">))</span>
-    <span class="n">setpoints_1d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">setpoints</span><span class="p">]))</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">setpoints_1d</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">ords_1d</span><span class="p">)):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Setpoints have to have length of 1 or matching to the length or ordinates.&#39;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">ords_1d</span><span class="p">,</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">setpoints_1d</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">ords_1d</span><span class="p">))</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">setpoints_1d</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">setpoints_1d</span><span class="p">)</span>
 </pre></div>
 
            </div>

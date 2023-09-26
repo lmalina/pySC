@@ -56,10 +56,6 @@
 <li class="toctree-l2"><a class="reference internal" href="core_functions.html#pySC.core.beam.bpm_reading"><code class="docutils literal notranslate"><span class="pre">bpm_reading()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="core_functions.html#pySC.core.beam.generate_bunches"><code class="docutils literal notranslate"><span class="pre">generate_bunches()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="core_functions.html#lattice-setting">Lattice setting</a></li>
-<li class="toctree-l2"><a class="reference internal" href="core_functions.html#pySC.core.lattice_setting.get_cm_setpoints"><code class="docutils literal notranslate"><span class="pre">get_cm_setpoints()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="core_functions.html#pySC.core.lattice_setting.set_cavity_setpoints"><code class="docutils literal notranslate"><span class="pre">set_cavity_setpoints()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="core_functions.html#pySC.core.lattice_setting.set_cm_setpoints"><code class="docutils literal notranslate"><span class="pre">set_cm_setpoints()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="core_functions.html#pySC.core.lattice_setting.set_magnet_setpoints"><code class="docutils literal notranslate"><span class="pre">set_magnet_setpoints()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="core_functions.html#pySC.core.lattice_setting.switch_cavity_and_radiation"><code class="docutils literal notranslate"><span class="pre">switch_cavity_and_radiation()</span></code></a></li>
 </ul>
 </li>
@@ -203,6 +199,24 @@ generate random errors and applies them to the corresponding attributes of eleme
 <p class="admonition-title">See also</p>
 <p><em>SC.register_magnets</em>, <em>SC.register_support</em>, <em>SC.register_bpms</em>, <em>SC.register_cavities</em></p>
 </div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pySC.core.simulated_commissioning.SimulatedCommissioning.get_cm_setpoints">
+<span class="sig-name descname"><span class="pre">get_cm_setpoints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ords</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skewness</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/pySC/core/simulated_commissioning.html#SimulatedCommissioning.get_cm_setpoints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pySC.core.simulated_commissioning.SimulatedCommissioning.get_cm_setpoints" title="Permalink to this definition"></a></dt>
+<dd><p>Return current dipole Corrector Magnets (CM) setpoints</p>
+<p>Reads the setpoints of the CMs specified in <cite>ords</cite> in the dimension <cite>skewness</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ords</strong> -- Array of CM ordinates in the lattice structure (ex: SC.ORD.CM[0])</p></li>
+<li><p><strong>skewness</strong> -- boolean specifying CM dimension ([False|True] -&gt; [hor|ver])</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>CM setpoints [rad]</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -502,6 +516,113 @@ rotations around the three x-, y- and z-axes:</p>
 <p class="admonition-title">See also</p>
 <p><em>SCgetOrds</em>, <em>SC.update_support</em>, <em>SC.support_offset_and_roll</em>, <em>plot_support</em>, <em>SC.apply_errors</em>,
 <em>SC.register_magnets</em>, <em>update_transformation</em></p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pySC.core.simulated_commissioning.SimulatedCommissioning.set_cavity_setpoints">
+<span class="sig-name descname"><span class="pre">set_cavity_setpoints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ords</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">setpoints</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'abs'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pySC/core/simulated_commissioning.html#SimulatedCommissioning.set_cavity_setpoints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pySC.core.simulated_commissioning.SimulatedCommissioning.set_cavity_setpoints" title="Permalink to this definition"></a></dt>
+<dd><p>Set RF properties to setpoints</p>
+<p>Set the setpoints of <cite>Voltage</cite>, <cite>Frequency</cite> or <cite>TimeLag</cite> as specified in “param” of the rf
+cavities specified in <cite>ords</cite>. If only a single setpoint is given for multiple cavities,
+the setpoint is applied to all cavities.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ords</strong> -- Array of cavity ordinates in the lattice structure (SC.ORD.RF)</p></li>
+<li><p><strong>setpoints</strong> -- Setpoints (array or single value for all cavities)</p></li>
+<li><p><strong>param</strong> -- String (‘Voltage’, ‘Frequency’ or ‘TimeLag’) specifying which cavity field should be set.</p></li>
+<li><p><strong>method</strong> -- ‘abs’ (default), Use absolute setpoint
+‘rel’, Use relative setpoint to nominal value
+‘add’, Add setpoints to current value</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>Sets the time lag of all cavities registered in SC to zero:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SC</span><span class="o">.</span><span class="n">set_cavity_setpoints</span><span class="p">(</span><span class="n">ords</span><span class="o">=</span><span class="n">SC</span><span class="o">.</span><span class="n">ORD</span><span class="o">.</span><span class="n">RF</span><span class="p">,</span> <span class="n">setpoints</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">param</span><span class="o">=</span><span class="s1">&#39;TimeLag&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Adds 1kHz to the frequency of the first cavity:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SC</span><span class="o">.</span><span class="n">set_cavity_setpoints</span><span class="p">(</span><span class="n">ords</span><span class="o">=</span><span class="n">SC</span><span class="o">.</span><span class="n">ORD</span><span class="o">.</span><span class="n">RF</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">setpoints</span><span class="o">=</span><span class="mf">1E3</span><span class="p">,</span> <span class="n">param</span><span class="o">=</span><span class="s1">&#39;Frequency&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;add&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pySC.core.simulated_commissioning.SimulatedCommissioning.set_cm_setpoints">
+<span class="sig-name descname"><span class="pre">set_cm_setpoints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ords</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">setpoints</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skewness</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'abs'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pySC/core/simulated_commissioning.html#SimulatedCommissioning.set_cm_setpoints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pySC.core.simulated_commissioning.SimulatedCommissioning.set_cm_setpoints" title="Permalink to this definition"></a></dt>
+<dd><p>Sets dipole corrector magnets to different setpoints</p>
+<p>Sets horizontal or vertical CMs as specified in <cite>ords</cite> and <cite>skewness</cite>, respectively, to <cite>setpoints</cite>
+[rad] and updates the magnetic fields. If the corresponding setpoint exceeds the CM limit
+specified in the corresponding lattice field <cite>CMlimit</cite>, the CM is clipped to that value
+and a warning is being printed (to switch off, use <cite>warning(‘off’,’SC:CM1’))</cite>. Positive setpoints
+will result in kicks in the positive horizontal or vertical direction.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ords</strong> -- Array of CM ordinates in the lattice structure (ex: SC.ORD.CM[0])</p></li>
+<li><p><strong>setpoints</strong> -- CM setpoints (array or single value for all CMs) [rad]</p></li>
+<li><p><strong>skewness</strong> -- boolean specifying CM dimension ([False|True] -&gt; [hor|ver])</p></li>
+<li><p><strong>method</strong> -- ‘abs’ (default), Use absolute setpoint
+‘rel’, Use relative setpoint to current value
+‘add’, Add setpoints to current value</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>Set all registered horizontal CMs to zero:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SC</span><span class="o">.</span><span class="n">set_cm_setpoints</span><span class="p">(</span><span class="n">ords</span><span class="o">=</span><span class="n">SC</span><span class="o">.</span><span class="n">ORD</span><span class="o">.</span><span class="n">HCM</span><span class="p">,</span> <span class="n">skewness</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">setpoints</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Add 10urad to the fourth registered vertical CM:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SC</span><span class="o">.</span><span class="n">set_cm_setpoints</span><span class="p">(</span><span class="n">ords</span><span class="o">=</span><span class="n">SC</span><span class="o">.</span><span class="n">ORD</span><span class="o">.</span><span class="n">VCM</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">setpoints</span><span class="o">=</span><span class="mf">1E-5</span><span class="p">,</span> <span class="n">skewness</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;add&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pySC.core.simulated_commissioning.SimulatedCommissioning.set_magnet_setpoints">
+<span class="sig-name descname"><span class="pre">set_magnet_setpoints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ords</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">setpoints</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skewness</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'abs'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dipole_compensation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pySC/core/simulated_commissioning.html#SimulatedCommissioning.set_magnet_setpoints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pySC.core.simulated_commissioning.SimulatedCommissioning.set_magnet_setpoints" title="Permalink to this definition"></a></dt>
+<dd><p>Sets magnets to setpoints</p>
+<p>Sets magnets (except CMs) as specified in <cite>ords</cite> to <cite>setpoints</cite> while <cite>order</cite> and <cite>skewness</cite> defines
+which field entry should be used (see below). The setpoints may be given relative to their nominal
+value or in absolute terms. If the considered quadrupole is a combined function magnet with
+non-zero bending angle and the kick compensation flag ‘dipole_compensation’=True, the appropriate bending
+angle difference is calculated and the horizontal CM setpoint is changed accordingly to compensate
+for that dipole kick difference.
+If the setpoint of a skew quadrupole exceeds the limit specified in the corresponding lattice
+field <cite>SkewQuadLimit</cite>, the setpoint is clipped to that value and a warning is logged.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ords</strong> -- Array of magnets ordinates in the lattice structure (ex: SC.ORD.HCM) (numpy.array() or list of int [int,int,..])</p></li>
+<li><p><strong>setpoints</strong> -- magnets setpoints (array or single value for all magnets).
+setpoints are assigned to the given order and skewness, i.e. once updated through
+SimulatedCommissioning.apply_errors, they correspond to a single element of PolynomA or PolynomB</p></li>
+<li><p><strong>skewness</strong> -- boolean specifying magnet plane ([False|True] -&gt; [PolynomB|PolynomA])</p></li>
+<li><p><strong>method</strong> -- ‘abs’ (default), Use absolute setpoint
+‘rel’, Use relative setpoint to nominal value
+‘add’, Add setpoints to current value</p></li>
+<li><p><strong>order</strong> -- Numeric value defining the order of the considered magnet: [0,1,2,…] =&gt; [dip,quad,sext,…]</p></li>
+<li><p><strong>dipole_compensation</strong> -- (default = False) Used for combined function magnets. If this flag is set and if there is a horizontal CM
+registered in the considered magnet, the CM is used to compensate the bending angle difference
+if the applied quadrupole setpoints differs from the design value.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>Identify the ordinates of all elements named <cite>‘SF’</cite> and switch their sextupole component off:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ords</span> <span class="o">=</span> <span class="n">SCgetOrds</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">,</span><span class="s1">&#39;SF&#39;</span><span class="p">)</span>
+<span class="n">SC</span><span class="o">.</span><span class="n">register_magnets</span><span class="p">(</span><span class="n">ords</span><span class="p">)</span>
+<span class="n">SC</span><span class="o">.</span><span class="n">set_magnet_setpoints</span><span class="p">(</span><span class="n">ords</span><span class="o">=</span><span class="n">ords</span><span class="p">,</span> <span class="n">skewness</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">setpoints</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;abs&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Identify the ordinates of all elements named <cite>QF</cite> and <cite>QD</cite> and set their quadrupole component to 99% of their design value:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ords</span> <span class="o">=</span> <span class="n">SCgetOrds</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">,</span><span class="s1">&#39;QF|QD&#39;</span><span class="p">)</span>
+<span class="n">SC</span><span class="o">.</span><span class="n">register_magnets</span><span class="p">(</span><span class="n">ords</span><span class="p">)</span>
+<span class="n">SC</span><span class="o">.</span><span class="n">set_magnet_setpoints</span><span class="p">(</span><span class="n">ords</span><span class="o">=</span><span class="n">ords</span><span class="p">,</span> <span class="n">skewness</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">setpoints</span><span class="o">=</span><span class="mf">0.99</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;rel&#39;</span><span class="p">)</span>
+</pre></div>
 </div>
 </dd></dl>
 
