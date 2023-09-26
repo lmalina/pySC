@@ -2,7 +2,6 @@ import numpy as np
 from matplotlib import pyplot as plt
 from numpy import ndarray
 import warnings
-from pySC.core.lattice_setting import get_cm_setpoints
 from pySC.core.simulated_commissioning import SimulatedCommissioning
 from pySC.plotting.plot_synoptic import plot_synoptic
 from pySC.plotting.plot_apertures import plot_data_apertures, plot_data_beta_disp, baseplot
@@ -100,7 +99,7 @@ def plot_cm_strengths(SC: SimulatedCommissioning):
     f, ax = plt.subplots(nrows=2, num=86, figsize=(9, 7.5), facecolor="w")
     s_pos = findspos(SC.RING)
     for n_dim in range(2):
-        setpoints = 1E6 * get_cm_setpoints(SC, SC.ORD.CM[n_dim], skewness=bool(n_dim))
+        setpoints = 1E6 * SC.get_cm_setpoints(SC.ORD.CM[n_dim], skewness=bool(n_dim))
         count, bins_count = np.histogram(setpoints, bins=len(setpoints))
         ax[0].bar(s_pos[SC.ORD.CM[n_dim]], setpoints)
         ax[1].plot(bins_count[1:], np.cumsum(count / np.sum(count)), lw=3)

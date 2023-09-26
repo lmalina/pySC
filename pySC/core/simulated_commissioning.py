@@ -7,7 +7,7 @@ built up around the ``at.Lattice`` under study.
 """
 import copy
 import re
-from typing import Tuple
+from typing import Tuple, Union, List
 
 import numpy as np
 from at import Lattice
@@ -15,10 +15,12 @@ from numpy import ndarray
 
 from pySC.core.classes import Injection, Sigmas, Indices, DotDict
 from pySC.core.constants import (BPM_ERROR_FIELDS, RF_ERROR_FIELDS, RF_PROPERTIES, MAGNET_TYPE_FIELDS,
-                                 MAGNET_ERROR_FIELDS, AB, SUPPORT_TYPES, SUPPORT_ERROR_FIELDS)
+                                 MAGNET_ERROR_FIELDS, AB, SUPPORT_TYPES, SUPPORT_ERROR_FIELDS, SETTING_ABS, SETTING_REL,
+                                 SETTING_ADD, NUM_TO_AB, SETPOINT)
 from pySC.utils import logging_tools
-from pySC.utils.at_wrapper import findspos
-from pySC.utils.classdef_tools import update_double_ordinates, add_padded, intersect, randn_cutoff, s_interpolation
+from pySC.utils.at_wrapper import findspos, atgetfieldvalues
+from pySC.utils.classdef_tools import update_double_ordinates, add_padded, intersect, randn_cutoff, s_interpolation, \
+    check_input_and_setpoints
 from pySC.utils.sc_tools import SCrandnc, SCscaleCircumference, update_transformation
 
 LOGGER = logging_tools.get_logger(__name__)
@@ -765,6 +767,186 @@ class SimulatedCommissioning:
                 roll[i, :] = np.interp(s_locations, s_pos[b], roll0[i, b])
             return off, roll
         return off0, roll0
+
+    def set_cavity_setpoints(self, ords: Union[int, List[int], ndarray],
+                             setpoints: Union[float, List[float], ndarray],
+                             param: str, method: str = SETTING_ABS):
+        """
+        Set RF properties to setpoints
+
+        Set the setpoints of `Voltage`, `Frequency` or `TimeLag` as specified in "param" of the rf
+        cavities specified in `ords`. If only a single setpoint is given for multiple cavities,
+        the setpoint is applied to all cavities.
+
+        Args:
+            ords: Array of cavity ordinates in the lattice structure (SC.ORD.RF)
+            setpoints: Setpoints (array or single value for all cavities)
+            param: String ('Voltage', 'Frequency' or 'TimeLag') specifying which cavity field should be set.
+            method: 'abs' (default), Use absolute setpoint
+                    'rel', Use relative setpoint to nominal value
+                    'add', Add setpoints to current value
+
+        Examples:
+            Sets the time lag of all cavities registered in SC to zero::
+
+                SC.set_cavity_setpoints(ords=SC.ORD.RF, setpoints=0.0, param='TimeLag')
+
+            Adds 1kHz to the frequency of the first cavity::
+
+                SC.set_cavity_setpoints(ords=SC.ORD.RF[0], setpoints=1E3, param='Frequency', method='add')
+
+        """
+        ords_1d, setpoints_1d = check_input_and_setpoints(method, ords, setpoints)
+        setpoint_str = f"{param}{SETPOINT}"
+        if method == SETTING_REL:
+            setpoints_1d *= atgetfieldvalues(self.RING, ords_1d, setpoint_str)
+        if method == SETTING_ADD:
+            setpoints_1d += atgetfieldvalues(self.RING, ords_1d, setpoint_str)
+        for i, ord in enumerate(ords_1d):
+            setattr(self.RING[ord], setpoint_str, setpoints_1d[i])
+        self.update_cavities(ords_1d)
+
+    def get_cm_setpoints(self, ords: Union[int, List[int], ndarray], skewness: bool) -> ndarray:
+        """
+
+        Return current dipole Corrector Magnets (CM) setpoints
+
+        Reads the setpoints of the CMs specified in `ords` in the dimension `skewness`.
+
+        Args:
+            ords: Array of CM ordinates in the lattice structure (ex: SC.ORD.CM[0])
+            skewness: boolean specifying CM dimension ([False|True] -> [hor|ver])
+
+        Returns:
+            CM setpoints [rad]
+        """
+        ords_1d = np.ravel(np.array([ords], dtype=int))
+        order = 0
+        ndim = int(skewness)
+        letter = NUM_TO_AB[ndim]
+        setpoints = atgetfieldvalues(self.RING, ords_1d, f"{SETPOINT}{letter}", order)
+        for i, ord1d in enumerate(ords_1d):
+            if self.RING[ord1d].PassMethod != 'CorrectorPass':
+                # positive setpoint -> positive kick -> negative horizontal field
+                setpoints[i] *= (-1) ** (ndim + 1) * self.RING[ord1d].Length
+        return setpoints
+
+    def set_cm_setpoints(self, ords: Union[int, List[int], ndarray],
+                         setpoints: Union[float, List[float], ndarray],
+                         skewness: bool, method: str = SETTING_ABS):
+        """
+        Sets dipole corrector magnets to different setpoints
+
+        Sets horizontal or vertical CMs as specified in `ords` and `skewness`, respectively, to `setpoints`
+        [rad] and updates the magnetic fields. If the corresponding setpoint exceeds the CM limit
+        specified in the corresponding lattice field `CMlimit`, the CM is clipped to that value
+        and a warning is being printed (to switch off, use `warning('off','SC:CM1'))`. Positive setpoints
+        will result in kicks in the positive horizontal or vertical direction.
+
+        Args:
+            ords:  Array of CM ordinates in the lattice structure (ex: SC.ORD.CM[0])
+            setpoints:  CM setpoints (array or single value for all CMs) [rad]
+            skewness: boolean specifying CM dimension ([False|True] -> [hor|ver])
+            method: 'abs' (default), Use absolute setpoint
+                    'rel', Use relative setpoint to current value
+                    'add', Add setpoints to current value
+
+        Examples:
+            Set all registered horizontal CMs to zero::
+
+                SC.set_cm_setpoints(ords=SC.ORD.HCM, skewness=False, setpoints=0.0)
+
+            Add 10urad to the fourth registered vertical CM::
+
+                SC.set_cm_setpoints(ords=SC.ORD.VCM[4], setpoints=1E-5, skewness=True, method='add')
+
+        """
+        # TODO corrector does not have PolynomA/B in at?
+        ords_1d, setpoints_1d = check_input_and_setpoints(method, ords, setpoints)
+        order = 0
+        ndim = int(skewness)
+        letter = NUM_TO_AB[ndim]
+        for i, ord in enumerate(ords_1d):
+            # positive setpoint -> positive kick -> negative horizontal field
+            norm_by = (-1) ** (ndim + 1) * self.RING[ord].Length if self.RING[ord].PassMethod != 'CorrectorPass' else 1
+            if method == SETTING_REL:
+                setpoints_1d[i] *= getattr(self.RING[ord], f"{SETPOINT}{letter}")[order] * norm_by
+            if method == SETTING_ADD:
+                setpoints_1d[i] += getattr(self.RING[ord], f"{SETPOINT}{letter}")[order] * norm_by
+            if hasattr(self.RING[ord], 'CMlimit') and abs(setpoints_1d[i]) > abs(self.RING[ord].CMlimit[ndim]):
+                LOGGER.info(f'CM (ord: {ord} / dim: {ndim}) is clipping')
+                setpoints_1d[i] = np.sign(setpoints_1d[i]) * self.RING[ord].CMlimit[ndim]
+            getattr(self.RING[ord], f"{SETPOINT}{letter}")[order] = setpoints_1d[i] / norm_by
+
+        self.update_magnets(ords_1d)
+
+    def set_magnet_setpoints(self, ords: Union[int, List[int], ndarray],
+                             setpoints: Union[float, List[float], ndarray],
+                             skewness: bool, order: int, method: str = SETTING_ABS,
+                             dipole_compensation: bool = False):
+        """
+        Sets magnets to setpoints
+
+        Sets magnets (except CMs) as specified in `ords` to `setpoints` while `order` and `skewness` defines
+        which field entry should be used (see below). The setpoints may be given relative to their nominal
+        value or in absolute terms. If the considered quadrupole is a combined function magnet with
+        non-zero bending angle and the kick compensation flag 'dipole_compensation'=True, the appropriate bending
+        angle difference is calculated and the horizontal CM setpoint is changed accordingly to compensate
+        for that dipole kick difference.
+        If the setpoint of a skew quadrupole exceeds the limit specified in the corresponding lattice
+        field `SkewQuadLimit`, the setpoint is clipped to that value and a warning is logged.
+
+        Args:
+            ords:  Array of magnets ordinates in the lattice structure (ex: SC.ORD.HCM) (numpy.array() or list of int [int,int,..])
+            setpoints:  magnets setpoints (array or single value for all magnets).
+                        setpoints are assigned to the given order and skewness, i.e. once updated through
+                        SimulatedCommissioning.apply_errors, they correspond to a single element of PolynomA or PolynomB
+            skewness: boolean specifying magnet plane ([False|True] -> [PolynomB|PolynomA])
+            method: 'abs' (default), Use absolute setpoint
+                    'rel', Use relative setpoint to nominal value
+                    'add', Add setpoints to current value
+            order: Numeric value defining the order of the considered magnet: [0,1,2,...] => [dip,quad,sext,...]
+            dipole_compensation: (default = False) Used for combined function magnets. If this flag is set and if there is a horizontal CM
+                                registered in the considered magnet, the CM is used to compensate the bending angle difference
+                                if the applied quadrupole setpoints differs from the design value.
+
+        Examples:
+            Identify the ordinates of all elements named `'SF'` and switch their sextupole component off::
+
+                ords = SCgetOrds(SC.RING,'SF')
+                SC.register_magnets(ords)
+                SC.set_magnet_setpoints(ords=ords, skewness=False, order=2, setpoints=0.0, method='abs')
+
+            Identify the ordinates of all elements named `QF` and `QD` and set their quadrupole component to 99% of their design value::
+
+                ords = SCgetOrds(SC.RING,'QF|QD')
+                SC.register_magnets(ords)
+                SC.set_magnet_setpoints(ords=ords, skewness=False, order=1, setpoints=0.99, method='rel')
+
+        """
+        ords_1d, setpoints_1d = check_input_and_setpoints(method, ords, setpoints)
+        letter = NUM_TO_AB[int(skewness)]
+        if method == SETTING_REL:
+            setpoints_1d *= atgetfieldvalues(self.RING, ords_1d, f"NomPolynom{letter}", order)
+        if method == SETTING_ADD:
+            setpoints_1d += atgetfieldvalues(self.RING, ords_1d, f"{SETPOINT}{letter}", order)
+        for i, ord in enumerate(ords_1d):
+            if skewness and order == 1 and getattr(self.RING[ord], 'SkewQuadLimit', np.inf) < np.abs(setpoints_1d[i]):
+                LOGGER.info(f'SkewLim \n Skew quadrupole (ord: {ord}) is clipping')
+                setpoints_1d[i] = np.sign(setpoints_1d[i]) * self.RING[ord].SkewQuadLimit
+            # TODO should check CF magnets
+            if dipole_compensation and order == 1:  # quad  # TODO check also skewness?
+                self._dipole_compensation(ord, setpoints_1d[i])
+            getattr(self.RING[ord], f"{SETPOINT}{letter}")[order] = setpoints_1d[i]
+
+        self.update_magnets(ords_1d)
+
+    def _dipole_compensation(self, ord, setpoint):
+        if getattr(self.RING[ord], 'BendingAngle', 0) != 0 and ord in self.ORD.HCM:
+            self.set_cm_setpoints(
+                ord,
+                (setpoint - self.RING[ord].SetPointB[1]) / self.RING[ord].NomPolynomB[1] * self.RING[ord].BendingAngle,
+                skewness=False, method=SETTING_ADD)
 
     def verify_structure(self):
         """
