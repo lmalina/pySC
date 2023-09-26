@@ -10,27 +10,15 @@ LOGGER = logging_tools.get_logger(__name__)
 
 def fit_chroma(SC, s_ords, target_chroma=None, init_step_size=np.array([2, 2]), xtol=1E-4, ftol=1E-3,
                tune_knobs_ords=None, tune_knobs_delta_k=None):
-    """
-    Applies a chromaticity correction using two sextupole families.
-    Args:
-    SC: SimulatedCommissioning instance
-    s_ords: [1x2] array of sextupole ordinates {`[1 x NSF1],[1 x NSD2]`}
-    target_chroma (optional): Target chromaticity for correction. Default: chromaticity of 'SC.IDEALRING'
-    init_step_size ([1x2] array, optional): Initial step size for the solver. Default: [2,2]
-    xtol(int, optional): Step tolerance for solver. Default: 1e-4
-    ftol(int, optional): Merit tolerance for solver. Default: 1e-4
-
-    Returns:
-        SC: SimulatedCommissioning instance with corrected chromaticity.
-    Example:
-        SC = fit_chroma(SC, s_ords=SCgetOrds(sc.RING, 'SF|SD'), target_chroma = [1 1])
-    """
     if target_chroma is None:
         _, _, target_chroma = atlinopt(SC.IDEALRING, 0, [])
     if np.sum(np.isnan(target_chroma)):
         LOGGER.error('Target chromaticity must not contain NaN. Aborting.')
         return SC
-
+    if tune_knobs_ords is not None and tune_knobs_delta_k is not None:
+        for nFam in range(len(tune_knobs_ords)):
+            SC = set_magnet_setpoints(SC, tune_knobs_ords[nFam], tune_knobs_delta_k[nFam], False, 1,
+                                      method='add')  # TODO quads here?
     LOGGER.debug(f'Fitting chromaticities from {atlinopt(SC.RING, 0, [])[2]} to {target_chroma}.')  # first two elements
     SP0 = np.zeros((len(s_ords), len(s_ords[0])))  # TODO can the lengts vary
     for nFam in range(len(s_ords)):
