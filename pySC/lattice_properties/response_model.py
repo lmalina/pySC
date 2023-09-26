@@ -40,9 +40,8 @@ def SCgetModelRM(SC, BPMords, CMords, trackMode='TBT', Z0=np.zeros(6), nTurns=1,
             (default = True) If True, the design lattice specified in `SC.IDEALRING` is used.
             If False, the model lattice is used SCgetModelRING(SC).
 
-    Return type:
-        RM:
-            The response matrix given in [m/rad].
+    Returns:
+        The response matrix given in [m/rad].
 
     Examples:
         Compute a response matrix::
