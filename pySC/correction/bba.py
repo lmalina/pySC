@@ -94,12 +94,12 @@ def fake_bba(SC, bpm_ords, mag_ords, errors=None, fake_offset=None):
     LOGGER.info(f"Final offset error is {1E6 * fake_offset} um (hor|ver)"
                 f" with {np.sum(errors, axis=1)} measurement failures -> being re-calculated now.\n")
     for inds in np.argwhere(errors):  # TODO get to the form such that apply_bpm_offsets can be used
-        fake_bpm_offset = (SC.RING[mag_ords[*inds]].MagnetOffset[inds[0]]
-                           + SC.RING[mag_ords[*inds]].SupportOffset[inds[0]]
-                           - SC.RING[bpm_ords[*inds]].SupportOffset[inds[0]]
+        fake_bpm_offset = (SC.RING[mag_ords[inds[0], inds[1]]].MagnetOffset[inds[0]]
+                           + SC.RING[mag_ords[inds[0], inds[1]]].SupportOffset[inds[0]]
+                           - SC.RING[bpm_ords[inds[0], inds[1]]].SupportOffset[inds[0]]
                            + fake_offset[inds[0]] * SCrandnc())
         if not np.isnan(fake_bpm_offset):
-            SC.RING[bpm_ords[*inds]].Offset[inds[0]] = fake_bpm_offset
+            SC.RING[bpm_ords[inds[0], inds[1]]].Offset[inds[0]] = fake_bpm_offset
         else:
             LOGGER.info('BPM offset not reassigned, NaN.\n')
     return SC
@@ -119,9 +119,10 @@ def apply_bpm_offsets(SC, bpm_ords, bba_offsets, bba_offset_errors):
     errors = is_bba_errored(bba_offsets, bba_offset_errors)
     # bpm_ords, bba_offsets, bba_offset_errors should have same shape
     for inds in np.argwhere(~errors):
-        SC.RING[bpm_ords[*inds]].Offset[inds[0]] += bba_offsets[*inds]
+        SC.RING[bpm_ords[inds[0], inds[1]]].Offset[inds[0]] += bba_offsets[inds[0], inds[1]]
     for inds in np.argwhere(errors):
-        LOGGER.info(f"Poor resolution for BPM {inds[1]} in plane {inds[0]}: {bba_offsets[*inds]}+-{bba_offset_errors[*inds]}")
+        LOGGER.info(f"Poor resolution for BPM {inds[1]} in plane {inds[0]}: "
+                    f"{bba_offsets[inds[0], inds[1]]}+-{bba_offset_errors[inds[0], inds[1]]}")
     return SC
      
 
