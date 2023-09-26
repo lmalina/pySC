@@ -16,9 +16,9 @@ from numpy import ndarray
 
 from pySC.core.beam import beam_transmission, bpm_reading, generate_bunches
 from pySC.core.simulated_commissioning import SimulatedCommissioning
+
 from pySC.core.classes import DotDict
-from pySC.core.lattice_setting import (set_cavity_setpoints, set_magnet_setpoints,
-                                       set_cm_setpoints, get_cm_setpoints, switch_cavity_and_radiation)
+from pySC.core.lattice_setting import switch_cavity_and_radiation
 from pySC.correction.bba import SCBBA as bba
 from pySC.correction.injection_fit import fit_injection_trajectory, fit_injection_drift
 from pySC.correction.orbit_trajectory import SCfeedbackFirstTurn as first_turn, SCfeedbackStitch as stitch, \
@@ -118,7 +118,7 @@ def SCgetCMSetPoints(SC: SimulatedCommissioning, CMords: ndarray, nDim: int) -> 
                 "Transition concerns nDim 1 -> horizontal, 2-> vertical.")
     if nDim not in (1, 2):
         raise ValueError("Function expects nDim 1 (hor) or 2 (ver)")
-    return get_cm_setpoints(SC, ords=CMords, skewness=(nDim == 2))
+    return SC.get_cm_setpoints(ords=CMords, skewness=(nDim == 2))
 
 
 def SCgetCOD(SC, /, *, ords=None, plot=False):
@@ -266,7 +266,8 @@ def SCscaleCircumference(RING, circ, /, *, mode='abs'):
 
 def SCsetCavs2SetPoints(SC: SimulatedCommissioning, CAVords: ndarray, type: str, setpoints: ndarray, /, *,
                         mode: str = 'abs') -> SimulatedCommissioning:
-    return set_cavity_setpoints(SC, ords=CAVords, setpoints=setpoints, param=type, method=mode)
+    SC.set_cavity_setpoints(ords=CAVords, setpoints=setpoints, param=type, method=mode)
+    return SC
 
 
 def SCsetCMs2SetPoints(SC: SimulatedCommissioning, CMords: ndarray, setpoints: ndarray, nDim: int, /, *,
@@ -275,8 +276,8 @@ def SCsetCMs2SetPoints(SC: SimulatedCommissioning, CMords: ndarray, setpoints: n
                 "Transition concerns nDim 1 -> horizontal, 2-> vertical.")
     if nDim not in (1, 2):
         raise ValueError("Function expects nDim 1 (hor) or 2 (ver)")
-    SC = set_cm_setpoints(SC, ords=CMords, setpoints=setpoints, skewness=(nDim == 2), method=mode)
-    return SC, get_cm_setpoints(SC, ords=CMords, skewness=(nDim == 2))
+    SC.set_cm_setpoints(ords=CMords, setpoints=setpoints, skewness=(nDim == 2), method=mode)
+    return SC, SC.get_cm_setpoints(ords=CMords, skewness=(nDim == 2))
 
 
 def SCsetMags2SetPoints(SC: SimulatedCommissioning, MAGords: ndarray, type: int, order: int, setpoints: ndarray, /, *,
@@ -286,10 +287,9 @@ def SCsetMags2SetPoints(SC: SimulatedCommissioning, MAGords: ndarray, type: int,
                 "                        order 1 -> dipole, 2-> quadrupole, 3-> sextupole, ...")
     if type not in (1, 2):
         raise ValueError("Function expects type 1 (skew) or 2 (normal)")
-
-    return set_magnet_setpoints(SC, ords=MAGords, setpoints=setpoints, skewness=(type == 1), order=order - 1,
-                                method=method, dipole_compensation=dipCompensation)
-
+    SC.set_magnet_setpoints(ords=MAGords, setpoints=setpoints, skewness=(type == 1), order=order - 1,
+                            method=method, dipole_compensation=dipCompensation)
+    return SC
 
 def SCsetMultipoles(SC: SimulatedCommissioning, ords: ndarray, AB, /, *, method: str = 'rnd', order: int = None, type: int = None):
     LOGGER.warn("Function SCsetMultipoles contains non-trivial transition between Matlab and Python code.\n"

@@ -8,7 +8,7 @@ from pySC.core.beam import bpm_reading, beam_transmission
 from pySC.correction.tune import tune_scan
 from pySC.lattice_properties.response_model import SCgetModelRM, SCgetModelDispersion
 from pySC.utils.sc_tools import SCgetOrds, SCgetPinv
-from pySC.core.lattice_setting import set_magnet_setpoints, switch_cavity_and_radiation
+from pySC.core.lattice_setting import switch_cavity_and_radiation
 from pySC.correction.rf import correct_rf_phase, correct_rf_frequency
 
 
@@ -66,7 +66,7 @@ def test_example(at_lattice):
 
     sc.RING = switch_cavity_and_radiation(sc.RING, 'cavityoff')
     sext_ords = SCgetOrds(sc.RING, 'SF|SD')
-    sc = set_magnet_setpoints(sc, sext_ords, 0.0, False, 2, method='abs')
+    sc.set_magnet_setpoints(sext_ords, 0.0, False, 2, method='abs')
     rm1 = SCgetModelRM(sc, sc.ORD.BPM, sc.ORD.CM, nTurns=1)
     rm2 = SCgetModelRM(sc, sc.ORD.BPM, sc.ORD.CM, nTurns=2)
     minv1 = SCgetPinv(rm1, alpha=50)
@@ -84,7 +84,7 @@ def test_example(at_lattice):
 
     # Turning on the sextupoles
     for rel_setting in np.linspace(0.1, 1, 5):
-        sc = set_magnet_setpoints(sc, sext_ords, rel_setting, False, 2, method='rel')
+        sc.set_magnet_setpoints(sext_ords, rel_setting, False, 2, method='rel')
         sc = SCfeedbackBalance(sc, minv2, maxsteps=32, eps=eps)
 
     sc.RING = switch_cavity_and_radiation(sc.RING, 'cavityon')

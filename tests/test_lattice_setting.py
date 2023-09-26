@@ -6,7 +6,7 @@ from numpy.testing import assert_equal, assert_allclose
 from tests.test_at_wrapper import at_lattice
 from pySC.utils.sc_tools import SCgetOrds
 from pySC.core.simulated_commissioning import SimulatedCommissioning
-from pySC.core.lattice_setting import set_cm_setpoints, set_magnet_setpoints, set_cavity_setpoints, get_cm_setpoints, _check_input_and_setpoints
+from pySC.utils.classdef_tools import check_input_and_setpoints
 from pySC.core.constants import SETTING_ABS, SETTING_REL, SETTING_ADD
 
 
@@ -14,7 +14,7 @@ def test_set_cm_setpoints_side_effects(sc):
     indices = np.arange(11, 450, 22, dtype=int)
     setpoints = 1e-4 * np.ones(len(indices))
     for _ in range(2):
-        sc = set_cm_setpoints(sc, indices, setpoints, True, method="add")
+        sc.set_cm_setpoints(indices, setpoints, True, method="add")
         assert_equal(indices, np.arange(11, 450, 22, dtype=int))
         assert_equal(setpoints, 1e-4 * np.ones(len(indices)))
 
@@ -26,7 +26,7 @@ def test_set_magnet_setpoints_side_effects(sc):
     indices = np.arange(11, 450, 22, dtype=int)
     setpoints = 1e-4 * np.ones(len(indices))
     for _ in range(2):
-        sc = set_magnet_setpoints(sc, indices, setpoints, True, 1, method="add")
+        sc.set_magnet_setpoints(indices, setpoints, True, 1, method="add")
         assert_equal(indices, np.arange(11, 450, 22, dtype=int))
         assert_equal(setpoints, 1e-4 * np.ones(len(indices)))
         assert sc.RING.__repr__() != lattice_copy.__repr__()
@@ -39,7 +39,7 @@ def test_set_cavity_setpoints_side_effects(sc):
     indices = np.zeros(1, dtype=int)
     setpoints = np.ones(1)
     for _ in range(2):
-        sc = set_cavity_setpoints(sc, indices, setpoints, "Frequency", method="add")
+        sc.set_cavity_setpoints(indices, setpoints, "Frequency", method="add")
         assert_equal(indices, np.zeros(1, dtype=int))
         assert_equal(setpoints, np.ones(1))
         assert sc.RING.__repr__() != lattice_copy.__repr__()
@@ -49,35 +49,35 @@ def test_check_input_and_setpoints():
     wanted_ord, wanted_setpoint = np.array([2], dtype=int),  np.array([3.5])
     for o, s in zip((2, [2], np.array([2])),
                     (3.5,  np.array([3.5]), [3.5])):
-        ord1d, setp1d = _check_input_and_setpoints(SETTING_ABS, o, s)
+        ord1d, setp1d = check_input_and_setpoints(SETTING_ABS, o, s)
         assert_equal(ord1d, wanted_ord)
         assert_equal(setp1d, wanted_setpoint)
 
     wanted_ords, wanted_setpoints = np.array([2, 6], dtype=int), np.array([3.5, 3.5])
     for os, ss in zip(((2, 6), [2, 6], np.array([2, 6])),
                       (3.5, np.array([3.5, 3.5]), [3.5])):
-        ords1d, setps1d = _check_input_and_setpoints(SETTING_ABS, os, ss)
+        ords1d, setps1d = check_input_and_setpoints(SETTING_ABS, os, ss)
         assert_equal(ords1d, wanted_ords)
         assert_equal(setps1d, wanted_setpoints)
 
 
 def test_set_magnet_setpoints(unit_sc):
-    unit_sc = set_magnet_setpoints(unit_sc, [2, 3], 1.1, False, 1, method=SETTING_REL)
+    unit_sc.set_magnet_setpoints([2, 3], 1.1, False, 1, method=SETTING_REL)
     assert_equal(unit_sc.RING[2].PolynomB, np.array([0, 1.32]))
     assert_equal(unit_sc.RING[3].PolynomB, np.array([0, -1.32]))
-    unit_sc = set_magnet_setpoints(unit_sc, 2, 0.1, False, 1, method=SETTING_ADD)
+    unit_sc.set_magnet_setpoints(2, 0.1, False, 1, method=SETTING_ADD)
     assert_allclose(unit_sc.RING[2].PolynomB, np.array([0, 1.42]))
     assert_equal(unit_sc.RING[3].PolynomB, np.array([0, -1.32]))
 
 
 def test_set_cm_setpoints(unit_sc):
-    unit_sc = set_cm_setpoints(unit_sc, [2, 3], 1e-4, False, method=SETTING_ABS)
+    unit_sc.set_cm_setpoints([2, 3], 1e-4, False, method=SETTING_ABS)
     assert_equal(unit_sc.RING[2].PolynomB, np.array([-2e-4, 1.2]))  # 2 due to 0.5 m long
     assert_equal(unit_sc.RING[3].PolynomB, np.array([-2e-4, -1.2]))
-    unit_sc = set_cm_setpoints(unit_sc, [2, 3], 1e-1, False, method=SETTING_ABS)  # clipping at 1 mrad
+    unit_sc.set_cm_setpoints([2, 3], 1e-1, False, method=SETTING_ABS)  # clipping at 1 mrad
     assert_equal(unit_sc.RING[2].PolynomB, np.array([-2e-3, 1.2]))
     assert_equal(unit_sc.RING[3].PolynomB, np.array([-2e-3, -1.2]))
-    unit_sc = set_cm_setpoints(unit_sc, 2, 1e-4, True, method=SETTING_ADD)
+    unit_sc.set_cm_setpoints(2, 1e-4, True, method=SETTING_ADD)
     assert_equal(unit_sc.RING[2].PolynomB, np.array([-2e-3, 1.2]))  # PolynomB unchanged
     assert_equal(unit_sc.RING[3].PolynomB, np.array([-2e-3, -1.2]))
     assert_equal(unit_sc.RING[2].PolynomA, np.array([2e-4, 0]))
