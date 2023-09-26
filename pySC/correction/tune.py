@@ -18,8 +18,8 @@ LOGGER = logging_tools.get_logger(__name__)
 
 
 def tune_scan(SC, quad_ords, rel_quad_changes, target=1, n_points=60, do_plot=False, nParticles=None, nTurns=None, full_scan=False):
-              """
-	Varies two quadrupole families to improve beam transmission, on a grid of relative setpoints 	specified in `rel_quad_changes` in a spiral-like pattern to increase the beam transmission. 
+	"""
+	Varies two quadrupole families to improve beam transmission, on a grid of relative setpoints 	specified in `rel_quad_changes` in a spiral-like pattern to increase the beam transmission.
 
 	Args:
 		SC: SimulatedCommissioning instance
@@ -29,15 +29,15 @@ def tune_scan(SC, quad_ords, rel_quad_changes, target=1, n_points=60, do_plot=Fa
 		n_points(int, optional): Number of points for the scan
 		nParticles(int, optional): Number of particles used for tracking (for convenience, otherwise `SC.INJ.nParticles` is used)
 		nTurns(int, optional): Number of turns used for tracking (for convenience, otherwise `SC.INJ.nTurns` is used)
-		
+
 		full_scan( bool , optional): If false, the scan finishes as soon as the target is reached
 		do_plot( bool , optional): If true, beam transmission is plotted at every step
 
-	Returns: 
+	Returns:
 		Updated SC structure with applied setpoints for maximised beam transmission
 		Relative setpoints which satisfied the target condition if reached, or the values which resulted in best transmission
 		Number of achieved turns
-		Turn-by-turn particle loss	
+		Turn-by-turn particle loss
 	Error:
 		`0`: Beam transmission target reached.
 		`1`: Beam transmission or number of turns increased, target not reached.
@@ -45,6 +45,7 @@ def tune_scan(SC, quad_ords, rel_quad_changes, target=1, n_points=60, do_plot=Fa
 
 	see also: *bpm_reading*, *generate_bunches*
 	"""
+
 	if nParticles is None:
 		nParticles = SC.INJ.nParticles
 	if nTurns is None:
