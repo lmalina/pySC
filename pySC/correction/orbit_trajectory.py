@@ -7,7 +7,6 @@ This module contains functions to correct trajectory (first turns(s)) and orbit.
 import numpy as np
 
 from pySC.core.beam import bpm_reading
-from pySC.core.lattice_setting import set_cavity_setpoints, set_cm_setpoints
 from pySC.utils import logging_tools
 from pySC.utils.sc_tools import SCrandnc
 
@@ -70,8 +69,8 @@ def SCfeedbackFirstTurn(SC, Mplus, reference=None, CMords=None, BPMords=None,
         dphi = np.dot(Mplus, (measurement - reference))
         lastCMh = _get_last_cm(transmission_history[-1]-1, 1, BPMords, CMords[0])[1][0]
         lastCMv = _get_last_cm(transmission_history[-1]-1, 1, BPMords, CMords[1])[1][0]         
-        SC = set_cm_setpoints(SC, CMords[0][:lastCMh + 1], -dphi[:lastCMh + 1], skewness=False, method='add')
-        SC = set_cm_setpoints(SC, CMords[1][:lastCMv + 1], -dphi[len(CMords[0]):len(CMords[0]) + lastCMv + 1], skewness=True, method='add')
+        SC.set_cm_setpoints(CMords[0][:lastCMh + 1], -dphi[:lastCMh + 1], skewness=False, method='add')
+        SC.set_cm_setpoints(CMords[1][:lastCMv + 1], -dphi[len(CMords[0]):len(CMords[0]) + lastCMv + 1], skewness=True, method='add')
         bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(
             SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history)  # Inject...
  
@@ -156,8 +155,8 @@ def SCfeedbackStitch(SC, Mplus, reference=None, CMords=None, BPMords=None, nBPMs
 
         # Correction step
         dphi = np.dot(Mplus, (measurement - reference))
-        SC = set_cm_setpoints(SC, CMords[0], -dphi[:len(CMords[0])], skewness=False, method="add")
-        SC = set_cm_setpoints(SC, CMords[1], -dphi[len(CMords[0]):], skewness=True, method="add")
+        SC.set_cm_setpoints(CMords[0], -dphi[:len(CMords[0])], skewness=False, method="add")
+        SC.set_cm_setpoints(CMords[1], -dphi[len(CMords[0]):], skewness=True, method="add")
         bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(
             SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history)
 
@@ -221,8 +220,8 @@ def SCfeedbackBalance(SC, Mplus, reference=None, CMords=None, BPMords=None, eps=
  
         # Correction step
         dphi = np.dot(Mplus, (measurement - reference))
-        SC = set_cm_setpoints(SC, CMords[0], -dphi[:len(CMords[0])], skewness=False, method="add")
-        SC = set_cm_setpoints(SC, CMords[1], -dphi[len(CMords[0]):], skewness=True, method="add")
+        SC.set_cm_setpoints(CMords[0], -dphi[:len(CMords[0])], skewness=False, method="add")
+        SC.set_cm_setpoints(CMords[1], -dphi[len(CMords[0]):], skewness=True, method="add")
         bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(
             SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history)
 
@@ -295,10 +294,10 @@ def SCfeedbackRun(SC, Mplus, reference=None, CMords=None, BPMords=None, eps=1e-4
         # Correction step
         dphi = np.dot(Mplus, (measurement - reference))
         if scaleDisp != 0:   # TODO this is weight
-            SC = set_cavity_setpoints(SC, SC.ORD.RF, -scaleDisp * dphi[-1], "Frequency", method="add")
+            SC.set_cavity_setpoints(SC.ORD.RF, -scaleDisp * dphi[-1], "Frequency", method="add")
             dphi = dphi[:-1]  # TODO the last setpoint is cavity frequency
-        SC = set_cm_setpoints(SC, CMords[0], -dphi[:len(CMords[0])], skewness=False, method="add")
-        SC = set_cm_setpoints(SC, CMords[1], -dphi[len(CMords[0]):], skewness=True, method="add")
+        SC.set_cm_setpoints(CMords[0], -dphi[:len(CMords[0])], skewness=False, method="add")
+        SC.set_cm_setpoints(CMords[1], -dphi[len(CMords[0]):], skewness=True, method="add")
         bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(
             SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history)  # Inject ...
 
@@ -391,8 +390,8 @@ def _wiggling(SC, BPMords, CMords, transmission_limit, angle_range=(50E-6, 200E-
         tmpCMordsV = _get_last_cm(transmission_history[-1] - 1, nWiggleCM, BPMords, CMords[1])[0]  # Last CMs in vert
 
         for i in range(dpts.shape[1]):
-            SC = set_cm_setpoints(SC, tmpCMordsH, dpts[0, i], skewness=False, method='add')
-            SC = set_cm_setpoints(SC, tmpCMordsV, dpts[1, i], skewness=True, method='add')
+            SC.set_cm_setpoints(tmpCMordsH, dpts[0, i], skewness=False, method='add')
+            SC.set_cm_setpoints(tmpCMordsV, dpts[1, i], skewness=True, method='add')
             bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(
                 SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history)
             if transmission_history[-1] >= transmission_limit:

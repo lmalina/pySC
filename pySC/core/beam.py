@@ -13,7 +13,7 @@ from numpy import ndarray
 from pySC.core.simulated_commissioning import SimulatedCommissioning
 from pySC.core.constants import TRACK_ORB, TRACK_PORB, TRACK_TBT
 from pySC.utils.sc_tools import SCrandnc
-from pySC.utils.at_wrapper import atgetfieldvalues, atpass, findorbit6, findspos
+from pySC.utils.at_wrapper import atgetfieldvalues, atpass, findorbit6, findspos, patpass
 import warnings
 from pySC.utils import logging_tools
 
@@ -130,7 +130,7 @@ def beam_transmission(SC: SimulatedCommissioning, nParticles: int = None, nTurns
     if nTurns is None:
         nTurns = SC.INJ.nTurns
     LOGGER.debug(f'Calculating maximum beam transmission for {nParticles} particles and {nTurns} turns: ')
-    T = atpass(SC.RING, generate_bunches(SC, nParticles=nParticles), nTurns, np.array([len(SC.RING)]), keep_lattice=False)
+    T = patpass(SC.RING, generate_bunches(SC, nParticles=nParticles), nTurns, np.array([len(SC.RING)]), keep_lattice=False)
     fraction_survived = np.mean(~np.isnan(T[0, :, :, :]), axis=(0, 1))
     max_turns = np.sum(fraction_survived > 1 - SC.INJ.beamLostAt)
     if plot:
