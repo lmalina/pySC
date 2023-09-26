@@ -10,6 +10,45 @@ from pySC.utils import logging_tools
 LOGGER = logging_tools.get_logger(__name__)
 
 def SCgetModelRM(SC, BPMords, CMords, trackMode='TBT', Z0=np.zeros(6), nTurns=1, dkick=1e-5, useIdealRing=True):
+    """
+    Determine the lattice response matrix based on current setpoints.
+
+    SCgetModelRM calculates the response matrix `RM` with the BPMs at the ordinates `BPMords`
+    and corrector magnets at ordinates `CMords` using the current magnet setpoints without any
+    roll/alignment/calibration errors. `CMords` is a 2-cell array containing the two lists for the
+    horizontal and vertical CMs respectively.
+    This routine can determine the turn-by-turn RM, as well as the orbit-RM; see option 'trackMode'.
+
+    Args:
+        SC:
+            SimulatedCommissioning class instance
+        BPMords:
+            Index of BPMs in SC.RING (SC.ORD.BPM)
+        CMords:
+            Index of Correctors Magnets in SC.RING (SC.ORD.CM)
+        trackMode:
+            (default = 'TBT') If `TBT` the turn-by-turn RM is calculated.
+            If `ORB` the orbit RM is calculated, using `at.findorbit6`
+        Z0:
+            (default = numpy.zeros(6)) Initial condition for tracking.
+            In `ORB`-mode this is used as the initial guess for `findorbit6`.
+        nTurns:
+            (default = 1) Number of turns over which to determine the TBT-RM. Ignored if in `ORB`-mode.
+        dkick:
+            (default = 1e-5) Kick [rad] to be added when numerically determining the partial derivatives.
+        useIdealRing:
+            (default = True) If True, the design lattice specified in `SC.IDEALRING` is used.
+            If False, the model lattice is used SCgetModelRING(SC).
+
+    Returns:
+        The response matrix given in [m/rad].
+
+    Examples:
+        Compute a response matrix::
+
+            RM1 = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, nTurns=1)
+
+    """
     LOGGER.info('Calculating model response matrix')
     track_methods = dict(TBT=atpass, ORB=orbpass)
     if trackMode not in track_methods.keys():
@@ -53,6 +92,35 @@ def orbpass(RING, Z0,  nTurns, REFPTS):
 
 
 def SCgetModelDispersion(SC, BPMords, CAVords, trackMode='ORB', Z0=np.zeros(6), nTurns=1, rfStep=1E3, useIdealRing=True):
+    """
+    Calculates the lattice dispersion based on current setpoints
+
+    Calculates the dispersion at the ordinates `BPMords` by changing the frequency of the rf cavities
+    specified in `CAVords` using the current magnet setpoints without any roll/alignment/calibration
+    errors. Optionally the design lattice is used.
+
+    Args:
+        SC:
+            SimulatedCommissioning class instance
+        BPMords:
+            Index of BPMs in SC.RING (SC.ORD.BPM)
+        CAVords:
+            Index of RF Cavities in SC.RING (SC.ORD.CM)
+        trackMode:
+            (default = 'TBT') If `TBT` the turn-by-turn RM is calculated.
+            If `ORB` the orbit RM is calculated, using `at.findorbit6`
+        Z0:
+            (default = numpy.zeros(6)) Initial condition for tracking.
+            In `ORB`-mode this is used as the initial guess for `findorbit6`.
+        nTurns:
+            (default = 1) Number of turns over which to determine the TBT-RM. Ignored if in `ORB`-mode.
+        rfStep: (default = 1e3) Change of rf frequency [Hz]
+        useIdealRing: (default=False) If true, the design lattice specified in `SC.IDEALRING` is used.
+
+    Returns:
+        The dispersion given in [m/Hz].
+
+    """
     LOGGER.info('Calculating model dispersion')
     track_methods = dict(TBT=atpass, ORB=orbpass)
     if trackMode not in track_methods.keys():
@@ -76,6 +144,20 @@ def SCgetModelDispersion(SC, BPMords, CAVords, trackMode='ORB', Z0=np.zeros(6), 
 
 
 def SCgetModelRING(SC: SimulatedCommissioning, includeAperture: bool =False) -> Lattice:
+    """
+    Returns a model lattice based on current setpoints
+
+    This function calculates a model lattice based on the setpoints of `SC.RING`. Misalignments,
+    lattice errors and dipole fields are excluded.
+
+    Args:
+        SC: SimulatedCommissioning class instance
+        includeAperture: (default=False) If true, the returned model ring includes the aperture
+
+    Returns:
+        The idealised RING structure
+
+    """
     ring = SC.IDEALRING.deepcopy()
     for ord in range(len(SC.RING)):
         if hasattr(SC.RING[ord], 'SetPointA') and hasattr(SC.RING[ord], 'SetPointB'):
