@@ -59,7 +59,7 @@ jobs:
           ./cc-test-reporter before-build
 
       - name: Run all tests
-        run: python -m pytest --cov-report xml --cov=pySC
+        run: python -m pytest --cov-report xml --cov=pySC/core --cov=pySC/correction --cov=pySC/lattice_properties --cov=pySC/plotting --cov=pySC/utils
 
       - name: Push Coverage to CodeClimate
         if: ${{ success() }}  # only if tests were successful

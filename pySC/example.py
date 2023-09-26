@@ -17,7 +17,7 @@ from pySC.correction.loco_wrapper import (loco_model, loco_fit_parameters, apply
 from pySC.plotting.plot_phase_space import plot_phase_space
 from pySC.plotting.plot_support import plot_support
 from pySC.plotting.plot_lattice import plot_lattice
-from pySC.core.lattice_setting import set_magnet_setpoints, switch_cavity_and_radiation
+from pySC.core.lattice_setting import switch_cavity_and_radiation
 from pySC.correction.rf import correct_rf_phase, correct_rf_frequency, phase_and_energy_error
 from pySC.utils import logging_tools
 
@@ -111,7 +111,7 @@ if __name__ == "__main__":
 
     SC.RING = switch_cavity_and_radiation(SC.RING, 'cavityoff')
     sextOrds = SCgetOrds(SC.RING, 'SF|SD')
-    SC = set_magnet_setpoints(SC, sextOrds, 0.0, False, 2, method='abs')
+    SC.set_magnet_setpoints(sextOrds, 0.0, False, 2, method='abs')
     RM1 = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, nTurns=1)
     RM2 = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, nTurns=2)
     Minv1 = SCgetPinv(RM1, alpha=50)
@@ -151,7 +151,7 @@ if __name__ == "__main__":
 
     # Turning on the sextupoles
     for rel_setting in np.linspace(0.1, 1, 5):
-        SC = set_magnet_setpoints(SC, sextOrds, rel_setting, False, 2, method='rel')
+        SC.set_magnet_setpoints(sextOrds, rel_setting, False, 2, method='rel')
         try:
             SC = SCfeedbackBalance(SC, Minv2, maxsteps=32, eps=eps)
         except RuntimeError:
