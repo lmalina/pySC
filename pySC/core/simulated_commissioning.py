@@ -43,11 +43,10 @@ class SimulatedCommissioning:
         0
         >>> print(SC.SIG.BPM[0].Offset)
         >>> SC.apply_errors()
-        >>> SC.update
 
     The properties of the class are:
         RING:
-            the AT ring lattice
+            the AT ring lattice to which the errors will be added
         IDEALRING:
             the ideal AT ring lattice
         INJ:
@@ -58,7 +57,7 @@ class SimulatedCommissioning:
             This parameter is set via *register_magnets*, *register_bpms*, *register_cavities*, *register_supports*
             See Also *pySC.core.classes.Sigmas*
         ORD:
-            Class to store the index in the lattice of elements concerned by errors
+            Class to store the indices of registered elements in the lattice
             This parameter is set via *register_magnets*, *register_bpms*, *register_cavities*, *register_supports*
             See Also *pySC.core.classes.Indices*
         plot:
@@ -83,7 +82,6 @@ class SimulatedCommissioning:
 
         Args:
             ords:  BPM ordinates in the lattice structure.
-            **kwargs: arbitrary BPM fields
 
         The BPM fields in the lattice elements are:
             Noise:
@@ -97,7 +95,8 @@ class SimulatedCommissioning:
             Roll:
                 BPM roll around z-axis w.r.t. the support structure
             SumError:
-                Calibration error of the sum signal. The sum signal is used to determine the beam loss location with a cutoff as defined `SC.INJ.beamLostAt`.
+                Calibration error of the sum signal. The sum signal is used to determine
+                the beam loss location with a cutoff as defined `SC.INJ.beamLostAt`.
 
         Examples:
             Identify the ordinates of all elements named `BPM` and registers them as BPMs in `SC`::
@@ -123,7 +122,7 @@ class SimulatedCommissioning:
                 SC.register_bpms(ords, Offset=500E-6*np.ones(2), SumError=0.2)
 
         See also:
-            *SCgetBPMreading*, *SCgetOrds*, *SC.sanity_check*, *SC.apply_errors*, *SC.register_support*, *SC.update_support*
+            *bpm_reading*, *SCgetOrds*, *SC.verify_structure*, *SC.apply_errors*, *SC.register_support*, *SC.update_support*
         """
         self._check_kwargs(kwargs, BPM_ERROR_FIELDS)
         self.ORD.BPM = np.unique(np.concatenate((self.ORD.BPM, ords)))
@@ -147,23 +146,16 @@ class SimulatedCommissioning:
 
         Args:
             ords: Cavity ordinates in the lattice structure.
-            **kwargs: any of the fields listed below
 
         Keyword Args:
-            VoltageSetPoint:
-                Setpoint of cavity voltage
             VoltageOffset:
                 Offset of cavity voltage wrt. to the setpoint
             VoltageCalError:
                 Calibration error of cavity voltage wrt. to the setpoint
-            FrequencySetPoint:
-                Setpoint of cavity frequency
             FrequencyOffset:
                 Offset of cavity frequency wrt. to the setpoint
             FrequencyCalError:
                 Calibration error of cavity frequency wrt. to the setpoint
-            TimeLagSetPoint:
-                Setpoint of cavity phase (`TimeLag`)
             TimeLagOffset:
                 Offset of cavity phase wrt. to the setpoint
             TimeLagCalError:
@@ -201,14 +193,13 @@ class SimulatedCommissioning:
                 setattr(self.RING[ind], f"{field}Offset", 0)
                 setattr(self.RING[ind], f"{field}CalError", 0)
 
-    def register_magnets(self, ords: ndarray, **kwargs):
+    def register_magnets(self, ords: ndarray, **kwargs):  # TODO docstring is too long also verify all relates to Python
         """
         Registers magnets specified by `ords` in the `SC` structure and initializes all required fields
         in the lattice elements. The ordinates of all registered magnets are stored in `SC.ORD.Magnet`.
 
         Args:
             ords: Magnet ordinates in the lattice structure.
-            **kwargs: any of the fields listed below
 
         Keyword Args:
             CalErrorB:
@@ -254,8 +245,8 @@ class SimulatedCommissioning:
         Examples:
             Identify the ordinates of all elements named `QF` and register them in `SC`::
 
-                ords = SCgetOrds(SC.RING, 'QF');
-                SC.register_magnets(ords);
+                ords = SCgetOrds(SC.RING, 'QF')
+                SC.register_magnets(ords)
 
             Register the magnets specified in `ords` in `SC` and set the uncertainty of
             the quadrupole component to 1E-3 and 30um horizontal and vertical offset::
@@ -290,15 +281,13 @@ class SimulatedCommissioning:
             The uncertainty of the bending angle is set to 1E-4::
 
                 masterOrds = SCgetOrds(SC.RING,'BENDa')
-                childOrds  = numpy.concatenate(SCgetOrds(SC.RING,'BENDb'),
-                                               SCgetOrds(SC.RING,'BENDc'))
-                SC.register_magnets(masterOrds, BendingAngle=1E-4,
-                                        MasterOf=childOrds)
+                childOrds  = numpy.vstack((SCgetOrds(SC.RING,'BENDb'), SCgetOrds(SC.RING,'BENDc')))
+                SC.register_magnets(masterOrds, BendingAngle=1E-4, MasterOf=childOrds)
 
             Register the magnets specified in `ords` in `SC` as combined function magnets
             and sets the uncertainty of the quadrupole component to 1E-3::
 
-                SC.register_magnets(SC,ords, CF=1, CalErrorB=np.array([0, 1E-3]))
+                SC.register_magnets(ords, CF=1, CalErrorB=np.array([0, 1E-3]))
 
             Register the magnets specified in `ords` in `SC` and set the uncertainty of
             the skew quadrupole component to 2E-3 and the uncertainty of the sextupole
@@ -309,7 +298,7 @@ class SimulatedCommissioning:
             Register the magnets specified in `ords` in `SC` as horizontal and vertical
             CMs, set their dipole uncertainties to 5% and 1%, respectively and define no CM limits::
 
-                SC.register_magnets(ords, HCM=Inf, VCM=Inf, CalErrorB=5E-2, CalErrorA=1E-2)
+                SC.register_magnets(ords, HCM=np.inf, VCM=np.inf, CalErrorB=5E-2, CalErrorA=1E-2)
 
             Register the magnets specified in `ords` in `SC` as horizontal and vertical
             CMs, set their uncertainties to 5% and 1%, respectively and their limits to 1
@@ -392,20 +381,20 @@ class SimulatedCommissioning:
             girder start points. When the support errors are applied the girder endpoints will get the same
             offset error as the start points, resulting in a paraxial translation of the girder::
 
-                SC.register_support(Girder=ords, Offset=[dX, dY, dZ])
+                SC.register_support(ords, "Girder", Offset=[dX, dY, dZ])
 
             Registers the section start- end endpoints defined in `ords` and assigns the horizontal and
             vertical section offset uncertainties `dX` and `dY`, respectively, to the start points. When
             the support errors are applied the section endpoints will get the same offset as the start points::
 
-                SC.register_support(Section=ords, Offset=np.array([dX, dY, 0]))
+                SC.register_support(ords, "Section", Offset=np.array([dX, dY, 0]))
 
             Registers the section start- end endpoints defined in `ords` and assigns the horizontal and
             vertical section offset uncertainties `dX` and `dY`, respectively, to the start points. When
             the support errors are applied the section endpoints will get the same offset as the start points.
             Also set a 4.2 sigmas cutoff::
 
-                SC.register_support(Section=ords, Offset=[np.array([dX, dY, 0]), 4.2])
+                SC.register_support(ords, "Section", Offset=[np.array([dX, dY, 0]), 4.2])
 
             Registers the girder start end endpoints defined in `ords`, assigns the roll uncertainty `dPhi`
             and the horizontal and vertical girder offset uncertainties `dX1` and `dY1`, respectively to the
@@ -413,7 +402,7 @@ class SimulatedCommissioning:
             girder start- and endpoints will get random offset errors and the resulting yaw and pitch angles
             are calculated accordingly::
 
-                SC.register_support(Girder=ords
+                SC.register_support(ords, "Girder",
                                     Offset=np.array([dX1, dY1, 0; dX2, dY2, 0]),
                                     Roll=np.array([dPhi, 0, 0]))
 
@@ -423,11 +412,11 @@ class SimulatedCommissioning:
             the girders will experience a paraxial translation according to the offsets plus the proper
             rotations around the three x-, y- and z-axes::
 
-                SC.register_support(Girder=ords,Offset=np.array([dX dY dZ]),Roll=np.array([az ax ay]));
+                SC.register_support(ords, "Girder", Offset=np.array([dX dY dZ]), Roll=np.array([az ax ay]));
 
         See Also:
-            *SCgetOrds*, *SC.update_support*, *SC.support_offset_and_roll*, *SCplotSupport*, *SC.apply_errors*,
-            *SC.register_magnets*, *SCgetTransformation*
+            *SCgetOrds*, *SC.update_support*, *SC.support_offset_and_roll*, *plot_support*, *SC.apply_errors*,
+            *SC.register_magnets*, *update_transformation*
 
         """
         if support_type not in SUPPORT_TYPES:
@@ -473,20 +462,18 @@ class SimulatedCommissioning:
             ords: Ordinates of the considered magnets.
             BA: [N x 2] array of PolynomA/B multipole errors.
             order: Numeric value defining the order of the considered magnet: [0,1,2,...] => [dip,quad,sext,...]
-            skewness: if False apply errors to normal fields (PolynomB). if True apply errors to skew fields (PolynomA)
+            skewness: if True apply errors to skew fields (PolynomA) if False to normal fields (PolynomB)
 
         Examples:
-            Defines systematic multipole components for the 'QF' magnet and adds it to the field offsets of all magnets named 'QF'::
+            Defines systematic multipole components for the 'QF' magnet and
+            adds it to the field offsets of all magnets named 'QF'::
 
                 ords = SCgetOrds(SC.RING,'QF')
-                BA = np.array([0, 1E-5;
-                               0, 1E-4;
-                               0, 0;
-                               0, 1E-2])
-                RING = SC.set_systematic_multipole_errors(RING, ords, BA, 1, False);
+                BA = np.array([[1E-5, 0], [1E-4, 0], [0, 0], [1E-2, 0]])
+                RING = SC.set_systematic_multipole_errors(RING, ords, BA, 1, False)
 
         See Also:
-            *pySC.utils.sc_tools.SCmultipolesRead*, *SC.update_magnets*, *SC.set_random_multipole_errors*
+            *SC.update_magnets*, *SC.set_random_multipole_errors*
         """
         if BA.ndim != 2 or BA.shape[1] != 2:
             raise ValueError("BA has to  be numpy.array of shape N x 2.")
@@ -502,27 +489,25 @@ class SimulatedCommissioning:
 
     def set_random_multipole_errors(self, ords: ndarray, BA):
         """
-        Applies multipole errors specified in `AB` in the lattice elements `ords` of `RING` depending on
-        the specified options.
-        It randomly generates multipole components with a 2-sigma truncated Gaussian distribution from each of the `BA`
-        entries. The final multipole errors are stored in the PolynomA/BOffset of the lattice elements.
+        Applies random multipole errors specified in `BA` in the lattice elements `ords` of `RING`.
+        It generates random multipole components with a 2-sigma truncated Gaussian distribution
+        from each of the `BA` entries.
+        The final multipole errors are stored in the PolynomA/BOffset of the lattice elements.
 
         Args:
             ords: Ordinates of the considered magnets.
             BA: [N x 2] array of PolynomB/A multipole errors. [normal, skew] components.
 
         Examples:
-            Defines random multipole components for the 'QF' magnet and adds it to the field offsets of all magnets named 'QF'::
+            Defines random multipole components for the 'QF' magnet
+            and adds it to the field offsets of all magnets named 'QF'::
 
                 ords = SCgetOrds(SC.RING,'QF')
-                BA = np.array([0, 1E-5;
-                               0, 1E-4;
-                               0, 0;
-                               0, 1E-2])
-                RING = SC.set_random_multipole_errors(RING, ords, BA)
+                BA = np.array([[1E-5, 0], [1E-4, 0], [0, 0], [1E-2, 0]])
+                SC.set_random_multipole_errors(ords, BA)
 
         See Also:
-            *pySC.utils.sc_tools.SCmultipolesRead*, *SC.update_magnets*, *SC.set_systematic_multipole_errors*
+            *SC.update_magnets*, *SC.set_systematic_multipole_errors*
         """
         if BA.ndim != 2 or BA.shape[1] != 2:
             raise ValueError("BA has to  be numpy.array of shape N x 2.")
@@ -546,15 +531,14 @@ class SimulatedCommissioning:
         exeption are bending angle errors which are stored in the `BendingAngleError`
         field. See examples in the SC.register* functions for more details.
 
-        *SC.apply_errors* uses the fields of `SC.SIG` to
-        randomly generate errors and applies them to the corresponding fields in `SC.RING`.
+        *SC.apply_errors* uses the uncertainties defined in `SC.SIG` to
+        generate random errors and applies them to the corresponding attributes of elements in `SC.RING`.
 
         Args:
             nsigmas: Number of sigmas at which the Gaussian distribution of errors is truncated
 
         See Also:
-            *SC.register_magnets*, *SC.register_support*, *SC.register_bpms*, *SC.register_cavities*,
-            *pySC.correction.ramp_errors.SCrampUpErrors*
+            *SC.register_magnets*, *SC.register_support*, *SC.register_bpms*, *SC.register_cavities*
         """
         # RF
         for ind in intersect(self.ORD.RF, self.SIG.RF.keys()):
@@ -632,7 +616,7 @@ class SimulatedCommissioning:
     def update_cavities(self, ords: ndarray = None):
         """
         Updates the cavity fields `Voltage`, `Frequency` and `TimeLag` in `SC.RING` as specified in `ords`.
-        If no ordinates are given explicitly, all registered cavities defined in `SC.ORD.Cavity` are
+        If no ordinates are given explicitly, all registered cavities defined in `SC.ORD.RF` are
         updated. For each cavity and each field, the setpoints, calibration errors and offsets are considered.
 
         Args:
@@ -657,7 +641,7 @@ class SimulatedCommissioning:
         PolynomB-multipoles induced by PolynomB entries, the corresponding multipole components are scaled
         by the current magnet excitation and added, as well as static field offsets (if specified in
         `PolynomA/BOffset`).
-        If the considered magnet has a bending angle error (from pure bending angle eror or due to a
+        If the considered magnet has a bending angle error (from pure bending angle error or due to a
         combined function magnet), the corresponding horizontal dipole magnetic field is calculated and
         added to the PolynomB(1) term. It is thereby assured that a dipole error doesn't alter the
         coordinate system.
@@ -670,7 +654,7 @@ class SimulatedCommissioning:
 
         See Also:
             *SC.register_magnets*, *SC.apply_errors*, *SC.set_systematic_multipole_errors*,
-            *SC.set_random_multipole_errors*, *SCsetMags2SetPoints*, *SCsetCMs2SetPoints*
+            *SC.set_random_multipole_errors*, *set_magnet_setpoints*, *set_cm_setpoints*
 
         """
         for ind in (self.ORD.Magnet if ords is None else ords):
@@ -685,12 +669,12 @@ class SimulatedCommissioning:
         based on the current support errors, by setting the lattice fields `T1`, `T2`, and
         `R1`, `R2` for magnets and the fields `SupportOffset` and `SupportRoll` for BPMs.
 
-        Keyword Args:
+        Args:
             offset_bpms: If true, BPM offsets are updated.
             offset_magnets: If true, magnet offsets are updated.
 
         See Also:
-            *SC.register_support*, *SC.support_offset_and_roll*, *SCplotSupport*
+            *SC.register_support*, *SC.support_offset_and_roll*, *plot_support*
 
         """
         s_pos = findspos(self.RING)
@@ -736,7 +720,7 @@ class SimulatedCommissioning:
             [3,length(s)]-array containing the [az/ax/ay] total support structure rolls at `s`.
 
         See Also:
-            *SC.register_support*, *SC.update_support*, *SCplotSupport*
+            *SC.register_support*, *SC.update_support*, *plot_support*
         """
         s_pos = findspos(self.RING)
         ring_length = s_pos[-1]
@@ -784,7 +768,7 @@ class SimulatedCommissioning:
 
     def verify_structure(self):
         """
-        Performs a sanity check on the current `SC` structure and returns warnings if things look fishy.
+        Verifies the integrity of SimilatedCommissionining class instance and warns if things look fishy.
         If you find something that is missing please contact us.
 
         See Also:

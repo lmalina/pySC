@@ -131,7 +131,7 @@ def set_cm_setpoints(SC: SimulatedCommissioning,
         Set all registered horizontal CMs to zero::
 
             SC = set_cm_setpoints(SC, ords=SC.ORD.HCM,
-                                    skewness=False, setpoints=0)
+                                    skewness=False, setpoints=0.0)
 
         Add 10urad to the fourth registered vertical CM::
 
@@ -176,7 +176,7 @@ def set_magnet_setpoints(SC: SimulatedCommissioning,
     angle difference is calculated and the horizontal CM setpoint is changed accordingly to compensate
     for that dipole kick difference.
     If the setpoint of a skew quadrupole exceeds the limit specified in the corresponding lattice
-    field `SkewQuadLimit`, the setpoint is clipped to that value and a warning is being printed.
+    field `SkewQuadLimit`, the setpoint is clipped to that value and a warning is logged.
 
     Args:
         SC: SimulatedCommissioning class instance

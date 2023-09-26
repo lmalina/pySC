@@ -1,5 +1,5 @@
 """
-Sub-classes
+Subclasses
 -------------
 
 This module contains the classes needed in the main data structure (``SimulatedCommissioning``).
@@ -38,7 +38,7 @@ class Injection:
 
     properties of this class are:
         beamLostAt:
-            (default=1) Relative amount of partcles which may be lost before BPM reading is NaN
+            (default=1) Relative amount of particles which may be lost before BPM reading is NaN
         Z0ideal:
             (default=numpy.zeros(6)) Design injected trajectory
         Z0:
@@ -95,7 +95,7 @@ class Injection:
 
 class Indices(DotDict):
     """
-    indexes of magnets, rf, BPMs, correctors girder plinths and sections in the AT lattice
+    Indices of magnets, RF cavities, BPMs, correctors,  girders,  plinths and sections in the AT lattice
 
     Args:
         BPM: numpy.array of integers. index of beam position monitors
@@ -109,7 +109,7 @@ class Indices(DotDict):
         Section: numpy.array of 2 element tuples. (start, end) start and end index of Sections
 
     Examples:
-        get BPM indexes::
+        get BPM indices::
 
             SC.ORD.BPM
 
@@ -133,7 +133,7 @@ class Indices(DotDict):
 
 class Sigmas(DotDict):
     """
-    stores the defined rms (sigma) of errors assigned to BPM, RF, magnets, supports and injection
+    Defined rms (sigma) size of errors later assigned to BPM, RF, magnets, supports and injection
 
     Args:
          BPM: errors sigma's in BPMs

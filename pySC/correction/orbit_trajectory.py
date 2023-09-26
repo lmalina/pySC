@@ -33,13 +33,9 @@ def SCfeedbackFirstTurn(SC, Mplus, reference=None, CMords=None, BPMords=None,
     application of (1) - more and more transmission is achieved throughout the
     ring, more magnets are traversed near their magnetic center (which is hopefully
     at least somewhere near the BPM zero-point), resulting in decreased kicks.
-    If, however, the beam encounters a heavily displaced quadrupole magnet this
-    approach is bound to fail as correction towards the center of the last
-    reached BPM does no good, really. In this case the magnet has to be cleared
-    using other means than linear algebra.  In this approach the kicks of an
-    increasing number of the last reached CMs are deterministically ``wiggled''
-    until transmission to the next BPM is achieved. Then, application of (1) is
-    resumed.
+    Otherwise,if trajectory correction cannot proceed further to next BPM
+    the kicks of an increasing number of the last reached CMs are deterministically ``wiggled''
+    until transmission to the next BPM is achieved. Then, application of (1) is resumed.
 
     Args:
         SC: SimulatedCommissioning class instance.
@@ -55,7 +51,7 @@ def SCfeedbackFirstTurn(SC, Mplus, reference=None, CMords=None, BPMords=None,
         wiggle_range: Range ([min,max] in rad) within which to wiggle the CMs. (default = (500E-6, 1000E-6))
 
     Returns:
-        SC-structure with corrected `SC.RING`
+        SimulatedCommissioning class instance with corrected `SC.RING`
 
     """
     LOGGER.debug('SCfeedbackFirstTurn: Start')
@@ -114,7 +110,7 @@ def SCfeedbackStitch(SC, Mplus, reference=None, CMords=None, BPMords=None, nBPMs
         wiggle_range: Range ([min,max] in rad) within which to wiggle the CMs. (default = (500E-6, 1000E-6))
 
     Returns:
-        SC-structure with corrected `SC.RING`.
+        SimulatedCommissioning class instance with corrected `SC.RING`
 
     Examples:
         Calculate the 2-turn response matrix and get the pseudo inverse using a Tikhonov regularization
@@ -177,7 +173,7 @@ def SCfeedbackStitch(SC, Mplus, reference=None, CMords=None, BPMords=None, nBPMs
 
 def SCfeedbackBalance(SC, Mplus, reference=None, CMords=None, BPMords=None, eps=1e-4, maxsteps=10, nRepro=3):
     """
-    balance two-turn BPM readings
+    Balance two-turn BPM readings
 
     Generates a period-1 closed orbit, after two-turn transmission has been
     achieved. This is done by iteratively applying correction steps, calculated
@@ -201,7 +197,7 @@ def SCfeedbackBalance(SC, Mplus, reference=None, CMords=None, BPMords=None, eps=
         eps: break, if the coefficient of variation of the RMS BPM reading is below this value
 
     Returns:
-        SC-structure with corrected `SC.RING`
+        SimulatedCommissioning class instance with corrected `SC.RING`
 
     """
     LOGGER.debug('SCfeedbackBalance: Start')
@@ -252,8 +248,8 @@ def SCfeedbackRun(SC, Mplus, reference=None, CMords=None, BPMords=None, eps=1e-4
     `(len(SC.ORD.HCM) + len(SC.ORD.VCM) + 1) x len(SC.ORD.BPM)`, otherwise the size
     `(len(SC.ORD.HCM) + len(SC.ORD.VCM)) x len(SC.ORD.BPM)`, or correspondingly if the CM
     and/or BPM ordinates for the correction is explicitly given (see options below). `SC.RING` is
-    assumed to be a lattice with transmission through all considered turns. This routine will
-    also return, if transmission is lost (RuntimeError).
+    assumed to be a lattice with transmission through all considered turns.
+    Raises RuntimeError if transmission is lost.
 
     Args:
         SC: SimulatedCommissioning class instance.
@@ -269,7 +265,7 @@ def SCfeedbackRun(SC, Mplus, reference=None, CMords=None, BPMords=None, eps=1e-4
         scaleDisp: (default =0 ) Scaling factor for and flag indicating if the dispersion is included in the response matrix
 
     Returns:
-        SC-structure with corrected `SC.RING`
+        SimulatedCommissioning class instance with corrected `SC.RING`
 
     Examples:
 
