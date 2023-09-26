@@ -12,3 +12,6 @@ Correction algorithms
 .. automodule:: pySC.correction.tune
     :members:
 
+.. automodule:: pySC.correction.chroma
+    :members:
+
