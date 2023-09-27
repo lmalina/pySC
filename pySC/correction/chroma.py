@@ -38,18 +38,24 @@ def fit_chroma(SC, s_ords, target_chroma=None, init_step_size=np.array([2, 2]), 
         return SC
 
     LOGGER.debug(f'Fitting chromaticities from {atlinopt(SC.RING, 0, [])[2]} to {target_chroma}.')  # first two elements
-    SP0 = np.zeros((len(s_ords), len(s_ords[0])))  #
+    #SP0 = np.zeros((len(s_ords[0]), len(s_ords[0])))
+    SP0 = [0*s_ords[0], 0*s_ords[1]] #working with a list of two arrays
     for nFam in range(len(s_ords)):
         for n in range(len(s_ords[nFam])):
             SP0[nFam][n] = SC.RING[s_ords[nFam][n]].SetPointB[2]
     fun = lambda x: _fit_chroma_fun(SC, s_ords, x, SP0, target_chroma)
     sol = fmin(fun, init_step_size, xtol=xtol, ftol=ftol)
-    SC = set_magnet_setpoints(SC, s_ords, sol + SP0, False, 1, method='abs', dipole_compensation=True)
+    #Apply found solution to the SC instance
+    print(sol)
+    SC.set_magnet_setpoints(s_ords[0], sol[0] + SP0[0], False, 2, method='abs', dipole_compensation=True)
+    SC.set_magnet_setpoints(s_ords[1], sol[1] + SP0[1], False, 2, method='abs', dipole_compensation=True)
     LOGGER.debug(f'        Final chromaticity: {atlinopt(SC.RING, 0, [])[2]}\n          Setpoints change: {sol}.')  # first two elements
     return SC
 
 
 def _fit_chroma_fun(SC, s_ords, setpoints, init_setpoints, target):
-    SC.set_magnet_setpoints(s_ords, setpoints + init_setpoints, False, 2, method='abs', dipole_compensation=True)
-    _, _, nu = atlinopt(SC.RING, 0, [])
+    SC.set_magnet_setpoints(s_ords[0], setpoints[0] + init_setpoints[0], False, 2, method='abs', dipole_compensation=True)
+    SC.set_magnet_setpoints(s_ords[1], setpoints[1] + init_setpoints[1], False, 2, method='abs', dipole_compensation=True)
+    nu = SC.RING.get_chrom()
+    nu = nu[0:2]
     return np.sqrt(np.mean((nu - target) ** 2))
