@@ -29,7 +29,7 @@ def fit_chroma(SC, s_ords, target_chroma=None, init_step_size=np.array([2, 2]), 
     Returns:
         SC: SimulatedCommissioning instance with corrected chromaticity.
     Example:
-        SC = fit_chroma(SC, s_ords=SCgetOrds(sc.RING, 'SF|SD'), target_chroma = [1 1])
+        SC = fit_chroma(SC, s_ords=SCgetOrds(sc.RING, 'SF|SD'), target_chroma=numpy.array([1,1]))
     """
     if target_chroma is None:
         _, _, target_chroma = atlinopt(SC.IDEALRING, 0, [])
