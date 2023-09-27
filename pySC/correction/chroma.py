@@ -49,7 +49,7 @@ def fit_chroma(SC, s_ords, target_chroma=None, init_step_size=np.array([2, 2]), 
     return SC
 
 
-def _fit_chroma_fun(SC, q_ords, setpoints, init_setpoints, target):
-    SC.set_magnet_setpoints(q_ords, setpoints + init_setpoints, False, 2, method='abs', dipole_compensation=True)
+def _fit_chroma_fun(SC, s_ords, setpoints, init_setpoints, target):
+    SC.set_magnet_setpoints(s_ords, setpoints + init_setpoints, False, 2, method='abs', dipole_compensation=True)
     _, _, nu = atlinopt(SC.RING, 0, [])
     return np.sqrt(np.mean((nu - target) ** 2))
