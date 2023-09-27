@@ -19,10 +19,10 @@ from pySC.core.simulated_commissioning import SimulatedCommissioning
 
 from pySC.core.classes import DotDict
 from pySC.core.lattice_setting import switch_cavity_and_radiation
-from pySC.correction.bba import SCBBA as bba
+from pySC.correction.bba import trajectory_bba, orbit_bba, fake_bba
 from pySC.correction.injection_fit import fit_injection_trajectory, fit_injection_drift
 from pySC.correction.orbit_trajectory import SCfeedbackFirstTurn as first_turn, SCfeedbackStitch as stitch, \
-    SCfeedbackRun as frun, SCfeedbackBalance as fbalance, SCpseudoBBA as pseudo_bba
+    SCfeedbackRun as frun, SCfeedbackBalance as fbalance
 from pySC.correction.ramp_errors import SCrampUpErrors as ramp_up_errors
 from pySC.correction.rf import correct_rf_phase, correct_rf_frequency
 from pySC.correction.tune import tune_scan
@@ -51,7 +51,12 @@ def SCapplyErrors(SC: SimulatedCommissioning, nsigmas: float = 2) -> SimulatedCo
 
 
 def SCBBA(SC, BPMords, magOrds, **kwargs):
-    return bba(SC, BPMords, magOrds, **kwargs)
+    if kwargs["mode"] == "TBT":
+        LOGGER.warning("Performing trajectory BBA, please check the actual function to resolve parameter changes.")
+        return trajectory_bba(SC, BPMords, magOrds, **kwargs)
+    if kwargs["mode"] == "ORB":
+        LOGGER.warning("Performing orbit BBA, please check the actual function to resolve parameter changes.")
+        return orbit_bba(SC, BPMords, magOrds, **kwargs)
 
 
 def SCcronoff(ring: Lattice, *args: str) -> Lattice:
@@ -224,7 +229,7 @@ def SCplotSupport(SC: SimulatedCommissioning, /, *, fontSize: int = 8, xLim: Tup
 
 
 def SCpseudoBBA(SC, BPMords, MagOrds, postBBAoffset, /, *, sigma=2):
-    return pseudo_bba(SC, BPMords, MagOrds, postBBAoffset, sigma=sigma)
+    return fake_bba(SC, BPMords, MagOrds, fake_offset=postBBAoffset)
 
 
 def SCrampUpErrors(SC, /, *, nStepsRamp=10, eps=1e-5, target=0, alpha=10, maxsteps=30, verbose=0):

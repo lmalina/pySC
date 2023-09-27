@@ -330,6 +330,7 @@ class SimulatedCommissioning:
             if ind not in self.SIG.Magnet.keys():
                 self.SIG.Magnet[ind] = DotDict()
             self.SIG.Magnet[ind].update(nvpairs)
+        # TODO Correctors
             for ab in AB:
                 order = len(getattr(self.RING[ind], f"Polynom{ab}"))
                 for field in ("NomPolynom", "SetPoint", "CalError"):
@@ -947,6 +948,15 @@ class SimulatedCommissioning:
                 ord,
                 (setpoint - self.RING[ord].SetPointB[1]) / self.RING[ord].NomPolynomB[1] * self.RING[ord].BendingAngle,
                 skewness=False, method=SETTING_ADD)
+
+    def very_deep_copy(self):
+        copied_structure = copy.deepcopy(self)
+        copied_structure.RING = self.RING.deepcopy()
+        copied_structure.IDEALRING = self.IDEALRING.deepcopy()
+        for ind, element in enumerate(self.RING):
+            copied_structure.RING[ind] = element.deepcopy()
+            copied_structure.IDEALRING[ind] = element.deepcopy()
+        return copied_structure
 
     def verify_structure(self):
         """
