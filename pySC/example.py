@@ -1,7 +1,6 @@
 import at
 import numpy as np
-import pySC
-from pySC.correction.bba import bba, _get_bpm_offset_from_mag
+from pySC.correction.bba import trajectory_bba, fake_bba
 
 from at import Lattice
 from pySC.utils.at_wrapper import atloco
@@ -130,24 +129,14 @@ if __name__ == "__main__":
     SC = SCfeedbackBalance(SC, Minv2, maxsteps=32, eps=eps)
 
     # plot_cm_strengths(SC)
-    # Performing BBA
+    # Performing trajectory BBA
     SC.INJ.nParticles = 1
-    quadOrds = np.tile(SCgetOrds(SC.RING, 'QF|QD'), (2, 1))[:, :10]
-    BPMords = np.tile(SC.ORD.BPM, (2, 1))[:, :10]
-
-    init_offsets = _get_bpm_offset_from_mag(SC.RING, BPMords, quadOrds)
-    SC, error_flags, offset_changes = bba(SC, BPMords, quadOrds, fakeMeasForFailures=False, BBABPMtarget=1000E-6,
-                          quadOrdPhaseAdvance=SCgetOrds(SC.RING, 'QF|QD')[0],
-                          quadStrengthPhaseAdvance=np.array([0.95, 0.8, 1.05]), outlierRejectionAt=1e-3, plotResults=True)
-    final_offsets = _get_bpm_offset_from_mag(SC.RING, BPMords, quadOrds)
-    print(offset_changes)
-    print(error_flags)
-    print("Offsets:")
-    print(init_offsets)
-    print(final_offsets)
-
-    print(np.std(init_offsets))
-    print(np.std(final_offsets))
+    quadOrds = np.tile(SCgetOrds(SC.RING, 'QF|QD'), (2, 1))
+    BPMords = np.tile(SC.ORD.BPM, (2, 1))
+    SC, bba_offsets, bba_offset_errors = trajectory_bba(SC, BPMords, quadOrds, q_ord_phase=SCgetOrds(SC.RING, 'QF|QD')[0],
+                                                        q_ord_setpoints=np.array([0.8, 0.9, 1.0, 1.1, 1.2]),
+                                                        magnet_strengths=np.array([0.8, 0.9, 1.0, 1.1, 1.2]),
+                                                        dipole_compensation=True, plot_results=True)
 
     # Turning on the sextupoles
     for rel_setting in np.linspace(0.1, 1, 5):
@@ -163,20 +152,21 @@ if __name__ == "__main__":
     plot_phase_space(SC, nParticles=10, nTurns=100)
 
     # RF cavity correction
-    SC.INJ.nTurns = 5
     for nIter in range(2):
+        SC.INJ.nTurns = 5
         SC = correct_rf_phase(SC, n_steps=25, plot_results=False, plot_progress=False)
-        SC = correct_rf_frequency(SC, n_steps=15, f_range=40E3 * np.array([-1, 1]), plot_results=False,
+        SC.INJ.nTurns = 15
+        SC = correct_rf_frequency(SC, n_steps=15, f_range=4E3 * np.array([-1, 1]), plot_results=False,
                                   plot_progress=False)
 
     # Plot phasespace after RF correction
     plot_phase_space(SC, nParticles=10, nTurns=100)
     [maxTurns, lostCount] = beam_transmission(SC, nParticles=100, nTurns=10)
 
-    # Performing pseudo-BBA
-    quadOrds = np.tile(SCgetOrds(SC.RING, 'QF|QD'), (2,1))
-    BPMords = np.tile(SC.ORD.BPM, (2,1))
-    SC = SCpseudoBBA(SC, BPMords, quadOrds, np.array([50E-6]))
+    # Faking-BBA
+    quadOrds = np.tile(SCgetOrds(SC.RING, 'QF|QD'), (2, 1))
+    BPMords = np.tile(SC.ORD.BPM, (2, 1))
+    SC = fake_bba(SC, BPMords, quadOrds, fake_offset=np.array([50E-6, 50E-6]))
 
     # Orbit correction
     SC.INJ.trackMode = 'ORB'
@@ -224,5 +214,3 @@ if __name__ == "__main__":
                                                  [SCgetOrds(SC.RING, 'QF'), False, 'individual', 1E-3],
                                                  [SCgetOrds(SC.RING, 'QD'), False, 'individual', 1E-4],
                                                  [SC.ORD.SkewQuad, True, 'individual', 1E-3])
-
-at.get_acceptance(SC.RING,('x', 'y') ,(15,15), (0.05,0.05), refpts=0)
