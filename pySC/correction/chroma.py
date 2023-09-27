@@ -20,7 +20,7 @@ def fit_chroma(SC, s_ords, target_chroma=None, init_step_size=np.array([2, 2]), 
 
     Args:
         SC: SimulatedCommissioning instance
-        s_ords: [1x2] array of sextupole ordinates {`[1 x NSF1],[1 x NSD2]`}
+        s_ords: [2xN] array or list [[1 x NSF],[1 x NSD]] of sextupole ordinates
         target_chroma (optional): Target chromaticity for correction. Default: chromaticity of 'SC.IDEALRING'
         init_step_size ([1x2] array, optional): Initial step size for the solver. Default: [2,2]
         xtol(int, optional): Step tolerance for solver. Default: 1e-4
@@ -29,7 +29,7 @@ def fit_chroma(SC, s_ords, target_chroma=None, init_step_size=np.array([2, 2]), 
     Returns:
         SC: SimulatedCommissioning instance with corrected chromaticity.
     Example:
-        SC = fit_chroma(SC, s_ords=SCgetOrds(sc.RING, 'SF|SD'), target_chroma=numpy.array([1,1]))
+        SC = fit_chroma(SC, s_ords=[SCgetOrds(sc.RING, 'SF'), SCgetOrds(sc.RING, 'SD')], target_chroma=numpy.array([1,1]))
     """
     if target_chroma is None:
         _, _, target_chroma = atlinopt(SC.IDEALRING, 0, [])
@@ -38,7 +38,7 @@ def fit_chroma(SC, s_ords, target_chroma=None, init_step_size=np.array([2, 2]), 
         return SC
 
     LOGGER.debug(f'Fitting chromaticities from {atlinopt(SC.RING, 0, [])[2]} to {target_chroma}.')  # first two elements
-    SP0 = np.zeros((len(s_ords), len(s_ords[0])))  # TODO can the lengts vary
+    SP0 = np.zeros((len(s_ords), len(s_ords[0])))  #
     for nFam in range(len(s_ords)):
         for n in range(len(s_ords[nFam])):
             SP0[nFam][n] = SC.RING[s_ords[nFam][n]].SetPointB[2]
