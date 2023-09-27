@@ -5,8 +5,7 @@ from pySC.correction.bba import trajectory_bba, fake_bba
 from at import Lattice
 from pySC.utils.at_wrapper import atloco
 from pySC.core.simulated_commissioning import SimulatedCommissioning
-from pySC.correction.orbit_trajectory import SCfeedbackFirstTurn, SCfeedbackStitch, SCfeedbackRun, SCfeedbackBalance, \
-    SCpseudoBBA
+from pySC.correction.orbit_trajectory import SCfeedbackFirstTurn, SCfeedbackStitch, SCfeedbackRun, SCfeedbackBalance
 from pySC.core.beam import bpm_reading, beam_transmission
 from pySC.correction.tune import tune_scan
 from pySC.lattice_properties.response_model import SCgetModelRM, SCgetModelDispersion
