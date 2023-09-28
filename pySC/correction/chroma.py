@@ -21,10 +21,10 @@ def fit_chroma(SC, s_ords, target_chroma=None, init_step_size=np.array([2, 2]), 
     Args:
         SC: SimulatedCommissioning instance
         s_ords: [2xN] array or list [[1 x NSF],[1 x NSD]] of sextupole ordinates
-        target_chroma (optional): Target chromaticity for correction. Default: chromaticity of 'SC.IDEALRING'
+        target_chroma ([1x2] array, optional): Target chromaticity for correction. Default: chromaticity of 'SC.IDEALRING'
         init_step_size ([1x2] array, optional): Initial step size for the solver. Default: [2,2]
-        xtol(int, optional): Step tolerance for solver. Default: 1e-4
-        ftol(int, optional): Merit tolerance for solver. Default: 1e-4
+        xtol(float, optional): Step tolerance for solver. Default: 1e-4
+        ftol(float, optional): Merit tolerance for solver. Default: 1e-4
 
     Returns:
         SC: SimulatedCommissioning instance with corrected chromaticity.
