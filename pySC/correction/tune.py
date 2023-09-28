@@ -130,6 +130,23 @@ def plot_scan(fin_trans, max_turns, first_quads, rel_quad_changes):
 
 
 def fit_tune(SC, q_ords, target_tune=None, xtol=1E-4, ftol=1E-3, fit_integer=True):
+    """
+        Applies a tune correction using two quadrupole families.
+        Note: this is not beam based but assumes the tunes can be measured reasonably well.
+
+        Args:
+            SC: SimulatedCommissioning instance
+            q_ords: [2xN] array or list [[1 x NQF],[1 x NQD]] of quadrupole ordinates
+            target_tune (optional, [1x2] array): Target tunes for correction. Default: tunes of 'SC.IDEALRING'
+            xtol(float, optional): Step tolerance for solver. Default: 1e-4
+            ftol(float, optional): Merit tolerance for solver. Default: 1e-4
+            fit_integer(bool, optional): Flag specifying if the integer part should be fitted as well.
+
+        Returns:
+            SC: SimulatedCommissioning instance with corrected chromaticity.
+        Example:
+            SC = fit_chroma(SC, s_ords=[SCgetOrds(sc.RING, 'SF'), SCgetOrds(sc.RING, 'SD')], target_chroma=numpy.array([1,1]))
+        """
     #  TODO check if experimantally feasible
     if target_tune is None:
         target_tune = tune(SC, fit_integer, ideal=True)
