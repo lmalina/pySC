@@ -37,7 +37,7 @@ def fit_chroma(SC, s_ords, target_chroma=None, init_step_size=np.array([2, 2]), 
         LOGGER.error('Target chromaticity must not contain NaN. Aborting.')
         return SC
 
-    LOGGER.debug(f'Fitting chromaticities from {atlinopt(SC.RING, 0, [])[2]} to {target_chroma}.')  # first two elements
+    LOGGER.debug(f'Fitting chromaticities from {SC.RING.get_chrom()} to {target_chroma}.')  # first two elements
     #SP0 = np.zeros((len(s_ords[0]), len(s_ords[0])))
     SP0 = [0*s_ords[0], 0*s_ords[1]] #working with a list of two arrays
     for nFam in range(len(s_ords)):
@@ -47,9 +47,7 @@ def fit_chroma(SC, s_ords, target_chroma=None, init_step_size=np.array([2, 2]), 
     sol = fmin(fun, init_step_size, xtol=xtol, ftol=ftol)
     #Apply found solution to the SC instance
     print(sol)
-    SC.set_magnet_setpoints(s_ords[0], sol[0] + SP0[0], False, 2, method='abs', dipole_compensation=True)
-    SC.set_magnet_setpoints(s_ords[1], sol[1] + SP0[1], False, 2, method='abs', dipole_compensation=True)
-    LOGGER.debug(f'        Final chromaticity: {atlinopt(SC.RING, 0, [])[2]}\n          Setpoints change: {sol}.')  # first two elements
+    LOGGER.debug(f'        Final chromaticity: {SC.RING.get_chrom()}\n          Setpoints change: {sol}.')  # first two elements
     return SC
 
 
