@@ -50,9 +50,6 @@ def switch_cavity_and_radiation(ring: Lattice, *args: str) -> Lattice:  # TODO s
         raise ValueError(f"Unknown arguments found: {invalid_args}"
                          f"Available options are: {valid_args}")
 
-    # present radiation state
-    radstate = ring.radiation
-
     # present cavity state
     ords = np.arange(len(ring))
     cavs = [i for i in np.ravel(np.array([ords], dtype=int)) if hasattr(ring[i], 'Frequency')]
@@ -83,7 +80,7 @@ def switch_cavity_and_radiation(ring: Lattice, *args: str) -> Lattice:  # TODO s
         else:  # rad on, cav off
             ring.enable_6d(cavity_pass='IdentityPass')
 
-    # update radiation state
+    # get radiation state
     radstate=ring.radiation
 
     if 'cavityoff' in args:
