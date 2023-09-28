@@ -38,15 +38,12 @@ def fit_chroma(SC, s_ords, target_chroma=None, init_step_size=np.array([2, 2]), 
         return SC
 
     LOGGER.debug(f'Fitting chromaticities from {SC.RING.get_chrom()} to {target_chroma}.')  # first two elements
-    #SP0 = np.zeros((len(s_ords[0]), len(s_ords[0])))
-    SP0 = [0*s_ords[0], 0*s_ords[1]] #working with a list of two arrays
+    SP0 = [0*s_ords[0], 0*s_ords[1]]
     for nFam in range(len(s_ords)):
         for n in range(len(s_ords[nFam])):
             SP0[nFam][n] = SC.RING[s_ords[nFam][n]].SetPointB[2]
     fun = lambda x: _fit_chroma_fun(SC, s_ords, x, SP0, target_chroma)
     sol = fmin(fun, init_step_size, xtol=xtol, ftol=ftol)
-    #Apply found solution to the SC instance
-    print(sol)
     LOGGER.debug(f'        Final chromaticity: {SC.RING.get_chrom()}\n          Setpoints change: {sol}.')  # first two elements
     return SC
 
