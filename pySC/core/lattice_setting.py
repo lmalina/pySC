@@ -83,6 +83,9 @@ def switch_cavity_and_radiation(ring: Lattice, *args: str) -> Lattice:  # TODO s
         else:  # rad on, cav off
             ring.enable_6d(cavity_pass='IdentityPass')
 
+    # update radiation state
+    radstate=ring.radiation
+
     if 'cavityoff' in args:
         if radstate:  # rad on, cav off
             ring.enable_6d(cavity_pass='IdentityPass')
