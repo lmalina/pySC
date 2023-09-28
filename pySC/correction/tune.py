@@ -140,31 +140,32 @@ def fit_tune(SC, q_ords, target_tune=None, xtol=1E-4, ftol=1E-3, fit_integer=Tru
             target_tune (optional, [1x2] array): Target tunes for correction. Default: tunes of 'SC.IDEALRING'
             xtol(float, optional): Step tolerance for solver. Default: 1e-4
             ftol(float, optional): Merit tolerance for solver. Default: 1e-4
-            fit_integer(bool, optional): Flag specifying if the integer part should be fitted as well.
+            fit_integer(bool, optional): Flag specifying if the integer part should be fitted as well. Default: True.
 
         Returns:
-            SC: SimulatedCommissioning instance with corrected chromaticity.
+            SC: SimulatedCommissioning instance with corrected tunes.
         Example:
-            SC = fit_chroma(SC, s_ords=[SCgetOrds(sc.RING, 'SF'), SCgetOrds(sc.RING, 'SD')], target_chroma=numpy.array([1,1]))
+            SC = fit_tune(SC, q_ords=[SCgetOrds(sc.RING, 'QF'), SCgetOrds(sc.RING, 'QD')], target_tune=numpy.array([0.16,0.21]))
         """
     #  TODO check if experimantally feasible
     if target_tune is None:
         target_tune = tune(SC, fit_integer, ideal=True)
-    LOGGER.debug(f'Fitting tunes from [{tune(SC, fit_integer)}] to [{target_tune}].')
-    SP0 = np.zeros((len(q_ords), len(q_ords[0])))  # TODO can the lengts vary
+    LOGGER.debug(f'Fitting tunes from [{SC.RING.get_tune(get_integer=fit_integer)}] to [{target_tune}].')
+    SP0 = [0*q_ords[0], 0*q_ords[1]] #working with a list of two arrays
     for nFam in range(len(q_ords)):
         for n in range(len(q_ords[nFam])):
             SP0[nFam][n] = SC.RING[q_ords[nFam][n]].SetPointB[1]
     fun = lambda x: _fit_tune_fun(SC, q_ords, x, SP0, target_tune, fit_integer)
     sol = fmin(fun, xtol=xtol, ftol=ftol)
-    SC.set_magnet_setpoints(q_ords, sol + SP0, False, 1, method='abs', dipole_compensation=True)
-    LOGGER.debug(f'       Final tune: [{tune(SC, fit_integer)}]\n  Setpoints change: [{sol}]')
+    LOGGER.debug(f'       Final tune: [{SC.RING.get_tune(get_integer=fit_integer)}]\n  Setpoints change: [{sol}]')
     return SC
 
 
 def _fit_tune_fun(SC, q_ords, setpoints, init_setpoints, target, fit_integer):
-    SC.set_magnet_setpoints(q_ords, setpoints + init_setpoints, False, 1, method='abs', dipole_compensation=True)
-    nu = tune(SC, fit_integer)
+    SC.set_magnet_setpoints(q_ords[0], setpoints[0] + init_setpoints[0], False, 1, method='abs', dipole_compensation=True)
+    SC.set_magnet_setpoints(q_ords[1], setpoints[1] + init_setpoints[1], False, 1, method='abs', dipole_compensation=True)
+    nu = SC.RING.get_tune(get_integer=fit_integer)
+    nu = nu[0:2]
     return np.sqrt(np.mean((nu - target) ** 2))
 
 
