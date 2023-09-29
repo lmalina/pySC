@@ -5,17 +5,19 @@ Trajectory and Orbit
 This module contains functions to correct trajectory (first turns(s)) and orbit.
 """
 import numpy as np
+from typing import Tuple
 
 from pySC.core.beam import bpm_reading
 from pySC.utils import logging_tools
-from pySC.utils.sc_tools import SCrandnc
 
 LOGGER = logging_tools.get_logger(__name__)
+NREPRO: int = 5
+WIGGLE_AFTER: int = 20
+WIGGLE_ANGLE_STEPS: int = 32
+WIGGLE_ANGLE_RANGE: Tuple[float, float] = (500E-6, 1000E-6)
 
 
-def SCfeedbackFirstTurn(SC, Mplus, reference=None, CMords=None, BPMords=None,
-                        maxsteps=100, nRepro=3, wiggle_after=20, wiggle_steps=32,
-                        wiggle_range=(500E-6, 1000E-6)):
+def SCfeedbackFirstTurn(SC, Mplus, reference=None, CMords=None, BPMords=None, maxsteps=100):
     """
     Achieves one-turn transmission
 
@@ -75,16 +77,16 @@ def SCfeedbackFirstTurn(SC, Mplus, reference=None, CMords=None, BPMords=None,
             SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history)  # Inject...
  
         # Check stopping criteria
-        if _is_repro(transmission_history, nRepro) and transmission_history[-1] == bpm_readings.shape[1]:   # last three the same and full transmission
+        if _is_repro(transmission_history, NREPRO) and transmission_history[-1] == bpm_readings.shape[1]:   # last three the same and full transmission
             LOGGER.debug('SCfeedbackFirstTurn: Success')
             return SC
-        if _is_repro(transmission_history, wiggle_after):
-            SC = _wiggling(SC, BPMords, CMords, transmission_history[-1] + 1, angle_range=wiggle_range, num_angle_steps=wiggle_steps, nRepro=nRepro)
+        if _is_repro(transmission_history, WIGGLE_AFTER):
+            SC = _wiggling(SC, BPMords, CMords, transmission_history[-1] + 1)
 
     raise RuntimeError('SCfeedbackFirstTurn: FAIL (maxsteps reached)')
 
 
-def SCfeedbackStitch(SC, Mplus, reference=None, CMords=None, BPMords=None, nBPMs=4, maxsteps=30, nRepro=3, wiggle_steps=32, wiggle_range=(500E-6, 1000E-6)):
+def SCfeedbackStitch(SC, Mplus, reference=None, CMords=None, BPMords=None, nBPMs=4, maxsteps=30):
     """
     Achieves 2-turn transmission
 
@@ -133,7 +135,7 @@ def SCfeedbackStitch(SC, Mplus, reference=None, CMords=None, BPMords=None, nBPMs
     
     # Check if minimum transmission for algorithm to work is reached
     if transmission_history[-1] < transmission_limit:
-        SC = _wiggling(SC, BPMords, CMords, transmission_limit, angle_range=wiggle_range, num_angle_steps=wiggle_steps, nRepro=nRepro)
+        SC = _wiggling(SC, BPMords, CMords, transmission_limit)
         bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(
             SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history)
         if transmission_history[-1] < transmission_limit:
@@ -163,14 +165,13 @@ def SCfeedbackStitch(SC, Mplus, reference=None, CMords=None, BPMords=None, nBPMs
         # Check stopping criteria
         if transmission_history[-1] < transmission_history[-2]:
             RuntimeError('SCfeedbackStitch: FAIL Setback')
-        if _is_repro(transmission_history, nRepro) and transmission_history[-1] == bpm_readings.shape[1]:
+        if _is_repro(transmission_history, NREPRO) and transmission_history[-1] == bpm_readings.shape[1]:
             LOGGER.debug('SCfeedbackStitch: Success')
             return SC
     raise RuntimeError('SCfeedbackStitch: FAIL Reached maxsteps')
 
 
-
-def SCfeedbackBalance(SC, Mplus, reference=None, CMords=None, BPMords=None, eps=1e-4, maxsteps=10, nRepro=3):
+def SCfeedbackBalance(SC, Mplus, reference=None, CMords=None, BPMords=None, eps=1e-4, maxsteps=10):
     """
     Balance two-turn BPM readings
 
@@ -228,14 +229,14 @@ def SCfeedbackBalance(SC, Mplus, reference=None, CMords=None, BPMords=None, eps=
         # Check stopping criteria
         if transmission_history[-1] < bpm_readings.shape[1]:
             raise RuntimeError('SCfeedbackBalance: FAIL (lost transmission)')
-        if _is_stable_or_converged(nRepro, eps, rms_orbit_history):
+        if _is_stable_or_converged(NREPRO, eps, rms_orbit_history):
             LOGGER.debug(f'SCfeedbackBalance: Success (converged after {steps} steps)')
             return SC
 
     raise RuntimeError('SCfeedbackBalance: FAIL (maxsteps reached, unstable)')
 
 
-def SCfeedbackRun(SC, Mplus, reference=None, CMords=None, BPMords=None, eps=1e-4, target=0, maxsteps=30, nRepro=3, scaleDisp=0):
+def SCfeedbackRun(SC, Mplus, reference=None, CMords=None, BPMords=None, eps=1e-4, target=0, maxsteps=30, scaleDisp=0):
     """
     iterative orbit correction
 
@@ -304,30 +305,16 @@ def SCfeedbackRun(SC, Mplus, reference=None, CMords=None, BPMords=None, eps=1e-4
         # Check stopping criteria
         if np.any(np.isnan(bpm_readings[0, :])):
             raise RuntimeError('SCfeedbackRun: FAIL (lost transmission)')
-        if max(rms_orbit_history[-1]) < target and _is_stable_or_converged(min(nRepro, maxsteps), eps, rms_orbit_history):
+        if max(rms_orbit_history[-1]) < target and _is_stable_or_converged(min(NREPRO, maxsteps), eps, rms_orbit_history):
             LOGGER.debug(f"SCfeedbackRun: Success (target reached after {steps:d} steps)")
             return SC
-        if _is_stable_or_converged(nRepro, eps, rms_orbit_history):
+        if _is_stable_or_converged(NREPRO, eps, rms_orbit_history):
             LOGGER.debug(f"SCfeedbackRun: Success (converged after {steps:d} steps)")
             return SC
-    if _is_stable_or_converged(min(nRepro, maxsteps), eps, rms_orbit_history) or maxsteps == 1:
+    if _is_stable_or_converged(min(NREPRO, maxsteps), eps, rms_orbit_history) or maxsteps == 1:
         LOGGER.debug("SCfeedbackRun: Success (maxsteps reached)")
         return SC
     raise RuntimeError("SCfeedbackRun: FAIL (maxsteps reached, unstable)")
-
-
-def SCpseudoBBA(SC, BPMords, MagOrds, postBBAoffset, sigma=2):
-    # TODO this looks fishy ... assumes BPMs attached to quads?
-    #  at the same time two separate 2D arrays?
-    if len(postBBAoffset) == 1:
-        postBBAoffset = np.tile(postBBAoffset, (2,np.size(BPMords, axis=1)))
-    for nBPM in range(np.size(BPMords, axis=1)):
-        for nDim in range(2):
-            SC.RING[BPMords[nDim][nBPM]].Offset[nDim] = (SC.RING[MagOrds[nDim][nBPM]].MagnetOffset[nDim]
-                                                         + SC.RING[MagOrds[nDim][nBPM]].SupportOffset[nDim]
-                                                         - SC.RING[BPMords[nDim][nBPM]].SupportOffset[nDim]
-                                                         + postBBAoffset[nDim][nBPM] * SCrandnc(sigma))
-    return SC
 
 
 def _check_ords(SC, Mplus, reference, BPMords, CMords):
@@ -379,9 +366,9 @@ def _is_stable_or_converged(n, eps, hist):  # TODO rethink
     return (np.var(hist[-n:]) / np.std(hist[-n:])) < eps
 
 
-def _wiggling(SC, BPMords, CMords, transmission_limit, angle_range=(50E-6, 200E-6), num_angle_steps=32, nums_correctors=range(1, 9), nRepro=3):
+def _wiggling(SC, BPMords, CMords, transmission_limit, nums_correctors=range(1, 9)):
     LOGGER.debug('Wiggling')
-    dpts = _golden_donut_diffs(angle_range[0], angle_range[1], num_angle_steps)
+    dpts = _golden_donut_diffs(WIGGLE_ANGLE_RANGE[0], WIGGLE_ANGLE_RANGE[1], WIGGLE_ANGLE_STEPS)
     bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords, ind_history=None, orb_history=None)  # Inject...
 
     for nWiggleCM in nums_correctors:
@@ -398,7 +385,7 @@ def _wiggling(SC, BPMords, CMords, transmission_limit, angle_range=(50E-6, 200E-
                 for _ in range(2):
                     bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(
                         SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history)
-                if _is_repro(transmission_history, nRepro):
+                if _is_repro(transmission_history, NREPRO):
                     LOGGER.debug('...completed')
                     return SC  # Continue with feedback
 
