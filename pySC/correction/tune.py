@@ -148,11 +148,12 @@ def fit_tune(SC, q_ords, target_tune=None, init_step_size=np.array([0.001, 0.001
         Example:
             SC = fit_tune(SC, q_ords=[SCgetOrds(sc.RING, 'QF'), SCgetOrds(sc.RING, 'QD')], target_tune=numpy.array([0.16,0.21]))
         """
-    #  TODO check if experimantally feasible
     if target_tune is None:
         target_tune = tune(SC, fit_integer, ideal=True)
     LOGGER.debug(f'Fitting tunes from [{SC.RING.get_tune(get_integer=fit_integer)}] to [{target_tune}].')
-    SP0 = [0*q_ords[0], 0*q_ords[1]] #working with a list of two arrays
+    SP0 = []
+    for n in range(len(q_ords))
+        SP0.append(np.zeros_like(q_ords[n])) #working with a list of two arrays
     for nFam in range(len(q_ords)):
         for n in range(len(q_ords[nFam])):
             SP0[nFam][n] = SC.RING[q_ords[nFam][n]].SetPointB[1]
@@ -163,20 +164,11 @@ def fit_tune(SC, q_ords, target_tune=None, init_step_size=np.array([0.001, 0.001
 
 
 def _fit_tune_fun(SC, q_ords, setpoints, init_setpoints, target, fit_integer):
-    print(SC.RING.get_tune(get_integer=fit_integer))
-    SC.set_magnet_setpoints(q_ords[0], setpoints[0] + init_setpoints[0], False, 1, method='abs', dipole_compensation=True)
-    SP0 = [0 * q_ords[0], 0 * q_ords[1]]  # working with a list of two arrays
     for nFam in range(len(q_ords)):
-        for n in range(len(q_ords[nFam])):
-            SP0[nFam][n] = SC.RING[q_ords[nFam][n]].SetPointB[1]
-    print(SP0)
-    print(SC.RING.get_tune(get_integer=fit_integer))
-    SC.set_magnet_setpoints(q_ords[1], setpoints[1] + init_setpoints[1], False, 1, method='abs', dipole_compensation=True)
-    print(SC.RING.get_tune(get_integer=fit_integer))
+        SC.set_magnet_setpoints(q_ords[nFam], setpoints[nFam] + init_setpoints[nFam], False, 1, method='abs', dipole_compensation=True)
     nu = SC.RING.get_tune(get_integer=fit_integer)
     nu = nu[0:2]
     return np.sqrt(np.mean((nu - target) ** 2))
-
 
 def tune(SC, fit_integer: bool = False, ideal: bool = False):
     ring = SC.IDEALRING if ideal else SC.RING
