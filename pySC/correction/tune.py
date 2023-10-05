@@ -152,7 +152,7 @@ def fit_tune(SC, q_ords, target_tune=None, init_step_size=np.array([0.001, 0.001
         target_tune = tune(SC, fit_integer, ideal=True)
     LOGGER.debug(f'Fitting tunes from [{SC.RING.get_tune(get_integer=fit_integer)}] to [{target_tune}].')
     SP0 = []
-    for n in range(len(q_ords))
+    for n in range(len(q_ords)):
         SP0.append(np.zeros_like(q_ords[n])) #working with a list of two arrays
     for nFam in range(len(q_ords)):
         for n in range(len(q_ords[nFam])):
