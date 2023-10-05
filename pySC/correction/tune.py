@@ -136,7 +136,7 @@ def fit_tune(SC, q_ords, target_tune=None, init_step_size=np.array([0.001, 0.001
 
         Args:
             SC: SimulatedCommissioning instance
-            q_ords: [2xN] array or list [[1 x NQF],[1 x NQD]] of quadrupole ordinates
+            q_ords: [2xN] array or list [[1 x NQ1],[1 x NQ2], [1 x NQ3], ...]  of quadrupole ordinates
             target_tune (optional, [1x2] array): Target tunes for correction. Default: tunes of 'SC.IDEALRING'
             init_step_size ([1x2] array, optional): Initial step size for the solver. Default: [1,1]
             xtol(float, optional): Step tolerance for solver. Default: 1e-4
