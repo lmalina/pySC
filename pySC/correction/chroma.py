@@ -20,7 +20,7 @@ def fit_chroma(SC, s_ords, target_chroma=None, init_step_size=np.array([2, 2]), 
 
     Args:
         SC: SimulatedCommissioning instance
-        s_ords: [2xN] array or list [[1 x NSF],[1 x NSD]] of sextupole ordinates
+        s_ords: [2xN] array or list [[1 x NS1],[1 x NS2], [1 x NS3], ...] of sextupole ordinates
         target_chroma ([1x2] array, optional): Target chromaticity for correction. Default: chromaticity of 'SC.IDEALRING'
         init_step_size ([1x2] array, optional): Initial step size for the solver. Default: [2,2]
         xtol(float, optional): Step tolerance for solver. Default: 1e-4
@@ -38,7 +38,8 @@ def fit_chroma(SC, s_ords, target_chroma=None, init_step_size=np.array([2, 2]), 
         return SC
 
     LOGGER.debug(f'Fitting chromaticities from {SC.RING.get_chrom()} to {target_chroma}.')  # first two elements
-    SP0 = [0*s_ords[0], 0*s_ords[1]]
+    for n in range(len(s_ords)):
+        SP0.append(np.zeros_like(s_ords[n]))
     for nFam in range(len(s_ords)):
         for n in range(len(s_ords[nFam])):
             SP0[nFam][n] = SC.RING[s_ords[nFam][n]].SetPointB[2]
@@ -49,8 +50,8 @@ def fit_chroma(SC, s_ords, target_chroma=None, init_step_size=np.array([2, 2]), 
 
 
 def _fit_chroma_fun(SC, s_ords, setpoints, init_setpoints, target):
-    SC.set_magnet_setpoints(s_ords[0], setpoints[0] + init_setpoints[0], False, 2, method='abs', dipole_compensation=True)
-    SC.set_magnet_setpoints(s_ords[1], setpoints[1] + init_setpoints[1], False, 2, method='abs', dipole_compensation=True)
+    for n in range(len(s_ords)):
+        SC.set_magnet_setpoints(s_ords[n], setpoints[n] + init_setpoints[n], False, 2, method='abs', dipole_compensation=True)
     nu = SC.RING.get_chrom()
     nu = nu[0:2]
     return np.sqrt(np.mean((nu - target) ** 2))
