@@ -32,7 +32,7 @@ def fit_chroma(SC, s_ords, target_chroma=None, init_step_size=np.array([2, 2]), 
         SC = fit_chroma(SC, s_ords=[SCgetOrds(sc.RING, 'SF'), SCgetOrds(sc.RING, 'SD')], target_chroma=numpy.array([1,1]))
     """
     if target_chroma is None:
-        _, _, target_chroma = atlinopt(SC.IDEALRING, 0, [])
+        target_chroma = SC.IDEALRING.get_chrom()
     if np.sum(np.isnan(target_chroma)):
         LOGGER.error('Target chromaticity must not contain NaN. Aborting.')
         return SC
