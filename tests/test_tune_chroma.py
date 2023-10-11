@@ -8,8 +8,8 @@ from pySC.utils.sc_tools import SCgetOrds
 
 def test_fit_tune(at_lattice):
     SC = sc(at_lattice)
-    SC = fit_tune(SC, q_ords=[SCgetOrds(SC.RING, 'QF'), SCgetOrds(SC.RING, 'QD')], target_tune=SC.RING.get_tune()[:2]+[0.005,-0.005])
-    assert_allclose(actual=SC.RING.get_tune()[:2], desired=SC.RING.get_tune()[:2]+[0.1,0.1], rtol=1e-2)
+    SC = fit_tune(SC, q_ords=[SCgetOrds(SC.RING, 'QF'), SCgetOrds(SC.RING, 'QD')], target_tune=SC.RING.get_tune(get_integer=True)[:2]+[0.005,-0.005], fit_integer=True)
+    assert_allclose(actual=SC.RING.get_tune()[:2], desired=SC.RING.get_tune()[:2]+[0.005,-0.005], rtol=1e-2)
     return sc
 
 def sc(at_lattice):
