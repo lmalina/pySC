@@ -129,7 +129,7 @@ def plot_scan(fin_trans, max_turns, first_quads, rel_quad_changes):
     return f, [ax1, ax2, ax3]
 
 
-def fit_tune(SC, q_ords, target_tune=None, init_step_size=np.array([0.1, 0.1]),xtol=1E-4, ftol=1E-3, fit_integer=True):
+def fit_tune(SC, q_ords, target_tune=None, init_step_size=np.array([0.0001, 0.0001]),xtol=1E-3, ftol=1E-3, fit_integer=True):
     """
         Applies a tune correction using two quadrupole families.
         Note: this is not beam based but assumes the tunes can be measured reasonably well.
@@ -138,9 +138,9 @@ def fit_tune(SC, q_ords, target_tune=None, init_step_size=np.array([0.1, 0.1]),x
             SC: SimulatedCommissioning instance
             q_ords: [2xN] array or list [[1 x NQ1],[1 x NQ2], [1 x NQ3], ...]  of quadrupole ordinates
             target_tune (optional, [1x2] array): Target tunes for correction. Default: tunes of 'SC.IDEALRING'
-            init_step_size ([1x2] array, optional): Initial step size for the solver. Default: [0.1,0.1]
-            xtol(float, optional): Step tolerance for solver. Default: 1e-4
-            ftol(float, optional): Merit tolerance for solver. Default: 1e-4
+            init_step_size ([1x2] array, optional): Initial step size for the solver. Default: [0.0001,0.0001]
+            xtol(float, optional): Step tolerance for solver. Default: 1e-3
+            ftol(float, optional): Merit tolerance for solver. Default: 1e-3
             fit_integer(bool, optional): Flag specifying if the integer part should be fitted as well. Default: True.
 
         Returns:
@@ -151,20 +151,14 @@ def fit_tune(SC, q_ords, target_tune=None, init_step_size=np.array([0.1, 0.1]),x
     if target_tune is None:
         target_tune = SC.IDEALRING.get_tune(get_integer=fit_integer)
     LOGGER.debug(f'Fitting tunes from [{SC.RING.get_tune(get_integer=fit_integer)}] to [{target_tune}].')
-    SP0 = []
-    for n in range(len(q_ords)):
-        SP0.append(np.zeros_like(q_ords[n])) #working with a list of two arrays
-    for nFam in range(len(q_ords)):
-        for n in range(len(q_ords[nFam])):
-            SP0[nFam][n] = SC.RING[q_ords[nFam][n]].SetPointB[1]
-    fun = lambda x: _fit_tune_fun(SC, q_ords, x, SP0, target_tune, fit_integer)
+    fun = lambda x: _fit_tune_fun(SC, q_ords, x,target_tune, fit_integer)
     sol = fmin(fun, init_step_size, xtol=xtol, ftol=ftol)
     LOGGER.debug(f'       Final tune: [{SC.RING.get_tune(get_integer=fit_integer)}]\n  Setpoints change: [{sol}]')
     return SC
 
 
-def _fit_tune_fun(SC, q_ords, setpoints, init_setpoints, target, fit_integer):
+def _fit_tune_fun(SC, q_ords, setpoints, target, fit_integer):
     for nFam in range(len(q_ords)):
-        SC.set_magnet_setpoints(q_ords[nFam], setpoints[nFam] + init_setpoints[nFam], False, 1, method='abs', dipole_compensation=True)
+        SC.set_magnet_setpoints(q_ords[nFam], setpoints[nFam], False, 1, method='add', dipole_compensation=True)
     nu = SC.RING.get_tune(get_integer=fit_integer)[:2]
     return np.sqrt(np.mean((nu - target) ** 2))
