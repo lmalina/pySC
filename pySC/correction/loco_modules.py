@@ -70,14 +70,9 @@ def generatingQuadsResponseParallel(quad_index, SC, C_model, correctrs_kick, use
 
 def quadsSensitivityMatrices(SC, correctors_kick, used_cor_indexes, used_bpm_indexes, quad_index, dk, useIdealRing,
                              trackMode, skewness, order, method, includeDispersion, rf_step, cav_ords):
-    # SC.IDEALRING[quad_index].PolynomB[1] += dk
     SC.set_magnet_setpoints(quad_index, dk, skewness, order, method)
-    print('go to model orm')
     C_measured = SCgetModelRM(SC, used_bpm_indexes, used_cor_indexes, dkick=correctors_kick, useIdealRing=useIdealRing,
                               trackMode=trackMode)
-
-    # SC.IDEALRING[quad_index].PolynomB[1] -= dk
-
     qx = C_measured
 
     if includeDispersion == True:
@@ -139,82 +134,12 @@ def SCgetMeasurRM(SC, BPMords, CMords, dkick=1e-5):
 
 
 
-def loco_correction(objective_function, initial_guess0, orbit_response_matrix_model, orbit_response_matrix_measured, J, Jt, lengths, including_fit_parameters,W, method='lm', eps=1.e-2, max_iterations=None, verbose=2):
+def loco_correction(objective_function, initial_guess0, orbit_response_matrix_model, orbit_response_matrix_measured, J, lengths, including_fit_parameters,W, method='lm', verbose=2):
 
-    if method == 'lm':
-        result = least_squares(objective_function, initial_guess0, method=method, verbose=verbose)
-        params_to_check = calculate_parameters(result.x, orbit_response_matrix_model, orbit_response_matrix_measured, J, lengths,including_fit_parameters,W)
-        return result, params_to_check
-    else:
-        if method == 'ng':
-            Iter = 0
-
-            while True:
-                Iter += 1
-
-                if max_iterations is not None and Iter > max_iterations:
-                    break
-
-                model = orbit_response_matrix_model
-                if 'quads' in including_fit_parameters:
-                    len_quads = lengths[0]
-                    delta_g = initial_guess0[:len_quads]
-                    B = np.sum([J[k] * delta_g[k] for k in range(len(delta_g))], axis=0)
-                    model += B
-
-                if 'cor' in including_fit_parameters:
-                    len_corr = lengths[1]
-                    delta_x = initial_guess0[len_quads:len_quads + len_corr]
-                    Co = orbit_response_matrix_model * delta_x
-                    model += Co
-
-                if 'bpm' in including_fit_parameters:
-                    len_bpm = lengths[2]
-                    delta_y = initial_guess0[len_quads + len_corr:]
-                    G = orbit_response_matrix_model * delta_y[:, np.newaxis]
-                    model += G
-
-
-                r = orbit_response_matrix_measured - model
-
-                t2 = np.zeros([len(initial_guess0), 1])
-                for i in range(len(initial_guess0)):
-                    t2[i] = np.sum(np.dot(np.dot(W,J[i]), r.T))
-
-                t3 = (np.dot(Jt, t2)).reshape(-1)
-                initial_guess1 = initial_guess0 + t3
-                t4 = abs(initial_guess1 - initial_guess0)
-
-                if max(t4) <= eps:
-                    break
-                initial_guess0 = initial_guess1
-
-            # params_to_check_ = calculate_parameters(initial_guess0, orbit_response_matrix_model, orbit_response_matrix_measured, J, lengths,
-            #                     including_fit_parameters,W)
-            """
-            delta_g = initial_guess0[:len_quads]
-            delta_x = initial_guess0[len_quads:len_quads + len_corr]
-            delta_y = initial_guess0[len_quads + len_corr:]
-
-            D = orbit_response_matrix_measured - orbit_response_matrix_model
-            B = np.sum([J[k] * delta_g[k] for k in range(len(delta_g))], axis=0)
-            Co = orbit_response_matrix_model * delta_x
-            G = orbit_response_matrix_model * delta_y[:, np.newaxis]
-            model = orbit_response_matrix_model + B + Co + G
-            residuals = orbit_response_matrix_measured - model
-
-            r_squared = r2_score(orbit_response_matrix_measured, model)
-            rms = sqrt(mean_squared_error(orbit_response_matrix_measured, model))
-
-            params_to_check_ = {
-                #'residulas': residuals,
-           'r_squared': r_squared,
-            'rmse': rms,
-            }
-
-             """
-            params_to_check_ = 1
-            return initial_guess0, params_to_check_
+    #if method == 'lm':
+    result = least_squares(objective_function, initial_guess0, method=method, verbose=verbose)
+    params_to_check = calculate_parameters(result.x, orbit_response_matrix_model, orbit_response_matrix_measured, J, lengths,including_fit_parameters,W)
+    return result, params_to_check
 
 
 
@@ -245,62 +170,6 @@ def objective(delta_params, orbit_response_matrix_model, orbit_response_matrix_m
     return residuals.ravel()
 
 
-def model(parameters, orbit_response_matrix_model, J, lengths, including_fit_parameters, parameter_names):
-
-    model = orbit_response_matrix_model
-    len_quads = lengths[0]
-    len_corr = lengths[1]
-    len_bpm = lengths[2]
-
-    if 'quads' in including_fit_parameters:
-        # len_quads = lengths[0]
-
-        delta_g = np.array([parameters[name].value for name in parameter_names[:len_quads]])
-
-        B = np.sum([J[k] * delta_g[k] for k in range(len(delta_g))], axis=0)
-        model += B
-
-    if 'cor' in including_fit_parameters:
-        # len_corr = lengths[1]
-        #delta_x = parameters[len_quads:len_quads + len_corr]
-        delta_x = np.array([parameters[name].value for name in parameter_names[len_quads:len_quads + len_corr]])
-
-        Co = orbit_response_matrix_model * delta_x
-        model += Co
-
-    if 'bpm' in including_fit_parameters:
-        # len_bpm = lengths[2]
-        #delta_y = parameters[len_quads + len_corr:]
-        delta_y = np.array([parameters[name].value for name in parameter_names[len_quads + len_corr:]])
-
-        G = orbit_response_matrix_model * delta_y[:, np.newaxis]
-        model += G
-
-    return model
-
-
-def loco1(model, delta_params, orbit_response_matrix_measured,W, orbit_response_matrix_model, J, lengths, including_fit_parameters, parameter_names):
-    model = Model(model)
-    result = model.fit(orbit_response_matrix_measured, params=delta_params,x=[delta_params, orbit_response_matrix_model, J, lengths, including_fit_parameters], weights=W, method='leastsq')
-    optimized_params = result.params
-    report = result.fit_report()
-    return optimized_params, report
-
-
-
-def loco(model, delta_params, orbit_response_matrix_measured, W, parameters, orbit_response_matrix_model, J, lengths, including_fit_parameters, parameter_names):
-    #model = Model(model)
-    #model = Model(model, independent_vars=['x'])
-    # Pass the required parameters to model.fit()
-     #result = model.fit(orbit_response_matrix_measured, params=delta_params, weights=W, method='leastsq',  parameters=parameters, orbit_response_matrix_model= orbit_response_matrix_model, J=J, lengths=lengths, including_fit_parameters=including_fit_parameters, parameter_names=parameter_names)
-
-    result = lmfit.minimize(model, delta_params, args=(orbit_response_matrix_model, J, lengths, including_fit_parameters, parameter_names))
-
-    optimized_params = result.params
-    report = result.fit_report()
-    return optimized_params, report
-
-
 
 def calculate_parameters(parameters, orbit_response_matrix_model, orbit_response_matrix_measured, J, lengths, including_fit_parameters,W):
     model = orbit_response_matrix_model
@@ -309,19 +178,16 @@ def calculate_parameters(parameters, orbit_response_matrix_model, orbit_response
     len_bpm = lengths[2]
 
     if 'quads' in including_fit_parameters:
-        #len_quads = lengths[0]
         delta_g = parameters[:len_quads]
         B = np.sum([J[k] * delta_g[k] for k in range(len(delta_g))], axis=0)
         model += B
 
     if 'cor' in including_fit_parameters:
-        #len_corr = lengths[1]
         delta_x = parameters[len_quads:len_quads + len_corr]
         Co = orbit_response_matrix_model * delta_x
         model += Co
 
     if 'bpm' in including_fit_parameters:
-        #len_bpm = lengths[2]
         delta_y = parameters[len_quads + len_corr:]
         G = orbit_response_matrix_model * delta_y[:, np.newaxis]
         model += G
@@ -367,8 +233,6 @@ def setCorrection(SC, r, elem_ind, Individuals=True, skewness=False, order=1, me
                         SC.set_magnet_setpoints(ord, -r[quad], True, 1)
 
                     SC.set_magnet_setpoints(elem_ind[quad], -r[quad], skewness, order, method)
-
-
 
 
         return SC
