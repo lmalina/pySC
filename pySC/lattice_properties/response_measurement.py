@@ -1,5 +1,4 @@
 import numpy as np
-
 from pySC.core.beam import bpm_reading
 from pySC.utils import logging_tools
 from pySC.utils.at_wrapper import atgetfieldvalues
@@ -8,10 +7,10 @@ LOGGER = logging_tools.get_logger(__name__)
 
 
 def response_matrix(SC, amp, bpm_ords, cm_ords, mode='fixedKick', n_steps=2, fit_order=1):
-    if ((not isinstance(amp, list) and not len(amp) == 1) or
-            (isinstance(amp, list) and (len(amp[0]) != len(cm_ords[0]) or len(amp[1]) != len(cm_ords[1])))):
-        raise ValueError('response_matrix amplitude must be defined as single value or '
-                         'array matching the number of used HCM and VCM.')
+    #if ((not isinstance(amp, list) and not len(amp) == 1) or
+    #        (isinstance(amp, list) and (len(amp[0]) != len(cm_ords[0]) or len(amp[1]) != len(cm_ords[1])))):
+    #    raise ValueError('response_matrix amplitude must be defined as single value or '
+    #                     'array matching the number of used HCM and VCM.')
     if not isinstance(amp, list):
         amp = [np.ones(len(cm_ords[0])) * amp, np.ones(len(cm_ords[1])) * amp]
     LOGGER.debug(f'Calculate {SC.INJ.nTurns}-turn trajectory response matrix for {len(bpm_ords)} BPMs and '

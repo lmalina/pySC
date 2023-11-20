@@ -15,8 +15,8 @@ def loco_model(SC, **kwargs):
              ))
     flags.update(**kwargs)
     ring_data, init = DotDict(), DotDict()
-    ring_data.CavityFrequency = SC.IDEALRING[SC.ORD.RF].Frequency
-    ring_data.CavityHarmNumber = SC.IDEALRING[SC.ORD.RF].HarmNumber
+    ring_data.CavityFrequency = SC.IDEALRING[SC.ORD.RF][0].Frequency
+    ring_data.CavityHarmNumber = SC.IDEALRING[SC.ORD.RF][0].HarmNumber
     ring_data.Lattice = SC.IDEALRING
     init.SC = SC
     return ring_data, flags, init
