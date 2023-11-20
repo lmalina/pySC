@@ -1,4 +1,5 @@
-from at import *
+import at
+import numpy as np
 from math import sqrt
 import multiprocessing
 from pySC.lattice_properties.response_model import SCgetModelRM, SCgetModelDispersion
@@ -8,8 +9,8 @@ from pySC.core.beam import bpm_reading
 import numpy as np
 from scipy.optimize import least_squares
 from sklearn.metrics import r2_score, mean_squared_error
-from lmfit import Parameters, Model
-import lmfit
+import matplotlib.pyplot as plt
+from scipy.optimize import least_squares
 
 def generatingQuadsResponseWorker(args):
     return generatingQuadsResponseParallel(*args)
@@ -134,40 +135,115 @@ def SCgetMeasurRM(SC, BPMords, CMords, dkick=1e-5):
 
 
 
-def loco_correction(objective_function, initial_guess0, orbit_response_matrix_model, orbit_response_matrix_measured, J, lengths, including_fit_parameters,W, method='lm', verbose=2):
+def loco_correction(objective_function, initial_guess0, orbit_response_matrix_model, orbit_response_matrix_measured, J, Jt, lengths,   including_fit_parameters, method='lm', verbose=2, max_iterations=1000, eps=1e-6,W = 1, show_plot = True):
 
-    #if method == 'lm':
-    result = least_squares(objective_function, initial_guess0, method=method, verbose=verbose)
-    params_to_check = calculate_parameters(result.x, orbit_response_matrix_model, orbit_response_matrix_measured, J, lengths,including_fit_parameters,W)
-    return result, params_to_check
+        if method == 'lm':
+        result = least_squares(objective_function, initial_guess0, method=method, verbose=verbose)#, xtol= 1e-2)
+        return result.x
+    else:
+        if method == 'ng':
+            Iter = 0
+            while True:
+                Iter += 1
+
+                if max_iterations is not None and Iter > max_iterations:
+                    break
+
+                model = orbit_response_matrix_model
+                len_quads = lengths[0]
+                len_corr = lengths[1]
+                len_bpm = lengths[2]
+
+                if 'quads' in including_fit_parameters:
+                    delta_g = initial_guess0[:len_quads]
+                    J1 = J[:len_quads]
+                    B = np.sum([J1[k] * delta_g[k] for k in range(len(J1))], axis=0)
+                    model += B
+
+                if 'cor' in including_fit_parameters:
+                    delta_x = initial_guess0[len_quads:len_quads + len_corr]
+                    J2 = J[len_quads:len_quads + len_corr]
+                    # Co = orbit_response_matrix_model * delta_x
+                    Co = np.sum([J2[k] * delta_x[k] for k in range(len(J2))], axis=0)
+                    model += Co
+
+                if 'bpm' in including_fit_parameters:
+                    delta_y = initial_guess0[len_quads + len_corr:]
+                    J3 = J[len_quads + len_corr:]
+                    #G = orbit_response_matrix_model * delta_y[:, np.newaxis]
+                    G = np.sum([J3[k] * delta_y[k] for k in range(len(J3))], axis=0)
+
+                    model += G
+
+                r = orbit_response_matrix_measured - model
 
 
+                t2 = np.zeros([len(initial_guess0), 1])
+                for i in range(len(initial_guess0)):
+                    t2[i] = np.sum(np.dot(np.dot(J[i],W), r.T)) #############
 
-def objective(delta_params, orbit_response_matrix_model, orbit_response_matrix_measured, J, lengths, including_fit_parameters,W):
+                t3 = (np.dot(Jt, t2)).reshape(-1)
+                initial_guess1 = initial_guess0 + t3
+                t4 = abs(initial_guess1 - initial_guess0)
+
+                if max(t4) <= eps:
+                    break
+                initial_guess0 = initial_guess1
+
+                #if show_plot == True:
+
+                    #e = np.dot(initial_guess0, J) - t2
+
+                    #plt.plot(e)
+                    #plt.title('correction error')
+                    #plt.show()
+
+        #params_to_check = calculate_parameters(initial_guess0, orbit_response_matrix_model, orbit_response_matrix_measured, J, lengths,including_fit_parameters)
+
+
+        return initial_guess0 #, params_to_check
+
+
+def objective(delta_params, orbit_response_matrix_model, orbit_response_matrix_measured, J, lengths, including_fit_parameters, W):
 
     D = orbit_response_matrix_measured - orbit_response_matrix_model
+    len_quads = lengths[0]
+    len_corr = lengths[1]
+    len_bpm = lengths[2]
+
     residuals = D
     if 'quads' in including_fit_parameters:
-        len_quads = lengths[0]
+
         delta_g = delta_params[:len_quads]
-        B = np.sum([J[k] * delta_g[k] for k in range(len(delta_g))], axis=0)
+        J1 = J[:len_quads]
+        B = np.sum([J1[k] * delta_g[k] for k in range(len(J1))], axis=0)
         residuals -= B
 
+
     if 'cor' in including_fit_parameters:
-        len_corr = lengths[1]
+
         delta_x = delta_params[len_quads:len_quads + len_corr]
-        Co = orbit_response_matrix_model * delta_x
+        J2= J[len_quads:len_quads + len_corr]
+        #Co = orbit_response_matrix_model * delta_x
+        Co = np.sum([J2[k] * delta_x[k] for k in range(len(J2))], axis=0)
         residuals -= Co
 
+
     if 'bpm' in including_fit_parameters:
-        len_bpm = lengths[2]
+
+
         delta_y = delta_params[len_quads + len_corr:]
-        G = orbit_response_matrix_model * delta_y[:, np.newaxis]
+        J3= J[len_quads + len_corr:]
+        #G = orbit_response_matrix_model * delta_y[:, np.newaxis]
+        G = np.sum([J3[k] * delta_y[k] for k in range(len(J3))], axis=0)
         residuals -= G
 
-    residuals = np.dot(np.sqrt(W), residuals)
+
+    residuals = np.dot(residuals, np.sqrt(W))
+
 
     return residuals.ravel()
+
 
 
 
@@ -236,3 +312,72 @@ def setCorrection(SC, r, elem_ind, Individuals=True, skewness=False, order=1, me
 
 
         return SC
+
+
+def setCorrection(SC, r, elem_ind, Individuals=True, skewness=False, order=1, method='add', dipole_compensation=True):
+        if Individuals:
+            for i in range(len(elem_ind)):
+                field = elem_ind[i].SCFieldName
+                #setpoint = fit_parameters.OrigValues[n_group] + damping * (
+                #        fit_parameters.IdealValues[n_group] - fit_parameters.Values[n_group])
+                if field == 'SetPointB':  # Normal quadrupole
+                    SC.set_magnet_setpoints(ord, -r[i], False, 1, dipole_compensation=dipole_compensation)
+                elif field == 'SetPointA':  # Skew quadrupole
+                    SC.set_magnet_setpoints(ord, -r[i], True, 1)
+
+                SC.set_magnet_setpoints(elem_ind[i], -r[i], skewness, order, method)
+        else:
+            for quadFam in range(len(elem_ind)):
+                for quad in quadFam :
+                    field = elem_ind[quad].SCFieldName
+                    # setpoint = fit_parameters.OrigValues[n_group] + damping * (
+                    #        fit_parameters.IdealValues[n_group] - fit_parameters.Values[n_group])
+                    if field == 'SetPointB':  # Normal quadrupole
+                        SC.set_magnet_setpoints(ord, -r[quad], False, 1, dipole_compensation=dipole_compensation)
+                    elif field == 'SetPointA':  # Skew quadrupole
+                        SC.set_magnet_setpoints(ord, -r[quad], True, 1)
+
+                    SC.set_magnet_setpoints(elem_ind[quad], -r[quad], skewness, order, method)
+
+
+        return SC
+
+
+def setCorrection_(SC, r, elem_ind, skewness=False, order=1, method='add', dipole_compensation=True):
+
+    for i in range(len(elem_ind)):
+        SC.set_magnet_setpoints(elem_ind[i], -r[i], skewness, order, method)
+
+
+    return SC
+
+def getBetaBeat(ring, twiss, elements_indexes, makeplot):
+    _, _, twiss_error = at.get_optics(ring, elements_indexes)
+    s_pos = twiss_error.s_pos
+    Beta_x = twiss_error.beta[:, 0]
+    Beta_y = twiss_error.beta[:, 1]
+    bx = np.array((twiss_error.beta[:, 0] - twiss.beta[:, 0]) / twiss.beta[:, 0])
+    by = np.array((twiss_error.beta[:, 1] - twiss.beta[:, 1]) / twiss.beta[:, 1])
+    bx_rms = np.sqrt(np.mean(bx ** 2))
+    by_rms = np.sqrt(np.mean(by ** 2))
+
+    if makeplot == True:
+        plt.rc('font', size=13)
+        fig, ax = plt.subplots()
+        ax.plot(s_pos, bx)
+        ax.set_xlabel("s_pos [m]", fontsize=14)
+        ax.set_ylabel(r'$\beta_x%$', fontsize=14)
+        ax.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
+        ax.grid(True, which='both', linestyle=':', color='gray')
+        plt.title('Horizontal beta')
+        plt.show()
+        fig, ax = plt.subplots()
+        ax.plot(s_pos, by)
+        ax.set_xlabel("s_pos [m]", fontsize=14)
+        ax.set_ylabel(r'$\beta_y%$', fontsize=14)
+        ax.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
+        ax.grid(True, which='both', linestyle=':', color='gray')
+        plt.title('Vertical beta')
+        plt.show()
+
+    return bx_rms, by_rms
