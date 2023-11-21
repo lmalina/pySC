@@ -381,3 +381,8 @@ def getBetaBeat(ring, twiss, elements_indexes, makeplot):
         plt.show()
 
     return bx_rms, by_rms
+
+def select_equally_spaced_elements(total_elements, num_elements):
+    step = len(total_elements) // (num_elements - 1)
+    indexes = total_elements[::step]
+    return indexes
