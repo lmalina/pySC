@@ -344,7 +344,7 @@ def _get_orbit_bump(SC, cm_ord, bpm_ord, n_dim, par):  # TODO
     W0[n_dim, max(1, tmpBPMind - par.orbBumpWindow):(tmpBPMind - 1)] = 0
     W0[n_dim, (tmpBPMind + 1):min(len(par.RMstruct.BPMords), tmpBPMind + par.orbBumpWindow)] = 0
 
-    CUR = SCfeedbackRun(SC, par.RMstruct.MinvCO, reference=R0, CMords=cm_ords, BPMords=par.RMstruct.BPMords, eps=1E-6,
+    CUR = SCfeedbackRun(SC, par.RMstruct.MinvCO, reference=R0, cm_ords=cm_ords, bpm_ords=par.RMstruct.BPMords, eps=1E-6,
                         target=0, maxsteps=50, scaleDisp=par.RMstruct.scaleDisp, )
     cm_vec = []
     factor = np.linspace(-1, 1, par.n_steps)
