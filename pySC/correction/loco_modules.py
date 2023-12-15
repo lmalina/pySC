@@ -6,13 +6,12 @@ from pySC.core.constants import SETTING_ADD
 from pySC.core.beam import bpm_reading
 import matplotlib.pyplot as plt
 from scipy.optimize import least_squares
-from scipy.stats import linregress
 from pySC.utils import logging_tools
 LOGGER = logging_tools.get_logger(__name__)
 
 
 def generating_jacobian(SC, C_model, dkick, used_cor_ind, bpm_indexes, quads_ind, dk, trackMode='ORB',
-                        useIdealRing=True, skewness=False, order=1, method='add', includeDispersion=False, rf_step=1E3,
+                        useIdealRing=True, skewness=False, order=1, method=SETTING_ADD, includeDispersion=False, rf_step=1E3,
                         cav_ords=None, full_jacobian=True):
     pool = multiprocessing.Pool()
     quad_args = [(quad_index, SC, C_model, dkick, used_cor_ind, bpm_indexes, dk, trackMode, useIdealRing,
@@ -21,6 +20,7 @@ def generating_jacobian(SC, C_model, dkick, used_cor_ind, bpm_indexes, quads_ind
     pool.close()
     pool.join()
     if full_jacobian:  # # Construct the complete Jacobian matrix for the LOCO
+        # TODO modify for calibration errors of given size
         length_corrections = len(np.concatenate(used_cor_ind))
         length_bpm = len(bpm_indexes) * 2
         return np.concatenate((results, np.tile(C_model, (length_corrections + length_bpm, 1, 1))))
@@ -64,7 +64,7 @@ def measure_closed_orbit_response_matrix(SC, bpm_ords, cm_ords, dkick=1e-5):
     n_bpms = len(bpm_ords)
     n_cms = len(cm_ords[0]) + len(cm_ords[1])
     response_matrix = np.full((2 * n_bpms * n_turns, n_cms), np.nan)
-    SC.INJ.trackMode = 'ORB'  # TODO modifies SC!
+    SC.INJ.trackMode = 'ORB'  # TODO modifies SC (not a pure function)!
 
     closed_orbits0 = bpm_reading(SC, bpm_ords=bpm_ords)[0]
     cnt = 0
@@ -122,14 +122,12 @@ def loco_correction(objective_function, initial_guess0, orbit_response_matrix_mo
 
         t3 = (np.dot(Jt, t2)).reshape(-1)
         initial_guess1 = initial_guess0 + t3
-        t4 = abs(initial_guess1 - initial_guess0)
+        t4 = np.abs(initial_guess1 - initial_guess0)
 
         if max(t4) <= eps:
             break
         initial_guess0 = initial_guess1
-        # e = np.dot(initial_guess0, J) - t2
-    #  params_to_check = calculate_parameters(initial_guess0, orbit_response_matrix_model, orbit_response_matrix_measured, J, lengths,including_fit_parameters)
-    return initial_guess0  # , params_to_check
+    return initial_guess0
 
 
 def objective(delta_params, orbit_response_matrix_model, orbit_response_matrix_measured, J, lengths,
@@ -164,74 +162,13 @@ def objective(delta_params, orbit_response_matrix_model, orbit_response_matrix_m
     return residuals.ravel()
 
 
-def calculate_parameters(parameters, orbit_response_matrix_model, orbit_response_matrix_measured, J, lengths,
-                         including_fit_parameters, W):
-    model = orbit_response_matrix_model
-    len_quads = lengths[0]
-    len_corr = lengths[1]
-    len_bpm = lengths[2]
-
-    if 'quads' in including_fit_parameters:
-        delta_g = parameters[:len_quads]
-        B = np.sum([J[k] * delta_g[k] for k in range(len(delta_g))], axis=0)
-        model += B
-
-    if 'cor' in including_fit_parameters:
-        delta_x = parameters[len_quads:len_quads + len_corr]
-        Co = orbit_response_matrix_model * delta_x
-        model += Co
-
-    if 'bpm' in including_fit_parameters:
-        delta_y = parameters[len_quads + len_corr:]
-        G = orbit_response_matrix_model * delta_y[:, np.newaxis]
-        model += G
-
-    residuals = orbit_response_matrix_measured - model
-    # Calculate R-squared
-    r_squared = r2_score(orbit_response_matrix_measured, model)  # , sample_weight = 1)
-
-    # Calculate RMSE
-    rms = np.sqrt(mean_squared_error(orbit_response_matrix_measured, model))  # , model, sample_weight = 1)) #np.diag(W)
-
-    params_to_check_ = {
-        'residulas': residuals,
-        'r_squared': r_squared,
-        'rmse': rms,
-    }
-    return params_to_check_
-
-
-def set_correction(SC, r, elem_ind, Individuals=True, skewness=False, order=1, method='add', dipole_compensation=True):
-    if Individuals:
-        for i in range(len(elem_ind)):
-            field = elem_ind[i].SCFieldName
-            # setpoint = fit_parameters.OrigValues[n_group] + damping * (
-            #        fit_parameters.IdealValues[n_group] - fit_parameters.Values[n_group])
-            if field == 'SetPointB':  # Normal quadrupole
-                SC.set_magnet_setpoints(ord, -r[i], False, 1, dipole_compensation=dipole_compensation)
-            elif field == 'SetPointA':  # Skew quadrupole
-                SC.set_magnet_setpoints(ord, -r[i], True, 1)
-
-            SC.set_magnet_setpoints(elem_ind[i], -r[i], skewness, order, method)
+def set_correction(SC, r, elem_ind, individuals=True, skewness=False, order=1, method=SETTING_ADD, dipole_compensation=True):
+    if individuals:
+        SC.set_magnet_setpoints(elem_ind, -r, skewness, order, method, dipole_compensation=dipole_compensation)
         return SC
 
-    for quad_fam in range(len(elem_ind)):  # TODO this is strange
-        for quad in quad_fam:
-            field = elem_ind[quad].SCFieldName
-            # setpoint = fit_parameters.OrigValues[n_group] + damping * (
-            #        fit_parameters.IdealValues[n_group] - fit_parameters.Values[n_group])
-            if field == 'SetPointB':  # Normal quadrupole
-                SC.set_magnet_setpoints(ord, -r[quad], False, 1, dipole_compensation=dipole_compensation)
-            elif field == 'SetPointA':  # Skew quadrupole
-                SC.set_magnet_setpoints(ord, -r[quad], True, 1)
-
-            SC.set_magnet_setpoints(elem_ind[quad], -r[quad], skewness, order, method)
-    return SC
-
-
-def set_correction_(SC, r, elem_ind, skewness=False, order=1, method='add', dipole_compensation=True):
-    for i in range(len(elem_ind)):
-        SC.set_magnet_setpoints(elem_ind[i], -r[i], skewness, order, method)
+    for fam_num, quad_fam in enumerate(elem_ind):
+        SC.set_magnet_setpoints(quad_fam, -r[fam_num], skewness, order, method, dipole_compensation=dipole_compensation)
     return SC
 
 
@@ -272,7 +209,6 @@ def select_equally_spaced_elements(total_elements, num_elements):
 
 
 def get_inverse(Jn, sCut, W):
-
     Nk = len(Jn)
     A = np.zeros([Nk, Nk])
     for i in range(Nk):

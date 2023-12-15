@@ -6,7 +6,7 @@ from pySC.core.simulated_commissioning import SimulatedCommissioning
 from pySC.utils.sc_tools import SCgetOrds
 from pySC.utils import logging_tools
 from pySC.correction.loco_modules import select_equally_spaced_elements, generating_jacobian, measure_closed_orbit_response_matrix, model_beta_beat, \
-    loco_correction, set_correction_, objective, get_inverse
+    loco_correction, set_correction, objective, get_inverse
 from pySC.lattice_properties.response_model import SCgetModelRM, SCgetModelDispersion
 
 LOGGER = logging_tools.get_logger(__name__)
@@ -30,9 +30,9 @@ if __name__ == "__main__":
     ring = at.Lattice(create_at_lattice())
     LOGGER.info(f"{len(ring)=}")
     SC = SimulatedCommissioning(ring)
-    SC.register_bpms(SCgetOrds(SC.RING, 'BPM'), Roll=0.0, CalError=1E-2 * np.ones(2))
+    SC.register_bpms(SCgetOrds(SC.RING, 'BPM'), Roll=0.0, CalError=1E-2 * np.ones(2), NoiseCO=np.array([1e-6, 1E-6]))
     SC.register_magnets(SCgetOrds(SC.RING, 'QF|QD'),  CalErrorB=np.array([0, 1E-2]))  # relative
-    SC.register_magnets(SCgetOrds(SC.RING, 'CXY'), CalErrorA=np.array([1E-200, 0]), CalErrorB=np.array([1E-200, 0]))
+    SC.register_magnets(SCgetOrds(SC.RING, 'CXY'), CalErrorA=np.array([1E-2, 0]), CalErrorB=np.array([1E-2, 0]))
     SC.register_magnets(SCgetOrds(SC.RING, 'BEND'))
     SC.register_magnets(SCgetOrds(SC.RING, 'SF|SD'))  # [1/m]
     SC.register_cavities(SCgetOrds(SC.RING, 'RFC'))
@@ -49,7 +49,6 @@ if __name__ == "__main__":
 
     CAVords = SCgetOrds(SC.RING, 'RFC')
     quadsOrds = [SCgetOrds(SC.RING, 'QF'), SCgetOrds(SC.RING, 'QD')]
-    CAVords = SCgetOrds(SC.RING, 'RFCav')
 
     CMstep = np.array([1.e-4])  # correctors change [rad]
     dk = 1.e-4  # quads change
@@ -59,28 +58,29 @@ if __name__ == "__main__":
     orbit_response_matrix_model = SCgetModelRM(SC, SC.ORD.BPM, CorOrds, trackMode='ORB', useIdealRing=True, dkick=CMstep)
     ModelDispersion = SCgetModelDispersion(SC, SC.ORD.BPM, CAVords, trackMode='ORB', Z0=np.zeros(6), nTurns=1,
                                            rfStep=RFstep, useIdealRing=True)
-
-    orbit_response_matrix_measured = measure_closed_orbit_response_matrix(SC, SC.ORD.BPM, CorOrds, CMstep)
-    _, _, twiss_err = at.get_optics(SC.RING, SC.ORD.BPM)
-
     Jn = generating_jacobian(SC, orbit_response_matrix_model, CMstep, CorOrds, SC.ORD.BPM, np.concatenate(quadsOrds), dk,
                              trackMode='ORB', useIdealRing=False, skewness=False, order=1, method='add',
                              includeDispersion=False, rf_step=RFstep, cav_ords=CAVords)
-
-    orbit_response_matrix_measured = measure_closed_orbit_response_matrix(SC, SC.ORD.BPM, CorOrds, CMstep)
-
-
-    numberOfIteration = 1
+    Jn = np.transpose(Jn, (0, 2, 1))
     sCut = 16
     W = 1
+    from pySC.core.beam import bpm_reading
+    n_samples = 3
+    a = np.empty((n_samples, 2, len(SC.ORD.BPM)))
+    for i in range(n_samples):
+        a[i] = bpm_reading(SC)[0]
+    errors = np.std(a, axis=0)
+
+    Jt = get_inverse(Jn, sCut, W)
+    _, _, twiss_err = at.get_optics(SC.RING, SC.ORD.BPM)
+    orbit_response_matrix_measured = measure_closed_orbit_response_matrix(SC, SC.ORD.BPM, CorOrds, CMstep)
+    numberOfIteration = 1
+
     for x in range(numberOfIteration):  # optics correction using QF and QD
         LOGGER.info(f'LOCO iteration {x}')
 
         C_measure = measure_closed_orbit_response_matrix(SC, SC.ORD.BPM, CorOrds, CMstep)
         bx_rms_err, by_rms_err = model_beta_beat(SC.RING, twiss, SC.ORD.BPM, makeplot=False)
-        Jn = np.transpose(Jn, (0, 2, 1))
-        Jt = get_inverse(Jn, sCut, W)
-
         quads = len(np.concatenate(quadsOrds))
         cor = len(np.concatenate(CorOrds))
         bpm = len(SC.ORD.BPM) * 2
@@ -105,7 +105,7 @@ if __name__ == "__main__":
         dx = fit_parameters[lengths[0]:lengths[0] + lengths[1]]
         dy = fit_parameters[lengths[0] + lengths[1]:]
         LOGGER.info('SVD')
-        SC = set_correction_(SC, dg, np.concatenate(quadsOrds))
+        SC = set_correction(SC, dg, np.concatenate(quadsOrds))
         _, _, twiss_corr = at.get_optics(SC.RING, SC.ORD.BPM)
         bx_rms_cor, by_rms_cor = model_beta_beat(SC.RING, twiss, SC.ORD.BPM, makeplot=True)
         LOGGER.info(
