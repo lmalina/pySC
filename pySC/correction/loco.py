@@ -10,30 +10,26 @@ from pySC.utils import logging_tools
 LOGGER = logging_tools.get_logger(__name__)
 
 
-def generating_jacobian(SC, C_model, dkick, used_cor_ind, bpm_indexes, quads_ind, dk, trackMode='ORB',
-                        useIdealRing=True, skewness=False, order=1, method=SETTING_ADD, includeDispersion=False, rf_step=1E3,
-                        cav_ords=None, full_jacobian=True):
+def calculate_jacobian(SC, C_model, dkick, used_cor_ind, bpm_indexes, quads_ind, dk, trackMode='ORB',
+                       useIdealRing=True, skewness=False, order=1, method=SETTING_ADD, includeDispersion=False, rf_step=1E3,
+                       cav_ords=None, full_jacobian=True):
     pool = multiprocessing.Pool()
     quad_args = [(quad_index, SC, C_model, dkick, used_cor_ind, bpm_indexes, dk, trackMode, useIdealRing,
                   skewness, order, method, includeDispersion, rf_step, cav_ords) for quad_index in quads_ind]
-    results = pool.map(generating_quads_response_worker, quad_args)
+    results = pool.map(generating_quads_response_parallel, quad_args)
     pool.close()
     pool.join()
     if full_jacobian:  # # Construct the complete Jacobian matrix for the LOCO
         # TODO modify for calibration errors of given size
-        length_corrections = len(np.concatenate(used_cor_ind))
-        length_bpm = len(bpm_indexes) * 2
-        return np.concatenate((results, np.tile(C_model, (length_corrections + length_bpm, 1, 1))))
+        n_correctors = len(np.concatenate(used_cor_ind))
+        n_bpms = len(bpm_indexes) * 2  # in both planes
+        return np.concatenate((results, np.tile(C_model, (n_correctors + n_bpms, 1, 1))))
     return results
 
 
-def generating_quads_response_worker(args):
-    return generating_quads_response_parallel(*args)
-
-
-def generating_quads_response_parallel(quad_index, SC, C_model, correctrs_kick, used_cor_indexes, used_bpm_indexes, dk,
-                                       useIdealRing, trackMode, skewness, order, method, includeDispersion, rf_step,
-                                       cav_ords):
+def generating_quads_response_parallel(args):
+    (quad_index, SC, C_model, correctrs_kick, used_cor_indexes, used_bpm_indexes, dk, useIdealRing, trackMode,
+     skewness, order, method, includeDispersion, rf_step, cav_ords) = args
     LOGGER.debug('generating response to quad of index', quad_index)
     C0 = C_model
     if includeDispersion:
@@ -175,8 +171,8 @@ def set_correction(SC, r, elem_ind, individuals=True, skewness=False, order=1, m
 def model_beta_beat(ring, twiss, elements_indexes, makeplot):
     _, _, twiss_error = at.get_optics(ring, elements_indexes)
     s_pos = twiss_error.s_pos
-    bx = np.array((twiss_error.beta[:, 0] - twiss.beta[:, 0]) / twiss.beta[:, 0])
-    by = np.array((twiss_error.beta[:, 1] - twiss.beta[:, 1]) / twiss.beta[:, 1])
+    bx = np.array(twiss_error.beta[:, 0] / twiss.beta[:, 0] - 1)
+    by = np.array(twiss_error.beta[:, 1] / twiss.beta[:, 1] - 1)
     bx_rms = np.sqrt(np.mean(bx ** 2))
     by_rms = np.sqrt(np.mean(by ** 2))
 
