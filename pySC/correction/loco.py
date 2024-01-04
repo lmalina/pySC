@@ -2,7 +2,7 @@ import at
 import numpy as np
 import multiprocessing
 from pySC.lattice_properties.response_model import SCgetModelRM, SCgetModelDispersion
-from pySC.core.constants import SETTING_ADD
+from pySC.core.constants import SETTING_ADD, TRACK_ORB
 from pySC.core.beam import bpm_reading
 import matplotlib.pyplot as plt
 from scipy.optimize import least_squares
@@ -10,15 +10,16 @@ from pySC.utils import logging_tools
 LOGGER = logging_tools.get_logger(__name__)
 
 
-def calculate_jacobian(SC, C_model, dkick, used_cor_ind, bpm_indexes, quads_ind, dk, trackMode='ORB',
+def calculate_jacobian(SC, C_model, dkick, used_cor_ind, bpm_indexes, quads_ind, dk, trackMode=TRACK_ORB,
                        useIdealRing=True, skewness=False, order=1, method=SETTING_ADD, includeDispersion=False, rf_step=1E3,
                        cav_ords=None, full_jacobian=True):
     pool = multiprocessing.Pool()
     quad_args = [(quad_index, SC, C_model, dkick, used_cor_ind, bpm_indexes, dk, trackMode, useIdealRing,
                   skewness, order, method, includeDispersion, rf_step, cav_ords) for quad_index in quads_ind]
-    results = pool.map(generating_quads_response_parallel, quad_args)
+    results = pool.map(generating_quads_response_matrices, quad_args)
     pool.close()
     pool.join()
+    results = [result / dk for result in results]
     if full_jacobian:  # # Construct the complete Jacobian matrix for the LOCO
         # TODO modify for calibration errors of given size
         n_correctors = len(np.concatenate(used_cor_ind))
@@ -27,31 +28,26 @@ def calculate_jacobian(SC, C_model, dkick, used_cor_ind, bpm_indexes, quads_ind,
     return results
 
 
-def generating_quads_response_parallel(args):
-    (quad_index, SC, C_model, correctrs_kick, used_cor_indexes, used_bpm_indexes, dk, useIdealRing, trackMode,
+def generating_quads_response_matrices(args):
+    (quad_index, SC, C_model, correctors_kick, used_cor_indexes, used_bpm_indexes, dk, trackMode, useIdealRing,
      skewness, order, method, includeDispersion, rf_step, cav_ords) = args
     LOGGER.debug('generating response to quad of index', quad_index)
-    C0 = C_model
-    if includeDispersion:
-        dispersion_model = SCgetModelDispersion(SC, used_bpm_indexes, CAVords=cav_ords)
-        C0 = np.hstack((C0, dispersion_model.reshape(-1, 1)))
+    if not includeDispersion:
+        SC.set_magnet_setpoints(quad_index, dk, skewness, order, method)
+        C_measured = SCgetModelRM(SC, used_bpm_indexes, used_cor_indexes, dkick=correctors_kick,
+                                  useIdealRing=useIdealRing,
+                                  trackMode=trackMode)
+        SC.set_magnet_setpoints(quad_index, -dk, skewness, order, method)
+        return C_measured - C_model
 
-    C = quads_sensitivity_matrices(SC, correctrs_kick, used_cor_indexes, used_bpm_indexes, quad_index, dk, trackMode,
-                                   useIdealRing, skewness, order, method, includeDispersion, rf_step, cav_ords)
-    return (C - C0) / dk
-
-
-def quads_sensitivity_matrices(SC, correctors_kick, used_cor_indexes, used_bpm_indexes, quad_index, dk, useIdealRing,
-                               trackMode, skewness, order, method, includeDispersion, rf_step, cav_ords):
+    dispersion_model = SCgetModelDispersion(SC, used_bpm_indexes, CAVords=cav_ords)
     SC.set_magnet_setpoints(quad_index, dk, skewness, order, method)
     C_measured = SCgetModelRM(SC, used_bpm_indexes, used_cor_indexes, dkick=correctors_kick, useIdealRing=useIdealRing,
                               trackMode=trackMode)
-    qx = C_measured
-    if includeDispersion:
-        dispersion_model = SCgetModelDispersion(SC, used_bpm_indexes, CAVords=cav_ords, rfStep=rf_step)
-        qx = np.hstack((qx, dispersion_model.reshape(-1, 1)))
+    dispersion_meas = SCgetModelDispersion(SC, used_bpm_indexes, CAVords=cav_ords, rfStep=rf_step)
     SC.set_magnet_setpoints(quad_index, -dk, skewness, order, method)
-    return qx
+    return np.hstack((C_measured - C_model, (dispersion_meas - dispersion_model).reshape(-1, 1)))
+
 
 
 def measure_closed_orbit_response_matrix(SC, bpm_ords, cm_ords, dkick=1e-5):
@@ -74,60 +70,62 @@ def measure_closed_orbit_response_matrix(SC, bpm_ords, cm_ords, dkick=1e-5):
     return response_matrix
 
 
-def loco_correction(objective_function, initial_guess0, orbit_response_matrix_model, orbit_response_matrix_measured,
-                    J, Jt, lengths, including_fit_parameters, method='lm', verbose=2, max_iterations=1000, eps=1e-6,
-                    W=1, show_plot=True):
-    if method not in ("lm", "ng"):
-        raise ValueError("Unsupported method only 'lm' or 'ng' are currently supported")
-    if method == 'lm':
-        result = least_squares(objective_function, initial_guess0, method=method, verbose=verbose)  # , xtol= 1e-2)
-        return result.x
+def loco_correction_lm(initial_guess0, orm_model, orm_measured, Jn, lengths, including_fit_parameters, weights=1,
+                       verbose=2):
+    result = least_squares(lambda delta_params: objective(delta_params, orm_model, orm_measured, Jn, lengths,
+                                                          including_fit_parameters, weights),
+                           initial_guess0, method="lm", verbose=verbose)  # , xtol= 1e-2)
+    return result.x
 
+
+def loco_correction_ng(initial_guess0, orm_model, orm_measured, J, Jt, lengths, including_fit_parameters, weights=1,
+                       max_iterations=1000, eps=1e-6):
+    initial_guess = initial_guess0.copy()
     for iter in range(max_iterations):
-        model = orbit_response_matrix_model
+        model = orm_model.copy()
         len_quads = lengths[0]
         len_corr = lengths[1]
         len_bpm = lengths[2]
 
         if 'quads' in including_fit_parameters:
-            delta_g = initial_guess0[:len_quads]
+            delta_g = initial_guess[:len_quads]
             J1 = J[:len_quads]
             B = np.sum([J1[k] * delta_g[k] for k in range(len(J1))], axis=0)
             model += B
 
         if 'cor' in including_fit_parameters:
-            delta_x = initial_guess0[len_quads:len_quads + len_corr]
+            delta_x = initial_guess[len_quads:len_quads + len_corr]
             J2 = J[len_quads:len_quads + len_corr]
             # Co = orbit_response_matrix_model * delta_x
             Co = np.sum([J2[k] * delta_x[k] for k in range(len(J2))], axis=0)
             model += Co
 
         if 'bpm' in including_fit_parameters:
-            delta_y = initial_guess0[len_quads + len_corr:]
+            delta_y = initial_guess[len_quads + len_corr:]
             J3 = J[len_quads + len_corr:]
             # G = orbit_response_matrix_model * delta_y[:, np.newaxis]
             G = np.sum([J3[k] * delta_y[k] for k in range(len(J3))], axis=0)
 
             model += G
 
-        r = orbit_response_matrix_measured - model
+        r = orm_measured - model
 
-        t2 = np.zeros([len(initial_guess0), 1])
-        for i in range(len(initial_guess0)):
-            t2[i] = np.sum(np.dot(np.dot(J[i], W), r.T))
+        t2 = np.zeros([len(initial_guess), 1])
+        for i in range(len(initial_guess)):
+            t2[i] = np.sum(np.dot(np.dot(J[i], weights), r.T))
 
         t3 = (np.dot(Jt, t2)).reshape(-1)
-        initial_guess1 = initial_guess0 + t3
-        t4 = np.abs(initial_guess1 - initial_guess0)
+        initial_guess1 = initial_guess + t3
+        t4 = np.abs(initial_guess1 - initial_guess)
 
         if max(t4) <= eps:
             break
-        initial_guess0 = initial_guess1
-    return initial_guess0
+        initial_guess = initial_guess1
+    return initial_guess
 
 
 def objective(delta_params, orbit_response_matrix_model, orbit_response_matrix_measured, J, lengths,
-              including_fit_parameters, W):
+              including_fit_parameters, weights):
     D = orbit_response_matrix_measured - orbit_response_matrix_model
     len_quads = lengths[0]
     len_corr = lengths[1]
@@ -154,7 +152,7 @@ def objective(delta_params, orbit_response_matrix_model, orbit_response_matrix_m
         G = np.sum([J3[k] * delta_y[k] for k in range(len(J3))], axis=0)
         residuals -= G
 
-    residuals = np.dot(residuals, np.sqrt(W))
+    residuals = np.dot(residuals, np.sqrt(weights))
     return residuals.ravel()
 
 

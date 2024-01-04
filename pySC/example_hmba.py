@@ -56,8 +56,8 @@ if __name__ == "__main__":
 
     _, _, twiss = at.get_optics(SC.IDEALRING, SC.ORD.BPM)
     orbit_response_matrix_model = SCgetModelRM(SC, SC.ORD.BPM, cor_ords, trackMode='ORB', useIdealRing=True, dkick=CMstep)
-    ModelDispersion = SCgetModelDispersion(SC, SC.ORD.BPM, cav_ords, trackMode='ORB', Z0=np.zeros(6), nTurns=1,
-                                           rfStep=RFstep, useIdealRing=True)
+    model_dispersion = SCgetModelDispersion(SC, SC.ORD.BPM, cav_ords, trackMode='ORB', Z0=np.zeros(6), nTurns=1,
+                                            rfStep=RFstep, useIdealRing=True)
     Jn = loco.calculate_jacobian(SC, orbit_response_matrix_model, CMstep, cor_ords, SC.ORD.BPM, np.concatenate(quads_ords), dk,
                             trackMode='ORB', useIdealRing=False, skewness=False, order=1, method='add',
                             includeDispersion=False, rf_step=RFstep, cav_ords=cav_ords)
@@ -86,12 +86,15 @@ if __name__ == "__main__":
         initial_guess[lengths[0]:lengths[0] + lengths[1]] = 1e-6
         initial_guess[lengths[0] + lengths[1]:] = 1e-6
 
-        fit_parameters = loco.loco_correction(
-            lambda delta_params: loco.objective(delta_params, np.transpose(orbit_response_matrix_model),
-                                           np.transpose(orbit_response_matrix_measured), Jn, lengths,
-                                           including_fit_parameters, weights), initial_guess,
-            np.transpose(orbit_response_matrix_model), np.transpose(orbit_response_matrix_measured), Jn, Jt, lengths,
-            including_fit_parameters, verbose=2, max_iterations=100, eps=1e-6, method='lm', W=weights)
+        # method lm (least squares)
+        fit_parameters = loco.loco_correction_lm(initial_guess, np.transpose(orbit_response_matrix_model),
+                                                 np.transpose(orbit_response_matrix_measured), Jn, lengths,
+                                                 including_fit_parameters, weights=weights, verbose=2)
+
+        # method ng
+        # fit_parameters = loco.loco_correction_ng(initial_guess, np.transpose(orbit_response_matrix_model),
+        #                                          np.transpose(orbit_response_matrix_measured), Jn, Jt, lengths,
+        #                                          including_fit_parameters, weights=weights, max_iterations=100, eps=1e-6)
 
         dg = fit_parameters[:lengths[0]]
         SC = loco.set_correction(SC, dg, np.concatenate(quads_ords))
