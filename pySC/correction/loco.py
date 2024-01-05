@@ -81,7 +81,7 @@ def loco_correction_lm(initial_guess0, orm_model, orm_measured, Jn, lengths, inc
 def loco_correction_ng(initial_guess0, orm_model, orm_measured, J, Jt, lengths, including_fit_parameters, weights=1,
                        max_iterations=1000, eps=1e-6):
     initial_guess = initial_guess0.copy()
-    for iter in range(max_iterations):
+    for _ in range(max_iterations):
         residuals = objective(initial_guess, orm_model, orm_measured, J, lengths, including_fit_parameters, 1)
         r = residuals.reshape(orm_model.shape)
 
@@ -91,10 +91,8 @@ def loco_correction_ng(initial_guess0, orm_model, orm_measured, J, Jt, lengths, 
 
         t3 = (np.dot(Jt, t2)).reshape(-1)
         initial_guess1 = initial_guess + t3
-        t4 = np.abs(initial_guess1 - initial_guess)
-
-        if max(t4) <= eps:
-            break
+        if np.max(np.abs(t3)) <= eps:
+            return initial_guess
         initial_guess = initial_guess1
     return initial_guess
 
