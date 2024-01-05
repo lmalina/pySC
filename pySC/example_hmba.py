@@ -67,7 +67,7 @@ if __name__ == "__main__":
 
     Jt = loco.get_inverse(Jn, n_singular_values, weights)
     _, _, twiss_err = at.get_optics(SC.RING, SC.ORD.BPM)
-    bx_rms_err, by_rms_err = loco.model_beta_beat(SC.RING, twiss, SC.ORD.BPM, makeplot=False)
+    bx_rms_err, by_rms_err = loco.model_beta_beat(SC.RING, twiss, SC.ORD.BPM, plot=False)
     info_tab = 14 * " "
     LOGGER.info("RMS Beta-beating before LOCO:\n"
                 f"{info_tab}{bx_rms_err * 100:04.2f}% horizontal\n{info_tab}{by_rms_err * 100:04.2f}% vertical  ")
@@ -77,7 +77,7 @@ if __name__ == "__main__":
         LOGGER.info(f'LOCO iteration {x}')
         orbit_response_matrix_measured = loco.measure_closed_orbit_response_matrix(SC, SC.ORD.BPM, cor_ords, CMstep)
         n_quads, n_corrs, n_bpms = len(np.concatenate(quads_ords)), len(np.concatenate(cor_ords)), len(SC.ORD.BPM) * 2
-        bx_rms_err, by_rms_err = loco.model_beta_beat(SC.RING, twiss, SC.ORD.BPM, makeplot=False)
+        bx_rms_err, by_rms_err = loco.model_beta_beat(SC.RING, twiss, SC.ORD.BPM, plot=False)
         total_length = n_bpms + n_corrs + n_quads
         lengths = [n_quads, n_corrs, n_bpms]
         including_fit_parameters = ['quads', 'cor', 'bpm']
@@ -98,7 +98,7 @@ if __name__ == "__main__":
 
         dg = fit_parameters[:lengths[0]]
         SC = loco.set_correction(SC, dg, np.concatenate(quads_ords))
-        bx_rms_cor, by_rms_cor = loco.model_beta_beat(SC.RING, twiss, SC.ORD.BPM, makeplot=True)
+        bx_rms_cor, by_rms_cor = loco.model_beta_beat(SC.RING, twiss, SC.ORD.BPM, plot=True)
         LOGGER.info(f"RMS Beta-beating after {x + 1} LOCO iterations:\n"
                     f"{info_tab}{bx_rms_cor * 100:04.2f}% horizontal\n{info_tab}{by_rms_cor * 100:04.2f}% vertical  ")
         LOGGER.info(f"Correction reduction: \n"

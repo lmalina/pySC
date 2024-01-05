@@ -4,6 +4,7 @@ import multiprocessing
 from pySC.lattice_properties.response_model import SCgetModelRM, SCgetModelDispersion
 from pySC.core.constants import SETTING_ADD, TRACK_ORB
 from pySC.core.beam import bpm_reading
+from pySC.utils.sc_tools import SCgetPinv
 import matplotlib.pyplot as plt
 from scipy.optimize import least_squares
 from pySC.utils import logging_tools
@@ -47,7 +48,6 @@ def generating_quads_response_matrices(args):
     dispersion_meas = SCgetModelDispersion(SC, used_bpm_indexes, CAVords=cav_ords, rfStep=rf_step)
     SC.set_magnet_setpoints(quad_index, -dk, skewness, order, method)
     return np.hstack((C_measured - C_model, (dispersion_meas - dispersion_model).reshape(-1, 1)))
-
 
 
 def measure_closed_orbit_response_matrix(SC, bpm_ords, cm_ords, dkick=1e-5):
@@ -131,7 +131,6 @@ def objective(delta_params, orbit_response_matrix_model, orbit_response_matrix_m
     len_corr = lengths[1]
     len_bpm = lengths[2]
 
-    residuals = D
     if 'quads' in including_fit_parameters:
         delta_g = delta_params[:len_quads]
         J1 = J[:len_quads]
@@ -166,7 +165,7 @@ def set_correction(SC, r, elem_ind, individuals=True, skewness=False, order=1, m
     return SC
 
 
-def model_beta_beat(ring, twiss, elements_indexes, makeplot):
+def model_beta_beat(ring, twiss, elements_indexes, plot=False):
     _, _, twiss_error = at.get_optics(ring, elements_indexes)
     s_pos = twiss_error.s_pos
     bx = np.array(twiss_error.beta[:, 0] / twiss.beta[:, 0] - 1)
@@ -174,50 +173,35 @@ def model_beta_beat(ring, twiss, elements_indexes, makeplot):
     bx_rms = np.sqrt(np.mean(bx ** 2))
     by_rms = np.sqrt(np.mean(by ** 2))
 
-    if makeplot:
-        plt.rc('font', size=13)
-        fig, ax = plt.subplots()
-        ax.plot(s_pos, bx)
-        ax.set_xlabel("s_pos [m]", fontsize=14)
-        ax.set_ylabel(r'$\beta_x%$', fontsize=14)
-        ax.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
-        ax.grid(True, which='both', linestyle=':', color='gray')
-        plt.title('Horizontal beta')
-        plt.show()
-        fig, ax = plt.subplots()
-        ax.plot(s_pos, by)
-        ax.set_xlabel("s_pos [m]", fontsize=14)
-        ax.set_ylabel(r'$\beta_y%$', fontsize=14)
-        ax.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
-        ax.grid(True, which='both', linestyle=':', color='gray')
-        plt.title('Vertical beta')
-        plt.show()
+    if plot:
+        init_font = plt.rcParams["font.size"]
+        plt.rcParams.update({'font.size': 14})
+
+        fig, ax = plt.subplots(nrows=2, sharex="all")
+        betas = [bx, by]
+        letters = ("x", "y")
+        for i in range(2):
+            ax[i].plot(s_pos, betas[i])
+            ax[i].set_xlabel("s_pos [m]")
+            ax[i].set_ylabel(rf'$\Delta\beta_{letters[i]}$ / $\beta_{letters[i]}$')
+            ax[i].ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
+            ax[i].grid(True, which='both', linestyle=':', color='gray')
+
+        fig.show()
+        plt.rcParams.update({'font.size': init_font})
 
     return bx_rms, by_rms
 
 
 def select_equally_spaced_elements(total_elements, num_elements):
     step = len(total_elements) // (num_elements - 1)
-    indexes = total_elements[::step]
-    return indexes
+    return total_elements[::step]
 
 
-def get_inverse(Jn, sCut, W):
-    Nk = len(Jn)
-    A = np.zeros([Nk, Nk])
-    for i in range(Nk):
-        for j in range(Nk):
-            A[i, j] = np.sum(np.dot(np.dot(Jn[i], W), Jn[j].T))
-    u, s, v = np.linalg.svd(A, full_matrices=True)
-    plt.plot(np.log(s), 'd--')
-    plt.title('singular value')
-    plt.xlabel('singular values')
-    plt.ylabel('$\log(\sigma_i)$')
-    plt.show()
-
-    smat = 0.0 * A
-    si = s ** -1
-    n_sv = sCut  # Cut off
-    si[n_sv:] *= 0.0
-    smat[:Nk, :Nk] = np.diag(si)
-    return np.dot(v.transpose(), np.dot(smat.transpose(), u.transpose()))
+def get_inverse(jacobian, s_cut, weights):
+    n_resp_mats = len(jacobian)
+    matrix = np.zeros([n_resp_mats, n_resp_mats])
+    for i in range(n_resp_mats):
+        for j in range(n_resp_mats):
+            matrix[i, j] = np.sum(np.dot(np.dot(jacobian[i], weights), jacobian[j].T))
+    return SCgetPinv(matrix, num_removed=n_resp_mats - min(n_resp_mats, s_cut), plot=True)
