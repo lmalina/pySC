@@ -82,33 +82,8 @@ def loco_correction_ng(initial_guess0, orm_model, orm_measured, J, Jt, lengths, 
                        max_iterations=1000, eps=1e-6):
     initial_guess = initial_guess0.copy()
     for iter in range(max_iterations):
-        model = orm_model.copy()
-        len_quads = lengths[0]
-        len_corr = lengths[1]
-        len_bpm = lengths[2]
-
-        if 'quads' in including_fit_parameters:
-            delta_g = initial_guess[:len_quads]
-            J1 = J[:len_quads]
-            B = np.sum([J1[k] * delta_g[k] for k in range(len(J1))], axis=0)
-            model += B
-
-        if 'cor' in including_fit_parameters:
-            delta_x = initial_guess[len_quads:len_quads + len_corr]
-            J2 = J[len_quads:len_quads + len_corr]
-            # Co = orbit_response_matrix_model * delta_x
-            Co = np.sum([J2[k] * delta_x[k] for k in range(len(J2))], axis=0)
-            model += Co
-
-        if 'bpm' in including_fit_parameters:
-            delta_y = initial_guess[len_quads + len_corr:]
-            J3 = J[len_quads + len_corr:]
-            # G = orbit_response_matrix_model * delta_y[:, np.newaxis]
-            G = np.sum([J3[k] * delta_y[k] for k in range(len(J3))], axis=0)
-
-            model += G
-
-        r = orm_measured - model
+        residuals = objective(initial_guess, orm_model, orm_measured, J, lengths, including_fit_parameters, 1)
+        r = residuals.reshape(orm_model.shape)
 
         t2 = np.zeros([len(initial_guess), 1])
         for i in range(len(initial_guess)):
@@ -124,12 +99,9 @@ def loco_correction_ng(initial_guess0, orm_model, orm_measured, J, Jt, lengths, 
     return initial_guess
 
 
-def objective(delta_params, orbit_response_matrix_model, orbit_response_matrix_measured, J, lengths,
-              including_fit_parameters, weights):
-    D = orbit_response_matrix_measured - orbit_response_matrix_model
-    len_quads = lengths[0]
-    len_corr = lengths[1]
-    len_bpm = lengths[2]
+def objective(delta_params, orm_model, orm_measured, J, lengths, including_fit_parameters, weights):
+    residuals = orm_measured - orm_model
+    len_quads, len_corr, len_bpm = lengths
 
     if 'quads' in including_fit_parameters:
         delta_g = delta_params[:len_quads]
