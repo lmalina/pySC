@@ -17,9 +17,13 @@ def calculate_jacobian(SC, C_model, dkick, used_cor_ind, bpm_indexes, quads_ind,
     pool = multiprocessing.Pool()
     quad_args = [(quad_index, SC, C_model, dkick, used_cor_ind, bpm_indexes, dk, trackMode, useIdealRing,
                   skewness, order, method, includeDispersion, rf_step, cav_ords) for quad_index in quads_ind]
+    # results = []
+    # for quad_arg in quad_args:
+    #     results.append(generating_quads_response_matrices(quad_arg))
     results = pool.map(generating_quads_response_matrices, quad_args)
     pool.close()
     pool.join()
+
     results = [result / dk for result in results]
     if full_jacobian:  # # Construct the complete Jacobian matrix for the LOCO
         # TODO modify for calibration errors of given size
@@ -70,17 +74,20 @@ def measure_closed_orbit_response_matrix(SC, bpm_ords, cm_ords, dkick=1e-5):
     return response_matrix
 
 
-def loco_correction_lm(initial_guess0, orm_model, orm_measured, Jn, lengths, including_fit_parameters, weights=1,
+def loco_correction_lm(initial_guess0, orm_model, orm_measured, Jn, lengths, including_fit_parameters, bounds=(-np.inf, np.inf), weights=1,
                        verbose=2):
-    result = least_squares(lambda delta_params: objective(delta_params, orm_model, orm_measured, Jn, lengths,
-                                                          including_fit_parameters, weights),
-                           initial_guess0, method="lm", verbose=verbose)  # , xtol= 1e-2)
+    mask = _get_parameters_mask(including_fit_parameters, lengths)
+    result = least_squares(lambda delta_params: objective2(delta_params, orm_measured - orm_model, Jn[mask, :, :], weights),
+                           initial_guess0[mask], #bounds=bounds,
+                           method="lm",
+                           verbose=verbose)  # , xtol= 1e-2)
     return result.x
 
 
 def loco_correction_ng(initial_guess0, orm_model, orm_measured, J, Jt, lengths, including_fit_parameters, weights=1,
                        max_iterations=1000, eps=1e-6):
     initial_guess = initial_guess0.copy()
+    mask = _get_parameters_mask(including_fit_parameters, lengths)
     for _ in range(max_iterations):
         residuals = objective(initial_guess, orm_model, orm_measured, J, lengths, including_fit_parameters, 1)
         r = residuals.reshape(orm_model.shape)
@@ -90,7 +97,7 @@ def loco_correction_ng(initial_guess0, orm_model, orm_measured, J, Jt, lengths, 
             t2[i] = np.sum(np.dot(np.dot(J[i], weights), r.T))
 
         t3 = (np.dot(Jt, t2)).reshape(-1)
-        initial_guess1 = initial_guess + t3
+        initial_guess1 = initial_guess + t3  # TODO check the sign
         if np.max(np.abs(t3)) <= eps:
             return initial_guess
         initial_guess = initial_guess1
@@ -98,31 +105,31 @@ def loco_correction_ng(initial_guess0, orm_model, orm_measured, J, Jt, lengths, 
 
 
 def objective(delta_params, orm_model, orm_measured, J, lengths, including_fit_parameters, weights):
-    residuals = orm_measured - orm_model
+    # This function is already tested
     len_quads, len_corr, len_bpm = lengths
-
+    mask = np.zeros(delta_params.shape)
     if 'quads' in including_fit_parameters:
-        delta_g = delta_params[:len_quads]
-        J1 = J[:len_quads]
-        B = np.sum([J1[k] * delta_g[k] for k in range(len(J1))], axis=0)
-        residuals -= B
-
+        mask[:len_quads] = 1
     if 'cor' in including_fit_parameters:
-        delta_x = delta_params[len_quads:len_quads + len_corr]
-        J2 = J[len_quads:len_quads + len_corr]
-        # Co = orbit_response_matrix_model * delta_x
-        Co = np.sum([J2[k] * delta_x[k] for k in range(len(J2))], axis=0)
-        residuals -= Co
-
+        mask[len_quads:len_quads + len_corr] = 1
     if 'bpm' in including_fit_parameters:
-        delta_y = delta_params[len_quads + len_corr:]
-        J3 = J[len_quads + len_corr:]
-        # G = orbit_response_matrix_model * delta_y[:, np.newaxis]
-        G = np.sum([J3[k] * delta_y[k] for k in range(len(J3))], axis=0)
-        residuals -= G
-
+        mask[len_quads + len_corr:] = 1
+    residuals = orm_measured - orm_model - np.einsum("ijk,i->jk", J, delta_params * mask)
     residuals = np.dot(residuals, np.sqrt(weights))
     return residuals.ravel()
+
+
+def _get_parameters_mask(including_fit_parameters, lengths):
+    len_quads, len_corr, len_bpm = lengths
+    mask = np.zeros(len_quads + len_corr + len_bpm, dtype=bool)
+    mask[:len_quads] = 'quads' in including_fit_parameters
+    mask[len_quads:len_quads + len_corr] = 'cor' in including_fit_parameters
+    mask[len_quads + len_corr:] = 'bpm' in including_fit_parameters
+    return mask
+
+
+def objective2(masked_params, orm_residuals, masked_jacobian, weights):
+    return np.dot(orm_residuals - np.einsum("ijk,i->jk", masked_jacobian, masked_params), np.sqrt(weights)).ravel()
 
 
 def set_correction(SC, r, elem_ind, individuals=True, skewness=False, order=1, method=SETTING_ADD, dipole_compensation=True):

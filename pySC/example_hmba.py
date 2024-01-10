@@ -71,7 +71,7 @@ if __name__ == "__main__":
     info_tab = 14 * " "
     LOGGER.info("RMS Beta-beating before LOCO:\n"
                 f"{info_tab}{bx_rms_err * 100:04.2f}% horizontal\n{info_tab}{by_rms_err * 100:04.2f}% vertical  ")
-    n_iter = 2
+    n_iter = 5
 
     for x in range(n_iter):  # optics correction using QF and QD
         LOGGER.info(f'LOCO iteration {x}')
@@ -80,7 +80,7 @@ if __name__ == "__main__":
         bx_rms_err, by_rms_err = loco.model_beta_beat(SC.RING, twiss, SC.ORD.BPM, plot=False)
         total_length = n_bpms + n_corrs + n_quads
         lengths = [n_quads, n_corrs, n_bpms]
-        including_fit_parameters = ['quads', 'cor', 'bpm']
+        including_fit_parameters = ['quads']#, 'cor', 'bpm']
         initial_guess = np.zeros(total_length)
         initial_guess[:lengths[0]] = 1e-6
         initial_guess[lengths[0]:lengths[0] + lengths[1]] = 1e-6
@@ -89,14 +89,14 @@ if __name__ == "__main__":
         # method lm (least squares)
         fit_parameters = loco.loco_correction_lm(initial_guess, np.transpose(orbit_response_matrix_model),
                                                  np.transpose(orbit_response_matrix_measured), Jn, lengths,
-                                                 including_fit_parameters, weights=weights, verbose=2)
+                                                 including_fit_parameters, bounds=(-0.03, 0.03), weights=weights, verbose=2)
 
         # method ng
         # fit_parameters = loco.loco_correction_ng(initial_guess, np.transpose(orbit_response_matrix_model),
         #                                          np.transpose(orbit_response_matrix_measured), Jn, Jt, lengths,
         #                                          including_fit_parameters, weights=weights, max_iterations=100, eps=1e-6)
 
-        dg = fit_parameters[:lengths[0]]
+        dg = fit_parameters[:lengths[0]] if len(fit_parameters) > n_quads else fit_parameters
         SC = loco.set_correction(SC, dg, np.concatenate(quads_ords))
         bx_rms_cor, by_rms_cor = loco.model_beta_beat(SC.RING, twiss, SC.ORD.BPM, plot=True)
         LOGGER.info(f"RMS Beta-beating after {x + 1} LOCO iterations:\n"
