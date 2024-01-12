@@ -77,7 +77,7 @@ def measure_closed_orbit_response_matrix(SC, bpm_ords, cm_ords, dkick=1e-5):
 def loco_correction_lm(initial_guess0, orm_model, orm_measured, Jn, lengths, including_fit_parameters, bounds=(-np.inf, np.inf), weights=1,
                        verbose=2):
     mask = _get_parameters_mask(including_fit_parameters, lengths)
-    result = least_squares(lambda delta_params: objective2(delta_params, orm_measured - orm_model, Jn[mask, :, :], weights),
+    result = least_squares(lambda delta_params: objective(delta_params, orm_measured - orm_model, Jn[mask, :, :], weights),
                            initial_guess0[mask], #bounds=bounds,
                            method="lm",
                            verbose=verbose)  # , xtol= 1e-2)
@@ -89,7 +89,7 @@ def loco_correction_ng(initial_guess0, orm_model, orm_measured, J, Jt, lengths, 
     initial_guess = initial_guess0.copy()
     mask = _get_parameters_mask(including_fit_parameters, lengths)
     for _ in range(max_iterations):
-        residuals = objective(initial_guess, orm_model, orm_measured, J, lengths, including_fit_parameters, 1)
+        residuals = objective(initial_guess[mask], orm_measured - orm_model, J[mask, :, :], weights)
         r = residuals.reshape(orm_model.shape)
 
         t2 = np.zeros([len(initial_guess), 1])
@@ -104,19 +104,9 @@ def loco_correction_ng(initial_guess0, orm_model, orm_measured, J, Jt, lengths, 
     return initial_guess
 
 
-def objective(delta_params, orm_model, orm_measured, J, lengths, including_fit_parameters, weights):
-    # This function is already tested
-    len_quads, len_corr, len_bpm = lengths
-    mask = np.zeros(delta_params.shape)
-    if 'quads' in including_fit_parameters:
-        mask[:len_quads] = 1
-    if 'cor' in including_fit_parameters:
-        mask[len_quads:len_quads + len_corr] = 1
-    if 'bpm' in including_fit_parameters:
-        mask[len_quads + len_corr:] = 1
-    residuals = orm_measured - orm_model - np.einsum("ijk,i->jk", J, delta_params * mask)
-    residuals = np.dot(residuals, np.sqrt(weights))
-    return residuals.ravel()
+def objective(masked_params, orm_residuals, masked_jacobian, weights):
+    return np.dot(orm_residuals - np.einsum("ijk,i->jk", masked_jacobian, masked_params),
+                  np.sqrt(weights)).ravel()
 
 
 def _get_parameters_mask(including_fit_parameters, lengths):
@@ -126,10 +116,6 @@ def _get_parameters_mask(including_fit_parameters, lengths):
     mask[len_quads:len_quads + len_corr] = 'cor' in including_fit_parameters
     mask[len_quads + len_corr:] = 'bpm' in including_fit_parameters
     return mask
-
-
-def objective2(masked_params, orm_residuals, masked_jacobian, weights):
-    return np.dot(orm_residuals - np.einsum("ijk,i->jk", masked_jacobian, masked_params), np.sqrt(weights)).ravel()
 
 
 def set_correction(SC, r, elem_ind, individuals=True, skewness=False, order=1, method=SETTING_ADD, dipole_compensation=True):
@@ -175,7 +161,7 @@ def select_equally_spaced_elements(total_elements, num_elements):
     return total_elements[::step]
 
 
-def get_inverse(jacobian, s_cut, weights):
+def get_inverse(jacobian, s_cut, weights, plot=False):
     n_resp_mats = len(jacobian)
     #matrix = np.zeros([n_resp_mats, n_resp_mats])
     #for i in range(n_resp_mats):
@@ -183,4 +169,4 @@ def get_inverse(jacobian, s_cut, weights):
     #        matrix[i, j] = np.sum(np.dot(np.dot(jacobian[i], weights), jacobian[j].T))
     sum_ = np.sum(jacobian, axis=1)          # Sum over i and j for all planes
     matrix = sum_ @ weights @ sum_.T
-    return SCgetPinv(matrix, num_removed=n_resp_mats - min(n_resp_mats, s_cut), plot=True)
+    return SCgetPinv(matrix, num_removed=n_resp_mats - min(n_resp_mats, s_cut), plot=plot)
