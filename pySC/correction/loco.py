@@ -170,8 +170,10 @@ def select_equally_spaced_elements(total_elements, num_elements):
 
 def get_inverse(jacobian, s_cut, weights):
     n_resp_mats = len(jacobian)
-    matrix = np.zeros([n_resp_mats, n_resp_mats])
-    for i in range(n_resp_mats):
-        for j in range(n_resp_mats):
-            matrix[i, j] = np.sum(np.dot(np.dot(jacobian[i], weights), jacobian[j].T))
+    #matrix = np.zeros([n_resp_mats, n_resp_mats])
+    #for i in range(n_resp_mats):
+    #    for j in range(n_resp_mats):
+    #        matrix[i, j] = np.sum(np.dot(np.dot(jacobian[i], weights), jacobian[j].T))
+    sum_ = np.sum(jacobian, axis=1)          # Sum over i and j for all planes
+    matrix = sum_ @ weights @ sum_.T
     return SCgetPinv(matrix, num_removed=n_resp_mats - min(n_resp_mats, s_cut), plot=True)

@@ -63,8 +63,8 @@ if __name__ == "__main__":
                             includeDispersion=False, rf_step=RFstep, cav_ords=cav_ords)
     Jn = np.transpose(Jn, (0, 2, 1))
     n_singular_values = 16
-    weights = 1
-
+    #weights = 1
+    weights = np.eye(len(SC.ORD.BPM) * 2)
     Jt = loco.get_inverse(Jn, n_singular_values, weights)
     _, _, twiss_err = at.get_optics(SC.RING, SC.ORD.BPM)
     bx_rms_err, by_rms_err = loco.model_beta_beat(SC.RING, twiss, SC.ORD.BPM, plot=False)
