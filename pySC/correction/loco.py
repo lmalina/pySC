@@ -11,7 +11,7 @@ from pySC.utils import logging_tools
 LOGGER = logging_tools.get_logger(__name__)
 
 
-def calculate_jacobian(SC, C_model, dkick, used_cor_ind, bpm_indexes, quads_ind, dk, trackMode=TRACK_ORB,
+def calculate_jacobian(SC, C_model, dkick, used_cor_ind, bpm_indexes, cor_ind, quads_ind, dk, trackMode=TRACK_ORB,
                        useIdealRing=True, skewness=False, order=1, method=SETTING_ADD, includeDispersion=False, rf_step=1E3,
                        cav_ords=None, full_jacobian=True):
     pool = multiprocessing.Pool()
@@ -29,7 +29,33 @@ def calculate_jacobian(SC, C_model, dkick, used_cor_ind, bpm_indexes, quads_ind,
         # TODO modify for calibration errors of given size
         n_correctors = len(np.concatenate(used_cor_ind))
         n_bpms = len(bpm_indexes) * 2  # in both planes
+
         return np.concatenate((results, np.tile(C_model, (n_correctors + n_bpms, 1, 1))))
+
+        '''
+        pool = multiprocessing.Pool()
+        cor_args = [(cor_ind, SC, C_model, dkick, used_cor_ind, bpm_indexes, dk, trackMode, useIdealRing,
+                      skewness, order, method, includeDispersion, rf_step, cav_ords) for quad_index in quads_ind]
+
+        results = pool.map(generating_cor_response_matrices, cor_args)
+        pool.close()
+        pool.join()
+
+        Jc = [result / dkick for result in results]
+
+        pool = multiprocessing.Pool()
+        bpm_args = [(bpm_indexes, SC, C_model, dkick, used_cor_ind, bpm_indexes, dk, trackMode, useIdealRing,
+                      skewness, order, method, includeDispersion, rf_step, cav_ords) for quad_index in quads_ind]
+
+        results = pool.map(generating_bpm_response_matrices, bpm_args)
+        pool.close()
+        pool.join()
+
+        Jb = [result / dkick for result in results]
+
+        return np.concatenate((results,Jc, Jb), axis=0)))
+        '''
+
     return results
 
 
@@ -52,6 +78,58 @@ def generating_quads_response_matrices(args):
     dispersion_meas = SCgetModelDispersion(SC, used_bpm_indexes, CAVords=cav_ords, rfStep=rf_step)
     SC.set_magnet_setpoints(quad_index, -dk, skewness, order, method)
     return np.hstack((C_measured - C_model, (dispersion_meas - dispersion_model).reshape(-1, 1)))
+
+def generating_cor_response_matrices(args):
+    (cor_index, SC, C_model, correctors_kick, used_cor_indexes, used_bpm_indexes, correctors_kick, trackMode, useIdealRing,
+     skewness, order, method, includeDispersion, rf_step, cav_ords) = args
+    LOGGER.debug('generating response to cor of index', cor_index)
+    if not includeDispersion:
+        #SC.set_magnet_setpoints(cor_index, dk, skewness, order, method)
+        err1 = SC.RING[cor_index].CalErrorA[0]
+        err2 = SC.RING[cor_index].CalErrorB[0]
+
+        SC.register_magnets(cor_index, CalErrorA=np.array([correctors_kick, 0]), CalErrorB=np.array([correctors_kick, 0]))
+        C_measured = SCgetModelRM(SC, used_bpm_indexes, used_cor_indexes, dkick=correctors_kick,
+                                  useIdealRing=useIdealRing,
+                                  trackMode=trackMode)
+        SC.register_magnets(cor_index, CalErrorA=np.array([err1, 0]), CalErrorB=np.array([err2, 0]))
+        #SC.set_magnet_setpoints(cor_index, -dk, skewness, order, method)
+        return C_measured - C_model
+
+    dispersion_model = SCgetModelDispersion(SC, used_bpm_indexes, CAVords=cav_ords)
+    SC.register_magnets(cor_index, CalErrorA=np.array([correctors_kick, 0]), CalErrorB=np.array([correctors_kick, 0]))
+    C_measured = SCgetModelRM(SC, used_bpm_indexes, used_cor_indexes, dkick=correctors_kick, useIdealRing=useIdealRing,
+                              trackMode=trackMode)
+    dispersion_meas = SCgetModelDispersion(SC, used_bpm_indexes, CAVords=cav_ords, rfStep=rf_step)
+    SC.register_magnets(cor_index, CalErrorA=np.array([err1, 0]), CalErrorB=np.array([err2, 0]))
+    return np.hstack((C_measured - C_model, (dispersion_meas - dispersion_model).reshape(-1, 1)))
+
+
+def generating_bpm_response_matrices(args):
+    (bpm_indexes, SC, C_model, correctors_kick, used_cor_indexes, used_bpm_indexes, correctors_kick, trackMode, useIdealRing,
+     skewness, order, method, includeDispersion, rf_step, cav_ords) = args
+    LOGGER.debug('generating response to bpm of index', bpm_indexes)
+    if not includeDispersion:
+        # SC.set_magnet_setpoints(cor_index, dk, skewness, order, method)
+        err1 = SC.RING[bpm_indexes].CalError[0]
+        err2 = SC.RING[bpm_indexes].CalError[1]
+
+        SC.register_magnets(bpm_indexes, CalError=correctors_kick)
+        C_measured = SCgetModelRM(SC, used_bpm_indexes, used_cor_indexes, dkick=correctors_kick,
+                                  useIdealRing=useIdealRing,
+                                  trackMode=trackMode)
+        SC.register_magnets(bpm_indexes, CalError=correctors_kick)
+        # SC.set_magnet_setpoints(cor_index, -dk, skewness, order, method)
+        return C_measured - C_model
+
+    dispersion_model = SCgetModelDispersion(SC, used_bpm_indexes, CAVords=cav_ords)
+    SC.register_magnets(bpm_indexes, CalError=correctors_kick)
+    C_measured = SCgetModelRM(SC, used_bpm_indexes, used_cor_indexes, dkick=correctors_kick, useIdealRing=useIdealRing,
+                              trackMode=trackMode)
+    dispersion_meas = SCgetModelDispersion(SC, used_bpm_indexes, CAVords=cav_ords, rfStep=rf_step)
+    SC.register_magnets(bpm_indexes, CalError=correctors_kick)
+    return np.hstack((C_measured - C_model, (dispersion_meas - dispersion_model).reshape(-1, 1)))
+
 
 
 def measure_closed_orbit_response_matrix(SC, bpm_ords, cm_ords, dkick=1e-5):
@@ -84,24 +162,18 @@ def loco_correction_lm(initial_guess0, orm_model, orm_measured, Jn, lengths, inc
     return result.x
 
 
-def loco_correction_ng(initial_guess0, orm_model, orm_measured, J, Jt, lengths, including_fit_parameters, weights=1,
-                       max_iterations=1000, eps=1e-6):
+def loco_correction_ng(initial_guess0, orm_model, orm_measured, J, lengths, including_fit_parameters, s_cut, weights=1):
     initial_guess = initial_guess0.copy()
     mask = _get_parameters_mask(including_fit_parameters, lengths)
-    for _ in range(max_iterations):
-        residuals = objective(initial_guess[mask], orm_measured - orm_model, J[mask, :, :], weights)
-        r = residuals.reshape(orm_model.shape)
+    residuals = objective(initial_guess[mask], orm_measured - orm_model, J[mask, :, :], weights)
+    r = residuals.reshape(orm_model.shape)
+    t2 = np.zeros([len(initial_guess), 1])
+    for i in range(len(initial_guess)):
+        t2[i] = np.sum(np.dot(np.dot(J[i], weights), r.T))
+    results = get_inverse(J, t2, s_cut, weights)
 
-        t2 = np.zeros([len(initial_guess), 1])
-        for i in range(len(initial_guess)):
-            t2[i] = np.sum(np.dot(np.dot(J[i], weights), r.T))
+    return results
 
-        t3 = (np.dot(Jt, t2)).reshape(-1)
-        initial_guess1 = initial_guess + t3  # TODO check the sign
-        if np.max(np.abs(t3)) <= eps:
-            return initial_guess
-        initial_guess = initial_guess1
-    return initial_guess
 
 
 def objective(masked_params, orm_residuals, masked_jacobian, weights):
@@ -161,7 +233,7 @@ def select_equally_spaced_elements(total_elements, num_elements):
     return total_elements[::step]
 
 
-def get_inverse(jacobian, s_cut, weights, plot=False):
+def get_inverse(jacobian, B, s_cut, weights, plot=False):
     n_resp_mats = len(jacobian)
     #matrix = np.zeros([n_resp_mats, n_resp_mats])
     #for i in range(n_resp_mats):
@@ -169,4 +241,18 @@ def get_inverse(jacobian, s_cut, weights, plot=False):
     #        matrix[i, j] = np.sum(np.dot(np.dot(jacobian[i], weights), jacobian[j].T))
     sum_ = np.sum(jacobian, axis=1)          # Sum over i and j for all planes
     matrix = sum_ @ weights @ sum_.T
-    return SCgetPinv(matrix, num_removed=n_resp_mats - min(n_resp_mats, s_cut), plot=plot)
+    matrixi = SCgetPinv(matrix, num_removed=n_resp_mats - min(n_resp_mats, s_cut), plot=plot)
+
+    '''
+    u, s, v = np.linalg.svd(matrix, full_matrices=True)
+    smat = 0.0 * matrix
+    si = s ** -1
+    n_sv = s_cut
+    si[n_sv:] *= 0.0
+    smat[:n_resp_mats, :n_resp_mats] = np.diag(si)
+    matrixi = np.dot(v.transpose(), np.dot(smat.transpose(), u.transpose()))
+    '''
+    r = (np.dot(matrixi, B)).reshape(-1)
+    e = np.dot(matrix, r).reshape(-1) - B.reshape(-1)
+
+    return r
