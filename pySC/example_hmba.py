@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[2]:
-
-
 import at
 import numpy as np
 from at import Lattice
@@ -65,26 +59,11 @@ if __name__ == "__main__":
     orbit_response_matrix_model = SCgetModelRM(SC, used_bpms_ords, used_cor_ords, trackMode='ORB', useIdealRing=True, dkick=CMstep)
     model_dispersion = SCgetModelDispersion(SC, used_bpms_ords, cav_ords, trackMode='ORB', Z0=np.zeros(6), nTurns=1,
                                             rfStep=RFstep, useIdealRing=True)
-    Jn = loco.calculate_jacobian(SC, orbit_response_matrix_model, CMstep, used_cor_ords, used_bpms_ords, cor_ords, np.concatenate(quads_ords), dk,
+    Jn = loco.calculate_jacobian(SC, orbit_response_matrix_model, CMstep, used_cor_ords, used_bpms_ords, np.concatenate(quads_ords), dk,
                             trackMode='ORB', useIdealRing=False, skewness=False, order=1, method='add',
                             includeDispersion=False, rf_step=RFstep, cav_ords=cav_ords)
-    Jn = np.transpose(Jn, (0, 2, 1))
-    #weights = 1
     weights = np.eye(len(used_bpms_ords) * 2)
-    tmp = np.sum(Jn, axis=1)
-    A = tmp @ weights @ tmp.T
-    u, s, v = np.linalg.svd(A, full_matrices=True)
-    import matplotlib.pyplot as plt
-
-    plt.plot(np.log(s), 'd--')
-    plt.title('singular value')
-    plt.xlabel('singular values')
-    plt.ylabel('$\log(\sigma_i)$')
-    plt.show()
-
     n_singular_values = 20
-
-    #Jt = loco.get_inverse(Jn, n_singular_values, weights)
 
     _, _, twiss_err = at.get_optics(SC.RING, SC.ORD.BPM)
     bx_rms_err, by_rms_err = loco.model_beta_beat(SC.RING, twiss, SC.ORD.BPM, plot=False)
@@ -108,14 +87,14 @@ if __name__ == "__main__":
         initial_guess[lengths[0] + lengths[1]:] = 1e-6
 
         # method lm (least squares)
-        #fit_parameters = loco.loco_correction_lm(initial_guess, np.transpose(orbit_response_matrix_model),
-        #                                         np.transpose(orbit_response_matrix_measured), Jn, lengths,
-        #                                         including_fit_parameters, bounds=(-0.03, 0.03), weights=weights, verbose=2)
+        # fit_parameters = loco.loco_correction_lm(initial_guess, orbit_response_matrix_model,
+        #                                          orbit_response_matrix_measured, Jn, lengths,
+        #                                          including_fit_parameters, bounds=(-0.03, 0.03), weights=weights, verbose=2)
 
         # method ng
-        fit_parameters = loco.loco_correction_ng(initial_guess, np.transpose(orbit_response_matrix_model),
-                                                  np.transpose(orbit_response_matrix_measured), Jn, lengths,
-                                                  including_fit_parameters, n_singular_values, weights=weights)
+        fit_parameters = loco.loco_correction_ng(initial_guess, orbit_response_matrix_model,
+                                                 orbit_response_matrix_measured, Jn, lengths,
+                                                 including_fit_parameters, n_singular_values, weights=weights)
 
         dg = fit_parameters[:lengths[0]] if len(fit_parameters) > n_quads else fit_parameters
         SC = loco.set_correction(SC, dg, np.concatenate(quads_ords))
@@ -125,10 +104,3 @@ if __name__ == "__main__":
         LOGGER.info(f"Correction reduction: \n"
                     f"    beta_x: {(1 - bx_rms_cor / bx_rms_err) * 100:.2f}%\n"
                     f"    beta_y: {(1 - by_rms_cor / by_rms_err) * 100:.2f}%\n")
-
-
-# In[ ]:
-
-
-
-
