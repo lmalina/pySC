@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+
 from pySC.core.constants import SPEED_OF_LIGHT
 from pySC.utils.at_wrapper import atpass, findorbit6, findspos
 from pySC.core.beam import generate_bunches

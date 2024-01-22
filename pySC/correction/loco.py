@@ -35,7 +35,6 @@ def calculate_jacobian(SC, C_model, dkick, used_cor_ind, bpm_indexes, quads_ind,
         j_bpm = np.zeros((n_bpms,) + C_model.shape)
         for i in range(n_bpms):
             j_bpm[i, i, :] = C_model[i, :]  # a single row of response matrix corresponding to a given plane of BPM
-        # return np.concatenate((results, np.tile(C_model, (n_correctors + n_bpms, 1, 1))))
         return np.concatenate((results, j_cor, j_bpm), axis=0)
     return results
 
@@ -67,7 +66,7 @@ def measure_closed_orbit_response_matrix(SC, bpm_ords, cm_ords, dkick=1e-5):
     n_bpms = len(bpm_ords)
     n_cms = len(cm_ords[0]) + len(cm_ords[1])
     response_matrix = np.full((2 * n_bpms * n_turns, n_cms), np.nan)
-    SC.INJ.trackMode = 'ORB'  # TODO modifies SC (not a pure function)!
+    SC.INJ.trackMode = TRACK_ORB  # TODO may modify SC (not a pure function)!
 
     closed_orbits0 = bpm_reading(SC, bpm_ords=bpm_ords)[0]
     cnt = 0
@@ -87,7 +86,7 @@ def loco_correction_lm(initial_guess0, orm_model, orm_measured, Jn, lengths, inc
     result = least_squares(lambda delta_params: objective(delta_params, orm_measured - orm_model, Jn[mask, :, :], weights),
                            initial_guess0[mask], #bounds=bounds,
                            method="lm",
-                           verbose=verbose)  # , xtol= 1e-2)
+                           verbose=verbose)
     return result.x
 
 
@@ -96,10 +95,10 @@ def loco_correction_ng(initial_guess0, orm_model, orm_measured, J, lengths, incl
     mask = _get_parameters_mask(including_fit_parameters, lengths)
     residuals = objective(initial_guess[mask], orm_measured - orm_model, J[mask, :, :], weights)
     r = residuals.reshape(np.transpose(orm_model).shape)
-    t2 = np.zeros([len(initial_guess), 1])
-    for i in range(len(initial_guess)):
+    t2 = np.zeros([len(initial_guess[mask]), 1])
+    for i in range(len(initial_guess[mask])):
         t2[i] = np.sum(np.dot(np.dot(J[i].T, weights), r.T))
-    return get_inverse(J, t2, s_cut, weights)
+    return get_inverse(J[mask, :, :], t2, s_cut, weights)
 
 
 def objective(masked_params, orm_residuals, masked_jacobian, weights):
@@ -165,5 +164,5 @@ def get_inverse(jacobian, B, s_cut, weights, plot=False):
     matrix = np.dot(np.dot(sum_corr, weights), sum_corr.T)
     inv_matrix = SCgetPinv(matrix, num_removed=n_resp_mats - min(n_resp_mats, s_cut), plot=plot)
     results = np.ravel(np.dot(inv_matrix, B))
-    e = np.ravel(np.dot(matrix, results)) - np.ravel(B)
+    # e = np.ravel(np.dot(matrix, results)) - np.ravel(B)
     return results
