@@ -1,6 +1,7 @@
 import at
 import numpy as np
 import pytest
+from pathlib import Path
 from pySC.core.simulated_commissioning import SimulatedCommissioning
 from pySC.utils.sc_tools import SCgetOrds
 from pySC.utils import logging_tools
@@ -8,6 +9,7 @@ from pySC.correction import loco
 from pySC.lattice_properties.response_model import SCgetModelRM, SCgetModelDispersion
 
 LOGGER = logging_tools.get_logger(__name__)
+INPUTS = Path(__file__).parent / "inputs"
 
 
 def test_loco_hmba(at_ring):
@@ -88,7 +90,7 @@ def test_loco_hmba(at_ring):
 
 @pytest.fixture
 def at_ring():
-    ring = at.load_mat('inputs/hmba.mat')
+    ring = at.load_mat(f'{INPUTS}/hmba.mat')
     bpm_indexes = at.get_refpts(ring, at.elements.Monitor)
     for bpm_index in reversed(bpm_indexes):
         corrector = at.elements.Corrector(f'CXY{bpm_index}', length=0, kick_angle=[0, 0], PolynomA=[0, 0],
