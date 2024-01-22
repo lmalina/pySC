@@ -1,4 +1,5 @@
 import numpy as np
+
 from pySC.core.beam import bpm_reading
 from pySC.utils import logging_tools
 from pySC.utils.at_wrapper import atgetfieldvalues
