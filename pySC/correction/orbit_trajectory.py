@@ -23,20 +23,20 @@ WIGGLE_ANGLE_STEPS: int = 32
 WIGGLE_ANGLE_RANGE: Tuple[float, float] = (500E-6, 1000E-6)
 
 
-def SCfeedbackFirstTurn(SC, response_matrix, reference=None, cm_ords=None, bpm_ords=None, maxsteps=100, **pinv_params):
+def first_turn(SC, response_matrix, reference=None, cm_ords=None, bpm_ords=None, maxsteps=100, **pinv_params):
     """
     Achieves one-turn transmission
 
     Achieves a first turn in `SC.RING`.  This algorithm is based on the idea that
     repeated trajectory corrections calculated via a suitably regularized
-    pseudo-inverse trajectory-response matrix `Mplus` will drive the BPM readings
+    pseudo-inverse  of `response matrix` will drive the BPM readings
     and CM settings to a fixed point.
 
-    lim_{n->oo}  B_n = const. , with B_{n+1}  = Phi(Mplus . B_{n} ),     (1)
+    lim_{n->oo}  B_n = const. , with B_{n+1}  = Phi(response_matrix^{-1} . B_{n} ),     (1)
 
     where mapping Phi maps corrector kicks to BPM-readings.
     The RMS-values of both, BPM readings and CM settings, are determined by the
-    regularization of Mplus.  Successively - during the course of repeated
+    regularization of pseudo-inverted response matrix.  Successively - during the course of repeated
     application of (1) - more and more transmission is achieved throughout the
     ring, more magnets are traversed near their magnetic center (which is hopefully
     at least somewhere near the BPM zero-point), resulting in decreased kicks.
@@ -46,7 +46,7 @@ def SCfeedbackFirstTurn(SC, response_matrix, reference=None, cm_ords=None, bpm_o
 
     Args:
         SC: SimulatedCommissioning class instance.
-        Mplus: Pseudo-inverse trajectory-response matrix.
+        response_matrix: Trajectory-response matrix.
         reference: (None) target orbit in the format `[x_1 ... x_n y_1 ...y_n]`, where
                    [x_i,y_i]` is the target position at the i-th BPM.
         cm_ords: List of CM ordinates to be used for correction (SC.ORD.CM)
@@ -57,14 +57,14 @@ def SCfeedbackFirstTurn(SC, response_matrix, reference=None, cm_ords=None, bpm_o
         SimulatedCommissioning class instance with corrected `SC.RING`
 
     """
-    LOGGER.debug('SCfeedbackFirstTurn: Start')
+    LOGGER.debug('First turn threading: Start')
     bpm_ords, cm_ords, reference = _check_ords(SC, response_matrix, reference, bpm_ords, cm_ords)
     bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, bpm_ords=bpm_ords)  # Inject...
     Mplus = sc_tools.SCgetPinv(response_matrix, **pinv_params)
 
     for n in range(maxsteps):
         if transmission_history[-1] == 0:
-            raise RuntimeError('SCfeedbackFirstTurn: FAIL (no BPM reading to begin with)')
+            raise RuntimeError('First turn threading: FAIL (no BPM reading to begin with)')
         
         # Set BPM readings
         measurement = bpm_readings[:, :].reshape(reference.shape)
@@ -82,15 +82,15 @@ def SCfeedbackFirstTurn(SC, response_matrix, reference=None, cm_ords=None, bpm_o
  
         # Check stopping criteria
         if _is_repro(transmission_history, NREPRO) and transmission_history[-1] == bpm_readings.shape[1]:   # last three the same and full transmission
-            LOGGER.debug('SCfeedbackFirstTurn: Success')
+            LOGGER.debug('First turn threading: Success')
             return SC
         if _is_repro(transmission_history, WIGGLE_AFTER):
             SC = _wiggling(SC, bpm_ords, cm_ords, transmission_history[-1] + 1)
 
-    raise RuntimeError('SCfeedbackFirstTurn: FAIL (maxsteps reached)')
+    raise RuntimeError('First turn threading: FAIL (maxsteps reached)')
 
 
-def SCfeedbackStitch(SC, response_matrix, reference=None, cm_ords=None, bpm_ords=None, nBPMs=4, maxsteps=30, **pinv_params):
+def stitch(SC, response_matrix, reference=None, cm_ords=None, bpm_ords=None, n_bpms=4, maxsteps=30, **pinv_params):
     """
     Achieves 2-turn transmission
 
@@ -104,11 +104,12 @@ def SCfeedbackStitch(SC, response_matrix, reference=None, cm_ords=None, bpm_ords
 
     Args:
         SC: SimulatedCommissioning class instance.
-        Mplus: Pseudo-inverse trajectory-response matrix.
+        response_matrix: Trajectory-response matrix.
         reference: (None) target orbit in the format `[x_1 ... x_n y_1 ...y_n]`, where
                    [x_i,y_i]` is the target position at the i-th BPM.
         cm_ords: List of CM ordinates to be used for correction (SC.ORD.CM)
         bpm_ords: List of BPM ordinates at which the reading should be evaluated (SC.ORD.BPM)
+        n_bpms: Number of BPMs to match the trajectory in first and second turn
         maxsteps: break, if this number of correction steps have been performed (default = 100)
 
     Returns:
@@ -120,17 +121,16 @@ def SCfeedbackStitch(SC, response_matrix, reference=None, cm_ords=None, bpm_ords
         three BPMs, for a maximum of 20 steps::
 
             RM2 = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, nTurns=2)
-            Minv2 = SCgetPinv(RM2, alpha=10)
             SC.INJ.nTurns = 2
-            SC = SCfeedbackStitch(SC, Minv2, nBPMs=3, maxsteps=20)
+            SC = stitch(SC, RM2, alpha=10, nBPMs=3, maxsteps=20)
 
     """
-    LOGGER.debug('SCfeedbackStitch: Start')
+    LOGGER.debug('Second turn stitching: Start')
     if SC.INJ.nTurns != 2:
         raise ValueError("Stitching works only with two turns.")
     bpm_ords, cm_ords, reference = _check_ords(SC, response_matrix, reference, bpm_ords, cm_ords)
     bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, bpm_ords=bpm_ords)  # Inject...
-    transmission_limit = len(bpm_ords) + nBPMs
+    transmission_limit = len(bpm_ords) + n_bpms
     if transmission_history[-1] < len(bpm_ords):
         raise RuntimeError("Stitching works only with full 1st turn transmission.")
     
@@ -151,9 +151,9 @@ def SCfeedbackStitch(SC, response_matrix, reference=None, cm_ords=None, bpm_ords
     # Main loop
     for steps in range(maxsteps):
         # Set BPM readings
-        delta_b = np.zeros((2,len(bpm_ords)))
-        delta_b[0][:nBPMs] = bpm_readings[0][len(bpm_ords):len(bpm_ords) + nBPMs] - bpm_readings[0][:nBPMs]
-        delta_b[1][:nBPMs] = bpm_readings[1][len(bpm_ords):len(bpm_ords) + nBPMs] - bpm_readings[1][:nBPMs]
+        delta_b = np.zeros((2, len(bpm_ords)))
+        delta_b[0][:n_bpms] = bpm_readings[0][len(bpm_ords):len(bpm_ords) + n_bpms] - bpm_readings[0][:n_bpms]
+        delta_b[1][:n_bpms] = bpm_readings[1][len(bpm_ords):len(bpm_ords) + n_bpms] - bpm_readings[1][:n_bpms]
         measurement = np.concatenate((bpm_readings[:, :len(bpm_ords)], delta_b), axis=1).ravel()
         measurement[np.isnan(measurement)] = 0
 
@@ -166,14 +166,14 @@ def SCfeedbackStitch(SC, response_matrix, reference=None, cm_ords=None, bpm_ords
 
         # Check stopping criteria
         if transmission_history[-1] < transmission_history[-2]:
-            RuntimeError('SCfeedbackStitch: FAIL Setback')
+            RuntimeError('Second turn stitching: FAIL Setback')
         if _is_repro(transmission_history, NREPRO) and transmission_history[-1] == bpm_readings.shape[1]:
-            LOGGER.debug('SCfeedbackStitch: Success')
+            LOGGER.debug('Second turn stitching: Success')
             return SC
-    raise RuntimeError('SCfeedbackStitch: FAIL Reached maxsteps')
+    raise RuntimeError('Second turn stitching: FAIL Reached maxsteps')
 
 
-def SCfeedbackBalance(SC, response_matrix, reference=None, cm_ords=None, bpm_ords=None, eps=1e-4, maxsteps=10, **pinv_params):
+def balance(SC, response_matrix, reference=None, cm_ords=None, bpm_ords=None, eps=1e-4, maxsteps=10, **pinv_params):
     """
     Balance two-turn BPM readings
 
@@ -189,7 +189,7 @@ def SCfeedbackBalance(SC, response_matrix, reference=None, cm_ords=None, bpm_ord
 
     Args:
         SC: SimulatedCommissioning class instance.
-        Mplus: Pseudo-inverse trajectory-response matrix.
+        response_matrix: Trajectory-response matrix.
         reference: (None) target orbit in the format `[x_1 ... x_n y_1 ...y_n]`, where
                    [x_i,y_i]` is the target position at the i-th BPM.
         cm_ords: List of CM ordinates to be used for correction (SC.ORD.CM)
@@ -201,7 +201,7 @@ def SCfeedbackBalance(SC, response_matrix, reference=None, cm_ords=None, bpm_ord
         SimulatedCommissioning class instance with corrected `SC.RING`
 
     """
-    LOGGER.debug('SCfeedbackBalance: Start')
+    LOGGER.debug('Balancing two turns: Start')
     if SC.INJ.nTurns != 2:
         raise ValueError("Balancing works only with two turns.")
     bpm_ords, cm_ords, reference = _check_ords(SC, response_matrix, reference, bpm_ords, cm_ords)
@@ -231,32 +231,32 @@ def SCfeedbackBalance(SC, response_matrix, reference=None, cm_ords=None, bpm_ord
 
         # Check stopping criteria
         if transmission_history[-1] < bpm_readings.shape[1]:
-            raise RuntimeError('SCfeedbackBalance: FAIL (lost transmission)')
+            raise RuntimeError('Balancing two turns: FAIL (lost transmission)')
         if _is_stable_or_converged(NREPRO, eps, rms_orbit_history):
-            LOGGER.debug(f'SCfeedbackBalance: Success (converged after {steps} steps)')
+            LOGGER.debug(f'Balancing two turns: Success (converged after {steps} steps)')
             return SC
 
-    raise RuntimeError('SCfeedbackBalance: FAIL (maxsteps reached, unstable)')
+    raise RuntimeError('Balancing two turns: FAIL (maxsteps reached, unstable)')
 
 
-def SCfeedbackRun(SC, response_matrix, reference=None, cm_ords=None, bpm_ords=None, eps=1e-4, target=0, maxsteps=30, scaleDisp=0, **pinv_params):
+def correct(SC, response_matrix, reference=None, cm_ords=None, bpm_ords=None, eps=1e-4, target=0, maxsteps=30, scaleDisp=0, **pinv_params):
     """
-    iterative orbit correction
+    Iterative orbit/trajectory correction
 
     Iteratively applies orbit corrections using the pseudoinverse of the
-    trajectory response matrix `Mplus`, until a break-condition specified by one
+    trajectory `response_matrix`, until a break-condition specified by one
     of 'eps', 'target' or 'maxsteps' is met.
     The dispersion can be included, thus the rf frequency as a correction
-    parameter. If the dispersion is to be included, `Mplus` has to have the size
-    `(len(SC.ORD.HCM) + len(SC.ORD.VCM) + 1) x len(SC.ORD.BPM)`, otherwise the size
-    `(len(SC.ORD.HCM) + len(SC.ORD.VCM)) x len(SC.ORD.BPM)`, or correspondingly if the CM
+    parameter. If the dispersion is to be included, `response_matrix` has to have the size
+    `(2 * len(SC.ORD.BPM)) x (len(SC.ORD.HCM) + len(SC.ORD.VCM) + 1)`, otherwise the size
+    `(2 * len(SC.ORD.BPM)) x (len(SC.ORD.HCM) + len(SC.ORD.VCM))`, or correspondingly if the CM
     and/or BPM ordinates for the correction is explicitly given (see options below). `SC.RING` is
     assumed to be a lattice with transmission through all considered turns.
     Raises RuntimeError if transmission is lost.
 
     Args:
         SC: SimulatedCommissioning class instance.
-        Mplus: Pseudo-inverse trajectory-response matrix.
+        response_matrix: Trajectory/orbit-response matrix.
         reference: (None) target orbit in the format `[x_1 ... x_n y_1 ...y_n]`, where
                    [x_i,y_i]` is the target position at the i-th BPM.
         cm_ords: List of CM ordinates to be used for correction (SC.ORD.CM)
@@ -281,12 +281,12 @@ def SCfeedbackRun(SC, response_matrix, reference=None, cm_ords=None, bpm_ords=No
                                        trackMode='ORB', Z0=np.zeros(6),
                                        nTurns=1, rfStep=1E3,
                                        useIdealRing=True)
-            MinvCO = SCgetPinv(np.column_stack((MCO, 1E8 * eta)), alpha=10)
-            SC = SCfeedbackRun(SC, MinvCO, target=0, maxsteps=50, scaleDisp=1E8)
+            SC = correct(SC, np.column_stack((MCO, 1E8 * eta)), alpha=10, target=0, maxsteps=50, scaleDisp=1E8)
 
     """
-    LOGGER.debug('SCfeedbackRun: Start')
-    bpm_ords, cm_ords, reference = _check_ords(SC, response_matrix, reference, bpm_ords, cm_ords)
+    LOGGER.debug('Orbit/trajectory correction: Start')
+    bpm_ords, cm_ords, reference = _check_ords(SC, response_matrix[:, :-1] if scaleDisp else response_matrix,
+                                               reference, bpm_ords, cm_ords)
     bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, bpm_ords=bpm_ords)  # Inject ...
     Mplus = sc_tools.SCgetPinv(response_matrix, **pinv_params)
 
@@ -307,17 +307,17 @@ def SCfeedbackRun(SC, response_matrix, reference=None, cm_ords=None, bpm_ords=No
 
         # Check stopping criteria
         if np.any(np.isnan(bpm_readings[0, :])):
-            raise RuntimeError('SCfeedbackRun: FAIL (lost transmission)')
+            raise RuntimeError('Orbit/trajectory correction: FAIL (lost transmission)')
         if max(rms_orbit_history[-1]) < target and _is_stable_or_converged(min(NREPRO, maxsteps), eps, rms_orbit_history):
-            LOGGER.debug(f"SCfeedbackRun: Success (target reached after {steps:d} steps)")
+            LOGGER.debug(f"Orbit/trajectory correction: Success (target reached after {steps:d} steps)")
             return SC
         if _is_stable_or_converged(NREPRO, eps, rms_orbit_history):
-            LOGGER.debug(f"SCfeedbackRun: Success (converged after {steps:d} steps)")
+            LOGGER.debug(f"Orbit/trajectory correction: Success (converged after {steps:d} steps)")
             return SC
     if _is_stable_or_converged(min(NREPRO, maxsteps), eps, rms_orbit_history) or maxsteps == 1:
-        LOGGER.debug("SCfeedbackRun: Success (maxsteps reached)")
+        LOGGER.debug("Orbit/trajectory correction: Success (maxsteps reached)")
         return SC
-    raise RuntimeError("SCfeedbackRun: FAIL (maxsteps reached, unstable)")
+    raise RuntimeError("Orbit/trajectory correction: FAIL (maxsteps reached, unstable)")
 
 
 def _check_ords(SC, response_matrix, reference, bpm_ords, cm_ords):

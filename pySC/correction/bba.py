@@ -8,7 +8,7 @@ from pySC.core.classes import DotDict
 from pySC.core.constants import TRACK_TBT, NUM_TO_AB, SETTING_REL, SETTING_ABS
 from pySC.utils.stats import weighted_mean, weighted_error, effective_sample_size, weights_from_errors
 from pySC.utils.at_wrapper import atgetfieldvalues, findspos
-from pySC.correction.orbit_trajectory import SCfeedbackRun
+from pySC.correction import orbit_trajectory
 
 
 LOGGER = logging_tools.get_logger(__name__)
@@ -344,8 +344,8 @@ def _get_orbit_bump(SC, cm_ord, bpm_ord, n_dim, par):  # TODO
     W0[n_dim, max(1, tmpBPMind - par.orbBumpWindow):(tmpBPMind - 1)] = 0
     W0[n_dim, (tmpBPMind + 1):min(len(par.RMstruct.BPMords), tmpBPMind + par.orbBumpWindow)] = 0
 
-    CUR = SCfeedbackRun(SC, par.RMstruct.MinvCO, reference=R0, cm_ords=cm_ords, bpm_ords=par.RMstruct.BPMords, eps=1E-6,
-                        target=0, maxsteps=50, scaleDisp=par.RMstruct.scaleDisp, )
+    CUR = orbit_trajectory.correct(SC, par.RMstruct.RM, reference=R0, cm_ords=cm_ords, bpm_ords=par.RMstruct.BPMords, eps=1E-6,
+                  target=0, maxsteps=50, scaleDisp=par.RMstruct.scaleDisp, )
     cm_vec = []
     factor = np.linspace(-1, 1, par.n_steps)
     for n_dim in range(2):

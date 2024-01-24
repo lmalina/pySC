@@ -1,8 +1,8 @@
 import numpy as np
 from pySC.core.constants import SUPPORT_TYPES, RF_PROPERTIES
-from pySC.correction.orbit_trajectory import SCfeedbackRun
+from pySC.correction import orbit_trajectory
 from pySC.lattice_properties.response_model import SCgetModelRM
-from pySC.utils.sc_tools import SCgetPinv, SCscaleCircumference
+from pySC.utils.sc_tools import SCscaleCircumference
 from pySC.utils import logging_tools
 
 LOGGER = logging_tools.get_logger(__name__)
@@ -15,7 +15,6 @@ def SCrampUpErrors(SC, nStepsRamp=10, eps=1e-5, target=0, alpha=10, maxsteps=30)
     errFieldsRF = ['Offset', 'CalError']
     SC0 = SC
     M = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, nTurns=SC.INJ.nTurns, trackMode=SC.INJ.trackMode)
-    Mplus = SCgetPinv(M, alpha=alpha)
     for scale in np.linspace(1 / nStepsRamp, 1, nStepsRamp):
         LOGGER.debug(f'Ramping up errors with scaling factor {scale:.2f}.')
         SC = scaleSupport(SC, SC0, errFieldsSup, scale)
@@ -25,7 +24,7 @@ def SCrampUpErrors(SC, nStepsRamp=10, eps=1e-5, target=0, alpha=10, maxsteps=30)
         SC = scaleInjection(SC, SC0, scale)
         SC = scaleCircumference(SC, SC0, scale)
         try:
-            SC = SCfeedbackRun(SC, Mplus, target=target, maxsteps=maxsteps, eps=eps)
+            SC = orbit_trajectory.correct(SC, M, alpha=alpha, target=target, maxsteps=maxsteps, eps=eps)
         except RuntimeError:
             if 2 * nStepsRamp > 100:
                 raise Exception(f'Ramping up failed at scaling {scale:.2f} with {nStepsRamp} ramping steps. '
