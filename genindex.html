@@ -70,10 +70,10 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="modules/correction.html">Correction algorithms</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="modules/correction.html#trajectory-and-orbit">Trajectory and Orbit</a></li>
-<li class="toctree-l2"><a class="reference internal" href="modules/correction.html#pySC.correction.orbit_trajectory.SCfeedbackBalance"><code class="docutils literal notranslate"><span class="pre">SCfeedbackBalance()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="modules/correction.html#pySC.correction.orbit_trajectory.SCfeedbackFirstTurn"><code class="docutils literal notranslate"><span class="pre">SCfeedbackFirstTurn()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="modules/correction.html#pySC.correction.orbit_trajectory.SCfeedbackRun"><code class="docutils literal notranslate"><span class="pre">SCfeedbackRun()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="modules/correction.html#pySC.correction.orbit_trajectory.SCfeedbackStitch"><code class="docutils literal notranslate"><span class="pre">SCfeedbackStitch()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/correction.html#pySC.correction.orbit_trajectory.balance"><code class="docutils literal notranslate"><span class="pre">balance()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/correction.html#pySC.correction.orbit_trajectory.correct"><code class="docutils literal notranslate"><span class="pre">correct()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/correction.html#pySC.correction.orbit_trajectory.first_turn"><code class="docutils literal notranslate"><span class="pre">first_turn()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/correction.html#pySC.correction.orbit_trajectory.stitch"><code class="docutils literal notranslate"><span class="pre">stitch()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules/correction.html#rf">RF</a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules/correction.html#pySC.correction.rf.phase_and_energy_error"><code class="docutils literal notranslate"><span class="pre">phase_and_energy_error()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules/correction.html#tune">Tune</a></li>
@@ -133,6 +133,7 @@
 <div class="genindex-jumpbox">
  <a href="#A"><strong>A</strong></a>
  | <a href="#B"><strong>B</strong></a>
+ | <a href="#C"><strong>C</strong></a>
  | <a href="#D"><strong>D</strong></a>
  | <a href="#F"><strong>F</strong></a>
  | <a href="#G"><strong>G</strong></a>
@@ -161,11 +162,21 @@
 <h2 id="B">B</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="modules/core_functions.html#pySC.core.beam.beam_transmission">beam_transmission() (in module pySC.core.beam)</a>
+      <li><a href="modules/correction.html#pySC.correction.orbit_trajectory.balance">balance() (in module pySC.correction.orbit_trajectory)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="modules/core_functions.html#pySC.core.beam.beam_transmission">beam_transmission() (in module pySC.core.beam)</a>
+</li>
       <li><a href="modules/core_functions.html#pySC.core.beam.bpm_reading">bpm_reading() (in module pySC.core.beam)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="C">C</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="modules/correction.html#pySC.correction.orbit_trajectory.correct">correct() (in module pySC.correction.orbit_trajectory)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -188,6 +199,10 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules/logging.html#pySC.utils.logging_tools.file_handler">file_handler() (in module pySC.utils.logging_tools)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="modules/correction.html#pySC.correction.orbit_trajectory.first_turn">first_turn() (in module pySC.correction.orbit_trajectory)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -368,14 +383,6 @@
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="modules/correction.html#pySC.correction.orbit_trajectory.SCfeedbackBalance">SCfeedbackBalance() (in module pySC.correction.orbit_trajectory)</a>
-</li>
-      <li><a href="modules/correction.html#pySC.correction.orbit_trajectory.SCfeedbackFirstTurn">SCfeedbackFirstTurn() (in module pySC.correction.orbit_trajectory)</a>
-</li>
-      <li><a href="modules/correction.html#pySC.correction.orbit_trajectory.SCfeedbackRun">SCfeedbackRun() (in module pySC.correction.orbit_trajectory)</a>
-</li>
-      <li><a href="modules/correction.html#pySC.correction.orbit_trajectory.SCfeedbackStitch">SCfeedbackStitch() (in module pySC.correction.orbit_trajectory)</a>
-</li>
       <li><a href="modules/lattice_properties.html#pySC.lattice_properties.response_model.SCgetModelDispersion">SCgetModelDispersion() (in module pySC.lattice_properties.response_model)</a>
 </li>
       <li><a href="modules/lattice_properties.html#pySC.lattice_properties.response_model.SCgetModelRING">SCgetModelRING() (in module pySC.lattice_properties.response_model)</a>
@@ -388,12 +395,12 @@
 </li>
       <li><a href="modules/utils.html#pySC.utils.sc_tools.SCrandnc">SCrandnc() (in module pySC.utils.sc_tools)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules/core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning.set_cavity_setpoints">set_cavity_setpoints() (pySC.core.simulated_commissioning.SimulatedCommissioning method)</a>
 </li>
       <li><a href="modules/core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning.set_cm_setpoints">set_cm_setpoints() (pySC.core.simulated_commissioning.SimulatedCommissioning method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules/core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning.set_magnet_setpoints">set_magnet_setpoints() (pySC.core.simulated_commissioning.SimulatedCommissioning method)</a>
 </li>
       <li><a href="modules/core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning.set_random_multipole_errors">set_random_multipole_errors() (pySC.core.simulated_commissioning.SimulatedCommissioning method)</a>
@@ -403,6 +410,8 @@
       <li><a href="modules/core_structure.html#pySC.core.classes.Sigmas">Sigmas (class in pySC.core.classes)</a>
 </li>
       <li><a href="modules/core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning">SimulatedCommissioning (class in pySC.core.simulated_commissioning)</a>
+</li>
+      <li><a href="modules/correction.html#pySC.correction.orbit_trajectory.stitch">stitch() (in module pySC.correction.orbit_trajectory)</a>
 </li>
       <li><a href="modules/logging.html#pySC.utils.logging_tools.stream_handler">stream_handler() (in module pySC.utils.logging_tools)</a>
 </li>
