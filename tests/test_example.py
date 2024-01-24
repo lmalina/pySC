@@ -2,12 +2,12 @@ import pytest
 from tests.test_at_wrapper import at_lattice
 import numpy as np
 from pySC.core.simulated_commissioning import SimulatedCommissioning
-from pySC.correction.orbit_trajectory import SCfeedbackFirstTurn, SCfeedbackStitch, SCfeedbackRun, SCfeedbackBalance
+from pySC.correction import orbit_trajectory
 from pySC.core.beam import bpm_reading, beam_transmission
 from pySC.correction.tune import tune_scan
 from pySC.correction.bba import trajectory_bba, fake_bba, _get_bpm_offset_from_mag
 from pySC.lattice_properties.response_model import SCgetModelRM, SCgetModelDispersion
-from pySC.utils.sc_tools import SCgetOrds, SCgetPinv
+from pySC.utils.sc_tools import SCgetOrds
 from pySC.core.lattice_setting import switch_cavity_and_radiation
 from pySC.correction.rf import correct_rf_phase, correct_rf_frequency
 
@@ -69,18 +69,16 @@ def test_example(at_lattice):
     sc.set_magnet_setpoints(sext_ords, 0.0, False, 2, method='abs')
     rm1 = SCgetModelRM(sc, sc.ORD.BPM, sc.ORD.CM, nTurns=1)
     rm2 = SCgetModelRM(sc, sc.ORD.BPM, sc.ORD.CM, nTurns=2)
-    minv1 = SCgetPinv(rm1, alpha=50)
-    minv2 = SCgetPinv(rm2, alpha=50)
     sc.INJ.nParticles = 1
     sc.INJ.nTurns = 1
     sc.INJ.nShots = 1
     sc.INJ.trackMode = 'TBT'
     eps = 5E-4  # Noise level
-    sc = SCfeedbackFirstTurn(sc, minv1)
+    sc = orbit_trajectory.first_turn(sc, rm1, alpha=50)
 
     sc.INJ.nTurns = 2
-    sc = SCfeedbackStitch(sc, minv2, nBPMs=3, maxsteps=20)
-    sc = SCfeedbackBalance(sc, minv2, maxsteps=32, eps=eps)
+    sc = orbit_trajectory.stitch(sc, rm2, alpha=50, n_bpms=3, maxsteps=20)
+    sc = orbit_trajectory.balance(sc, rm2, alpha=50, maxsteps=32, eps=eps)
 
     # Performing BBA
     sc.INJ.nParticles = 1
@@ -99,7 +97,7 @@ def test_example(at_lattice):
     # Turning on the sextupoles
     for rel_setting in np.linspace(0.1, 1, 5):
         sc.set_magnet_setpoints(sext_ords, rel_setting, False, 2, method='rel')
-        sc = SCfeedbackBalance(sc, minv2, maxsteps=32, eps=eps)
+        sc = orbit_trajectory.balance(sc, rm2, alpha=50, maxsteps=32, eps=eps)
 
     sc.RING = switch_cavity_and_radiation(sc.RING, 'cavityon')
 
@@ -116,11 +114,10 @@ def test_example(at_lattice):
     sc.INJ.trackMode = 'ORB'
     mco = SCgetModelRM(sc, sc.ORD.BPM, sc.ORD.CM, trackMode='ORB')
     eta = SCgetModelDispersion(sc, sc.ORD.BPM, sc.ORD.RF)
-
+    resp_with_disp = np.column_stack((mco, 1E8 * eta))
     for alpha in range(10, 0, -1):
-        minv_co = SCgetPinv(np.column_stack((mco, 1E8 * eta)), alpha=alpha)
         try:
-            cur = SCfeedbackRun(sc, minv_co, target=0, maxsteps=50, scaleDisp=1E8)
+            cur = orbit_trajectory.correct(sc, resp_with_disp, alpha=50, target=0, maxsteps=50, scaleDisp=1E8)
         except RuntimeError:
             break
         B0rms = np.sqrt(np.mean(np.square(bpm_reading(sc)[0]), axis=1))

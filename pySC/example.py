@@ -5,7 +5,7 @@ from pySC.correction.bba import trajectory_bba, fake_bba
 from at import Lattice
 from pySC.utils.at_wrapper import atloco
 from pySC.core.simulated_commissioning import SimulatedCommissioning
-from pySC.correction.orbit_trajectory import SCfeedbackFirstTurn, SCfeedbackStitch, SCfeedbackRun, SCfeedbackBalance
+from pySC.correction import orbit_trajectory
 from pySC.core.beam import bpm_reading, beam_transmission
 from pySC.correction.tune import tune_scan
 from pySC.lattice_properties.response_model import SCgetModelRM, SCgetModelDispersion
@@ -112,20 +112,18 @@ if __name__ == "__main__":
     SC.set_magnet_setpoints(sextOrds, 0.0, False, 2, method='abs')
     RM1 = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, nTurns=1)
     RM2 = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, nTurns=2)
-    Minv1 = SCgetPinv(RM1, alpha=50)
-    Minv2 = SCgetPinv(RM2, alpha=50)
     SC.INJ.nParticles = 1
     SC.INJ.nTurns = 1
     SC.INJ.nShots = 1
     SC.INJ.trackMode = 'TBT'
     eps = 5E-4  # Noise level
     bpm_reading(SC)
-    SC = SCfeedbackFirstTurn(SC, Minv1)
+    SC = orbit_trajectory.first_turn(SC, RM1, alpha=50)
 
     SC.INJ.nTurns = 2
-    SC = SCfeedbackStitch(SC, Minv2, nBPMs=3, maxsteps=20)
-    # SC = SCfeedbackRun(SC, Minv2, target=300E-6, maxsteps=30, eps=eps)
-    SC = SCfeedbackBalance(SC, Minv2, maxsteps=32, eps=eps)
+    SC = orbit_trajectory.stitch(SC, RM2, n_bpms=3, maxsteps=20, alpha=50)
+    # SC = orbit_trajectory.correct(SC, RM2, target=300E-6, maxsteps=30, eps=eps, alpha=50)
+    SC = orbit_trajectory.balance(SC, RM2, maxsteps=32, eps=eps, alpha=50)
 
     # plot_cm_strengths(SC)
     # Performing trajectory BBA
@@ -141,7 +139,7 @@ if __name__ == "__main__":
     for rel_setting in np.linspace(0.1, 1, 5):
         SC.set_magnet_setpoints(sextOrds, rel_setting, False, 2, method='rel')
         try:
-            SC = SCfeedbackBalance(SC, Minv2, maxsteps=32, eps=eps)
+            SC = orbit_trajectory.balance(SC, RM2, maxsteps=32, eps=eps, alpha=50)
         except RuntimeError:
             pass
 
@@ -171,11 +169,10 @@ if __name__ == "__main__":
     SC.INJ.trackMode = 'ORB'
     MCO = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, trackMode='ORB')
     eta = SCgetModelDispersion(SC, SC.ORD.BPM, SC.ORD.RF)
-
+    resp_with_disp = np.column_stack((MCO, 1E8 * eta))
     for alpha in range(10, 0, -1):
-        MinvCO = SCgetPinv(np.column_stack((MCO, 1E8 * eta)), alpha=alpha)
         try:
-            CUR = SCfeedbackRun(SC, MinvCO, target=0, maxsteps=50, scaleDisp=1E8)
+            CUR = orbit_trajectory.correct(SC, resp_with_disp, target=0, maxsteps=50, scaleDisp=1E8, alpha=alpha)
         except RuntimeError:
             break
         B0rms = np.sqrt(np.mean(np.square(bpm_reading(SC)[0]), axis=1))
@@ -201,12 +198,11 @@ if __name__ == "__main__":
                                          # {Ords, normal/skew, ind/fam, deltaK}
                                          [SCgetOrds(SC.RING, 'QD'), False, 'individual', 1E-4])
 
-    Morbinv = SCgetPinv(MCO, alpha=50)
     for n in range(6):
         _, bpm_data, cm_data, fit_parameters, loco_flags, ring_data = atloco(loco_meas_data, bpm_data, cm_data,
                                                                              fit_parameters, loco_flags, ring_data)
         SC = apply_lattice_correction(SC, fit_parameters)
-        SC = SCfeedbackRun(SC, Morbinv, target=0, maxsteps=30)
+        SC = orbit_trajectory.correct(SC, MCO, alpha=50, target=0, maxsteps=30)
         if n == 3:
             loco_flags.Coupling = True
             fit_parameters = loco_fit_parameters(SC, init.SC.RING, ring_data, RFstep,

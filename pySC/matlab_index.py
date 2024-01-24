@@ -21,8 +21,7 @@ from pySC.core.classes import DotDict
 from pySC.core.lattice_setting import switch_cavity_and_radiation
 from pySC.correction.bba import trajectory_bba, orbit_bba, fake_bba
 from pySC.correction.injection_fit import fit_injection_trajectory, fit_injection_drift
-from pySC.correction.orbit_trajectory import SCfeedbackFirstTurn as first_turn, SCfeedbackStitch as stitch, \
-    SCfeedbackRun as frun, SCfeedbackBalance as fbalance
+from pySC.correction import orbit_trajectory
 from pySC.correction.ramp_errors import SCrampUpErrors as ramp_up_errors
 from pySC.correction.rf import correct_rf_phase, correct_rf_frequency
 from pySC.correction.tune import tune_scan
@@ -72,28 +71,28 @@ def SCdynamicAperture(RING, dE, /, *, bounds=np.array([0, 1e-3]), nturns=1000, t
 
 
 def SCfeedbackBalance(SC, Mplus, /, *, R0=None, CMords=None, BPMords=None, eps=1e-4, maxsteps=10, verbose=False):
-    return fbalance(SC, Mplus, reference=R0, CMords=CMords, BPMords=BPMords, eps=eps, maxsteps=maxsteps)
+    return orbit_trajectory.balance(SC, np.linalg.pinv(Mplus), reference=R0, cm_ords=CMords, bpm_ords=BPMords,
+                                    eps=eps, maxsteps=maxsteps)
 
 
 def SCfeedbackFirstTurn(SC, Mplus, /, *, R0=None, CMords=None, BPMords=None, maxsteps=100, wiggleAfter=20,
                         wiggleSteps=32, wiggleRange=np.array([500E-6, 1000E-6]), verbose=False):
-    return first_turn(SC, Mplus, reference=R0, CMords=CMords, BPMords=BPMords, maxsteps=maxsteps,
-                      wiggle_after=wiggleAfter,
-                      wiggle_steps=wiggleSteps, wiggle_range=wiggleRange)
+    # wiggle parameters are constants of pySC.correction.orbit_trajectory module
+    return orbit_trajectory.first_turn(SC, np.linalg.pinv(Mplus), reference=R0, cm_ords=CMords, bpm_ords=BPMords,
+                                       maxsteps=maxsteps)
 
 
 def SCfeedbackRun(SC, Mplus, /, *, R0=None, CMords=None, BPMords=None, eps=1e-4, target=0, maxsteps=30, scaleDisp=0,
                   weight=None, verbose=False):
-    return frun(SC, Mplus, reference=R0, CMords=CMords, BPMords=BPMords, eps=eps, target=target, maxsteps=maxsteps,
-                scaleDisp=scaleDisp)
+    return orbit_trajectory.correct(SC, np.linalg.pinv(Mplus), reference=R0, cm_ords=CMords, bpm_ords=BPMords,
+                                    eps=eps, target=target, maxsteps=maxsteps, scaleDisp=scaleDisp)
 
 
 def SCfeedbackStitch(SC, Mplus, /, *, R0=None, CMords=None, BPMords=None, nBPMs=4, maxsteps=30, nRepro=3,
                      wiggle_steps=32,
                      wiggle_range=np.array([500E-6, 1000E-6])):
-    return stitch(SC, Mplus, reference=R0, CMords=CMords, BPMords=BPMords, nBPMs=nBPMs, maxsteps=maxsteps,
-                  nRepro=nRepro,
-                  wiggle_steps=wiggle_steps, wiggle_range=wiggle_range)
+    # wiggle parameters are constants of pySC.correction.orbit_trajectory module
+    return orbit_trajectory.stitch(SC, np.linalg.pinv(Mplus), reference=R0, cm_ords=CMords, bpm_ords=BPMords, n_bpms=nBPMs, maxsteps=maxsteps)
 
 
 def SCfitInjectionZ(SC, mode, /, *, nDims=np.array([0, 1]), nBPMs=np.array([0, 1, 2]), nShots=None, verbose=0,
