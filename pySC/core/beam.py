@@ -5,6 +5,7 @@ Beam
 This module contains the 'beam-based' functions to interact with lattice under study.
 """
 from typing import Tuple
+import warnings
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -12,10 +13,7 @@ from numpy import ndarray
 
 from pySC.core.simulated_commissioning import SimulatedCommissioning
 from pySC.core.constants import TRACK_ORB, TRACK_PORB, TRACK_TBT
-from pySC.utils.sc_tools import SCrandnc
-from pySC.utils.at_wrapper import atgetfieldvalues, atpass, findorbit6, findspos, patpass
-import warnings
-from pySC.utils import logging_tools
+from pySC.utils import at_wrapper, logging_tools, sc_tools
 
 warnings.filterwarnings("ignore", message='Mean of empty slice')
 LOGGER = logging_tools.get_logger(__name__)
@@ -130,7 +128,7 @@ def beam_transmission(SC: SimulatedCommissioning, nParticles: int = None, nTurns
     if nTurns is None:
         nTurns = SC.INJ.nTurns
     LOGGER.debug(f'Calculating maximum beam transmission for {nParticles} particles and {nTurns} turns: ')
-    T = patpass(SC.RING, generate_bunches(SC, nParticles=nParticles), nTurns, np.array([len(SC.RING)]), keep_lattice=False)
+    T = at_wrapper.patpass(SC.RING, generate_bunches(SC, nParticles=nParticles), nTurns, np.array([len(SC.RING)]), keep_lattice=False)
     fraction_survived = np.mean(~np.isnan(T[0, :, :, :]), axis=(0, 1))
     max_turns = np.sum(fraction_survived > 1 - SC.INJ.beamLostAt)
     if plot:
@@ -161,10 +159,10 @@ def generate_bunches(SC: SimulatedCommissioning, nParticles=None) -> ndarray:
     """
     if nParticles is None:
         nParticles = SC.INJ.nParticles
-    Z = np.tile(np.transpose(SC.INJ.randomInjectionZ * SCrandnc(2, (1, 6)) + SC.INJ.Z0), nParticles)
+    Z = np.tile(np.transpose(SC.INJ.randomInjectionZ * sc_tools.randnc(2, (1, 6)) + SC.INJ.Z0), nParticles)
     if nParticles != 1:
         V, L = np.linalg.eig(SC.INJ.beamSize)
-        Z += np.diag(np.sqrt(V)) @ L @ SCrandnc(3, (6, nParticles))
+        Z += np.diag(np.sqrt(V)) @ L @ sc_tools.randnc(3, (6, nParticles))
     return SC.INJ.postFun(Z)
 
 
@@ -183,12 +181,12 @@ def plot_transmission(ax, fraction_survived, n_turns, beam_lost_at):
 def _real_bpm_reading(SC, track_mat, bpm_inds=None):  # track_mat should be only x,y over all particles only at BPM positions
     n_bpms, nTurns = track_mat.shape[2:]
     bpm_ords = SC.ORD.BPM if bpm_inds is None else SC.ORD.BPM[bpm_inds]
-    bpm_noise = np.transpose(atgetfieldvalues(SC.RING, bpm_ords, ('NoiseCO' if SC.INJ.trackMode == 'ORB' else "Noise")))
-    bpm_noise = bpm_noise[:, :, np.newaxis] * SCrandnc(2, (2, n_bpms, nTurns))
-    bpm_offset = np.transpose(atgetfieldvalues(SC.RING, bpm_ords, 'Offset') + atgetfieldvalues(SC.RING, bpm_ords, 'SupportOffset'))
-    bpm_cal_error = np.transpose(atgetfieldvalues(SC.RING, bpm_ords, 'CalError'))
-    bpm_roll = np.squeeze(atgetfieldvalues(SC.RING, bpm_ords, 'Roll') + atgetfieldvalues(SC.RING, bpm_ords, 'SupportRoll'), axis=1)
-    bpm_sum_error = np.transpose(atgetfieldvalues(SC.RING, bpm_ords, 'SumError'))[:, np.newaxis] * SCrandnc(2, (n_bpms, nTurns))
+    bpm_noise = np.transpose(at_wrapper.atgetfieldvalues(SC.RING, bpm_ords, ('NoiseCO' if SC.INJ.trackMode == 'ORB' else "Noise")))
+    bpm_noise = bpm_noise[:, :, np.newaxis] * sc_tools.randnc(2, (2, n_bpms, nTurns))
+    bpm_offset = np.transpose(at_wrapper.atgetfieldvalues(SC.RING, bpm_ords, 'Offset') + at_wrapper.atgetfieldvalues(SC.RING, bpm_ords, 'SupportOffset'))
+    bpm_cal_error = np.transpose(at_wrapper.atgetfieldvalues(SC.RING, bpm_ords, 'CalError'))
+    bpm_roll = np.squeeze(at_wrapper.atgetfieldvalues(SC.RING, bpm_ords, 'Roll') + at_wrapper.atgetfieldvalues(SC.RING, bpm_ords, 'SupportRoll'), axis=1)
+    bpm_sum_error = np.transpose(at_wrapper.atgetfieldvalues(SC.RING, bpm_ords, 'SumError'))[:, np.newaxis] * sc_tools.randnc(2, (n_bpms, nTurns))
     # averaging the X and Y positions at BPMs over particles
     mean_orbit = np.nanmean(track_mat, axis=1)
     transmission = np.mean(~np.isnan(track_mat[0, :, :, :]), axis=0) * (1 + bpm_sum_error)
@@ -211,9 +209,9 @@ def _tracking(SC: SimulatedCommissioning, refs: ndarray) -> ndarray:
     #  lattice_pass output:            (6, N, R, T) coordinates of N particles at R reference points for T turns.
     #  findorbit second output value:  (R, 6) closed orbit vector at each specified location
     if SC.INJ.trackMode == TRACK_ORB:
-        pos = np.transpose(findorbit6(SC.RING, refs, keep_lattice=False)[1])[[0, 2], :].reshape(2, 1, len(refs), 1)
+        pos = np.transpose(at_wrapper.findorbit6(SC.RING, refs, keep_lattice=False)[1])[[0, 2], :].reshape(2, 1, len(refs), 1)
     else:
-        pos = atpass(SC.RING, generate_bunches(SC), SC.INJ.nTurns, refs, keep_lattice=False)[[0, 2], :, :, :]
+        pos = at_wrapper.atpass(SC.RING, generate_bunches(SC), SC.INJ.nTurns, refs, keep_lattice=False)[[0, 2], :, :, :]
     pos[1, np.isnan(pos[0, :, :, :])] = np.nan
     return pos
 
@@ -235,7 +233,7 @@ def _reshape_3d_to_matlab_like_2d(mean_bpm_orbits_3d: ndarray) -> ndarray:
 def _plot_bpm_reading(SC, bpm_orbits_3d, bpm_inds=None, all_readings_5d=None):
     ap_ords, apers = _get_ring_aperture(SC)
     fig, ax = plt.subplots(num=1, nrows=2, ncols=1, sharex="all", figsize=(8, 6), dpi=100, facecolor="w")
-    s_pos = findspos(SC.RING)
+    s_pos = at_wrapper.findspos(SC.RING)
     circumference = s_pos[-1]
     bpms = SC.ORD.BPM if bpm_inds is None else SC.ORD.BPM[bpm_inds]
     if all_readings_5d is not None:

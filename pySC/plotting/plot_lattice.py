@@ -5,7 +5,7 @@ import warnings
 from pySC.core.simulated_commissioning import SimulatedCommissioning
 from pySC.plotting.plot_synoptic import plot_synoptic
 from pySC.plotting.plot_apertures import plot_data_apertures, plot_data_beta_disp, baseplot
-from pySC.utils.at_wrapper import findspos
+from pySC.utils import at_wrapper
 
 warnings.filterwarnings("ignore", message='Legend does not support handles for PatchCollection instances.')
 
@@ -97,7 +97,7 @@ def plot_cm_strengths(SC: SimulatedCommissioning):
     init_font = plt.rcParams["font.size"]
     plt.rcParams.update({'font.size': 18})
     f, ax = plt.subplots(nrows=2, num=86, figsize=(9, 7.5), facecolor="w")
-    s_pos = findspos(SC.RING)
+    s_pos = at_wrapper.findspos(SC.RING)
     for n_dim in range(2):
         setpoints = 1E6 * SC.get_cm_setpoints(SC.ORD.CM[n_dim], skewness=bool(n_dim))
         count, bins_count = np.histogram(setpoints, bins=len(setpoints))
@@ -120,8 +120,8 @@ def _get_s_range(ring, s_range, indices, n_sectors):
     if s_range is not None:
         return s_range
     if indices is not None:
-        s_pos = findspos(ring)
+        s_pos = at_wrapper.findspos(ring)
         return s_pos[np.min(indices)], s_pos[np.max(indices)]
     if n_sectors is not None:
-        return 0, findspos(ring)[-1] / n_sectors
+        return 0, at_wrapper.findspos(ring)[-1] / n_sectors
     return ring.s_range

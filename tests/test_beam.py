@@ -2,8 +2,8 @@ import pytest
 import numpy as np
 from numpy.testing import assert_equal
 from pySC.core.beam import bpm_reading, all_elements_reading, beam_transmission, generate_bunches
-from pySC.utils.sc_tools import SCgetOrds
 from pySC.core.simulated_commissioning import SimulatedCommissioning
+from pySC.utils import sc_tools
 from tests.test_at_wrapper import at_lattice
 
 
@@ -55,7 +55,7 @@ def test_generate_bunches_basic(sc):
 @pytest.fixture
 def sc(at_lattice):
     SC = SimulatedCommissioning(at_lattice)
-    SC.register_bpms(SCgetOrds(SC.RING, 'BPM'), CalError=5E-2 * np.ones(2),
+    SC.register_bpms(sc_tools.ords_from_regex(SC.RING, 'BPM'), CalError=5E-2 * np.ones(2),
                      Offset=500E-6 * np.ones(2),
                      Noise=10E-6 * np.ones(2),
                      NoiseCO=0E-6 * np.ones(2),
