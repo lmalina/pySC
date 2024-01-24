@@ -11,7 +11,7 @@ from scipy.optimize import fmin
 
 from pySC.core.beam import beam_transmission, plot_transmission
 from pySC.utils import logging_tools
-from pySC.utils.at_wrapper import atlinopt
+
 
 LOGGER = logging_tools.get_logger(__name__)
 
@@ -149,9 +149,9 @@ def fit_tune(SC, q_ords, target_tune=None, init_step_size=np.array([0.0001, 0.00
             SC = fit_tune(SC, q_ords=[SCgetOrds(sc.RING, 'QF'), SCgetOrds(sc.RING, 'QD')], target_tune=numpy.array([0.16,0.21]))
         """
     if target_tune is None:
-        target_tune = SC.IDEALRING.get_tune(get_integer=fit_integer)
+        target_tune = SC.IDEALRING.get_tune(get_integer=fit_integer)[:2]
     LOGGER.debug(f'Fitting tunes from [{SC.RING.get_tune(get_integer=fit_integer)}] to [{target_tune}].')
-    fun = lambda x: _fit_tune_fun(SC, q_ords, x,target_tune, fit_integer)
+    fun = lambda x: _fit_tune_fun(SC, q_ords, x, target_tune, fit_integer)
     sol = fmin(fun, init_step_size, xtol=xtol, ftol=ftol)
     LOGGER.debug(f'       Final tune: [{SC.RING.get_tune(get_integer=fit_integer)}]\n  Setpoints change: [{sol}]')
     return SC
@@ -159,6 +159,7 @@ def fit_tune(SC, q_ords, target_tune=None, init_step_size=np.array([0.0001, 0.00
 
 def _fit_tune_fun(SC, q_ords, setpoints, target, fit_integer):
     for nFam in range(len(q_ords)):
+        # TODO check the add method here
         SC.set_magnet_setpoints(q_ords[nFam], setpoints[nFam], False, 1, method='add', dipole_compensation=True)
     nu = SC.RING.get_tune(get_integer=fit_integer)[:2]
     return np.sqrt(np.mean((nu - target) ** 2))
