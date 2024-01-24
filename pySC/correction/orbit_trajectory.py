@@ -12,9 +12,8 @@ import numpy as np
 from typing import Tuple
 
 from pySC.core.beam import bpm_reading
-from pySC.utils import logging_tools
-from pySC.utils import sc_tools
 from pySC.core.constants import SETTING_ADD
+from pySC.utils import logging_tools, sc_tools
 
 LOGGER = logging_tools.get_logger(__name__)
 NREPRO: int = 5
@@ -60,7 +59,7 @@ def first_turn(SC, response_matrix, reference=None, cm_ords=None, bpm_ords=None,
     LOGGER.debug('First turn threading: Start')
     bpm_ords, cm_ords, reference = _check_ords(SC, response_matrix, reference, bpm_ords, cm_ords)
     bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, bpm_ords=bpm_ords)  # Inject...
-    Mplus = sc_tools.SCgetPinv(response_matrix, **pinv_params)
+    Mplus = sc_tools.pinv(response_matrix, **pinv_params)
 
     for n in range(maxsteps):
         if transmission_history[-1] == 0:
@@ -146,7 +145,7 @@ def stitch(SC, response_matrix, reference=None, cm_ords=None, bpm_ords=None, n_b
     reference = reference.reshape(2, len(bpm_readings[0]))
     reference[:, len(bpm_ords):] = 0
     reference = reference.reshape(response_matrix.shape[0])
-    Mplus = sc_tools.SCgetPinv(response_matrix, **pinv_params)
+    Mplus = sc_tools.pinv(response_matrix, **pinv_params)
 
     # Main loop
     for steps in range(maxsteps):
@@ -213,7 +212,7 @@ def balance(SC, response_matrix, reference=None, cm_ords=None, bpm_ords=None, ep
     reference = reference.reshape(2, len(bpm_readings[0]))
     reference[:, len(bpm_ords):] = 0
     reference = reference.reshape(response_matrix.shape[0])
-    Mplus = sc_tools.SCgetPinv(response_matrix, **pinv_params)
+    Mplus = sc_tools.pinv(response_matrix, **pinv_params)
 
     # Main loop
     for steps in range(maxsteps):
@@ -288,7 +287,7 @@ def correct(SC, response_matrix, reference=None, cm_ords=None, bpm_ords=None, ep
     bpm_ords, cm_ords, reference = _check_ords(SC, response_matrix[:, :-1] if scaleDisp else response_matrix,
                                                reference, bpm_ords, cm_ords)
     bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, bpm_ords=bpm_ords)  # Inject ...
-    Mplus = sc_tools.SCgetPinv(response_matrix, **pinv_params)
+    Mplus = sc_tools.pinv(response_matrix, **pinv_params)
 
     # Main loop
     for steps in range(maxsteps):

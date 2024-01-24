@@ -3,8 +3,7 @@ import numpy as np
 import pytest
 from pathlib import Path
 from pySC.core.simulated_commissioning import SimulatedCommissioning
-from pySC.utils.sc_tools import SCgetOrds
-from pySC.utils import logging_tools
+from pySC.utils import logging_tools, sc_tools
 from pySC.correction import loco
 from pySC.lattice_properties.response_model import SCgetModelRM, SCgetModelDispersion
 
@@ -15,21 +14,21 @@ INPUTS = Path(__file__).parent / "inputs"
 def test_loco_hmba(at_ring):
     np.random.seed(12345678)
     sc = SimulatedCommissioning(at_ring)
-    sc.register_bpms(SCgetOrds(sc.RING, 'BPM'), Roll=0.0, CalError=1E-2 * np.ones(2), NoiseCO=np.array([1e-7, 1E-7]))
-    sc.register_magnets(SCgetOrds(sc.RING, 'QF|QD'), CalErrorB=np.array([0, 1E-2]))  # relative
-    sc.register_magnets(SCgetOrds(sc.RING, 'CXY'), CalErrorA=np.array([1E-4, 0]), CalErrorB=np.array([1E-4, 0]))
-    sc.register_magnets(SCgetOrds(sc.RING, 'BEND'))
-    sc.register_magnets(SCgetOrds(sc.RING, 'SF|SD'))  # [1/m]
-    sc.register_cavities(SCgetOrds(sc.RING, 'RFC'))
+    sc.register_bpms(sc_tools.ords_from_regex(sc.RING, 'BPM'), Roll=0.0, CalError=1E-2 * np.ones(2), NoiseCO=np.array([1e-7, 1E-7]))
+    sc.register_magnets(sc_tools.ords_from_regex(sc.RING, 'QF|QD'), CalErrorB=np.array([0, 1E-2]))  # relative
+    sc.register_magnets(sc_tools.ords_from_regex(sc.RING, 'CXY'), CalErrorA=np.array([1E-4, 0]), CalErrorB=np.array([1E-4, 0]))
+    sc.register_magnets(sc_tools.ords_from_regex(sc.RING, 'BEND'))
+    sc.register_magnets(sc_tools.ords_from_regex(sc.RING, 'SF|SD'))  # [1/m]
+    sc.register_cavities(sc_tools.ords_from_regex(sc.RING, 'RFC'))
     sc.apply_errors()
-    cor_ords = SCgetOrds(sc.RING, 'CXY')
+    cor_ords = sc_tools.ords_from_regex(sc.RING, 'CXY')
 
     used_correctors1 = loco.select_equally_spaced_elements(cor_ords, 10)
     used_correctors2 = loco.select_equally_spaced_elements(cor_ords, 10)
     used_cor_ords = [used_correctors1, used_correctors2]
     used_bpms_ords = loco.select_equally_spaced_elements(sc.ORD.BPM, len(sc.ORD.BPM))
-    cav_ords = SCgetOrds(sc.RING, 'RFC')
-    quads_ords = [SCgetOrds(sc.RING, 'QF'), SCgetOrds(sc.RING, 'QD')]
+    cav_ords = sc_tools.ords_from_regex(sc.RING, 'RFC')
+    quads_ords = [sc_tools.ords_from_regex(sc.RING, 'QF'), sc_tools.ords_from_regex(sc.RING, 'QD')]
 
     CMstep = np.array([1.e-4])  # correctors change [rad]
     dk = 1.e-4  # quads change

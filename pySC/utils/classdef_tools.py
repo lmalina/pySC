@@ -1,7 +1,7 @@
 import numpy as np
 
 from pySC.core.constants import SETTING_METHODS
-from pySC.utils.sc_tools import SCrandnc
+from pySC.utils import sc_tools
 
 
 def update_double_ordinates(ords1, ords2):
@@ -16,8 +16,8 @@ def intersect(primary, secondary):
 
 def randn_cutoff(field, default_cut_off):
     if isinstance(field, list):
-        return field[0] * SCrandnc(field[1], np.shape(field[0]))
-    return field * SCrandnc(default_cut_off, np.shape(field))
+        return field[0] * sc_tools.randnc(field[1], np.shape(field[0]))
+    return field * sc_tools.randnc(default_cut_off, np.shape(field))
 
 
 def add_padded(v1, v2):

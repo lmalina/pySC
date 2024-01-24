@@ -34,9 +34,8 @@ from pySC.lattice_properties.response_model import SCgetModelRM as model_rm, SCg
 from pySC.plotting.plot_lattice import plot_lattice, plot_cm_strengths
 from pySC.plotting.plot_phase_space import plot_phase_space
 from pySC.plotting.plot_support import plot_support
-from pySC.utils import logging_tools
-from pySC.utils.sc_tools import SCgetOrds as get_ords, SCgetPinv as get_pinv, SCrandnc as randnc, \
-    SCscaleCircumference as scale_circumference, update_transformation, SCmultipolesRead as read_multipoles
+from pySC.utils import logging_tools, sc_tools
+
 
 LOGGER = logging_tools.get_logger(__name__)
 LOGGER.warn("Matlab_index imported: \n"
@@ -149,11 +148,11 @@ def SCgetModelRM(SC, BPMords, CMords, /, *, trackMode='TBT', Z0=np.zeros(6), nTu
 
 
 def SCgetOrds(ring: Lattice, regex: str, /, *, verbose: bool = False) -> ndarray:
-    return get_ords(ring=ring, regex=regex)
+    return sc_tools.ords_from_regex(ring=ring, regex=regex)
 
 
 def SCgetPinv(matrix: ndarray, /, *, N: int = 0, alpha: float = 0, damping: float = 1, plot: bool = False) -> ndarray:
-    return get_pinv(matrix=matrix, num_removed=N, alpha=alpha, damping=damping, plot=plot)
+    return sc_tools.pinv(matrix=matrix, num_removed=N, alpha=alpha, damping=damping, plot=plot)
 
 
 def SCgetRespMat(SC, Amp, BPMords, CMords, /, *, mode='fixedKick', nSteps=2, fit='linear', verbose=0):
@@ -177,7 +176,7 @@ def SCgetTransformation(dx, dy, dz, ax, ay, az, magTheta, magLength, refPoint='c
         dict(Length=magLength, BendingAngle=magTheta, SupportOffset=np.zeros(3), SupportRoll=np.zeros(3),
              MagnetOffset=np.array([dx, dy, dz]),
              MagnetRoll=np.roll(np.array([ax, ay, az]), 1)))  # inside the function, it will be rolled back
-    fake_element = update_transformation(fake_element)
+    fake_element = sc_tools.update_transformation(fake_element)
     return fake_element.T1, fake_element.T2, fake_element.R1, fake_element.R2
 
 
@@ -194,7 +193,7 @@ def SCmomentumAperture(RING, REFPTS, inibounds, /, *, nturns=1000, accuracy=1e-4
 
 
 def SCmultipolesRead(fname):
-    return read_multipoles(fname)
+    return sc_tools.read_multipoles(fname)
 
 
 def SCparticlesIn3D(*args):
@@ -236,7 +235,7 @@ def SCrampUpErrors(SC, /, *, nStepsRamp=10, eps=1e-5, target=0, alpha=10, maxste
 
 
 def SCrandnc(cut_off: float = 2, shape: tuple = (1,)) -> ndarray:
-    return randnc(cut_off, shape)
+    return sc_tools.randnc(cut_off, shape)
 
 
 def SCregisterBPMs(SC: SimulatedCommissioning, BPMords: ndarray, **kwargs) -> SimulatedCommissioning:
@@ -265,7 +264,7 @@ def SCSanityCheck(SC: SimulatedCommissioning) -> None:
 
 
 def SCscaleCircumference(RING, circ, /, *, mode='abs'):
-    return scale_circumference(RING, circ, mode=mode)
+    return sc_tools.scale_circumference(RING, circ, mode=mode)
 
 
 def SCsetCavs2SetPoints(SC: SimulatedCommissioning, CAVords: ndarray, type: str, setpoints: ndarray, /, *,

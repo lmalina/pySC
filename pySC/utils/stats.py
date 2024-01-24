@@ -16,7 +16,7 @@ LOGGER = logging_tools.get_logger(__name__)
 
 CONFIDENCE_LEVEL = (1 + erf(1 / np.sqrt(2))) / 2
 PI2: float = 2 * np.pi
-PI2I: float = 2j * np.pi
+PI2I: complex = 2j * np.pi
 
 
 def circular_mean(data, period=PI2, errors=None, axis=None):

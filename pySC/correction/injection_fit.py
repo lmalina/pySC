@@ -1,18 +1,18 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy import ndarray
-from pySC.core.beam import bpm_reading
-from pySC.utils.at_wrapper import atpass, findspos
-from pySC.utils import logging_tools
 from scipy.optimize import fmin
+from pySC.core.beam import bpm_reading
 from pySC.core.simulated_commissioning import SimulatedCommissioning
+from pySC.utils import at_wrapper, logging_tools
 
 LOGGER = logging_tools.get_logger(__name__)
 PLANE_STR = ('Hor.', 'Ver.')
 
+
 def fit_injection_drift(SC: SimulatedCommissioning, n_dims: ndarray = np.array([0, 1]), plot: bool = False):
     # uses SC.INJ.nShots
-    s_pos = findspos(SC.RING)
+    s_pos = at_wrapper.findspos(SC.RING)
     bpm_inds = np.arange(2, dtype=int) + len(SC.ORD.BPM) - 1
     bref = bpm_reading(SC)[0][:, bpm_inds]
     s_bpm = np.array([s_pos[SC.ORD.BPM[-1]] - s_pos[-1], s_pos[SC.ORD.BPM[0]]])
@@ -36,7 +36,7 @@ def fit_injection_drift(SC: SimulatedCommissioning, n_dims: ndarray = np.array([
 
 def fit_injection_trajectory(SC: SimulatedCommissioning, bpm_inds: ndarray = np.array([0, 1, 2]), plot: bool = False):
     # uses SC.INJ.nShots
-    s_pos = findspos(SC.RING)
+    s_pos = at_wrapper.findspos(SC.RING)
     bref = bpm_reading(SC)[0][:, bpm_inds]
     delta_z0 = np.zeros(6)
     delta_z0[0:4] = -fmin(_merit_function, np.zeros(4), args=(SC, bref, SC.ORD.BPM[bpm_inds]))
@@ -68,7 +68,7 @@ def _fit_bpm_data(s_bpm, bref):
 
 
 def _merit_function(x, SC, bref, ords_used):
-    t = atpass(SC.IDEALRING, np.concatenate((x, np.zeros(2))), 1, ords_used, keep_lattice=False)[[0, 2], 0, :, 0]
+    t = at_wrapper.atpass(SC.IDEALRING, np.concatenate((x, np.zeros(2))), 1, ords_used, keep_lattice=False)[[0, 2], 0, :, 0]
     return np.sqrt(np.mean(bref - t) ** 2)
 
 

@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import Polygon
 
-from pySC.utils.at_wrapper import findspos
+from pySC.utils import at_wrapper
 
 MONITOR = "monitor"
 NORMAL_KWARGS = ("dipole", "quadrupole", "sextupole", "multipole", MONITOR)
@@ -27,7 +27,7 @@ def plot_synoptic(SC, axes: matplotlib.axes.Axes = None, correctors: bool = Fals
     if axes is None:
         axsyn.set_zorder(-0.2)       # Put synoptic in the background
 
-    s_pos = findspos(ring)[:-1]
+    s_pos = at_wrapper.findspos(ring)[:-1]
 
     if famnames:
         #  get fam name of each main multipole

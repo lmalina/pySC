@@ -1,17 +1,17 @@
 import re
 
 import numpy as np
-from at import Lattice
 from matplotlib import pyplot as plt
 from numpy import ndarray
+from at import Lattice
 
-from pySC.utils.at_wrapper import findspos
-from pySC.utils import logging_tools
+from pySC.utils import at_wrapper, logging_tools
+
 
 LOGGER = logging_tools.get_logger(__name__)
 
 
-def SCrandnc(cut_off: float = 2, shape: tuple = (1, )) -> ndarray:
+def randnc(cut_off: float = 2, shape: tuple = (1,)) -> ndarray:
     """
     Generates an array of random number(s) from normal distribution with a cut-off.
 
@@ -36,7 +36,7 @@ def SCrandnc(cut_off: float = 2, shape: tuple = (1, )) -> ndarray:
     return out.reshape(out_shape)
 
 
-def SCgetOrds(ring: Lattice, regex: str) -> ndarray:
+def ords_from_regex(ring: Lattice, regex: str) -> ndarray:
     """
     Returns the indices of the elements in the ring whose names match the regex.
 
@@ -58,7 +58,7 @@ def SCgetOrds(ring: Lattice, regex: str) -> ndarray:
     return indices
 
 
-def SCgetPinv(matrix: ndarray, num_removed: int = 0, alpha: float = 0, damping: float = 1, plot: bool = False) -> ndarray:
+def pinv(matrix: ndarray, num_removed: int = 0, alpha: float = 0, damping: float = 1, plot: bool = False) -> ndarray:
     """
     Computes the pseudo-inverse of a matrix using the Singular Value Decomposition (SVD) method.
 
@@ -93,11 +93,11 @@ def SCgetPinv(matrix: ndarray, num_removed: int = 0, alpha: float = 0, damping: 
     return matrix_inv
 
 
-def SCscaleCircumference(RING, circ, mode='abs'):  # TODO
+def scale_circumference(RING, circ, mode='abs'):  # TODO
     allowed_modes = ("abs", "rel")
     if mode not in allowed_modes:
         raise ValueError(f'Unsupported circumference scaling mode: ``{mode}``. Allowed are {allowed_modes}.')
-    C = findspos(RING)[-1]
+    C = at_wrapper.findspos(RING)[-1]
     D = 0
     for ind in range(len(RING)):
         if RING[ind].PassMethod == 'DriftPass':
@@ -142,7 +142,7 @@ def update_transformation(element):
     return element
 
 
-def SCmultipolesRead(fname):  # TODO sample of the input anywhere?
+def read_multipoles(fname):  # TODO sample of the input anywhere?
     f = open(fname, 'r')
     tab = np.array(f.read().split()).astype(float)
     f.close()
