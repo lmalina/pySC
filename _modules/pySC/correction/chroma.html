@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>pySC.core.lattice_setting &mdash; pySC 0.1.0 documentation</title>
+  <title>pySC.correction.chroma &mdash; pySC 0.1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=fa44fd50" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=988d0652" />
@@ -120,7 +120,7 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
-      <li class="breadcrumb-item active">pySC.core.lattice_setting</li>
+      <li class="breadcrumb-item active">pySC.correction.chroma</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -129,75 +129,64 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <h1>Source code for pySC.core.lattice_setting</h1><div class="highlight"><pre>
+  <h1>Source code for pySC.correction.chroma</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">Lattice setting</span>
+<span class="sd">Chromaticity</span>
 <span class="sd">-------------</span>
 
-<span class="sd">This module contains the &#39;machine-based&#39; functions to interact with lattice under study.</span>
+<span class="sd">This module contains functions to fit the chromaticity of &#39;SC.RING&#39;.</span>
 <span class="sd">&quot;&quot;&quot;</span>
+
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">at</span> <span class="kn">import</span> <span class="n">Lattice</span>
-<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">ndarray</span>
+<span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">fmin</span>
+
 <span class="kn">from</span> <span class="nn">pySC.utils</span> <span class="kn">import</span> <span class="n">logging_tools</span>
 
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging_tools</span><span class="o">.</span><span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">switch_rf</span><span class="p">(</span><span class="n">ring</span><span class="p">:</span> <span class="n">Lattice</span><span class="p">,</span> <span class="n">ords</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Lattice</span><span class="p">:</span>
-    <span class="n">cavs</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">ords</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">))</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">ring</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="s1">&#39;Frequency&#39;</span><span class="p">)]</span>
-    <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="n">cavs</span><span class="p">:</span>
-        <span class="n">ring</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span><span class="o">.</span><span class="n">PassMethod</span> <span class="o">=</span> <span class="s1">&#39;RFCavityPass&#39;</span> <span class="k">if</span> <span class="n">state</span> <span class="k">else</span> <span class="s1">&#39;IdentityPass&#39;</span>
-    <span class="k">return</span> <span class="n">ring</span>
-
-
-<div class="viewcode-block" id="switch_cavity_and_radiation"><a class="viewcode-back" href="../../../modules/core_functions.html#pySC.core.lattice_setting.switch_cavity_and_radiation">[docs]</a><span class="k">def</span> <span class="nf">switch_cavity_and_radiation</span><span class="p">(</span><span class="n">ring</span><span class="p">:</span> <span class="n">Lattice</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Lattice</span><span class="p">:</span>  <span class="c1"># TODO some at methods do that?</span>
+<div class="viewcode-block" id="fit_chroma"><a class="viewcode-back" href="../../../modules/correction.html#pySC.correction.chroma.fit_chroma">[docs]</a><span class="k">def</span> <span class="nf">fit_chroma</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">s_ords</span><span class="p">,</span> <span class="n">target_chroma</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">init_step_size</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">]),</span> <span class="n">xtol</span><span class="o">=</span><span class="mf">1E-4</span><span class="p">,</span> <span class="n">ftol</span><span class="o">=</span><span class="mf">1E-3</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    switch cavity / radiation to on / off</span>
-
-<span class="sd">    Depending on `mode` switch_cavity_and_radiation switches the cavities / the radiation in `RING` on or off.</span>
-<span class="sd">    Possible `mode`s are &quot;radiationoff&quot;, &quot;radiationon&quot;, &quot;cavityoff&quot;, &quot;cavityon&quot;.</span>
-<span class="sd">    Multiple modes can be specified.</span>
+<span class="sd">    Applies a chromaticity correction using two sextupole families.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        ring:</span>
-<span class="sd">            AT lattice, for example SC.RING</span>
-<span class="sd">        &quot;radiationoff&quot;: turn OFF radiation.  Priority is given to the *OFF modes.</span>
-<span class="sd">        &quot;radiationon&quot;: turn ON radiation.  Priority is given to the *OFF modes.</span>
-<span class="sd">        &quot;cavityoff&quot;: turn OFF cavity.  Priority is given to the *OFF modes.</span>
-<span class="sd">        &quot;cavityon&quot; : turn ON cavity.  Priority is given to the *OFF modes.</span>
+<span class="sd">        SC: SimulatedCommissioning instance</span>
+<span class="sd">        s_ords: [2xN] array or list [[1 x NS1],[1 x NS2], [1 x NS3], ...] of sextupole ordinates</span>
+<span class="sd">        target_chroma ([1x2] array, optional): Target chromaticity for correction. Default: chromaticity of &#39;SC.IDEALRING&#39;</span>
+<span class="sd">        init_step_size ([1x2] array, optional): Initial step size for the solver. Default: [2,2]</span>
+<span class="sd">        xtol(float, optional): Step tolerance for solver. Default: 1e-4</span>
+<span class="sd">        ftol(float, optional): Merit tolerance for solver. Default: 1e-3</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        ring:</span>
-<span class="sd">            The modified base AT structure lattice.</span>
-
-<span class="sd">    Examples:</span>
-<span class="sd">        Switch cavities and radiation in `SC.RING` off.::</span>
-
-<span class="sd">            SC.RING = switch_cavity_and_radiation(SC.RING, &#39;cavityoff&#39;, &#39;radiationoff&#39;)</span>
+<span class="sd">        SC: SimulatedCommissioning instance with corrected chromaticity.</span>
+<span class="sd">    Example:</span>
+<span class="sd">        SC = fit_chroma(SC, s_ords=[SCgetOrds(sc.RING, &#39;SF&#39;), SCgetOrds(sc.RING, &#39;SD&#39;)], target_chroma=numpy.array([1,1]))</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">target_chroma</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">target_chroma</span> <span class="o">=</span> <span class="n">SC</span><span class="o">.</span><span class="n">IDEALRING</span><span class="o">.</span><span class="n">get_chrom</span><span class="p">()[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">target_chroma</span><span class="p">)):</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Target chromaticity must not contain NaN. Aborting.&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">SC</span>
 
-    <span class="n">valid_args</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;radiationoff&#39;</span><span class="p">,</span> <span class="s1">&#39;radiationon&#39;</span><span class="p">,</span> <span class="s1">&#39;cavityoff&#39;</span><span class="p">,</span> <span class="s1">&#39;cavityon&#39;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">invalid_args</span> <span class="o">:=</span> <span class="p">[</span><span class="n">arg</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span> <span class="k">if</span> <span class="n">arg</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid_args</span><span class="p">]:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown arguments found: </span><span class="si">{</span><span class="n">invalid_args</span><span class="si">}</span><span class="s2">&quot;</span>
-                         <span class="sa">f</span><span class="s2">&quot;Available options are: </span><span class="si">{</span><span class="n">valid_args</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="n">non_rad_pass_methods</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;BndMPoleSymplectic4Pass&#39;</span><span class="p">,</span> <span class="s1">&#39;BndMPoleSymplectic4E2Pass&#39;</span><span class="p">,</span> <span class="s1">&#39;StrMPoleSymplectic4Pass&#39;</span><span class="p">]</span>
-    <span class="n">rad_pass_methods</span> <span class="o">=</span> <span class="p">[</span><span class="n">method</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;Pass&quot;</span><span class="p">,</span> <span class="s2">&quot;RadPass&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">non_rad_pass_methods</span><span class="p">]</span>
+    <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Fitting chromaticities from </span><span class="si">{</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="o">.</span><span class="n">get_chrom</span><span class="p">()</span><span class="si">}</span><span class="s1"> to </span><span class="si">{</span><span class="n">target_chroma</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">)</span>  <span class="c1"># first two elements</span>
+    <span class="n">SP0</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">s_ords</span><span class="p">)):</span>
+        <span class="n">SP0</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">s_ords</span><span class="p">[</span><span class="n">n</span><span class="p">]))</span>
+    <span class="k">for</span> <span class="n">nFam</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">s_ords</span><span class="p">)):</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">s_ords</span><span class="p">[</span><span class="n">nFam</span><span class="p">])):</span>
+            <span class="n">SP0</span><span class="p">[</span><span class="n">nFam</span><span class="p">][</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="n">s_ords</span><span class="p">[</span><span class="n">nFam</span><span class="p">][</span><span class="n">n</span><span class="p">]]</span><span class="o">.</span><span class="n">SetPointB</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">fun</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">_fit_chroma_fun</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">s_ords</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">SP0</span><span class="p">,</span> <span class="n">target_chroma</span><span class="p">)</span>
+    <span class="n">sol</span> <span class="o">=</span> <span class="n">fmin</span><span class="p">(</span><span class="n">fun</span><span class="p">,</span> <span class="n">init_step_size</span><span class="p">,</span> <span class="n">xtol</span><span class="o">=</span><span class="n">xtol</span><span class="p">,</span> <span class="n">ftol</span><span class="o">=</span><span class="n">ftol</span><span class="p">)</span>
+    <span class="c1"># TODO needs to set the solution to SC</span>
+    <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;        Final chromaticity: </span><span class="si">{</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="o">.</span><span class="n">get_chrom</span><span class="p">()</span><span class="si">}</span><span class="se">\n</span><span class="s1">          Setpoints change: </span><span class="si">{</span><span class="n">sol</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">)</span>  <span class="c1"># first two elements</span>
+    <span class="k">return</span> <span class="n">SC</span></div>
 
-    <span class="k">if</span> <span class="s1">&#39;radiationoff&#39;</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ring</span><span class="p">)):</span>
-            <span class="k">if</span> <span class="n">ring</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span><span class="o">.</span><span class="n">PassMethod</span> <span class="ow">in</span> <span class="n">rad_pass_methods</span><span class="p">:</span>
-                <span class="n">ring</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span><span class="o">.</span><span class="n">PassMethod</span> <span class="o">=</span> <span class="n">ring</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span><span class="o">.</span><span class="n">PassMethod</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;Rad&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="s1">&#39;radiationon&#39;</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ring</span><span class="p">)):</span>
-            <span class="k">if</span> <span class="n">ring</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span><span class="o">.</span><span class="n">PassMethod</span> <span class="ow">in</span> <span class="n">non_rad_pass_methods</span><span class="p">:</span>
-                <span class="n">ring</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span><span class="o">.</span><span class="n">PassMethod</span> <span class="o">=</span> <span class="n">ring</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span><span class="o">.</span><span class="n">PassMethod</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;Pass&quot;</span><span class="p">,</span> <span class="s2">&quot;RadPass&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="s1">&#39;cavityoff&#39;</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">switch_rf</span><span class="p">(</span><span class="n">ring</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ring</span><span class="p">)),</span> <span class="kc">False</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="s1">&#39;cavityon&#39;</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">switch_rf</span><span class="p">(</span><span class="n">ring</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ring</span><span class="p">)),</span> <span class="kc">True</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">ring</span></div>
 
+<span class="k">def</span> <span class="nf">_fit_chroma_fun</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">s_ords</span><span class="p">,</span> <span class="n">setpoints</span><span class="p">,</span> <span class="n">init_setpoints</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">s_ords</span><span class="p">)):</span>
+        <span class="n">SC</span><span class="o">.</span><span class="n">set_magnet_setpoints</span><span class="p">(</span><span class="n">s_ords</span><span class="p">[</span><span class="n">n</span><span class="p">],</span> <span class="n">setpoints</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">+</span> <span class="n">init_setpoints</span><span class="p">[</span><span class="n">n</span><span class="p">],</span> <span class="kc">False</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;abs&#39;</span><span class="p">,</span> <span class="n">dipole_compensation</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">nu</span> <span class="o">=</span> <span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="o">.</span><span class="n">get_chrom</span><span class="p">()[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">nu</span> <span class="o">-</span> <span class="n">target</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
 </pre></div>
 
            </div>

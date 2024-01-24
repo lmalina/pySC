@@ -81,6 +81,8 @@
 <li class="toctree-l2"><a class="reference internal" href="#pySC.correction.rf.phase_and_energy_error"><code class="docutils literal notranslate"><span class="pre">phase_and_energy_error()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#tune">Tune</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pySC.correction.tune.tune_scan"><code class="docutils literal notranslate"><span class="pre">tune_scan()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#chromaticity">Chromaticity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pySC.correction.chroma.fit_chroma"><code class="docutils literal notranslate"><span class="pre">fit_chroma()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="lattice_properties.html">Lattice properties</a><ul>
@@ -339,6 +341,36 @@ Turn-by-turn particle loss</p>
 </dd>
 </dl>
 <p>see also: <em>bpm_reading</em>, <em>generate_bunches</em></p>
+</dd></dl>
+
+<span class="target" id="module-pySC.correction.chroma"></span><section id="chromaticity">
+<h2>Chromaticity<a class="headerlink" href="#chromaticity" title="Permalink to this heading"></a></h2>
+<p>This module contains functions to fit the chromaticity of ‘SC.RING’.</p>
+</section>
+<dl class="py function">
+<dt class="sig sig-object py" id="pySC.correction.chroma.fit_chroma">
+<span class="sig-prename descclassname"><span class="pre">pySC.correction.chroma.</span></span><span class="sig-name descname"><span class="pre">fit_chroma</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">SC</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s_ords</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_chroma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_step_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">array([2,</span> <span class="pre">2])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xtol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ftol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pySC/correction/chroma.html#fit_chroma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pySC.correction.chroma.fit_chroma" title="Permalink to this definition"></a></dt>
+<dd><p>Applies a chromaticity correction using two sextupole families.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>SC</strong> -- SimulatedCommissioning instance</p></li>
+<li><p><strong>s_ords</strong> -- [2xN] array or list [[1 x NS1],[1 x NS2], [1 x NS3], …] of sextupole ordinates</p></li>
+<li><p><strong>target_chroma</strong> (<em>[</em><em>1x2</em><em>] </em><em>array</em><em>, </em><em>optional</em>) -- Target chromaticity for correction. Default: chromaticity of ‘SC.IDEALRING’</p></li>
+<li><p><strong>init_step_size</strong> (<em>[</em><em>1x2</em><em>] </em><em>array</em><em>, </em><em>optional</em>) -- Initial step size for the solver. Default: [2,2]</p></li>
+<li><p><strong>xtol</strong> (<em>float</em><em>, </em><em>optional</em>) -- Step tolerance for solver. Default: 1e-4</p></li>
+<li><p><strong>ftol</strong> (<em>float</em><em>, </em><em>optional</em>) -- Merit tolerance for solver. Default: 1e-3</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>SimulatedCommissioning instance with corrected chromaticity.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>SC</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<p>SC = fit_chroma(SC, s_ords=[SCgetOrds(sc.RING, ‘SF’), SCgetOrds(sc.RING, ‘SD’)], target_chroma=numpy.array([1,1]))</p>
 </dd></dl>
 
 </section>
