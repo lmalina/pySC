@@ -96,9 +96,9 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">Utils</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/utils.html#at-wrapper">AT wrapper</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../modules/utils.html#pySC.utils.sc_tools.SCgetOrds"><code class="docutils literal notranslate"><span class="pre">SCgetOrds()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../modules/utils.html#pySC.utils.sc_tools.SCgetPinv"><code class="docutils literal notranslate"><span class="pre">SCgetPinv()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../modules/utils.html#pySC.utils.sc_tools.SCrandnc"><code class="docutils literal notranslate"><span class="pre">SCrandnc()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/utils.html#pySC.utils.sc_tools.ords_from_regex"><code class="docutils literal notranslate"><span class="pre">ords_from_regex()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/utils.html#pySC.utils.sc_tools.pinv"><code class="docutils literal notranslate"><span class="pre">pinv()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/utils.html#pySC.utils.sc_tools.randnc"><code class="docutils literal notranslate"><span class="pre">randnc()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -142,9 +142,8 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Tuple</span>
 
 <span class="kn">from</span> <span class="nn">pySC.core.beam</span> <span class="kn">import</span> <span class="n">bpm_reading</span>
-<span class="kn">from</span> <span class="nn">pySC.utils</span> <span class="kn">import</span> <span class="n">logging_tools</span>
-<span class="kn">from</span> <span class="nn">pySC.utils</span> <span class="kn">import</span> <span class="n">sc_tools</span>
 <span class="kn">from</span> <span class="nn">pySC.core.constants</span> <span class="kn">import</span> <span class="n">SETTING_ADD</span>
+<span class="kn">from</span> <span class="nn">pySC.utils</span> <span class="kn">import</span> <span class="n">logging_tools</span><span class="p">,</span> <span class="n">sc_tools</span>
 
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging_tools</span><span class="o">.</span><span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 <span class="n">NREPRO</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span>
@@ -190,7 +189,7 @@
     <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;First turn threading: Start&#39;</span><span class="p">)</span>
     <span class="n">bpm_ords</span><span class="p">,</span> <span class="n">cm_ords</span><span class="p">,</span> <span class="n">reference</span> <span class="o">=</span> <span class="n">_check_ords</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">response_matrix</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">bpm_ords</span><span class="p">,</span> <span class="n">cm_ords</span><span class="p">)</span>
     <span class="n">bpm_readings</span><span class="p">,</span> <span class="n">transmission_history</span><span class="p">,</span> <span class="n">rms_orbit_history</span> <span class="o">=</span> <span class="n">_bpm_reading_and_logging</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">bpm_ords</span><span class="o">=</span><span class="n">bpm_ords</span><span class="p">)</span>  <span class="c1"># Inject...</span>
-    <span class="n">Mplus</span> <span class="o">=</span> <span class="n">sc_tools</span><span class="o">.</span><span class="n">SCgetPinv</span><span class="p">(</span><span class="n">response_matrix</span><span class="p">,</span> <span class="o">**</span><span class="n">pinv_params</span><span class="p">)</span>
+    <span class="n">Mplus</span> <span class="o">=</span> <span class="n">sc_tools</span><span class="o">.</span><span class="n">pinv</span><span class="p">(</span><span class="n">response_matrix</span><span class="p">,</span> <span class="o">**</span><span class="n">pinv_params</span><span class="p">)</span>
 
     <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">maxsteps</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">transmission_history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
@@ -276,7 +275,7 @@
     <span class="n">reference</span> <span class="o">=</span> <span class="n">reference</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">bpm_readings</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
     <span class="n">reference</span><span class="p">[:,</span> <span class="nb">len</span><span class="p">(</span><span class="n">bpm_ords</span><span class="p">):]</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">reference</span> <span class="o">=</span> <span class="n">reference</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">response_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-    <span class="n">Mplus</span> <span class="o">=</span> <span class="n">sc_tools</span><span class="o">.</span><span class="n">SCgetPinv</span><span class="p">(</span><span class="n">response_matrix</span><span class="p">,</span> <span class="o">**</span><span class="n">pinv_params</span><span class="p">)</span>
+    <span class="n">Mplus</span> <span class="o">=</span> <span class="n">sc_tools</span><span class="o">.</span><span class="n">pinv</span><span class="p">(</span><span class="n">response_matrix</span><span class="p">,</span> <span class="o">**</span><span class="n">pinv_params</span><span class="p">)</span>
 
     <span class="c1"># Main loop</span>
     <span class="k">for</span> <span class="n">steps</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">maxsteps</span><span class="p">):</span>
@@ -343,7 +342,7 @@
     <span class="n">reference</span> <span class="o">=</span> <span class="n">reference</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">bpm_readings</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
     <span class="n">reference</span><span class="p">[:,</span> <span class="nb">len</span><span class="p">(</span><span class="n">bpm_ords</span><span class="p">):]</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">reference</span> <span class="o">=</span> <span class="n">reference</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">response_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-    <span class="n">Mplus</span> <span class="o">=</span> <span class="n">sc_tools</span><span class="o">.</span><span class="n">SCgetPinv</span><span class="p">(</span><span class="n">response_matrix</span><span class="p">,</span> <span class="o">**</span><span class="n">pinv_params</span><span class="p">)</span>
+    <span class="n">Mplus</span> <span class="o">=</span> <span class="n">sc_tools</span><span class="o">.</span><span class="n">pinv</span><span class="p">(</span><span class="n">response_matrix</span><span class="p">,</span> <span class="o">**</span><span class="n">pinv_params</span><span class="p">)</span>
 
     <span class="c1"># Main loop</span>
     <span class="k">for</span> <span class="n">steps</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">maxsteps</span><span class="p">):</span>
@@ -418,7 +417,7 @@
     <span class="n">bpm_ords</span><span class="p">,</span> <span class="n">cm_ords</span><span class="p">,</span> <span class="n">reference</span> <span class="o">=</span> <span class="n">_check_ords</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">response_matrix</span><span class="p">[:,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">scaleDisp</span> <span class="k">else</span> <span class="n">response_matrix</span><span class="p">,</span>
                                                <span class="n">reference</span><span class="p">,</span> <span class="n">bpm_ords</span><span class="p">,</span> <span class="n">cm_ords</span><span class="p">)</span>
     <span class="n">bpm_readings</span><span class="p">,</span> <span class="n">transmission_history</span><span class="p">,</span> <span class="n">rms_orbit_history</span> <span class="o">=</span> <span class="n">_bpm_reading_and_logging</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">bpm_ords</span><span class="o">=</span><span class="n">bpm_ords</span><span class="p">)</span>  <span class="c1"># Inject ...</span>
-    <span class="n">Mplus</span> <span class="o">=</span> <span class="n">sc_tools</span><span class="o">.</span><span class="n">SCgetPinv</span><span class="p">(</span><span class="n">response_matrix</span><span class="p">,</span> <span class="o">**</span><span class="n">pinv_params</span><span class="p">)</span>
+    <span class="n">Mplus</span> <span class="o">=</span> <span class="n">sc_tools</span><span class="o">.</span><span class="n">pinv</span><span class="p">(</span><span class="n">response_matrix</span><span class="p">,</span> <span class="o">**</span><span class="n">pinv_params</span><span class="p">)</span>
 
     <span class="c1"># Main loop</span>
     <span class="k">for</span> <span class="n">steps</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">maxsteps</span><span class="p">):</span>

@@ -99,9 +99,9 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="utils.html">Utils</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="utils.html#at-wrapper">AT wrapper</a></li>
-<li class="toctree-l2"><a class="reference internal" href="utils.html#pySC.utils.sc_tools.SCgetOrds"><code class="docutils literal notranslate"><span class="pre">SCgetOrds()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="utils.html#pySC.utils.sc_tools.SCgetPinv"><code class="docutils literal notranslate"><span class="pre">SCgetPinv()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="utils.html#pySC.utils.sc_tools.SCrandnc"><code class="docutils literal notranslate"><span class="pre">SCrandnc()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#pySC.utils.sc_tools.ords_from_regex"><code class="docutils literal notranslate"><span class="pre">ords_from_regex()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#pySC.utils.sc_tools.pinv"><code class="docutils literal notranslate"><span class="pre">pinv()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#pySC.utils.sc_tools.randnc"><code class="docutils literal notranslate"><span class="pre">randnc()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -253,7 +253,7 @@ the beam loss location with a cutoff as defined <cite>SC.INJ.beamLostAt</cite>.<
 </dl>
 <p class="rubric">Examples</p>
 <p>Identify the ordinates of all elements named <cite>BPM</cite> and registers them as BPMs in <cite>SC</cite>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ords</span> <span class="o">=</span> <span class="n">SCgetOrds</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">,</span><span class="s1">&#39;BPM&#39;</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ords</span> <span class="o">=</span> <span class="n">sc_tools</span><span class="o">.</span><span class="n">ords_from_regex</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">,</span><span class="s1">&#39;BPM&#39;</span><span class="p">)</span>
 <span class="n">SC</span><span class="o">.</span><span class="n">register_bpms</span><span class="p">(</span><span class="n">ords</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -276,7 +276,7 @@ both planes and a calibration error of the sum signal of 20%:</p>
 </div>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
-<p><em>bpm_reading</em>, <em>SCgetOrds</em>, <em>SC.verify_structure</em>, <em>SC.apply_errors</em>, <em>SC.register_support</em>, <em>SC.update_support</em></p>
+<p><em>bpm_reading</em>, <em>ords_from_regex</em>, <em>SC.verify_structure</em>, <em>SC.apply_errors</em>, <em>SC.register_support</em>, <em>SC.update_support</em></p>
 </div>
 </dd></dl>
 
@@ -302,7 +302,7 @@ corresponding cavity lattice elements and storing the ordinates in <cite>SC.ORD.
 </dl>
 <p class="rubric">Examples</p>
 <p>Identify the ordinates of all elements named <cite>‘CAV’</cite> and register them as cavities in <cite>SC</cite>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ords</span> <span class="o">=</span> <span class="n">SCgetOrds</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">,</span> <span class="s1">&#39;CAV&#39;</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ords</span> <span class="o">=</span> <span class="n">sc_tools</span><span class="o">.</span><span class="n">ords_from_regex</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">,</span> <span class="s1">&#39;CAV&#39;</span><span class="p">)</span>
 <span class="n">SC</span><span class="o">.</span><span class="n">register_cavities</span><span class="p">(</span><span class="n">ords</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -319,7 +319,7 @@ to 1kHz. A subsequent call of <em>SC.apply_errors</em> would generate a random f
 </div>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
-<p><em>SCgetOrds</em>, <em>SC.verify_structure</em>, <em>SC.apply_errors</em></p>
+<p><em>ords_from_regex</em>, <em>SC.verify_structure</em>, <em>SC.apply_errors</em></p>
 </div>
 </dd></dl>
 
@@ -367,7 +367,7 @@ currently not be updated correctly.</p></li>
 stored in the corresponding fields <cite>SC.ORD.CM</cite> and <cite>SC.ORD.SkewQuad</cite>, respectively.</p>
 <p class="rubric">Examples</p>
 <p>Identify the ordinates of all elements named <cite>QF</cite> and register them in <cite>SC</cite>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ords</span> <span class="o">=</span> <span class="n">SCgetOrds</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">,</span> <span class="s1">&#39;QF&#39;</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ords</span> <span class="o">=</span> <span class="n">sc_tools</span><span class="o">.</span><span class="n">ords_from_regex</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">,</span> <span class="s1">&#39;QF&#39;</span><span class="p">)</span>
 <span class="n">SC</span><span class="o">.</span><span class="n">register_magnets</span><span class="p">(</span><span class="n">ords</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -402,8 +402,8 @@ magnets named <cite>BENDb</cite> and <cite>BENDc</cite> ([<cite>2xN</cite>] arra
 the <cite>masterOrds</cite> as the master magnets of the children in the corresponding
 columns of <cite>childOrds</cite>.
 The uncertainty of the bending angle is set to 1E-4:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">masterOrds</span> <span class="o">=</span> <span class="n">SCgetOrds</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">,</span><span class="s1">&#39;BENDa&#39;</span><span class="p">)</span>
-<span class="n">childOrds</span>  <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">SCgetOrds</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">,</span><span class="s1">&#39;BENDb&#39;</span><span class="p">),</span> <span class="n">SCgetOrds</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">,</span><span class="s1">&#39;BENDc&#39;</span><span class="p">)))</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">masterOrds</span> <span class="o">=</span> <span class="n">sc_tools</span><span class="o">.</span><span class="n">ords_from_regex</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">,</span><span class="s1">&#39;BENDa&#39;</span><span class="p">)</span>
+<span class="n">childOrds</span>  <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">sc_tools</span><span class="o">.</span><span class="n">ords_from_regex</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">,</span><span class="s1">&#39;BENDb&#39;</span><span class="p">),</span> <span class="n">sc_tools</span><span class="o">.</span><span class="n">ords_from_regex</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">,</span><span class="s1">&#39;BENDc&#39;</span><span class="p">)))</span>
 <span class="n">SC</span><span class="o">.</span><span class="n">register_magnets</span><span class="p">(</span><span class="n">masterOrds</span><span class="p">,</span> <span class="n">BendingAngle</span><span class="o">=</span><span class="mf">1E-4</span><span class="p">,</span> <span class="n">MasterOf</span><span class="o">=</span><span class="n">childOrds</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -436,7 +436,7 @@ mrad. Furthermore, set the uncertainty of the skew quadrupole component to
 </div>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
-<p><em>SCgetOrds</em>, <em>SC.update_magnets</em>, <em>SC.verify_structure</em>, <em>SC.apply_errors</em>, <em>SC.register_support</em></p>
+<p><em>ords_from_regex</em>, <em>SC.update_magnets</em>, <em>SC.verify_structure</em>, <em>SC.apply_errors</em>, <em>SC.register_support</em></p>
 </div>
 </dd></dl>
 
@@ -517,7 +517,7 @@ rotations around the three x-, y- and z-axes:</p>
 </div>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
-<p><em>SCgetOrds</em>, <em>SC.update_support</em>, <em>SC.support_offset_and_roll</em>, <em>plot_support</em>, <em>SC.apply_errors</em>,
+<p><em>ords_from_regex</em>, <em>SC.update_support</em>, <em>SC.support_offset_and_roll</em>, <em>plot_support</em>, <em>SC.apply_errors</em>,
 <em>SC.register_magnets</em>, <em>update_transformation</em></p>
 </div>
 </dd></dl>
@@ -616,13 +616,13 @@ if the applied quadrupole setpoints differs from the design value.</p></li>
 </dl>
 <p class="rubric">Examples</p>
 <p>Identify the ordinates of all elements named <cite>‘SF’</cite> and switch their sextupole component off:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ords</span> <span class="o">=</span> <span class="n">SCgetOrds</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">,</span><span class="s1">&#39;SF&#39;</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ords</span> <span class="o">=</span> <span class="n">sc_tools</span><span class="o">.</span><span class="n">ords_from_regex</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">,</span><span class="s1">&#39;SF&#39;</span><span class="p">)</span>
 <span class="n">SC</span><span class="o">.</span><span class="n">register_magnets</span><span class="p">(</span><span class="n">ords</span><span class="p">)</span>
 <span class="n">SC</span><span class="o">.</span><span class="n">set_magnet_setpoints</span><span class="p">(</span><span class="n">ords</span><span class="o">=</span><span class="n">ords</span><span class="p">,</span> <span class="n">skewness</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">setpoints</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;abs&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Identify the ordinates of all elements named <cite>QF</cite> and <cite>QD</cite> and set their quadrupole component to 99% of their design value:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ords</span> <span class="o">=</span> <span class="n">SCgetOrds</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">,</span><span class="s1">&#39;QF|QD&#39;</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ords</span> <span class="o">=</span> <span class="n">sc_tools</span><span class="o">.</span><span class="n">ords_from_regex</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">,</span><span class="s1">&#39;QF|QD&#39;</span><span class="p">)</span>
 <span class="n">SC</span><span class="o">.</span><span class="n">register_magnets</span><span class="p">(</span><span class="n">ords</span><span class="p">)</span>
 <span class="n">SC</span><span class="o">.</span><span class="n">set_magnet_setpoints</span><span class="p">(</span><span class="n">ords</span><span class="o">=</span><span class="n">ords</span><span class="p">,</span> <span class="n">skewness</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">setpoints</span><span class="o">=</span><span class="mf">0.99</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;rel&#39;</span><span class="p">)</span>
 </pre></div>
@@ -647,7 +647,7 @@ The final multipole errors are stored in the PolynomA/BOffset of the lattice ele
 <p class="rubric">Examples</p>
 <p>Defines random multipole components for the ‘QF’ magnet
 and adds it to the field offsets of all magnets named ‘QF’:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ords</span> <span class="o">=</span> <span class="n">SCgetOrds</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">,</span><span class="s1">&#39;QF&#39;</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ords</span> <span class="o">=</span> <span class="n">sc_tools</span><span class="o">.</span><span class="n">ords_from_regex</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">,</span><span class="s1">&#39;QF&#39;</span><span class="p">)</span>
 <span class="n">BA</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">1E-5</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mf">1E-4</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mf">1E-2</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span>
 <span class="n">SC</span><span class="o">.</span><span class="n">set_random_multipole_errors</span><span class="p">(</span><span class="n">ords</span><span class="p">,</span> <span class="n">BA</span><span class="p">)</span>
 </pre></div>
@@ -681,7 +681,7 @@ PolynomA/B fields.</p>
 <p class="rubric">Examples</p>
 <p>Defines systematic multipole components for the ‘QF’ magnet and
 adds it to the field offsets of all magnets named ‘QF’:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ords</span> <span class="o">=</span> <span class="n">SCgetOrds</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">,</span><span class="s1">&#39;QF&#39;</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ords</span> <span class="o">=</span> <span class="n">sc_tools</span><span class="o">.</span><span class="n">ords_from_regex</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">,</span><span class="s1">&#39;QF&#39;</span><span class="p">)</span>
 <span class="n">BA</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">1E-5</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mf">1E-4</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mf">1E-2</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span>
 <span class="n">RING</span> <span class="o">=</span> <span class="n">SC</span><span class="o">.</span><span class="n">set_systematic_multipole_errors</span><span class="p">(</span><span class="n">RING</span><span class="p">,</span> <span class="n">ords</span><span class="p">,</span> <span class="n">BA</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
 </pre></div>

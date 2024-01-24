@@ -96,9 +96,9 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">Utils</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/utils.html#at-wrapper">AT wrapper</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../modules/utils.html#pySC.utils.sc_tools.SCgetOrds"><code class="docutils literal notranslate"><span class="pre">SCgetOrds()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../modules/utils.html#pySC.utils.sc_tools.SCgetPinv"><code class="docutils literal notranslate"><span class="pre">SCgetPinv()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../modules/utils.html#pySC.utils.sc_tools.SCrandnc"><code class="docutils literal notranslate"><span class="pre">SCrandnc()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/utils.html#pySC.utils.sc_tools.ords_from_regex"><code class="docutils literal notranslate"><span class="pre">ords_from_regex()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/utils.html#pySC.utils.sc_tools.pinv"><code class="docutils literal notranslate"><span class="pre">pinv()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/utils.html#pySC.utils.sc_tools.randnc"><code class="docutils literal notranslate"><span class="pre">randnc()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -128,14 +128,13 @@
            <div itemprop="articleBody">
              
   <h1>Source code for pySC.lattice_properties.response_model</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span></span><span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">at</span> <span class="kn">import</span> <span class="n">Lattice</span>
 
 <span class="kn">from</span> <span class="nn">pySC.core.simulated_commissioning</span> <span class="kn">import</span> <span class="n">SimulatedCommissioning</span>
-<span class="kn">from</span> <span class="nn">pySC.utils.at_wrapper</span> <span class="kn">import</span> <span class="n">atpass</span><span class="p">,</span> <span class="n">findorbit6</span>
 <span class="kn">from</span> <span class="nn">pySC.core.constants</span> <span class="kn">import</span> <span class="n">NUM_TO_AB</span><span class="p">,</span> <span class="n">RF_PROPERTIES</span>
-<span class="kn">import</span> <span class="nn">copy</span>
-<span class="kn">from</span> <span class="nn">pySC.utils</span> <span class="kn">import</span> <span class="n">logging_tools</span>
+<span class="kn">from</span> <span class="nn">pySC.utils</span> <span class="kn">import</span> <span class="n">at_wrapper</span><span class="p">,</span> <span class="n">logging_tools</span>
 
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging_tools</span><span class="o">.</span><span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
@@ -180,7 +179,7 @@
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Calculating model response matrix&#39;</span><span class="p">)</span>
-    <span class="n">track_methods</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">TBT</span><span class="o">=</span><span class="n">atpass</span><span class="p">,</span> <span class="n">ORB</span><span class="o">=</span><span class="n">orbpass</span><span class="p">)</span>
+    <span class="n">track_methods</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">TBT</span><span class="o">=</span><span class="n">at_wrapper</span><span class="o">.</span><span class="n">atpass</span><span class="p">,</span> <span class="n">ORB</span><span class="o">=</span><span class="n">orbpass</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">trackMode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">track_methods</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
         <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Unknown track mode </span><span class="si">{</span><span class="n">trackMode</span><span class="si">}</span><span class="s1">. Valid values are </span><span class="si">{</span><span class="n">track_methods</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
     <span class="n">ring</span> <span class="o">=</span> <span class="n">SC</span><span class="o">.</span><span class="n">IDEALRING</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">()</span> <span class="k">if</span> <span class="n">useIdealRing</span> <span class="k">else</span> <span class="n">SCgetModelRING</span><span class="p">(</span><span class="n">SC</span><span class="p">)</span>
@@ -218,7 +217,7 @@
 
 
 <span class="k">def</span> <span class="nf">orbpass</span><span class="p">(</span><span class="n">RING</span><span class="p">,</span> <span class="n">Z0</span><span class="p">,</span>  <span class="n">nTurns</span><span class="p">,</span> <span class="n">REFPTS</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">findorbit6</span><span class="p">(</span><span class="n">RING</span><span class="p">,</span> <span class="n">REFPTS</span><span class="p">)[</span><span class="mi">1</span><span class="p">])[[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">],</span> <span class="p">:]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">REFPTS</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">at_wrapper</span><span class="o">.</span><span class="n">findorbit6</span><span class="p">(</span><span class="n">RING</span><span class="p">,</span> <span class="n">REFPTS</span><span class="p">)[</span><span class="mi">1</span><span class="p">])[[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">],</span> <span class="p">:]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">REFPTS</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="SCgetModelDispersion"><a class="viewcode-back" href="../../../modules/lattice_properties.html#pySC.lattice_properties.response_model.SCgetModelDispersion">[docs]</a><span class="k">def</span> <span class="nf">SCgetModelDispersion</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">BPMords</span><span class="p">,</span> <span class="n">CAVords</span><span class="p">,</span> <span class="n">trackMode</span><span class="o">=</span><span class="s1">&#39;ORB&#39;</span><span class="p">,</span> <span class="n">Z0</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">6</span><span class="p">),</span> <span class="n">nTurns</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">rfStep</span><span class="o">=</span><span class="mf">1E3</span><span class="p">,</span> <span class="n">useIdealRing</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
@@ -252,7 +251,7 @@
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Calculating model dispersion&#39;</span><span class="p">)</span>
-    <span class="n">track_methods</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">TBT</span><span class="o">=</span><span class="n">atpass</span><span class="p">,</span> <span class="n">ORB</span><span class="o">=</span><span class="n">orbpass</span><span class="p">)</span>
+    <span class="n">track_methods</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">TBT</span><span class="o">=</span><span class="n">at_wrapper</span><span class="o">.</span><span class="n">atpass</span><span class="p">,</span> <span class="n">ORB</span><span class="o">=</span><span class="n">orbpass</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">trackMode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">track_methods</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
         <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Unknown track mode </span><span class="si">{</span><span class="n">trackMode</span><span class="si">}</span><span class="s1">. Valid values are </span><span class="si">{</span><span class="n">track_methods</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
     <span class="n">ring</span> <span class="o">=</span> <span class="n">SC</span><span class="o">.</span><span class="n">IDEALRING</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">()</span> <span class="k">if</span> <span class="n">useIdealRing</span> <span class="k">else</span> <span class="n">SCgetModelRING</span><span class="p">(</span><span class="n">SC</span><span class="p">)</span>

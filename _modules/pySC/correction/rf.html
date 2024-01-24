@@ -96,9 +96,9 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">Utils</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/utils.html#at-wrapper">AT wrapper</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../modules/utils.html#pySC.utils.sc_tools.SCgetOrds"><code class="docutils literal notranslate"><span class="pre">SCgetOrds()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../modules/utils.html#pySC.utils.sc_tools.SCgetPinv"><code class="docutils literal notranslate"><span class="pre">SCgetPinv()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../modules/utils.html#pySC.utils.sc_tools.SCrandnc"><code class="docutils literal notranslate"><span class="pre">SCrandnc()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/utils.html#pySC.utils.sc_tools.ords_from_regex"><code class="docutils literal notranslate"><span class="pre">ords_from_regex()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/utils.html#pySC.utils.sc_tools.pinv"><code class="docutils literal notranslate"><span class="pre">pinv()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/utils.html#pySC.utils.sc_tools.randnc"><code class="docutils literal notranslate"><span class="pre">randnc()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -138,10 +138,9 @@
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">curve_fit</span><span class="p">,</span> <span class="n">fsolve</span>
 
-<span class="kn">from</span> <span class="nn">pySC.utils.at_wrapper</span> <span class="kn">import</span> <span class="n">findorbit6</span>
 <span class="kn">from</span> <span class="nn">pySC.core.beam</span> <span class="kn">import</span> <span class="n">bpm_reading</span>
-<span class="kn">from</span> <span class="nn">pySC.utils</span> <span class="kn">import</span> <span class="n">logging_tools</span>
 <span class="kn">from</span> <span class="nn">pySC.core.constants</span> <span class="kn">import</span> <span class="n">SPEED_OF_LIGHT</span>
+<span class="kn">from</span> <span class="nn">pySC.utils</span> <span class="kn">import</span> <span class="n">at_wrapper</span><span class="p">,</span> <span class="n">logging_tools</span>
 
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging_tools</span><span class="o">.</span><span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 <span class="n">MIN_TURNS_FOR_LINEAR_FIT</span> <span class="o">=</span> <span class="mi">3</span>
@@ -229,7 +228,7 @@
 <div class="viewcode-block" id="phase_and_energy_error"><a class="viewcode-back" href="../../../modules/correction.html#pySC.correction.rf.phase_and_energy_error">[docs]</a><span class="k">def</span> <span class="nf">phase_and_energy_error</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">cav_ords</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;This is not a simple observable in reality.&quot;&quot;&quot;</span>
     <span class="n">lamb</span> <span class="o">=</span> <span class="n">SPEED_OF_LIGHT</span> <span class="o">/</span> <span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="n">cav_ords</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">Frequency</span>
-    <span class="n">orbit6</span> <span class="o">=</span> <span class="n">findorbit6</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">orbit6</span> <span class="o">=</span> <span class="n">at_wrapper</span><span class="o">.</span><span class="n">findorbit6</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">phase_error</span> <span class="o">=</span> <span class="n">_fold_phase</span><span class="p">((</span><span class="n">orbit6</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span> <span class="o">-</span> <span class="n">SC</span><span class="o">.</span><span class="n">INJ</span><span class="o">.</span><span class="n">Z0</span><span class="p">[</span><span class="mi">5</span><span class="p">])</span> <span class="o">/</span> <span class="n">lamb</span><span class="p">,</span> <span class="n">lamb</span><span class="p">)</span> <span class="o">*</span> <span class="mi">360</span>
     <span class="n">energy_error</span> <span class="o">=</span> <span class="n">SC</span><span class="o">.</span><span class="n">INJ</span><span class="o">.</span><span class="n">Z0</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">-</span> <span class="n">orbit6</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
     <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Static phase error </span><span class="si">{</span><span class="n">phase_error</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1"> deg&#39;</span><span class="p">)</span>

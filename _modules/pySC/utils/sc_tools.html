@@ -96,9 +96,9 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">Utils</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/utils.html#at-wrapper">AT wrapper</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../modules/utils.html#pySC.utils.sc_tools.SCgetOrds"><code class="docutils literal notranslate"><span class="pre">SCgetOrds()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../modules/utils.html#pySC.utils.sc_tools.SCgetPinv"><code class="docutils literal notranslate"><span class="pre">SCgetPinv()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../modules/utils.html#pySC.utils.sc_tools.SCrandnc"><code class="docutils literal notranslate"><span class="pre">SCrandnc()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/utils.html#pySC.utils.sc_tools.ords_from_regex"><code class="docutils literal notranslate"><span class="pre">ords_from_regex()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/utils.html#pySC.utils.sc_tools.pinv"><code class="docutils literal notranslate"><span class="pre">pinv()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/utils.html#pySC.utils.sc_tools.randnc"><code class="docutils literal notranslate"><span class="pre">randnc()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -131,17 +131,17 @@
 <span></span><span class="kn">import</span> <span class="nn">re</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">at</span> <span class="kn">import</span> <span class="n">Lattice</span>
 <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
 <span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">ndarray</span>
+<span class="kn">from</span> <span class="nn">at</span> <span class="kn">import</span> <span class="n">Lattice</span>
 
-<span class="kn">from</span> <span class="nn">pySC.utils.at_wrapper</span> <span class="kn">import</span> <span class="n">findspos</span>
-<span class="kn">from</span> <span class="nn">pySC.utils</span> <span class="kn">import</span> <span class="n">logging_tools</span>
+<span class="kn">from</span> <span class="nn">pySC.utils</span> <span class="kn">import</span> <span class="n">at_wrapper</span><span class="p">,</span> <span class="n">logging_tools</span>
+
 
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging_tools</span><span class="o">.</span><span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="SCrandnc"><a class="viewcode-back" href="../../../modules/utils.html#pySC.utils.sc_tools.SCrandnc">[docs]</a><span class="k">def</span> <span class="nf">SCrandnc</span><span class="p">(</span><span class="n">cut_off</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n">shape</span><span class="p">:</span> <span class="nb">tuple</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="p">))</span> <span class="o">-&gt;</span> <span class="n">ndarray</span><span class="p">:</span>
+<div class="viewcode-block" id="randnc"><a class="viewcode-back" href="../../../modules/utils.html#pySC.utils.sc_tools.randnc">[docs]</a><span class="k">def</span> <span class="nf">randnc</span><span class="p">(</span><span class="n">cut_off</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n">shape</span><span class="p">:</span> <span class="nb">tuple</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,))</span> <span class="o">-&gt;</span> <span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Generates an array of random number(s) from normal distribution with a cut-off.</span>
 
@@ -166,7 +166,7 @@
     <span class="k">return</span> <span class="n">out</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">out_shape</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="SCgetOrds"><a class="viewcode-back" href="../../../modules/utils.html#pySC.utils.sc_tools.SCgetOrds">[docs]</a><span class="k">def</span> <span class="nf">SCgetOrds</span><span class="p">(</span><span class="n">ring</span><span class="p">:</span> <span class="n">Lattice</span><span class="p">,</span> <span class="n">regex</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ndarray</span><span class="p">:</span>
+<div class="viewcode-block" id="ords_from_regex"><a class="viewcode-back" href="../../../modules/utils.html#pySC.utils.sc_tools.ords_from_regex">[docs]</a><span class="k">def</span> <span class="nf">ords_from_regex</span><span class="p">(</span><span class="n">ring</span><span class="p">:</span> <span class="n">Lattice</span><span class="p">,</span> <span class="n">regex</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Returns the indices of the elements in the ring whose names match the regex.</span>
 
@@ -188,7 +188,7 @@
     <span class="k">return</span> <span class="n">indices</span></div>
 
 
-<div class="viewcode-block" id="SCgetPinv"><a class="viewcode-back" href="../../../modules/utils.html#pySC.utils.sc_tools.SCgetPinv">[docs]</a><span class="k">def</span> <span class="nf">SCgetPinv</span><span class="p">(</span><span class="n">matrix</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span> <span class="n">num_removed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">damping</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">plot</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ndarray</span><span class="p">:</span>
+<div class="viewcode-block" id="pinv"><a class="viewcode-back" href="../../../modules/utils.html#pySC.utils.sc_tools.pinv">[docs]</a><span class="k">def</span> <span class="nf">pinv</span><span class="p">(</span><span class="n">matrix</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span> <span class="n">num_removed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">damping</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">plot</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Computes the pseudo-inverse of a matrix using the Singular Value Decomposition (SVD) method.</span>
 
@@ -223,11 +223,11 @@
     <span class="k">return</span> <span class="n">matrix_inv</span></div>
 
 
-<span class="k">def</span> <span class="nf">SCscaleCircumference</span><span class="p">(</span><span class="n">RING</span><span class="p">,</span> <span class="n">circ</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;abs&#39;</span><span class="p">):</span>  <span class="c1"># TODO</span>
+<span class="k">def</span> <span class="nf">scale_circumference</span><span class="p">(</span><span class="n">RING</span><span class="p">,</span> <span class="n">circ</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;abs&#39;</span><span class="p">):</span>  <span class="c1"># TODO</span>
     <span class="n">allowed_modes</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;abs&quot;</span><span class="p">,</span> <span class="s2">&quot;rel&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">allowed_modes</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Unsupported circumference scaling mode: ``</span><span class="si">{</span><span class="n">mode</span><span class="si">}</span><span class="s1">``. Allowed are </span><span class="si">{</span><span class="n">allowed_modes</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">)</span>
-    <span class="n">C</span> <span class="o">=</span> <span class="n">findspos</span><span class="p">(</span><span class="n">RING</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">C</span> <span class="o">=</span> <span class="n">at_wrapper</span><span class="o">.</span><span class="n">findspos</span><span class="p">(</span><span class="n">RING</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
     <span class="n">D</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">RING</span><span class="p">)):</span>
         <span class="k">if</span> <span class="n">RING</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span><span class="o">.</span><span class="n">PassMethod</span> <span class="o">==</span> <span class="s1">&#39;DriftPass&#39;</span><span class="p">:</span>
@@ -272,7 +272,7 @@
     <span class="k">return</span> <span class="n">element</span>
 
 
-<span class="k">def</span> <span class="nf">SCmultipolesRead</span><span class="p">(</span><span class="n">fname</span><span class="p">):</span>  <span class="c1"># TODO sample of the input anywhere?</span>
+<span class="k">def</span> <span class="nf">read_multipoles</span><span class="p">(</span><span class="n">fname</span><span class="p">):</span>  <span class="c1"># TODO sample of the input anywhere?</span>
     <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
     <span class="n">tab</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">())</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
     <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>

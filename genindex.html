@@ -96,9 +96,9 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="modules/utils.html">Utils</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="modules/utils.html#at-wrapper">AT wrapper</a></li>
-<li class="toctree-l2"><a class="reference internal" href="modules/utils.html#pySC.utils.sc_tools.SCgetOrds"><code class="docutils literal notranslate"><span class="pre">SCgetOrds()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="modules/utils.html#pySC.utils.sc_tools.SCgetPinv"><code class="docutils literal notranslate"><span class="pre">SCgetPinv()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="modules/utils.html#pySC.utils.sc_tools.SCrandnc"><code class="docutils literal notranslate"><span class="pre">SCrandnc()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/utils.html#pySC.utils.sc_tools.ords_from_regex"><code class="docutils literal notranslate"><span class="pre">ords_from_regex()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/utils.html#pySC.utils.sc_tools.pinv"><code class="docutils literal notranslate"><span class="pre">pinv()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/utils.html#pySC.utils.sc_tools.randnc"><code class="docutils literal notranslate"><span class="pre">randnc()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -139,6 +139,7 @@
  | <a href="#G"><strong>G</strong></a>
  | <a href="#I"><strong>I</strong></a>
  | <a href="#M"><strong>M</strong></a>
+ | <a href="#O"><strong>O</strong></a>
  | <a href="#P"><strong>P</strong></a>
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
@@ -270,10 +271,20 @@
   </ul></td>
 </tr></table>
 
+<h2 id="O">O</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="modules/utils.html#pySC.utils.sc_tools.ords_from_regex">ords_from_regex() (in module pySC.utils.sc_tools)</a>
+</li>
+  </ul></td>
+</tr></table>
+
 <h2 id="P">P</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules/correction.html#pySC.correction.rf.phase_and_energy_error">phase_and_energy_error() (in module pySC.correction.rf)</a>
+</li>
+      <li><a href="modules/utils.html#pySC.utils.sc_tools.pinv">pinv() (in module pySC.utils.sc_tools)</a>
 </li>
       <li>
     pySC.core.beam
@@ -367,12 +378,14 @@
 <h2 id="R">R</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="modules/core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning.register_bpms">register_bpms() (pySC.core.simulated_commissioning.SimulatedCommissioning method)</a>
+      <li><a href="modules/utils.html#pySC.utils.sc_tools.randnc">randnc() (in module pySC.utils.sc_tools)</a>
 </li>
-      <li><a href="modules/core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning.register_cavities">register_cavities() (pySC.core.simulated_commissioning.SimulatedCommissioning method)</a>
+      <li><a href="modules/core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning.register_bpms">register_bpms() (pySC.core.simulated_commissioning.SimulatedCommissioning method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="modules/core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning.register_cavities">register_cavities() (pySC.core.simulated_commissioning.SimulatedCommissioning method)</a>
+</li>
       <li><a href="modules/core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning.register_magnets">register_magnets() (pySC.core.simulated_commissioning.SimulatedCommissioning method)</a>
 </li>
       <li><a href="modules/core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning.register_supports">register_supports() (pySC.core.simulated_commissioning.SimulatedCommissioning method)</a>
@@ -389,22 +402,16 @@
 </li>
       <li><a href="modules/lattice_properties.html#pySC.lattice_properties.response_model.SCgetModelRM">SCgetModelRM() (in module pySC.lattice_properties.response_model)</a>
 </li>
-      <li><a href="modules/utils.html#pySC.utils.sc_tools.SCgetOrds">SCgetOrds() (in module pySC.utils.sc_tools)</a>
-</li>
-      <li><a href="modules/utils.html#pySC.utils.sc_tools.SCgetPinv">SCgetPinv() (in module pySC.utils.sc_tools)</a>
-</li>
-      <li><a href="modules/utils.html#pySC.utils.sc_tools.SCrandnc">SCrandnc() (in module pySC.utils.sc_tools)</a>
-</li>
       <li><a href="modules/core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning.set_cavity_setpoints">set_cavity_setpoints() (pySC.core.simulated_commissioning.SimulatedCommissioning method)</a>
 </li>
       <li><a href="modules/core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning.set_cm_setpoints">set_cm_setpoints() (pySC.core.simulated_commissioning.SimulatedCommissioning method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules/core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning.set_magnet_setpoints">set_magnet_setpoints() (pySC.core.simulated_commissioning.SimulatedCommissioning method)</a>
 </li>
       <li><a href="modules/core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning.set_random_multipole_errors">set_random_multipole_errors() (pySC.core.simulated_commissioning.SimulatedCommissioning method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules/core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning.set_systematic_multipole_errors">set_systematic_multipole_errors() (pySC.core.simulated_commissioning.SimulatedCommissioning method)</a>
 </li>
       <li><a href="modules/core_structure.html#pySC.core.classes.Sigmas">Sigmas (class in pySC.core.classes)</a>
