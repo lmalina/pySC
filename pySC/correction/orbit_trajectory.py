@@ -13,6 +13,8 @@ from typing import Tuple
 
 from pySC.core.beam import bpm_reading
 from pySC.utils import logging_tools
+from pySC.utils import sc_tools
+from pySC.core.constants import SETTING_ADD
 
 LOGGER = logging_tools.get_logger(__name__)
 NREPRO: int = 5
@@ -58,6 +60,7 @@ def SCfeedbackFirstTurn(SC, response_matrix, reference=None, cm_ords=None, bpm_o
     LOGGER.debug('SCfeedbackFirstTurn: Start')
     bpm_ords, cm_ords, reference = _check_ords(SC, response_matrix, reference, bpm_ords, cm_ords)
     bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, bpm_ords=bpm_ords)  # Inject...
+    Mplus = sc_tools.SCgetPinv(response_matrix, **pinv_params)
 
     for n in range(maxsteps):
         if transmission_history[-1] == 0:
@@ -71,8 +74,9 @@ def SCfeedbackFirstTurn(SC, response_matrix, reference=None, cm_ords=None, bpm_o
         dphi = np.dot(Mplus, (measurement - reference))
         lastCMh = _get_last_cm(transmission_history[-1] - 1, 1, bpm_ords, cm_ords[0])[1][0]
         lastCMv = _get_last_cm(transmission_history[-1] - 1, 1, bpm_ords, cm_ords[1])[1][0]
-        SC.set_cm_setpoints(cm_ords[0][:lastCMh + 1], -dphi[:lastCMh + 1], skewness=False, method='add')
-        SC.set_cm_setpoints(cm_ords[1][:lastCMv + 1], -dphi[len(cm_ords[0]):len(cm_ords[0]) + lastCMv + 1], skewness=True, method='add')
+        SC.set_cm_setpoints(cm_ords[0][:lastCMh + 1], -dphi[:lastCMh + 1], skewness=False, method=SETTING_ADD)
+        SC.set_cm_setpoints(cm_ords[1][:lastCMv + 1], -dphi[len(cm_ords[0]):len(cm_ords[0]) + lastCMv + 1],
+                            skewness=True, method=SETTING_ADD)
         bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(
             SC, bpm_ords=bpm_ords, ind_history=transmission_history, orb_history=rms_orbit_history)  # Inject...
  
@@ -86,7 +90,7 @@ def SCfeedbackFirstTurn(SC, response_matrix, reference=None, cm_ords=None, bpm_o
     raise RuntimeError('SCfeedbackFirstTurn: FAIL (maxsteps reached)')
 
 
-def SCfeedbackStitch(SC, Mplus, reference=None, cm_ords=None, bpm_ords=None, nBPMs=4, maxsteps=30):
+def SCfeedbackStitch(SC, response_matrix, reference=None, cm_ords=None, bpm_ords=None, nBPMs=4, maxsteps=30, **pinv_params):
     """
     Achieves 2-turn transmission
 
@@ -124,7 +128,7 @@ def SCfeedbackStitch(SC, Mplus, reference=None, cm_ords=None, bpm_ords=None, nBP
     LOGGER.debug('SCfeedbackStitch: Start')
     if SC.INJ.nTurns != 2:
         raise ValueError("Stitching works only with two turns.")
-    bpm_ords, cm_ords, reference = _check_ords(SC, Mplus, reference, bpm_ords, cm_ords)
+    bpm_ords, cm_ords, reference = _check_ords(SC, response_matrix, reference, bpm_ords, cm_ords)
     bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, bpm_ords=bpm_ords)  # Inject...
     transmission_limit = len(bpm_ords) + nBPMs
     if transmission_history[-1] < len(bpm_ords):
@@ -141,8 +145,9 @@ def SCfeedbackStitch(SC, Mplus, reference=None, cm_ords=None, bpm_ords=None, nBP
     # Prepare reference
     reference = reference.reshape(2, len(bpm_readings[0]))
     reference[:, len(bpm_ords):] = 0
-    reference =reference.reshape(Mplus.shape[1])
-    
+    reference = reference.reshape(response_matrix.shape[0])
+    Mplus = sc_tools.SCgetPinv(response_matrix, **pinv_params)
+
     # Main loop
     for steps in range(maxsteps):
         # Set BPM readings
@@ -154,8 +159,8 @@ def SCfeedbackStitch(SC, Mplus, reference=None, cm_ords=None, bpm_ords=None, nBP
 
         # Correction step
         dphi = np.dot(Mplus, (measurement - reference))
-        SC.set_cm_setpoints(cm_ords[0], -dphi[:len(cm_ords[0])], skewness=False, method="add")
-        SC.set_cm_setpoints(cm_ords[1], -dphi[len(cm_ords[0]):], skewness=True, method="add")
+        SC.set_cm_setpoints(cm_ords[0], -dphi[:len(cm_ords[0])], skewness=False, method=SETTING_ADD)
+        SC.set_cm_setpoints(cm_ords[1], -dphi[len(cm_ords[0]):], skewness=True, method=SETTING_ADD)
         bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(
             SC, bpm_ords=bpm_ords, ind_history=transmission_history, orb_history=rms_orbit_history)
 
@@ -168,7 +173,7 @@ def SCfeedbackStitch(SC, Mplus, reference=None, cm_ords=None, bpm_ords=None, nBP
     raise RuntimeError('SCfeedbackStitch: FAIL Reached maxsteps')
 
 
-def SCfeedbackBalance(SC, Mplus, reference=None, cm_ords=None, bpm_ords=None, eps=1e-4, maxsteps=10):
+def SCfeedbackBalance(SC, response_matrix, reference=None, cm_ords=None, bpm_ords=None, eps=1e-4, maxsteps=10, **pinv_params):
     """
     Balance two-turn BPM readings
 
@@ -199,7 +204,7 @@ def SCfeedbackBalance(SC, Mplus, reference=None, cm_ords=None, bpm_ords=None, ep
     LOGGER.debug('SCfeedbackBalance: Start')
     if SC.INJ.nTurns != 2:
         raise ValueError("Balancing works only with two turns.")
-    bpm_ords, cm_ords, reference = _check_ords(SC, Mplus, reference, bpm_ords, cm_ords)
+    bpm_ords, cm_ords, reference = _check_ords(SC, response_matrix, reference, bpm_ords, cm_ords)
     bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, bpm_ords=bpm_ords)  # Inject...
     if transmission_history[-1] < bpm_readings.shape[1]:
         raise ValueError("Balancing works only with full 2 turn transmission.")
@@ -207,18 +212,20 @@ def SCfeedbackBalance(SC, Mplus, reference=None, cm_ords=None, bpm_ords=None, ep
     # Prepare reference
     reference = reference.reshape(2, len(bpm_readings[0]))
     reference[:, len(bpm_ords):] = 0
-    reference = reference.reshape(Mplus.shape[1])
+    reference = reference.reshape(response_matrix.shape[0])
+    Mplus = sc_tools.SCgetPinv(response_matrix, **pinv_params)
 
     # Main loop
     for steps in range(maxsteps):
         # Set BPM readings
-        delta_b = [bpm_readings[0][len(bpm_ords):] - bpm_readings[0][:len(bpm_ords)], bpm_readings[1][len(bpm_ords):] - bpm_readings[1][:len(bpm_ords)]]
+        delta_b = [bpm_readings[0][len(bpm_ords):] - bpm_readings[0][:len(bpm_ords)],
+                   bpm_readings[1][len(bpm_ords):] - bpm_readings[1][:len(bpm_ords)]]
         measurement = np.concatenate((bpm_readings[:, :len(bpm_ords)], delta_b), axis=1).ravel()
  
         # Correction step
         dphi = np.dot(Mplus, (measurement - reference))
-        SC.set_cm_setpoints(cm_ords[0], -dphi[:len(cm_ords[0])], skewness=False, method="add")
-        SC.set_cm_setpoints(cm_ords[1], -dphi[len(cm_ords[0]):], skewness=True, method="add")
+        SC.set_cm_setpoints(cm_ords[0], -dphi[:len(cm_ords[0])], skewness=False, method=SETTING_ADD)
+        SC.set_cm_setpoints(cm_ords[1], -dphi[len(cm_ords[0]):], skewness=True, method=SETTING_ADD)
         bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(
             SC, bpm_ords=bpm_ords, ind_history=transmission_history, orb_history=rms_orbit_history)
 
@@ -232,7 +239,7 @@ def SCfeedbackBalance(SC, Mplus, reference=None, cm_ords=None, bpm_ords=None, ep
     raise RuntimeError('SCfeedbackBalance: FAIL (maxsteps reached, unstable)')
 
 
-def SCfeedbackRun(SC, Mplus, reference=None, cm_ords=None, bpm_ords=None, eps=1e-4, target=0, maxsteps=30, scaleDisp=0):
+def SCfeedbackRun(SC, response_matrix, reference=None, cm_ords=None, bpm_ords=None, eps=1e-4, target=0, maxsteps=30, scaleDisp=0, **pinv_params):
     """
     iterative orbit correction
 
@@ -279,8 +286,9 @@ def SCfeedbackRun(SC, Mplus, reference=None, cm_ords=None, bpm_ords=None, eps=1e
 
     """
     LOGGER.debug('SCfeedbackRun: Start')
-    bpm_ords, cm_ords, reference = _check_ords(SC, Mplus, reference, bpm_ords, cm_ords)
+    bpm_ords, cm_ords, reference = _check_ords(SC, response_matrix, reference, bpm_ords, cm_ords)
     bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, bpm_ords=bpm_ords)  # Inject ...
+    Mplus = sc_tools.SCgetPinv(response_matrix, **pinv_params)
 
     # Main loop
     for steps in range(maxsteps):
@@ -290,10 +298,10 @@ def SCfeedbackRun(SC, Mplus, reference=None, cm_ords=None, bpm_ords=None, eps=1e
         # Correction step
         dphi = np.dot(Mplus, (measurement - reference))
         if scaleDisp != 0:   # TODO this is weight
-            SC.set_cavity_setpoints(SC.ORD.RF, -scaleDisp * dphi[-1], "Frequency", method="add")
+            SC.set_cavity_setpoints(SC.ORD.RF, -scaleDisp * dphi[-1], "Frequency", method=SETTING_ADD)
             dphi = dphi[:-1]  # TODO the last setpoint is cavity frequency
-        SC.set_cm_setpoints(cm_ords[0], -dphi[:len(cm_ords[0])], skewness=False, method="add")
-        SC.set_cm_setpoints(cm_ords[1], -dphi[len(cm_ords[0]):], skewness=True, method="add")
+        SC.set_cm_setpoints(cm_ords[0], -dphi[:len(cm_ords[0])], skewness=False, method=SETTING_ADD)
+        SC.set_cm_setpoints(cm_ords[1], -dphi[len(cm_ords[0]):], skewness=True, method=SETTING_ADD)
         bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(
             SC, bpm_ords=bpm_ords, ind_history=transmission_history, orb_history=rms_orbit_history)  # Inject ...
 
@@ -378,8 +386,8 @@ def _wiggling(SC, bpm_ords, cm_ords, transmission_limit, nums_correctors=range(1
         tmpCMordsV = _get_last_cm(transmission_history[-1] - 1, nWiggleCM, bpm_ords, cm_ords[1])[0]  # Last CMs in vert
 
         for i in range(dpts.shape[1]):
-            SC.set_cm_setpoints(tmpCMordsH, dpts[0, i], skewness=False, method='add')
-            SC.set_cm_setpoints(tmpCMordsV, dpts[1, i], skewness=True, method='add')
+            SC.set_cm_setpoints(tmpCMordsH, dpts[0, i], skewness=False, method=SETTING_ADD)
+            SC.set_cm_setpoints(tmpCMordsV, dpts[1, i], skewness=True, method=SETTING_ADD)
             bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(
                 SC, bpm_ords=bpm_ords, ind_history=transmission_history, orb_history=rms_orbit_history)
             if transmission_history[-1] >= transmission_limit:
