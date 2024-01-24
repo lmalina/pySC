@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from pySC.core.constants import SPEED_OF_LIGHT
-from pySC.utils.at_wrapper import atpass, findorbit6, findspos
+from pySC.utils import at_wrapper
 from pySC.core.beam import generate_bunches
 
 
@@ -10,22 +10,22 @@ def plot_phase_space(SC, ords=np.zeros(1, dtype=int), custom_bunch=None, nPartic
     init_font = plt.rcParams["font.size"]
     plt.rcParams.update({'font.size': 18})
     z_in, n_particles, n_turns = _check_input(SC, custom_bunch, nParticles, nTurns)
-    T = atpass(SC.RING, z_in, n_turns, ords, keep_lattice=False)
+    T = at_wrapper.atpass(SC.RING, z_in, n_turns, ords, keep_lattice=False)
     T[:, np.isnan(T[0, :])] = np.nan
     label_str = [r'$\Delta x$ [$\mu$m]', r"$\Delta x'$ [$\mu$rad]", r'$\Delta y$ [$\mu$m]', r"$\Delta y'$ [$\mu$rad]",
                  r'$\Delta S$ [m]', r'$\delta E$ $[\%]$']
     title_str = ['Horizontal', 'Vertical', 'Longitudinal']
     cav_ord = SC.ORD.RF[0]
     if SC.RING[cav_ord].PassMethod == 'RFCavityPass':
-        circumference = findspos(SC.RING)[-1]
+        circumference = at_wrapper.findspos(SC.RING)[-1]
         length_slippage = SPEED_OF_LIGHT * SC.RING[cav_ord].HarmNumber / SC.RING[cav_ord].Frequency - circumference
         T[5, :, :, :] = T[5, :, :, :] - length_slippage * np.arange(n_turns)[np.newaxis, np.newaxis, :]
         label_str[4] = r'$\Delta S_{act}$ [m]'
     if plotCO:
-        CO = np.squeeze(findorbit6(SC.RING, ords)[1])
+        CO = np.squeeze(at_wrapper.findorbit6(SC.RING, ords)[1])
         if np.isnan(CO[0]):
             start_point_guess = np.nanmean(T, axis=(1, 2, 3))
-            CO = np.squeeze(findorbit6(SC.RING, ords, guess=start_point_guess)[1])
+            CO = np.squeeze(at_wrapper.findorbit6(SC.RING, ords, guess=start_point_guess)[1])
             if np.isnan(CO[0]):
                 CO = np.full(6, np.nan)
     else:

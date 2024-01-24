@@ -4,10 +4,9 @@ import multiprocessing
 from pySC.lattice_properties.response_model import SCgetModelRM, SCgetModelDispersion
 from pySC.core.constants import SETTING_ADD, TRACK_ORB
 from pySC.core.beam import bpm_reading
-from pySC.utils.sc_tools import SCgetPinv
 import matplotlib.pyplot as plt
 from scipy.optimize import least_squares
-from pySC.utils import logging_tools
+from pySC.utils import logging_tools, sc_tools
 LOGGER = logging_tools.get_logger(__name__)
 
 
@@ -162,7 +161,7 @@ def get_inverse(jacobian, B, s_cut, weights, plot=False):
     n_resp_mats = len(jacobian)
     sum_corr = np.sum(jacobian, axis=2)          # Sum over i and j for all planes
     matrix = np.dot(np.dot(sum_corr, weights), sum_corr.T)
-    inv_matrix = SCgetPinv(matrix, num_removed=n_resp_mats - min(n_resp_mats, s_cut), plot=plot)
+    inv_matrix = sc_tools.pinv(matrix, num_removed=n_resp_mats - min(n_resp_mats, s_cut), plot=plot)
     results = np.ravel(np.dot(inv_matrix, B))
     # e = np.ravel(np.dot(matrix, results)) - np.ravel(B)
     return results

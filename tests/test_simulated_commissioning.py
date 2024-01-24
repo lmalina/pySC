@@ -5,7 +5,7 @@ import numpy as np
 from numpy.testing import assert_allclose, assert_equal
 import at
 from pySC.core.simulated_commissioning import SimulatedCommissioning
-from pySC.utils.sc_tools import SCgetOrds
+from pySC.utils import sc_tools
 
 
 def test_simulated_commissioning_data_structure(at_cell):
@@ -55,7 +55,7 @@ def test_register_cavities(at_cell):
 def test_register_magnets(at_cell):
     sc = SimulatedCommissioning(at_cell)
     mag_dict = dict(CalErrorB=np.array([5E-2, 1E-3]), MagnetOffset=200E-6 * np.array([1, 1, 0]),)
-    indices = SCgetOrds(sc.RING, "Q")
+    indices = sc_tools.ords_from_regex(sc.RING, "Q")
     sc.register_magnets(np.repeat(indices, 2), CalErrorB=np.array([5E-2, 1E-3]), MagnetOffset=200E-6 * np.array([1, 1, 0]),)
     update_dict = dict(CalErrorA=5E-2)
     sc.register_magnets(indices[2::-1], CalErrorA=5E-2)
@@ -68,7 +68,7 @@ def test_register_magnets(at_cell):
 def test_register_supports(at_cell):
     sc = SimulatedCommissioning(at_cell)
     mag_dict = dict(SectionOffset=200E-6 * np.array([1, 1, 0]),)
-    indices = np.vstack((SCgetOrds(sc.RING, "SF"), SCgetOrds(sc.RING, "SD")))
+    indices = np.vstack((sc_tools.ords_from_regex(sc.RING, "SF"), sc_tools.ords_from_regex(sc.RING, "SD")))
     sc.register_supports(np.repeat(indices, 2, axis=1), "Section",  Offset=200E-6 * np.array([1, 1, 0]),)
     update_dict1 = dict(SectionRoll=5E-2 * np.array([1, 0, 0]), SectionOffset=100E-6 * np.array([1, 1, 0]))
     update_dict2 = dict(SectionRoll=5E-2 * np.array([1, 0, 0]))
@@ -105,9 +105,9 @@ def test_apply_errors(at_cell):
     sc.register_bpms(np.array([8, 21]), CalError=5E-2 * np.ones(2), Offset=500E-6 * np.ones(2),
                      Noise=10E-6 * np.ones(2), NoiseCO=1E-6 * np.ones(2), Roll=1E-3)
     sc.register_cavities(np.array([0]), FrequencyOffset=5E3, VoltageOffset=5E3, TimeLagOffset=0.5)
-    sc.register_magnets(SCgetOrds(sc.RING, "Q"), CalErrorB=np.array([5E-2, 1E-3]),
+    sc.register_magnets(sc_tools.ords_from_regex(sc.RING, "Q"), CalErrorB=np.array([5E-2, 1E-3]),
                         MagnetOffset=200E-6 * np.array([1, 1, 0]), )
-    indices = np.vstack((SCgetOrds(sc.RING, 'SectionStart'), SCgetOrds(sc.RING, 'SectionEnd')))
+    indices = np.vstack((sc_tools.ords_from_regex(sc.RING, 'SectionStart'), sc_tools.ords_from_regex(sc.RING, 'SectionEnd')))
     sc.register_supports(indices, "Section", Offset=200E-6 * np.array([1, 1, 0]), Roll=20E-6 * np.array([1, 0, 0]))
     sc.apply_errors()
     # BPM at index 8

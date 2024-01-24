@@ -2,8 +2,7 @@ import numpy as np
 from pySC.core.constants import SUPPORT_TYPES, RF_PROPERTIES
 from pySC.correction import orbit_trajectory
 from pySC.lattice_properties.response_model import SCgetModelRM
-from pySC.utils.sc_tools import SCscaleCircumference
-from pySC.utils import logging_tools
+from pySC.utils import logging_tools, sc_tools
 
 LOGGER = logging_tools.get_logger(__name__)
 
@@ -87,5 +86,5 @@ def scaleCircumference(SC, SC0, scale):
     for ord in range(len(SC0.RING)):
         D += SC0.RING[ord].Length
         D0 += SC0.IDEALRING[ord].Length
-    SC.RING = SCscaleCircumference(SC.RING, scale * (D - D0) + D0, 'abs')
+    SC.RING = sc_tools.scale_circumference(SC.RING, scale * (D - D0) + D0, 'abs')
     return SC

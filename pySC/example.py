@@ -3,13 +3,11 @@ import numpy as np
 from pySC.correction.bba import trajectory_bba, fake_bba
 
 from at import Lattice
-from pySC.utils.at_wrapper import atloco
 from pySC.core.simulated_commissioning import SimulatedCommissioning
 from pySC.correction import orbit_trajectory
 from pySC.core.beam import bpm_reading, beam_transmission
 from pySC.correction.tune import tune_scan
 from pySC.lattice_properties.response_model import SCgetModelRM, SCgetModelDispersion
-from pySC.utils.sc_tools import SCgetOrds, SCgetPinv
 from pySC.correction.loco_wrapper import (loco_model, loco_fit_parameters, apply_lattice_correction, loco_measurement,
                                           loco_bpm_structure, loco_cm_structure)
 from pySC.plotting.plot_phase_space import plot_phase_space
@@ -17,7 +15,7 @@ from pySC.plotting.plot_support import plot_support
 from pySC.plotting.plot_lattice import plot_lattice
 from pySC.core.lattice_setting import switch_cavity_and_radiation
 from pySC.correction.rf import correct_rf_phase, correct_rf_frequency, phase_and_energy_error
-from pySC.utils import logging_tools
+from pySC.utils import at_wrapper, logging_tools, sc_tools
 
 LOGGER = logging_tools.get_logger(__name__)
 
@@ -51,44 +49,44 @@ if __name__ == "__main__":
     LOGGER.info(f"{len(ring)=}")
     SC = SimulatedCommissioning(ring)
     # at.summary(ring)
-    ords = SCgetOrds(SC.RING, 'BPM')
+    ords = sc_tools.ords_from_regex(SC.RING, 'BPM')
     SC.register_bpms(ords, CalError=5E-2 * np.ones(2),  # x and y, relative
                      Offset=500E-6 * np.ones(2),  # x and y, [m]
                      Noise=10E-6 * np.ones(2),  # x and y, [m]
                      NoiseCO=1E-6 * np.ones(2),  # x and y, [m]
                      Roll=1E-3)  # az, [rad]
-    ords = SCgetOrds(SC.RING, 'QF')
+    ords = sc_tools.ords_from_regex(SC.RING, 'QF')
     SC.register_magnets(ords, HCM=1E-3,  # [rad]
                         CalErrorB=np.array([5E-2, 1E-3]),  # relative
                         MagnetOffset=200E-6 * np.array([1, 1, 0]),  # x, y and z, [m]
                         MagnetRoll=200E-6 * np.array([1, 0, 0]))  # az, ax and ay, [rad]
-    ords = SCgetOrds(SC.RING, 'QD')
+    ords = sc_tools.ords_from_regex(SC.RING, 'QD')
     SC.register_magnets(ords, VCM=1E-3,  # [rad]
                         CalErrorA=np.array([5E-2, 0]),  # relative
                         CalErrorB=np.array([0, 1E-3]),  # relative
                         MagnetOffset=200E-6 * np.array([1, 1, 0]),  # x, y and z, [m]
                         MagnetRoll=200E-6 * np.array([1, 0, 0]))  # az, ax and ay, [rad]
-    ords = SCgetOrds(SC.RING, 'BEND')
+    ords = sc_tools.ords_from_regex(SC.RING, 'BEND')
     SC.register_magnets(ords,
                         BendingAngle=1E-3,  # relative
                         MagnetOffset=200E-6 * np.array([1, 1, 0]),  # x, y and z, [m]
                         MagnetRoll=200E-6 * np.array([1, 0, 0]))  # az, ax and ay, [rad]
-    ords = SCgetOrds(SC.RING, 'SF|SD')
+    ords = sc_tools.ords_from_regex(SC.RING, 'SF|SD')
     SC.register_magnets(ords,
                         SkewQuad=0.1,  # [1/m]
                         CalErrorA=np.array([0, 1E-3, 0]),  # relative
                         CalErrorB=np.array([0, 0, 1E-3]),  # relative
                         MagnetOffset=200E-6 * np.array([1, 1, 0]),  # x, y and z, [m]
                         MagnetRoll=200E-6 * np.array([1, 0, 0]))  # az, ax and ay, [rad]
-    ords = SCgetOrds(SC.RING, 'RFCav')
+    ords = sc_tools.ords_from_regex(SC.RING, 'RFCav')
     SC.register_cavities(ords, FrequencyOffset=5E3,  # [Hz]
                          VoltageOffset=5E3,  # [V]
                          TimeLagOffset=0.5)  # [m]
-    ords = np.vstack((SCgetOrds(SC.RING, 'GirderStart'), SCgetOrds(SC.RING, 'GirderEnd')))
+    ords = np.vstack((sc_tools.ords_from_regex(SC.RING, 'GirderStart'), sc_tools.ords_from_regex(SC.RING, 'GirderEnd')))
     SC.register_supports(ords, "Girder",
                          Offset=100E-6 * np.array([1, 1, 0]),  # x, y and z, [m]
                          Roll=200E-6 * np.array([1, 0, 0]))  # az, ax and ay, [rad]
-    ords = np.vstack((SCgetOrds(SC.RING, 'SectionStart'), SCgetOrds(SC.RING, 'SectionEnd')))
+    ords = np.vstack((sc_tools.ords_from_regex(SC.RING, 'SectionStart'), sc_tools.ords_from_regex(SC.RING, 'SectionEnd')))
     SC.register_supports(ords, "Section",
                            Offset=100E-6 * np.array([1, 1, 0]))  # x, y and z, [m]
     SC.INJ.beamSize = np.diag(np.array([200E-6, 100E-6, 100E-6, 50E-6, 1E-3, 1E-4]) ** 2)
@@ -96,9 +94,9 @@ if __name__ == "__main__":
     SC.SIG.staticInjectionZ = np.array([1E-3, 1E-4, 1E-3, 1E-4, 1E-3, 1E-3])  # [m; rad; m; rad; rel.; m]
     SC.SIG.Circumference = 2E-4  # relative
     SC.INJ.beamLostAt = 0.6  # relative
-    for ord in SCgetOrds(SC.RING, 'Drift'):
+    for ord in sc_tools.ords_from_regex(SC.RING, 'Drift'):
         SC.RING[ord].EApertures = 13E-3 * np.array([1, 1])  # [m]
-    for ord in SCgetOrds(SC.RING, 'QF|QD|BEND|SF|SD'):
+    for ord in sc_tools.ords_from_regex(SC.RING, 'QF|QD|BEND|SF|SD'):
         SC.RING[ord].EApertures = 10E-3 * np.array([1, 1])  # [m]
     SC.RING[SC.ORD.Magnet[50]].EApertures = np.array([6E-3, 3E-3])  # [m]
 
@@ -108,7 +106,7 @@ if __name__ == "__main__":
     plot_support(SC)
 
     SC.RING = switch_cavity_and_radiation(SC.RING, 'cavityoff')
-    sextOrds = SCgetOrds(SC.RING, 'SF|SD')
+    sextOrds = sc_tools.ords_from_regex(SC.RING, 'SF|SD')
     SC.set_magnet_setpoints(sextOrds, 0.0, False, 2, method='abs')
     RM1 = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, nTurns=1)
     RM2 = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, nTurns=2)
@@ -128,9 +126,9 @@ if __name__ == "__main__":
     # plot_cm_strengths(SC)
     # Performing trajectory BBA
     SC.INJ.nParticles = 1
-    quadOrds = np.tile(SCgetOrds(SC.RING, 'QF|QD'), (2, 1))
+    quadOrds = np.tile(sc_tools.ords_from_regex(SC.RING, 'QF|QD'), (2, 1))
     BPMords = np.tile(SC.ORD.BPM, (2, 1))
-    SC, bba_offsets, bba_offset_errors = trajectory_bba(SC, BPMords, quadOrds, q_ord_phase=SCgetOrds(SC.RING, 'QF|QD')[0],
+    SC, bba_offsets, bba_offset_errors = trajectory_bba(SC, BPMords, quadOrds, q_ord_phase=sc_tools.ords_from_regex(SC.RING, 'QF|QD')[0],
                                                         q_ord_setpoints=np.array([0.8, 0.9, 1.0, 1.1, 1.2]),
                                                         magnet_strengths=np.array([0.8, 0.9, 1.0, 1.1, 1.2]),
                                                         dipole_compensation=True, plot_results=True)
@@ -161,7 +159,7 @@ if __name__ == "__main__":
     [maxTurns, lostCount] = beam_transmission(SC, nParticles=100, nTurns=10)
 
     # Faking-BBA
-    quadOrds = np.tile(SCgetOrds(SC.RING, 'QF|QD'), (2, 1))
+    quadOrds = np.tile(sc_tools.ords_from_regex(SC.RING, 'QF|QD'), (2, 1))
     BPMords = np.tile(SC.ORD.BPM, (2, 1))
     SC = fake_bba(SC, BPMords, quadOrds, fake_offset=np.array([50E-6, 50E-6]))
 
@@ -183,7 +181,7 @@ if __name__ == "__main__":
     SC.RING = switch_cavity_and_radiation(SC.RING, 'cavityon')
     plot_phase_space(SC, nParticles=10, nTurns=1000)
     maxTurns, lostCount = beam_transmission(SC, nParticles=100, nTurns=200, plot=True)
-    SC, _, _, _ = tune_scan(SC, np.vstack((SCgetOrds(SC.RING, 'QF'), SCgetOrds(SC.RING, 'QD'))),
+    SC, _, _, _ = tune_scan(SC, np.vstack((sc_tools.ords_from_regex(SC.RING, 'QF'), sc_tools.ords_from_regex(SC.RING, 'QD'))),
                             np.outer(np.ones(2), 1 + np.linspace(-0.01, 0.01, 51)), do_plot=False, nParticles=100,
                             nTurns=200)
     CMstep = 1E-4  # [rad] # TODO later in the structure it is in mrad, ???
@@ -194,18 +192,18 @@ if __name__ == "__main__":
     cm_data = loco_cm_structure(SC, CMstep, FitKicks=True)
     loco_meas_data = loco_measurement(SC, CMstep, RFstep, SC.ORD.BPM, SC.ORD.CM)
     fit_parameters = loco_fit_parameters(SC, init.SC.RING, ring_data, RFstep,
-                                         [SCgetOrds(SC.RING, 'QF'), False, 'individual', 1E-3],
+                                         [sc_tools.ords_from_regex(SC.RING, 'QF'), False, 'individual', 1E-3],
                                          # {Ords, normal/skew, ind/fam, deltaK}
-                                         [SCgetOrds(SC.RING, 'QD'), False, 'individual', 1E-4])
+                                         [sc_tools.ords_from_regex(SC.RING, 'QD'), False, 'individual', 1E-4])
 
     for n in range(6):
-        _, bpm_data, cm_data, fit_parameters, loco_flags, ring_data = atloco(loco_meas_data, bpm_data, cm_data,
+        _, bpm_data, cm_data, fit_parameters, loco_flags, ring_data = at_wrapper.atloco(loco_meas_data, bpm_data, cm_data,
                                                                              fit_parameters, loco_flags, ring_data)
         SC = apply_lattice_correction(SC, fit_parameters)
         SC = orbit_trajectory.correct(SC, MCO, alpha=50, target=0, maxsteps=30)
         if n == 3:
             loco_flags.Coupling = True
             fit_parameters = loco_fit_parameters(SC, init.SC.RING, ring_data, RFstep,
-                                                 [SCgetOrds(SC.RING, 'QF'), False, 'individual', 1E-3],
-                                                 [SCgetOrds(SC.RING, 'QD'), False, 'individual', 1E-4],
+                                                 [sc_tools.ords_from_regex(SC.RING, 'QF'), False, 'individual', 1E-3],
+                                                 [sc_tools.ords_from_regex(SC.RING, 'QD'), False, 'individual', 1E-4],
                                                  [SC.ORD.SkewQuad, True, 'individual', 1E-3])

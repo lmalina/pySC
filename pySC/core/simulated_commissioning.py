@@ -17,11 +17,7 @@ from pySC.core.classes import Injection, Sigmas, Indices, DotDict
 from pySC.core.constants import (BPM_ERROR_FIELDS, RF_ERROR_FIELDS, RF_PROPERTIES, MAGNET_TYPE_FIELDS,
                                  MAGNET_ERROR_FIELDS, AB, SUPPORT_TYPES, SUPPORT_ERROR_FIELDS, SETTING_ABS, SETTING_REL,
                                  SETTING_ADD, NUM_TO_AB, SETPOINT)
-from pySC.utils import logging_tools
-from pySC.utils.at_wrapper import findspos, atgetfieldvalues
-from pySC.utils.classdef_tools import update_double_ordinates, add_padded, intersect, randn_cutoff, s_interpolation, \
-    check_input_and_setpoints
-from pySC.utils.sc_tools import SCrandnc, SCscaleCircumference, update_transformation
+from pySC.utils import at_wrapper, classdef_tools, logging_tools, sc_tools
 
 LOGGER = logging_tools.get_logger(__name__)
 
@@ -430,7 +426,7 @@ class SimulatedCommissioning:
         if upstream := np.sum(np.diff(support_ords, axis=0) < 0):
             LOGGER.warning(f"{upstream} {support_type} endpoints(s) may be upstream of startpoint(s).")
         # TODO check the dimensions of Roll and Offset values
-        self.ORD[support_type] = update_double_ordinates(self.ORD[support_type], support_ords)
+        self.ORD[support_type] = classdef_tools.update_double_ordinates(self.ORD[support_type], support_ords)
         for ind in np.ravel(support_ords):
             setattr(self.RING[ind], f"{support_type}Offset", np.zeros(3))  # [x,y,z]
             setattr(self.RING[ind], f"{support_type}Roll", np.zeros(3))  # [az,ax,ay]
@@ -515,11 +511,11 @@ class SimulatedCommissioning:
         if BA.ndim != 2 or BA.shape[1] != 2:
             raise ValueError("BA has to  be numpy.array of shape N x 2.")
         for ord in ords:
-            randBA = SCrandnc(2, BA.shape) * BA  # TODO this should be registered in SC.SIG
+            randBA = sc_tools.randnc(2, BA.shape) * BA  # TODO this should be registered in SC.SIG
             for ind, target in enumerate(("B", "A")):
                 attr_name = f"Polynom{target}Offset"
                 setattr(self.RING[ord], attr_name,
-                        add_padded(getattr(self.RING[ord], attr_name), randBA[:, ind])
+                        classdef_tools.add_padded(getattr(self.RING[ord], attr_name), randBA[:, ind])
                         if hasattr(self.RING[ord], attr_name) else randBA[:, ind])
 
     def apply_errors(self, nsigmas: float = 2):
@@ -544,28 +540,28 @@ class SimulatedCommissioning:
             *SC.register_magnets*, *SC.register_support*, *SC.register_bpms*, *SC.register_cavities*
         """
         # RF
-        for ind in intersect(self.ORD.RF, self.SIG.RF.keys()):
+        for ind in classdef_tools.intersect(self.ORD.RF, self.SIG.RF.keys()):
             for field in self.SIG.RF[ind]:
-                setattr(self.RING[ind], field, randn_cutoff(self.SIG.RF[ind][field], nsigmas))
+                setattr(self.RING[ind], field, classdef_tools.randn_cutoff(self.SIG.RF[ind][field], nsigmas))
         # BPM
-        for ind in intersect(self.ORD.BPM, self.SIG.BPM.keys()):
+        for ind in classdef_tools.intersect(self.ORD.BPM, self.SIG.BPM.keys()):
             for field in self.SIG.BPM[ind]:
                 if re.search('Noise', field):
                     setattr(self.RING[ind], field, self.SIG.BPM[ind][field])
                 else:
-                    setattr(self.RING[ind], field, randn_cutoff(self.SIG.BPM[ind][field], nsigmas))
+                    setattr(self.RING[ind], field, classdef_tools.randn_cutoff(self.SIG.BPM[ind][field], nsigmas))
         # Magnet
-        for ind in intersect(self.ORD.Magnet, self.SIG.Magnet.keys()):
+        for ind in classdef_tools.intersect(self.ORD.Magnet, self.SIG.Magnet.keys()):
             for field in self.SIG.Magnet[ind]:
                 setattr(self.RING[ind], 'BendingAngleError' if field == 'BendingAngle' else field,
-                        randn_cutoff(self.SIG.Magnet[ind][field], nsigmas))
+                        classdef_tools.randn_cutoff(self.SIG.Magnet[ind][field], nsigmas))
         # Injection
-        self.INJ.Z0 = self.INJ.Z0ideal + self.SIG.staticInjectionZ * SCrandnc(nsigmas, (6,))
+        self.INJ.Z0 = self.INJ.Z0ideal + self.SIG.staticInjectionZ * sc_tools.randnc(nsigmas, (6,))
         self.INJ.randomInjectionZ = 1 * self.SIG.randomInjectionZ
         # Circumference
         if 'Circumference' in self.SIG.keys():
-            circScaling = 1 + self.SIG.Circumference * SCrandnc(nsigmas, (1, 1))
-            self.RING = SCscaleCircumference(self.RING, circScaling, 'rel')
+            circScaling = 1 + self.SIG.Circumference * sc_tools.randnc(nsigmas, (1, 1))
+            self.RING = sc_tools.scale_circumference(self.RING, circScaling, 'rel')
             LOGGER.info('Circumference error applied.')
         # Misalignments
         self._apply_support_alignment_error(nsigmas)
@@ -577,7 +573,7 @@ class SimulatedCommissioning:
             self.update_cavities()
 
     def _apply_support_alignment_error(self, nsigmas):
-        s_pos = findspos(self.RING)
+        s_pos = at_wrapper.findspos(self.RING)
         for support_type in SUPPORT_TYPES:
             for ordPair in self.ORD[support_type].T:
                 if ordPair[0] not in self.SIG.Support.keys():
@@ -585,9 +581,9 @@ class SimulatedCommissioning:
                 for field, value in self.SIG.Support[ordPair[0]].items():
                     if support_type not in field:
                         continue
-                    setattr(self.RING[ordPair[0]], field, randn_cutoff(value, nsigmas))
+                    setattr(self.RING[ordPair[0]], field, classdef_tools.randn_cutoff(value, nsigmas))
                     setattr(self.RING[ordPair[1]], field,
-                            randn_cutoff(value, nsigmas) if field in self.SIG.Support[ordPair[1]].keys()
+                            classdef_tools.randn_cutoff(value, nsigmas) if field in self.SIG.Support[ordPair[1]].keys()
                             else getattr(self.RING[ordPair[0]], field))
 
                 struct_length = np.remainder(np.diff(s_pos[ordPair]), s_pos[-1])
@@ -680,14 +676,14 @@ class SimulatedCommissioning:
             *SC.register_support*, *SC.support_offset_and_roll*, *plot_support*
 
         """
-        s_pos = findspos(self.RING)
+        s_pos = at_wrapper.findspos(self.RING)
         if offset_magnets:
             if len(self.ORD.Magnet):
                 offsets, rolls = self.support_offset_and_roll(s_pos[self.ORD.Magnet])
                 for i, ind in enumerate(self.ORD.Magnet):
                     setattr(self.RING[ind], "SupportOffset", offsets[:, i])
                     setattr(self.RING[ind], "SupportRoll", rolls[:, i])
-                    self.RING[ind] = update_transformation(self.RING[ind])
+                    self.RING[ind] = sc_tools.update_transformation(self.RING[ind])
                     if hasattr(self.RING[ind], 'MasterOf'):
                         for child_ind in self.RING[ind].MasterOf:
                             for field in ("T1", "T2", "R1", "R2"):
@@ -725,7 +721,7 @@ class SimulatedCommissioning:
         See Also:
             *SC.register_support*, *SC.update_support*, *plot_support*
         """
-        s_pos = findspos(self.RING)
+        s_pos = at_wrapper.findspos(self.RING)
         ring_length = s_pos[-1]
         off0 = np.zeros((3, len(s_pos)))
         roll0 = np.zeros((3, len(s_pos)))
@@ -740,7 +736,7 @@ class SimulatedCommissioning:
                     tmpoff1[:, i] = off0[:, ord1[i]] + getattr(self.RING[ord1[i]], f"{suport_type}Offset")
                     tmpoff2[:, i] = off0[:, ord2[i]] + getattr(self.RING[ord2[i]], f"{suport_type}Offset")
                 for i in range(3):
-                    off0[i, :] = s_interpolation(off0[i, :], s_pos, ord1, tmpoff1[i, :], ord2, tmpoff2[i, :])
+                    off0[i, :] = classdef_tools.s_interpolation(off0[i, :], s_pos, ord1, tmpoff1[i, :], ord2, tmpoff2[i, :])
 
         for support_type in SUPPORT_TYPES:  # Order has to be Section, Plinth, Girder
             for ords in self.ORD[support_type].T:
@@ -797,12 +793,12 @@ class SimulatedCommissioning:
                 SC.set_cavity_setpoints(ords=SC.ORD.RF[0], setpoints=1E3, param='Frequency', method='add')
 
         """
-        ords_1d, setpoints_1d = check_input_and_setpoints(method, ords, setpoints)
+        ords_1d, setpoints_1d = classdef_tools.check_input_and_setpoints(method, ords, setpoints)
         setpoint_str = f"{param}{SETPOINT}"
         if method == SETTING_REL:
-            setpoints_1d *= atgetfieldvalues(self.RING, ords_1d, setpoint_str)
+            setpoints_1d *= at_wrapper.atgetfieldvalues(self.RING, ords_1d, setpoint_str)
         if method == SETTING_ADD:
-            setpoints_1d += atgetfieldvalues(self.RING, ords_1d, setpoint_str)
+            setpoints_1d += at_wrapper.atgetfieldvalues(self.RING, ords_1d, setpoint_str)
         for i, ord in enumerate(ords_1d):
             setattr(self.RING[ord], setpoint_str, setpoints_1d[i])
         self.update_cavities(ords_1d)
@@ -825,7 +821,7 @@ class SimulatedCommissioning:
         order = 0
         ndim = int(skewness)
         letter = NUM_TO_AB[ndim]
-        setpoints = atgetfieldvalues(self.RING, ords_1d, f"{SETPOINT}{letter}", order)
+        setpoints = at_wrapper.atgetfieldvalues(self.RING, ords_1d, f"{SETPOINT}{letter}", order)
         for i, ord1d in enumerate(ords_1d):
             if self.RING[ord1d].PassMethod != 'CorrectorPass':
                 # positive setpoint -> positive kick -> negative horizontal field
@@ -863,7 +859,7 @@ class SimulatedCommissioning:
 
         """
         # TODO corrector does not have PolynomA/B in at?
-        ords_1d, setpoints_1d = check_input_and_setpoints(method, ords, setpoints)
+        ords_1d, setpoints_1d = classdef_tools.check_input_and_setpoints(method, ords, setpoints)
         order = 0
         ndim = int(skewness)
         letter = NUM_TO_AB[ndim]
@@ -925,12 +921,12 @@ class SimulatedCommissioning:
                 SC.set_magnet_setpoints(ords=ords, skewness=False, order=1, setpoints=0.99, method='rel')
 
         """
-        ords_1d, setpoints_1d = check_input_and_setpoints(method, ords, setpoints)
+        ords_1d, setpoints_1d = classdef_tools.check_input_and_setpoints(method, ords, setpoints)
         letter = NUM_TO_AB[int(skewness)]
         if method == SETTING_REL:
-            setpoints_1d *= atgetfieldvalues(self.RING, ords_1d, f"NomPolynom{letter}", order)
+            setpoints_1d *= at_wrapper.atgetfieldvalues(self.RING, ords_1d, f"NomPolynom{letter}", order)
         if method == SETTING_ADD:
-            setpoints_1d += atgetfieldvalues(self.RING, ords_1d, f"{SETPOINT}{letter}", order)
+            setpoints_1d += at_wrapper.atgetfieldvalues(self.RING, ords_1d, f"{SETPOINT}{letter}", order)
         for i, ord in enumerate(ords_1d):
             if skewness and order == 1 and getattr(self.RING[ord], 'SkewQuadLimit', np.inf) < np.abs(setpoints_1d[i]):
                 LOGGER.info(f'SkewLim \n Skew quadrupole (ord: {ord}) is clipping')
@@ -1061,7 +1057,7 @@ class SimulatedCommissioning:
     def _optional_magnet_fields(self, ind, MAGords, **kwargs):
         if 'CF' in kwargs.keys():
             self.RING[ind].CombinedFunction = True
-        if intersect(("HCM", "VCM"), kwargs.keys()) and not hasattr(self.RING[ind], 'CMlimit'):
+        if classdef_tools.intersect(("HCM", "VCM"), kwargs.keys()) and not hasattr(self.RING[ind], 'CMlimit'):
             self.RING[ind].CMlimit = np.zeros(2)
         if 'HCM' in kwargs.keys():
             self.RING[ind].CMlimit[0] = kwargs["HCM"]
@@ -1076,17 +1072,17 @@ class SimulatedCommissioning:
 
     def _update_magnets(self, source_ord, target_ord):
         setpoints_a, setpoints_b = self.RING[source_ord].SetPointA, self.RING[source_ord].SetPointB
-        polynoms = dict(A=setpoints_a * add_padded(np.ones(len(setpoints_a)), self.RING[source_ord].CalErrorA),
-                        B=setpoints_b * add_padded(np.ones(len(setpoints_b)), self.RING[source_ord].CalErrorB))
+        polynoms = dict(A=setpoints_a * classdef_tools.add_padded(np.ones(len(setpoints_a)), self.RING[source_ord].CalErrorA),
+                        B=setpoints_b * classdef_tools.add_padded(np.ones(len(setpoints_b)), self.RING[source_ord].CalErrorB))
         for target in AB:
             new_polynom = polynoms[target][:]
             if hasattr(self.RING[target_ord], f'Polynom{target}Offset'):
-                new_polynom = add_padded(new_polynom, getattr(self.RING[target_ord], f'Polynom{target}Offset'))
+                new_polynom = classdef_tools.add_padded(new_polynom, getattr(self.RING[target_ord], f'Polynom{target}Offset'))
             for source in AB:
                 if hasattr(self.RING[target_ord], f'SysPol{target}From{source}'):
                     polynom_errors = getattr(self.RING[target_ord], f'SysPol{target}From{source}')
                     for n in polynom_errors.keys():
-                        new_polynom = add_padded(new_polynom, polynoms[source][n] * polynom_errors[n])
+                        new_polynom = classdef_tools.add_padded(new_polynom, polynoms[source][n] * polynom_errors[n])
             setattr(self.RING[target_ord], f"Polynom{target}", new_polynom)
 
         if hasattr(self.RING[source_ord], 'BendingAngleError'):

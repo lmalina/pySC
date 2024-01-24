@@ -8,10 +8,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit, fsolve
 
-from pySC.utils.at_wrapper import findorbit6
 from pySC.core.beam import bpm_reading
-from pySC.utils import logging_tools
 from pySC.core.constants import SPEED_OF_LIGHT
+from pySC.utils import at_wrapper, logging_tools
 
 LOGGER = logging_tools.get_logger(__name__)
 MIN_TURNS_FOR_LINEAR_FIT = 3
@@ -99,7 +98,7 @@ def correct_rf_frequency(SC, cav_ords=None, bpm_ords=None, n_steps=15, f_range=(
 def phase_and_energy_error(SC, cav_ords):
     """This is not a simple observable in reality."""
     lamb = SPEED_OF_LIGHT / SC.RING[cav_ords[0]].Frequency
-    orbit6 = findorbit6(SC.RING)[0]
+    orbit6 = at_wrapper.findorbit6(SC.RING)[0]
     phase_error = _fold_phase((orbit6[5] - SC.INJ.Z0[5]) / lamb, lamb) * 360
     energy_error = SC.INJ.Z0[4] - orbit6[4]
     LOGGER.info(f'Static phase error {phase_error:.0f} deg')

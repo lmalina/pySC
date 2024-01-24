@@ -2,12 +2,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from pySC.core.beam import bpm_reading, all_elements_reading
-from pySC.utils.sc_tools import SCrandnc
-from pySC.utils import logging_tools
 from pySC.core.classes import DotDict
 from pySC.core.constants import TRACK_TBT, NUM_TO_AB, SETTING_REL, SETTING_ABS
-from pySC.utils.stats import weighted_mean, weighted_error, effective_sample_size, weights_from_errors
-from pySC.utils.at_wrapper import atgetfieldvalues, findspos
+from pySC.utils import at_wrapper, logging_tools, sc_tools, stats
 from pySC.correction import orbit_trajectory
 
 
@@ -27,7 +24,7 @@ def trajectory_bba(SC, bpm_ords, mag_ords, **kwargs):
         raise ValueError('Beam-trajectory-based alignment works in TBT mode with 2 turns. '
                          'Please set: SC.INJ.nTurns = 2 and SC.INJ.trackMode = "TBT"')
 
-    q0 = atgetfieldvalues(SC.RING, par.q_ord_phase, "SetPointB", index=1)
+    q0 = at_wrapper.atgetfieldvalues(SC.RING, par.q_ord_phase, "SetPointB", index=1)
     bba_offsets = np.full(bpm_ords.shape, np.nan)
     bba_offset_errors = np.full(bpm_ords.shape, np.nan)
     for n_dim in range(bpm_ords.shape[0]):  # TODO currently assumes either horizontal or both planes
@@ -97,7 +94,7 @@ def fake_bba(SC, bpm_ords, mag_ords, errors=None, fake_offset=None):
         fake_bpm_offset = (SC.RING[mag_ords[inds[0], inds[1]]].MagnetOffset[inds[0]]
                            + SC.RING[mag_ords[inds[0], inds[1]]].SupportOffset[inds[0]]
                            - SC.RING[bpm_ords[inds[0], inds[1]]].SupportOffset[inds[0]]
-                           + fake_offset[inds[0]] * SCrandnc())
+                           + fake_offset[inds[0]] * sc_tools.randnc())
         if not np.isnan(fake_bpm_offset):
             SC.RING[bpm_ords[inds[0], inds[1]]].Offset[inds[0]] = fake_bpm_offset
         else:
@@ -134,10 +131,10 @@ def is_bba_errored(bba_offsets, bba_offset_errors):
 def _get_bpm_offset_from_mag(ring, bpm_ords, mag_ords):
     offset = np.full(bpm_ords.shape, np.nan)
     for n_dim in range(bpm_ords.shape[0]):
-        offset[n_dim, :] = (atgetfieldvalues(ring, bpm_ords[n_dim, :], 'Offset', n_dim)
-                            + atgetfieldvalues(ring, bpm_ords[n_dim, :], 'SupportOffset', n_dim)
-                            - atgetfieldvalues(ring, mag_ords[n_dim, :], 'MagnetOffset', n_dim)
-                            - atgetfieldvalues(ring, mag_ords[n_dim, :], 'SupportOffset', n_dim))
+        offset[n_dim, :] = (at_wrapper.atgetfieldvalues(ring, bpm_ords[n_dim, :], 'Offset', n_dim)
+                            + at_wrapper.atgetfieldvalues(ring, bpm_ords[n_dim, :], 'SupportOffset', n_dim)
+                            - at_wrapper.atgetfieldvalues(ring, mag_ords[n_dim, :], 'MagnetOffset', n_dim)
+                            - at_wrapper.atgetfieldvalues(ring, mag_ords[n_dim, :], 'SupportOffset', n_dim))
     return offset
 
 
@@ -175,8 +172,8 @@ def _data_evaluation(SC, bpm_pos, trajectories, mag_vec, n_dim, m_ord, par):
         center[j] = -p[1] / (par.fit_order * p[0])  # zero-crossing if linear, minimum is quadratic
         center_err[j] = np.sqrt(center[j] ** 2 * (pcov[0,0]/p[0]**2 + pcov[1,1]/p[1]**2 - 2 * pcov[0, 1] / p[0] / p[1]))
     mask = ~np.isnan(center)
-    offset_change = weighted_mean(center[mask], center_err[mask])
-    offset_change_error = weighted_error(center[mask]-offset_change, center_err[mask]) / np.sqrt(effective_sample_size(center[mask], weights_from_errors(center_err[mask])))
+    offset_change = stats.weighted_mean(center[mask], center_err[mask])
+    offset_change_error = stats.weighted_error(center[mask]-offset_change, center_err[mask]) / np.sqrt(stats.effective_sample_size(center[mask], stats.weights_from_errors(center_err[mask])))
     if not par.dipole_compensation and n_dim == 0 and SC.RING[m_ord].NomPolynomB[1] != 0:
         offset_change += getattr(SC.RING[m_ord], 'BendingAngle', 0) / SC.RING[m_ord].NomPolynomB[1] / SC.RING[m_ord].Length
     return offset_change, offset_change_error
@@ -264,7 +261,7 @@ def _data_measurement_tbt(SC, m_ord, bpm_ind, j_bpm, n_dim, scaling, par):
 
 
 def _phase_advance_injection_scan(SC, n_dim, last_bpm_ind, par):
-    q0 = atgetfieldvalues(SC.RING, par.q_ord_phase, "SetPointB", index=1)
+    q0 = at_wrapper.atgetfieldvalues(SC.RING, par.q_ord_phase, "SetPointB", index=1)
     n_setpoints = len(par.q_ord_setpoints)
     bpm_ranges = np.zeros((n_setpoints, len(SC.ORD.BPM)))
     scalings = np.zeros(n_setpoints)
@@ -357,7 +354,7 @@ def _get_orbit_bump(SC, cm_ord, bpm_ord, n_dim, par):  # TODO
 
 
 def _plot_bba_step(SC, ax, bpm_ind, n_dim):
-    s_pos = findspos(SC.RING)
+    s_pos = at_wrapper.findspos(SC.RING)
     bpm_readings, all_elements_positions = all_elements_reading(SC)
     ax.plot(s_pos[SC.ORD.BPM], 1E3 * bpm_readings[n_dim, :len(SC.ORD.BPM)], marker='o')
     ax.plot(s_pos[SC.ORD.BPM[bpm_ind]], 1E3 * bpm_readings[n_dim, bpm_ind], marker='o', markersize=10, markerfacecolor='k')
