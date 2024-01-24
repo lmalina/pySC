@@ -99,7 +99,7 @@ class SimulatedCommissioning:
         Examples:
             Identify the ordinates of all elements named `BPM` and registers them as BPMs in `SC`::
 
-                ords = SCgetOrds(SC.RING,'BPM')
+                ords = sc_tools.ords_from_regex(SC.RING,'BPM')
                 SC.register_bpms(ords)
 
             Register the BPMs specified in `ords` in `SC` and set the uncertainty of the offset to `500um` in
@@ -120,7 +120,7 @@ class SimulatedCommissioning:
                 SC.register_bpms(ords, Offset=500E-6*np.ones(2), SumError=0.2)
 
         See also:
-            *bpm_reading*, *SCgetOrds*, *SC.verify_structure*, *SC.apply_errors*, *SC.register_support*, *SC.update_support*
+            *bpm_reading*, *ords_from_regex*, *SC.verify_structure*, *SC.apply_errors*, *SC.register_support*, *SC.update_support*
         """
         self._check_kwargs(kwargs, BPM_ERROR_FIELDS)
         self.ORD.BPM = np.unique(np.concatenate((self.ORD.BPM, ords)))
@@ -162,7 +162,7 @@ class SimulatedCommissioning:
         Examples:
             Identify the ordinates of all elements named `'CAV'` and register them as cavities in `SC`::
 
-                ords = SCgetOrds(SC.RING, 'CAV')
+                ords = sc_tools.ords_from_regex(SC.RING, 'CAV')
                 SC.register_cavities(ords)
 
             Register the cavities specified in `ords` in `SC` and sets the uncertainty of the frequency offset
@@ -177,7 +177,7 @@ class SimulatedCommissioning:
                 SC.register_cavities(ords, FrequencyOffset=1E3, TimeLagOffset=0.3)
 
         See also:
-            *SCgetOrds*, *SC.verify_structure*, *SC.apply_errors*
+            *ords_from_regex*, *SC.verify_structure*, *SC.apply_errors*
 
         """
         self._check_kwargs(kwargs, RF_ERROR_FIELDS)
@@ -243,7 +243,7 @@ class SimulatedCommissioning:
         Examples:
             Identify the ordinates of all elements named `QF` and register them in `SC`::
 
-                ords = SCgetOrds(SC.RING, 'QF')
+                ords = sc_tools.ords_from_regex(SC.RING, 'QF')
                 SC.register_magnets(ords)
 
             Register the magnets specified in `ords` in `SC` and set the uncertainty of
@@ -278,8 +278,8 @@ class SimulatedCommissioning:
             columns of `childOrds`.
             The uncertainty of the bending angle is set to 1E-4::
 
-                masterOrds = SCgetOrds(SC.RING,'BENDa')
-                childOrds  = numpy.vstack((SCgetOrds(SC.RING,'BENDb'), SCgetOrds(SC.RING,'BENDc')))
+                masterOrds = sc_tools.ords_from_regex(SC.RING,'BENDa')
+                childOrds  = numpy.vstack((sc_tools.ords_from_regex(SC.RING,'BENDb'), sc_tools.ords_from_regex(SC.RING,'BENDc')))
                 SC.register_magnets(masterOrds, BendingAngle=1E-4, MasterOf=childOrds)
 
             Register the magnets specified in `ords` in `SC` as combined function magnets
@@ -310,7 +310,7 @@ class SimulatedCommissioning:
                                     CalErrorA=np.array([1E-2, 2E-3, 0]))
 
         See Also:
-            *SCgetOrds*, *SC.update_magnets*, *SC.verify_structure*, *SC.apply_errors*, *SC.register_support*
+            *ords_from_regex*, *SC.update_magnets*, *SC.verify_structure*, *SC.apply_errors*, *SC.register_support*
 
         """
         self._check_kwargs(kwargs, MAGNET_TYPE_FIELDS + MAGNET_ERROR_FIELDS)
@@ -414,7 +414,7 @@ class SimulatedCommissioning:
                 SC.register_support(ords, "Girder", Offset=np.array([dX dY dZ]), Roll=np.array([az ax ay]));
 
         See Also:
-            *SCgetOrds*, *SC.update_support*, *SC.support_offset_and_roll*, *plot_support*, *SC.apply_errors*,
+            *ords_from_regex*, *SC.update_support*, *SC.support_offset_and_roll*, *plot_support*, *SC.apply_errors*,
             *SC.register_magnets*, *update_transformation*
 
         """
@@ -467,7 +467,7 @@ class SimulatedCommissioning:
             Defines systematic multipole components for the 'QF' magnet and
             adds it to the field offsets of all magnets named 'QF'::
 
-                ords = SCgetOrds(SC.RING,'QF')
+                ords = sc_tools.ords_from_regex(SC.RING,'QF')
                 BA = np.array([[1E-5, 0], [1E-4, 0], [0, 0], [1E-2, 0]])
                 RING = SC.set_systematic_multipole_errors(RING, ords, BA, 1, False)
 
@@ -501,7 +501,7 @@ class SimulatedCommissioning:
             Defines random multipole components for the 'QF' magnet
             and adds it to the field offsets of all magnets named 'QF'::
 
-                ords = SCgetOrds(SC.RING,'QF')
+                ords = sc_tools.ords_from_regex(SC.RING,'QF')
                 BA = np.array([[1E-5, 0], [1E-4, 0], [0, 0], [1E-2, 0]])
                 SC.set_random_multipole_errors(ords, BA)
 
@@ -910,13 +910,13 @@ class SimulatedCommissioning:
         Examples:
             Identify the ordinates of all elements named `'SF'` and switch their sextupole component off::
 
-                ords = SCgetOrds(SC.RING,'SF')
+                ords = sc_tools.ords_from_regex(SC.RING,'SF')
                 SC.register_magnets(ords)
                 SC.set_magnet_setpoints(ords=ords, skewness=False, order=2, setpoints=0.0, method='abs')
 
             Identify the ordinates of all elements named `QF` and `QD` and set their quadrupole component to 99% of their design value::
 
-                ords = SCgetOrds(SC.RING,'QF|QD')
+                ords = sc_tools.ords_from_regex(SC.RING,'QF|QD')
                 SC.register_magnets(ords)
                 SC.set_magnet_setpoints(ords=ords, skewness=False, order=1, setpoints=0.99, method='rel')
 
