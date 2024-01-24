@@ -1,11 +1,10 @@
+import copy
 import numpy as np
 from at import Lattice
 
 from pySC.core.simulated_commissioning import SimulatedCommissioning
-from pySC.utils.at_wrapper import atpass, findorbit6
 from pySC.core.constants import NUM_TO_AB, RF_PROPERTIES
-import copy
-from pySC.utils import logging_tools
+from pySC.utils import at_wrapper, logging_tools
 
 LOGGER = logging_tools.get_logger(__name__)
 
@@ -50,7 +49,7 @@ def SCgetModelRM(SC, BPMords, CMords, trackMode='TBT', Z0=np.zeros(6), nTurns=1,
 
     """
     LOGGER.info('Calculating model response matrix')
-    track_methods = dict(TBT=atpass, ORB=orbpass)
+    track_methods = dict(TBT=at_wrapper.atpass, ORB=orbpass)
     if trackMode not in track_methods.keys():
         ValueError(f'Unknown track mode {trackMode}. Valid values are {track_methods.keys()}')
     ring = SC.IDEALRING.deepcopy() if useIdealRing else SCgetModelRING(SC)
@@ -88,7 +87,7 @@ def SCgetModelRM(SC, BPMords, CMords, trackMode='TBT', Z0=np.zeros(6), nTurns=1,
 
 
 def orbpass(RING, Z0,  nTurns, REFPTS):
-    return np.transpose(findorbit6(RING, REFPTS)[1])[[0,1,2,3], :].reshape(4, 1, len(REFPTS), 1)
+    return np.transpose(at_wrapper.findorbit6(RING, REFPTS)[1])[[0,1,2,3], :].reshape(4, 1, len(REFPTS), 1)
 
 
 def SCgetModelDispersion(SC, BPMords, CAVords, trackMode='ORB', Z0=np.zeros(6), nTurns=1, rfStep=1E3, useIdealRing=True):
@@ -122,7 +121,7 @@ def SCgetModelDispersion(SC, BPMords, CAVords, trackMode='ORB', Z0=np.zeros(6), 
 
     """
     LOGGER.info('Calculating model dispersion')
-    track_methods = dict(TBT=atpass, ORB=orbpass)
+    track_methods = dict(TBT=at_wrapper.atpass, ORB=orbpass)
     if trackMode not in track_methods.keys():
         ValueError(f'Unknown track mode {trackMode}. Valid values are {track_methods.keys()}')
     ring = SC.IDEALRING.deepcopy() if useIdealRing else SCgetModelRING(SC)

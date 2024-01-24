@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import copy
-from pySC.utils.at_wrapper import findspos, atgetfieldvalues
+from pySC.utils import at_wrapper
 from pySC.core.constants import SUPPORT_TYPES
 from typing import Tuple
 from pySC.core.simulated_commissioning import SimulatedCommissioning
@@ -28,7 +28,7 @@ def plot_support(SC: SimulatedCommissioning, font_size: int = 8, x_lim: Tuple[fl
     init_font = plt.rcParams["font.size"]
     plt.rcParams.update({'font.size': font_size})
     # Get s - positions along the lattice
-    s_pos = findspos(SC.RING)
+    s_pos = at_wrapper.findspos(SC.RING)
     circumference = s_pos[-1]
     if x_lim is None:
         x_lim = (0, circumference)
@@ -53,20 +53,20 @@ def plot_support(SC: SimulatedCommissioning, font_size: int = 8, x_lim: Tuple[fl
 
     # Magnet offsets and rolls
     off_support_line, roll_support_line = SC.support_offset_and_roll(s)
-    off_mag_support = atgetfieldvalues(SC.RING, SC.ORD.Magnet, "SupportOffset")
-    roll_mag_support = atgetfieldvalues(SC.RING, SC.ORD.Magnet, "SupportRoll")
-    off_mag_individual = atgetfieldvalues(SC.RING, SC.ORD.Magnet, "MagnetOffset")
-    roll_mag_individual = atgetfieldvalues(SC.RING, SC.ORD.Magnet, "MagnetRoll")
-    off_mag_total = atgetfieldvalues(SC.RING, SC.ORD.Magnet, "T2")[:, [0, 2, 5]]
+    off_mag_support = at_wrapper.atgetfieldvalues(SC.RING, SC.ORD.Magnet, "SupportOffset")
+    roll_mag_support = at_wrapper.atgetfieldvalues(SC.RING, SC.ORD.Magnet, "SupportRoll")
+    off_mag_individual = at_wrapper.atgetfieldvalues(SC.RING, SC.ORD.Magnet, "MagnetOffset")
+    roll_mag_individual = at_wrapper.atgetfieldvalues(SC.RING, SC.ORD.Magnet, "MagnetRoll")
+    off_mag_total = at_wrapper.atgetfieldvalues(SC.RING, SC.ORD.Magnet, "T2")[:, [0, 2, 5]]
     roll_mag_total = roll_mag_support + roll_mag_individual
 
     # BPM offsets and rolls
     # Longitudinal offsets and Pitch and Yaw angles not supported for BPMs
     pad_off, pad_roll = ((0, 0), (0, 1)), ((0, 0), (0, 2))
-    off_bpm = np.pad(atgetfieldvalues(SC.RING, SC.ORD.BPM, "Offset"), pad_off)
-    roll_bpm = np.pad(atgetfieldvalues(SC.RING, SC.ORD.BPM, "Roll"), pad_roll)
-    off_bpm_support = np.pad(atgetfieldvalues(SC.RING, SC.ORD.BPM, "SupportOffset"), pad_off)
-    roll_bpm_support = np.pad(atgetfieldvalues(SC.RING, SC.ORD.BPM, "SupportRoll"), pad_roll)
+    off_bpm = np.pad(at_wrapper.atgetfieldvalues(SC.RING, SC.ORD.BPM, "Offset"), pad_off)
+    roll_bpm = np.pad(at_wrapper.atgetfieldvalues(SC.RING, SC.ORD.BPM, "Roll"), pad_roll)
+    off_bpm_support = np.pad(at_wrapper.atgetfieldvalues(SC.RING, SC.ORD.BPM, "SupportOffset"), pad_off)
+    roll_bpm_support = np.pad(at_wrapper.atgetfieldvalues(SC.RING, SC.ORD.BPM, "SupportRoll"), pad_roll)
 
     # create figure
     fig, ax = plt.subplots(nrows=9, ncols=2, num=1213, sharex="all", figsize=(10, 15))

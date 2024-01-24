@@ -3,32 +3,39 @@ Trajectory and Orbit
 -------------
 
 This module contains functions to correct trajectory (first turns(s)) and orbit.
+In all functions, the provided response matrix needs to be matching:
+    registered BPMs in SC.ORD.BPM or bpm_ords if provided
+    registered CMs in SC.ORD.CM or cm_ords if provided
+    assumes all BPMs are used both horizontal and vertical plane
 """
 import numpy as np
+from typing import Tuple
 
 from pySC.core.beam import bpm_reading
-from pySC.utils import logging_tools
-from pySC.utils.sc_tools import SCrandnc
+from pySC.core.constants import SETTING_ADD
+from pySC.utils import logging_tools, sc_tools
 
 LOGGER = logging_tools.get_logger(__name__)
+NREPRO: int = 5
+WIGGLE_AFTER: int = 20
+WIGGLE_ANGLE_STEPS: int = 32
+WIGGLE_ANGLE_RANGE: Tuple[float, float] = (500E-6, 1000E-6)
 
 
-def SCfeedbackFirstTurn(SC, Mplus, reference=None, CMords=None, BPMords=None,
-                        maxsteps=100, nRepro=3, wiggle_after=20, wiggle_steps=32,
-                        wiggle_range=(500E-6, 1000E-6)):
+def first_turn(SC, response_matrix, reference=None, cm_ords=None, bpm_ords=None, maxsteps=100, **pinv_params):
     """
     Achieves one-turn transmission
 
     Achieves a first turn in `SC.RING`.  This algorithm is based on the idea that
     repeated trajectory corrections calculated via a suitably regularized
-    pseudo-inverse trajectory-response matrix `Mplus` will drive the BPM readings
+    pseudo-inverse  of `response matrix` will drive the BPM readings
     and CM settings to a fixed point.
 
-    lim_{n->oo}  B_n = const. , with B_{n+1}  = Phi(Mplus . B_{n} ),     (1)
+    lim_{n->oo}  B_n = const. , with B_{n+1}  = Phi(response_matrix^{-1} . B_{n} ),     (1)
 
     where mapping Phi maps corrector kicks to BPM-readings.
     The RMS-values of both, BPM readings and CM settings, are determined by the
-    regularization of Mplus.  Successively - during the course of repeated
+    regularization of pseudo-inverted response matrix.  Successively - during the course of repeated
     application of (1) - more and more transmission is achieved throughout the
     ring, more magnets are traversed near their magnetic center (which is hopefully
     at least somewhere near the BPM zero-point), resulting in decreased kicks.
@@ -38,28 +45,25 @@ def SCfeedbackFirstTurn(SC, Mplus, reference=None, CMords=None, BPMords=None,
 
     Args:
         SC: SimulatedCommissioning class instance.
-        Mplus: Pseudo-inverse trajectory-response matrix.
+        response_matrix: Trajectory-response matrix.
         reference: (None) target orbit in the format `[x_1 ... x_n y_1 ...y_n]`, where
                    [x_i,y_i]` is the target position at the i-th BPM.
-        CMords: List of CM ordinates to be used for correction (SC.ORD.CM)
-        BPMords: List of BPM ordinates at which the reading should be evaluated (SC.ORD.BPM)
+        cm_ords: List of CM ordinates to be used for correction (SC.ORD.CM)
+        bpm_ords: List of BPM ordinates at which the reading should be evaluated (SC.ORD.BPM)
         maxsteps: break, if this number of correction steps have been performed (default = 100)
-        nRepro: (default 3)
-        wiggle_after: Number of iterations without increased transmission to start wiggling. (default = 20)
-        wiggle_steps: Number of wiggle steps to perform, before incresing the number. (default = 64)
-        wiggle_range: Range ([min,max] in rad) within which to wiggle the CMs. (default = (500E-6, 1000E-6))
 
     Returns:
         SimulatedCommissioning class instance with corrected `SC.RING`
 
     """
-    LOGGER.debug('SCfeedbackFirstTurn: Start')
-    BPMords, CMords, reference = _check_ords(SC, Mplus, reference, BPMords, CMords)
-    bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords)  # Inject...
+    LOGGER.debug('First turn threading: Start')
+    bpm_ords, cm_ords, reference = _check_ords(SC, response_matrix, reference, bpm_ords, cm_ords)
+    bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, bpm_ords=bpm_ords)  # Inject...
+    Mplus = sc_tools.pinv(response_matrix, **pinv_params)
 
     for n in range(maxsteps):
         if transmission_history[-1] == 0:
-            raise RuntimeError('SCfeedbackFirstTurn: FAIL (no BPM reading to begin with)')
+            raise RuntimeError('First turn threading: FAIL (no BPM reading to begin with)')
         
         # Set BPM readings
         measurement = bpm_readings[:, :].reshape(reference.shape)
@@ -67,24 +71,25 @@ def SCfeedbackFirstTurn(SC, Mplus, reference=None, CMords=None, BPMords=None,
 
         # Correction step
         dphi = np.dot(Mplus, (measurement - reference))
-        lastCMh = _get_last_cm(transmission_history[-1]-1, 1, BPMords, CMords[0])[1][0]
-        lastCMv = _get_last_cm(transmission_history[-1]-1, 1, BPMords, CMords[1])[1][0]         
-        SC.set_cm_setpoints(CMords[0][:lastCMh + 1], -dphi[:lastCMh + 1], skewness=False, method='add')
-        SC.set_cm_setpoints(CMords[1][:lastCMv + 1], -dphi[len(CMords[0]):len(CMords[0]) + lastCMv + 1], skewness=True, method='add')
+        lastCMh = _get_last_cm(transmission_history[-1] - 1, 1, bpm_ords, cm_ords[0])[1][0]
+        lastCMv = _get_last_cm(transmission_history[-1] - 1, 1, bpm_ords, cm_ords[1])[1][0]
+        SC.set_cm_setpoints(cm_ords[0][:lastCMh + 1], -dphi[:lastCMh + 1], skewness=False, method=SETTING_ADD)
+        SC.set_cm_setpoints(cm_ords[1][:lastCMv + 1], -dphi[len(cm_ords[0]):len(cm_ords[0]) + lastCMv + 1],
+                            skewness=True, method=SETTING_ADD)
         bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(
-            SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history)  # Inject...
+            SC, bpm_ords=bpm_ords, ind_history=transmission_history, orb_history=rms_orbit_history)  # Inject...
  
         # Check stopping criteria
-        if _is_repro(transmission_history, nRepro) and transmission_history[-1] == bpm_readings.shape[1]:   # last three the same and full transmission
-            LOGGER.debug('SCfeedbackFirstTurn: Success')
+        if _is_repro(transmission_history, NREPRO) and transmission_history[-1] == bpm_readings.shape[1]:   # last three the same and full transmission
+            LOGGER.debug('First turn threading: Success')
             return SC
-        if _is_repro(transmission_history, wiggle_after):
-            SC = _wiggling(SC, BPMords, CMords, transmission_history[-1] + 1, angle_range=wiggle_range, num_angle_steps=wiggle_steps, nRepro=nRepro)
+        if _is_repro(transmission_history, WIGGLE_AFTER):
+            SC = _wiggling(SC, bpm_ords, cm_ords, transmission_history[-1] + 1)
 
-    raise RuntimeError('SCfeedbackFirstTurn: FAIL (maxsteps reached)')
+    raise RuntimeError('First turn threading: FAIL (maxsteps reached)')
 
 
-def SCfeedbackStitch(SC, Mplus, reference=None, CMords=None, BPMords=None, nBPMs=4, maxsteps=30, nRepro=3, wiggle_steps=32, wiggle_range=(500E-6, 1000E-6)):
+def stitch(SC, response_matrix, reference=None, cm_ords=None, bpm_ords=None, n_bpms=4, maxsteps=30, **pinv_params):
     """
     Achieves 2-turn transmission
 
@@ -98,15 +103,13 @@ def SCfeedbackStitch(SC, Mplus, reference=None, CMords=None, BPMords=None, nBPMs
 
     Args:
         SC: SimulatedCommissioning class instance.
-        Mplus: Pseudo-inverse trajectory-response matrix.
+        response_matrix: Trajectory-response matrix.
         reference: (None) target orbit in the format `[x_1 ... x_n y_1 ...y_n]`, where
                    [x_i,y_i]` is the target position at the i-th BPM.
-        CMords: List of CM ordinates to be used for correction (SC.ORD.CM)
-        BPMords: List of BPM ordinates at which the reading should be evaluated (SC.ORD.BPM)
+        cm_ords: List of CM ordinates to be used for correction (SC.ORD.CM)
+        bpm_ords: List of BPM ordinates at which the reading should be evaluated (SC.ORD.BPM)
+        n_bpms: Number of BPMs to match the trajectory in first and second turn
         maxsteps: break, if this number of correction steps have been performed (default = 100)
-        nRepro: (default 3)
-        wiggle_steps: Number of wiggle steps to perform, before incresing the number. (default = 64)
-        wiggle_range: Range ([min,max] in rad) within which to wiggle the CMs. (default = (500E-6, 1000E-6))
 
     Returns:
         SimulatedCommissioning class instance with corrected `SC.RING`
@@ -117,60 +120,59 @@ def SCfeedbackStitch(SC, Mplus, reference=None, CMords=None, BPMords=None, nBPMs
         three BPMs, for a maximum of 20 steps::
 
             RM2 = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, nTurns=2)
-            Minv2 = SCgetPinv(RM2, alpha=10)
             SC.INJ.nTurns = 2
-            SC = SCfeedbackStitch(SC, Minv2, nBPMs=3, maxsteps=20)
+            SC = stitch(SC, RM2, alpha=10, nBPMs=3, maxsteps=20)
 
     """
-    LOGGER.debug('SCfeedbackStitch: Start')
+    LOGGER.debug('Second turn stitching: Start')
     if SC.INJ.nTurns != 2:
         raise ValueError("Stitching works only with two turns.")
-    BPMords, CMords, reference = _check_ords(SC, Mplus, reference, BPMords, CMords)
-    bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords)  # Inject...
-    transmission_limit = len(BPMords)+nBPMs
-    if transmission_history[-1] < len(BPMords):
+    bpm_ords, cm_ords, reference = _check_ords(SC, response_matrix, reference, bpm_ords, cm_ords)
+    bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, bpm_ords=bpm_ords)  # Inject...
+    transmission_limit = len(bpm_ords) + n_bpms
+    if transmission_history[-1] < len(bpm_ords):
         raise RuntimeError("Stitching works only with full 1st turn transmission.")
     
     # Check if minimum transmission for algorithm to work is reached
     if transmission_history[-1] < transmission_limit:
-        SC = _wiggling(SC, BPMords, CMords, transmission_limit, angle_range=wiggle_range, num_angle_steps=wiggle_steps, nRepro=nRepro)
+        SC = _wiggling(SC, bpm_ords, cm_ords, transmission_limit)
         bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(
-            SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history)
+            SC, bpm_ords=bpm_ords, ind_history=transmission_history, orb_history=rms_orbit_history)
         if transmission_history[-1] < transmission_limit:
             raise RuntimeError("Not enough transmission for stitching to work.")
 
     # Prepare reference
     reference = reference.reshape(2, len(bpm_readings[0]))
-    reference[:, len(BPMords):] = 0
-    reference =reference.reshape(Mplus.shape[1])
-    
+    reference[:, len(bpm_ords):] = 0
+    reference = reference.reshape(response_matrix.shape[0])
+    Mplus = sc_tools.pinv(response_matrix, **pinv_params)
+
     # Main loop
     for steps in range(maxsteps):
         # Set BPM readings
-        delta_b = np.zeros((2,len(BPMords)))
-        delta_b[0][:nBPMs] = bpm_readings[0][len(BPMords):len(BPMords)+nBPMs] - bpm_readings[0][:nBPMs]
-        delta_b[1][:nBPMs] = bpm_readings[1][len(BPMords):len(BPMords)+nBPMs] - bpm_readings[1][:nBPMs]
-        measurement = np.concatenate((bpm_readings[:, :len(BPMords)], delta_b), axis=1).ravel()
+        delta_b = np.zeros((2, len(bpm_ords)))
+        delta_b[0][:n_bpms] = bpm_readings[0][len(bpm_ords):len(bpm_ords) + n_bpms] - bpm_readings[0][:n_bpms]
+        delta_b[1][:n_bpms] = bpm_readings[1][len(bpm_ords):len(bpm_ords) + n_bpms] - bpm_readings[1][:n_bpms]
+        measurement = np.concatenate((bpm_readings[:, :len(bpm_ords)], delta_b), axis=1).ravel()
         measurement[np.isnan(measurement)] = 0
 
         # Correction step
         dphi = np.dot(Mplus, (measurement - reference))
-        SC.set_cm_setpoints(CMords[0], -dphi[:len(CMords[0])], skewness=False, method="add")
-        SC.set_cm_setpoints(CMords[1], -dphi[len(CMords[0]):], skewness=True, method="add")
+        SC.set_cm_setpoints(cm_ords[0], -dphi[:len(cm_ords[0])], skewness=False, method=SETTING_ADD)
+        SC.set_cm_setpoints(cm_ords[1], -dphi[len(cm_ords[0]):], skewness=True, method=SETTING_ADD)
         bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(
-            SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history)
+            SC, bpm_ords=bpm_ords, ind_history=transmission_history, orb_history=rms_orbit_history)
 
         # Check stopping criteria
         if transmission_history[-1] < transmission_history[-2]:
-            RuntimeError('SCfeedbackStitch: FAIL Setback')
-        if _is_repro(transmission_history, nRepro) and transmission_history[-1] == bpm_readings.shape[1]:
-            LOGGER.debug('SCfeedbackStitch: Success')
+            RuntimeError('Second turn stitching: FAIL Setback')
+        if _is_repro(transmission_history, NREPRO) and transmission_history[-1] == bpm_readings.shape[1]:
+            LOGGER.debug('Second turn stitching: Success')
             return SC
-    raise RuntimeError('SCfeedbackStitch: FAIL Reached maxsteps')
+    raise RuntimeError('Second turn stitching: FAIL Reached maxsteps')
 
 
-
-def SCfeedbackBalance(SC, Mplus, reference=None, CMords=None, BPMords=None, eps=1e-4, maxsteps=10, nRepro=3):
+def balance(SC, response_matrix, reference=None, cm_ords=None, bpm_ords=None, eps=1e-4, maxsteps=10, **pinv_params):
     """
     Balance two-turn BPM readings
 
@@ -186,79 +188,79 @@ def SCfeedbackBalance(SC, Mplus, reference=None, CMords=None, BPMords=None, eps=
 
     Args:
         SC: SimulatedCommissioning class instance.
-        Mplus: Pseudo-inverse trajectory-response matrix.
+        response_matrix: Trajectory-response matrix.
         reference: (None) target orbit in the format `[x_1 ... x_n y_1 ...y_n]`, where
                    [x_i,y_i]` is the target position at the i-th BPM.
-        CMords: List of CM ordinates to be used for correction (SC.ORD.CM)
-        BPMords: List of BPM ordinates at which the reading should be evaluated (SC.ORD.BPM)
+        cm_ords: List of CM ordinates to be used for correction (SC.ORD.CM)
+        bpm_ords: List of BPM ordinates at which the reading should be evaluated (SC.ORD.BPM)
         maxsteps: break, if this number of correction steps have been performed (default = 100)
-        nRepro: (default 3)
         eps: break, if the coefficient of variation of the RMS BPM reading is below this value
 
     Returns:
         SimulatedCommissioning class instance with corrected `SC.RING`
 
     """
-    LOGGER.debug('SCfeedbackBalance: Start')
+    LOGGER.debug('Balancing two turns: Start')
     if SC.INJ.nTurns != 2:
         raise ValueError("Balancing works only with two turns.")
-    BPMords, CMords, reference = _check_ords(SC, Mplus, reference, BPMords, CMords)
-    bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords)  # Inject...
+    bpm_ords, cm_ords, reference = _check_ords(SC, response_matrix, reference, bpm_ords, cm_ords)
+    bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, bpm_ords=bpm_ords)  # Inject...
     if transmission_history[-1] < bpm_readings.shape[1]:
         raise ValueError("Balancing works only with full 2 turn transmission.")
 
     # Prepare reference
     reference = reference.reshape(2, len(bpm_readings[0]))
-    reference[:, len(BPMords):] = 0
-    reference = reference.reshape(Mplus.shape[1])
+    reference[:, len(bpm_ords):] = 0
+    reference = reference.reshape(response_matrix.shape[0])
+    Mplus = sc_tools.pinv(response_matrix, **pinv_params)
 
     # Main loop
     for steps in range(maxsteps):
         # Set BPM readings
-        delta_b = [bpm_readings[0][len(BPMords):] - bpm_readings[0][:len(BPMords)], bpm_readings[1][len(BPMords):] - bpm_readings[1][:len(BPMords)]]
-        measurement = np.concatenate((bpm_readings[:, :len(BPMords)], delta_b), axis=1).ravel()
+        delta_b = [bpm_readings[0][len(bpm_ords):] - bpm_readings[0][:len(bpm_ords)],
+                   bpm_readings[1][len(bpm_ords):] - bpm_readings[1][:len(bpm_ords)]]
+        measurement = np.concatenate((bpm_readings[:, :len(bpm_ords)], delta_b), axis=1).ravel()
  
         # Correction step
         dphi = np.dot(Mplus, (measurement - reference))
-        SC.set_cm_setpoints(CMords[0], -dphi[:len(CMords[0])], skewness=False, method="add")
-        SC.set_cm_setpoints(CMords[1], -dphi[len(CMords[0]):], skewness=True, method="add")
+        SC.set_cm_setpoints(cm_ords[0], -dphi[:len(cm_ords[0])], skewness=False, method=SETTING_ADD)
+        SC.set_cm_setpoints(cm_ords[1], -dphi[len(cm_ords[0]):], skewness=True, method=SETTING_ADD)
         bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(
-            SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history)
+            SC, bpm_ords=bpm_ords, ind_history=transmission_history, orb_history=rms_orbit_history)
 
         # Check stopping criteria
         if transmission_history[-1] < bpm_readings.shape[1]:
-            raise RuntimeError('SCfeedbackBalance: FAIL (lost transmission)')
-        if _is_stable_or_converged(nRepro, eps, rms_orbit_history):
-            LOGGER.debug(f'SCfeedbackBalance: Success (converged after {steps} steps)')
+            raise RuntimeError('Balancing two turns: FAIL (lost transmission)')
+        if _is_stable_or_converged(NREPRO, eps, rms_orbit_history):
+            LOGGER.debug(f'Balancing two turns: Success (converged after {steps} steps)')
             return SC
 
-    raise RuntimeError('SCfeedbackBalance: FAIL (maxsteps reached, unstable)')
+    raise RuntimeError('Balancing two turns: FAIL (maxsteps reached, unstable)')
 
 
-def SCfeedbackRun(SC, Mplus, reference=None, CMords=None, BPMords=None, eps=1e-4, target=0, maxsteps=30, nRepro=3, scaleDisp=0):
+def correct(SC, response_matrix, reference=None, cm_ords=None, bpm_ords=None, eps=1e-4, target=0, maxsteps=30, scaleDisp=0, **pinv_params):
     """
-    iterative orbit correction
+    Iterative orbit/trajectory correction
 
     Iteratively applies orbit corrections using the pseudoinverse of the
-    trajectory response matrix `Mplus`, until a break-condition specified by one
+    trajectory `response_matrix`, until a break-condition specified by one
     of 'eps', 'target' or 'maxsteps' is met.
     The dispersion can be included, thus the rf frequency as a correction
-    parameter. If the dispersion is to be included, `Mplus` has to have the size
-    `(len(SC.ORD.HCM) + len(SC.ORD.VCM) + 1) x len(SC.ORD.BPM)`, otherwise the size
-    `(len(SC.ORD.HCM) + len(SC.ORD.VCM)) x len(SC.ORD.BPM)`, or correspondingly if the CM
+    parameter. If the dispersion is to be included, `response_matrix` has to have the size
+    `(2 * len(SC.ORD.BPM)) x (len(SC.ORD.HCM) + len(SC.ORD.VCM) + 1)`, otherwise the size
+    `(2 * len(SC.ORD.BPM)) x (len(SC.ORD.HCM) + len(SC.ORD.VCM))`, or correspondingly if the CM
     and/or BPM ordinates for the correction is explicitly given (see options below). `SC.RING` is
     assumed to be a lattice with transmission through all considered turns.
     Raises RuntimeError if transmission is lost.
 
     Args:
         SC: SimulatedCommissioning class instance.
-        Mplus: Pseudo-inverse trajectory-response matrix.
+        response_matrix: Trajectory/orbit-response matrix.
         reference: (None) target orbit in the format `[x_1 ... x_n y_1 ...y_n]`, where
                    [x_i,y_i]` is the target position at the i-th BPM.
-        CMords: List of CM ordinates to be used for correction (SC.ORD.CM)
-        BPMords: List of BPM ordinates at which the reading should be evaluated (SC.ORD.BPM)
+        cm_ords: List of CM ordinates to be used for correction (SC.ORD.CM)
+        bpm_ords: List of BPM ordinates at which the reading should be evaluated (SC.ORD.BPM)
         maxsteps: break, if this number of correction steps have been performed (default = 100)
-        nRepro: (default 3)
         eps: break, if the coefficient of variation of the RMS BPM reading is below this value
         target: (default =0 ) break, if the RMS BPM reading reaches this value
         scaleDisp: (default =0 ) Scaling factor for and flag indicating if the dispersion is included in the response matrix
@@ -274,17 +276,18 @@ def SCfeedbackRun(SC, Mplus, reference=None, CMords=None, BPMords=None, eps=1e-4
 
             SC.INJ.trackMode = 'ORB'
             MCO = SCgetModelRM(SC, SC.ORD.BPM, SC.ORD.CM, trackMode='ORB')
-            eta = SCgetModelDispersion(SC, SC.ORD.BPM, SC.ORD.Cavity,
+            eta = SCgetModelDispersion(SC, SC.ORD.BPM, SC.ORD.RF,
                                        trackMode='ORB', Z0=np.zeros(6),
                                        nTurns=1, rfStep=1E3,
                                        useIdealRing=True)
-            MinvCO = SCgetPinv(np.column_stack((MCO, 1E8 * eta)), alpha=10)
-            SC = SCfeedbackRun(SC, MinvCO, target=0, maxsteps=50, scaleDisp=1E8)
+            SC = correct(SC, np.column_stack((MCO, 1E8 * eta)), alpha=10, target=0, maxsteps=50, scaleDisp=1E8)
 
     """
-    LOGGER.debug('SCfeedbackRun: Start')
-    BPMords, CMords, reference = _check_ords(SC, Mplus, reference, BPMords, CMords)
-    bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords)  # Inject ...
+    LOGGER.debug('Orbit/trajectory correction: Start')
+    bpm_ords, cm_ords, reference = _check_ords(SC, response_matrix[:, :-1] if scaleDisp else response_matrix,
+                                               reference, bpm_ords, cm_ords)
+    bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, bpm_ords=bpm_ords)  # Inject ...
+    Mplus = sc_tools.pinv(response_matrix, **pinv_params)
 
     # Main loop
     for steps in range(maxsteps):
@@ -294,54 +297,46 @@ def SCfeedbackRun(SC, Mplus, reference=None, CMords=None, BPMords=None, eps=1e-4
         # Correction step
         dphi = np.dot(Mplus, (measurement - reference))
         if scaleDisp != 0:   # TODO this is weight
-            SC.set_cavity_setpoints(SC.ORD.RF, -scaleDisp * dphi[-1], "Frequency", method="add")
+            SC.set_cavity_setpoints(SC.ORD.RF, -scaleDisp * dphi[-1], "Frequency", method=SETTING_ADD)
             dphi = dphi[:-1]  # TODO the last setpoint is cavity frequency
-        SC.set_cm_setpoints(CMords[0], -dphi[:len(CMords[0])], skewness=False, method="add")
-        SC.set_cm_setpoints(CMords[1], -dphi[len(CMords[0]):], skewness=True, method="add")
+        SC.set_cm_setpoints(cm_ords[0], -dphi[:len(cm_ords[0])], skewness=False, method=SETTING_ADD)
+        SC.set_cm_setpoints(cm_ords[1], -dphi[len(cm_ords[0]):], skewness=True, method=SETTING_ADD)
         bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(
-            SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history)  # Inject ...
+            SC, bpm_ords=bpm_ords, ind_history=transmission_history, orb_history=rms_orbit_history)  # Inject ...
 
         # Check stopping criteria
         if np.any(np.isnan(bpm_readings[0, :])):
-            raise RuntimeError('SCfeedbackRun: FAIL (lost transmission)')
-        if max(rms_orbit_history[-1]) < target and _is_stable_or_converged(min(nRepro, maxsteps), eps, rms_orbit_history):
-            LOGGER.debug(f"SCfeedbackRun: Success (target reached after {steps:d} steps)")
+            raise RuntimeError('Orbit/trajectory correction: FAIL (lost transmission)')
+        if max(rms_orbit_history[-1]) < target and _is_stable_or_converged(min(NREPRO, maxsteps), eps, rms_orbit_history):
+            LOGGER.debug(f"Orbit/trajectory correction: Success (target reached after {steps:d} steps)")
             return SC
-        if _is_stable_or_converged(nRepro, eps, rms_orbit_history):
-            LOGGER.debug(f"SCfeedbackRun: Success (converged after {steps:d} steps)")
+        if _is_stable_or_converged(NREPRO, eps, rms_orbit_history):
+            LOGGER.debug(f"Orbit/trajectory correction: Success (converged after {steps:d} steps)")
             return SC
-    if _is_stable_or_converged(min(nRepro, maxsteps), eps, rms_orbit_history) or maxsteps == 1:
-        LOGGER.debug("SCfeedbackRun: Success (maxsteps reached)")
+    if _is_stable_or_converged(min(NREPRO, maxsteps), eps, rms_orbit_history) or maxsteps == 1:
+        LOGGER.debug("Orbit/trajectory correction: Success (maxsteps reached)")
         return SC
-    raise RuntimeError("SCfeedbackRun: FAIL (maxsteps reached, unstable)")
+    raise RuntimeError("Orbit/trajectory correction: FAIL (maxsteps reached, unstable)")
 
 
-def SCpseudoBBA(SC, BPMords, MagOrds, postBBAoffset, sigma=2):
-    # TODO this looks fishy ... assumes BPMs attached to quads?
-    #  at the same time two separate 2D arrays?
-    if len(postBBAoffset) == 1:
-        postBBAoffset = np.tile(postBBAoffset, (2,np.size(BPMords, axis=1)))
-    for nBPM in range(np.size(BPMords, axis=1)):
-        for nDim in range(2):
-            SC.RING[BPMords[nDim][nBPM]].Offset[nDim] = (SC.RING[MagOrds[nDim][nBPM]].MagnetOffset[nDim]
-                                                         + SC.RING[MagOrds[nDim][nBPM]].SupportOffset[nDim]
-                                                         - SC.RING[BPMords[nDim][nBPM]].SupportOffset[nDim]
-                                                         + postBBAoffset[nDim][nBPM] * SCrandnc(sigma))
-    return SC
-
-
-def _check_ords(SC, Mplus, reference, BPMords, CMords):
-    if CMords is None:
-        CMords = SC.ORD.CM.copy()
-    if BPMords is None:
-        BPMords = SC.ORD.BPM.copy()
+def _check_ords(SC, response_matrix, reference, bpm_ords, cm_ords):
+    if cm_ords is None:
+        cm_ords = SC.ORD.CM.copy()
+    if bpm_ords is None:
+        bpm_ords = SC.ORD.BPM.copy()
+    if response_matrix.shape[0] != 2 * len(bpm_ords) * SC.INJ.nTurns:
+        raise ValueError("Response matrix shape does not match the number of BPMs.")
+    if response_matrix.shape[1] != len(cm_ords[0]) + len(cm_ords[1]):
+        raise ValueError("Response matrix shape does not match the number of CMs.")
     if reference is None:
-        reference = np.zeros((Mplus.shape[1], 1))
-    return BPMords, CMords, reference
+        reference = np.zeros((response_matrix.shape[0], 1))
+    elif reference.shape[0] != response_matrix.shape[0]:
+        raise ValueError("Reference shape does not match the shape of the response matrix.")
+    return bpm_ords, cm_ords, reference
 
 
-def _bpm_reading_and_logging(SC, BPMords, ind_history=None, orb_history=None):
-    bpm_readings = bpm_reading(SC, bpm_ords=BPMords)[0]
+def _bpm_reading_and_logging(SC, bpm_ords, ind_history=None, orb_history=None):
+    bpm_readings = bpm_reading(SC, bpm_ords=bpm_ords)[0]
     bpms_reached = ~np.isnan(bpm_readings[0])
     if ind_history is None or orb_history is None:
         return bpm_readings, [np.sum(bpms_reached)], [np.sqrt(np.mean(np.square(bpm_readings[:, bpms_reached]), axis=1))]
@@ -350,13 +345,13 @@ def _bpm_reading_and_logging(SC, BPMords, ind_history=None, orb_history=None):
     return bpm_readings, ind_history, orb_history  # assumes no bad BPMs
 
 
-def _get_last_cm(lastBPMidx, n, BPMords, CMords):  # Refactored
+def _get_last_cm(lastBPMidx, n, bpm_ords, cm_ords):  # Refactored
     # Returns last CM ords and index of last CMs
-    if lastBPMidx >= len(BPMords):  # If there is no beam loss in the first turn
-        return CMords[-n:], range(len(CMords)-n, len(CMords))  # ... just return the last n CMs
-    if len(CMords[np.where(CMords <= BPMords[lastBPMidx])]) == 0:
+    if lastBPMidx >= len(bpm_ords):  # If there is no beam loss in the first turn
+        return cm_ords[-n:], range(len(cm_ords) - n, len(cm_ords))  # ... just return the last n CMs
+    if len(cm_ords[np.where(cm_ords <= bpm_ords[lastBPMidx])]) == 0:
         raise RuntimeError('No CM upstream of BPMs')
-    return CMords[np.where(CMords <= BPMords[lastBPMidx])[0][-n:]], np.where(CMords <= BPMords[lastBPMidx])[0][-n:]
+    return cm_ords[np.where(cm_ords <= bpm_ords[lastBPMidx])[0][-n:]], np.where(cm_ords <= bpm_ords[lastBPMidx])[0][-n:]
 
 
 def _is_repro(hist, n):
@@ -379,26 +374,26 @@ def _is_stable_or_converged(n, eps, hist):  # TODO rethink
     return (np.var(hist[-n:]) / np.std(hist[-n:])) < eps
 
 
-def _wiggling(SC, BPMords, CMords, transmission_limit, angle_range=(50E-6, 200E-6), num_angle_steps=32, nums_correctors=range(1, 9), nRepro=3):
+def _wiggling(SC, bpm_ords, cm_ords, transmission_limit, nums_correctors=range(1, 9)):
     LOGGER.debug('Wiggling')
-    dpts = _golden_donut_diffs(angle_range[0], angle_range[1], num_angle_steps)
-    bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, BPMords=BPMords, ind_history=None, orb_history=None)  # Inject...
+    dpts = _golden_donut_diffs(WIGGLE_ANGLE_RANGE[0], WIGGLE_ANGLE_RANGE[1], WIGGLE_ANGLE_STEPS)
+    bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, bpm_ords=bpm_ords, ind_history=None, orb_history=None)  # Inject...
 
     for nWiggleCM in nums_correctors:
         LOGGER.debug(f'Number of magnets used for wiggling: {nWiggleCM}. \n')
-        tmpCMordsH = _get_last_cm(transmission_history[-1] - 1, nWiggleCM, BPMords, CMords[0])[0]  # Last CMs in horz
-        tmpCMordsV = _get_last_cm(transmission_history[-1] - 1, nWiggleCM, BPMords, CMords[1])[0]  # Last CMs in vert
+        tmpCMordsH = _get_last_cm(transmission_history[-1] - 1, nWiggleCM, bpm_ords, cm_ords[0])[0]  # Last CMs in horz
+        tmpCMordsV = _get_last_cm(transmission_history[-1] - 1, nWiggleCM, bpm_ords, cm_ords[1])[0]  # Last CMs in vert
 
         for i in range(dpts.shape[1]):
-            SC.set_cm_setpoints(tmpCMordsH, dpts[0, i], skewness=False, method='add')
-            SC.set_cm_setpoints(tmpCMordsV, dpts[1, i], skewness=True, method='add')
+            SC.set_cm_setpoints(tmpCMordsH, dpts[0, i], skewness=False, method=SETTING_ADD)
+            SC.set_cm_setpoints(tmpCMordsV, dpts[1, i], skewness=True, method=SETTING_ADD)
             bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(
-                SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history)
+                SC, bpm_ords=bpm_ords, ind_history=transmission_history, orb_history=rms_orbit_history)
             if transmission_history[-1] >= transmission_limit:
                 for _ in range(2):
                     bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(
-                        SC, BPMords=BPMords, ind_history=transmission_history, orb_history=rms_orbit_history)
-                if _is_repro(transmission_history, nRepro):
+                        SC, bpm_ords=bpm_ords, ind_history=transmission_history, orb_history=rms_orbit_history)
+                if _is_repro(transmission_history, NREPRO):
                     LOGGER.debug('...completed')
                     return SC  # Continue with feedback
 

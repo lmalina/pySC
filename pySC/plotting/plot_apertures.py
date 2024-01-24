@@ -5,7 +5,7 @@ import numpy as np
 from at import Lattice, Refpts
 from matplotlib import pyplot as plt
 
-from pySC.utils.at_wrapper import findspos, atlinopt
+from pySC.utils import at_wrapper
 
 SLICES = 400
 
@@ -18,7 +18,7 @@ def plot_data_apertures(ring: Lattice, refpts: Refpts, **kwargs):
 
     ea_all, ra_all = _apertures(ring)
     # Extract the plot data
-    s_pos = findspos(ring)[refpts]
+    s_pos = at_wrapper.findspos(ring)[refpts]
     ea = ea_all[refpts] * to_mm
     ra = ra_all[refpts] * to_mm
     if "cut_off" in kwargs.keys():
@@ -38,7 +38,7 @@ def plot_data_apertures(ring: Lattice, refpts: Refpts, **kwargs):
 
 def plot_data_beta_disp(ring: Lattice, refpts, **kwargs):
     """Generates data for plotting beta functions and dispersion"""
-    _, _, data = atlinopt(ring, refpts=refpts, get_chrom=True, **kwargs)
+    _, _, data = at_wrapper.atlinopt(ring, refpts=refpts, get_chrom=True, **kwargs)
     s_pos = data['s_pos']
     betax = data['beta'][:, 0]
     betay = data['beta'][:, 1]

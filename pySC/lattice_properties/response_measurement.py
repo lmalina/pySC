@@ -1,8 +1,8 @@
 import numpy as np
 
 from pySC.core.beam import bpm_reading
-from pySC.utils import logging_tools
-from pySC.utils.at_wrapper import atgetfieldvalues
+from pySC.utils import at_wrapper, logging_tools
+
 
 LOGGER = logging_tools.get_logger(__name__)
 
@@ -68,7 +68,7 @@ def dispersion(SC, rf_step, bpm_ords=None, cav_ords=None, n_steps=2):
     for n_cav, cav_ord in enumerate(cav_ords):
         rf_steps[n_cav, :] = SC.RING[cav_ord].FrequencySetPoint + np.linspace(-rf_step, rf_step, n_steps)
     dB = np.zeros((n_steps, *np.shape(bref)))
-    rf0 = atgetfieldvalues(SC.RING, cav_ords, "FrequencySetPoint")
+    rf0 = at_wrapper.atgetfieldvalues(SC.RING, cav_ords, "FrequencySetPoint")
     for nStep in range(n_steps):
         SC.set_cavity_setpoints(cav_ords, rf_steps[:, nStep], 'Frequency', 'abs')
         dB[nStep, :] = np.ravel(bpm_reading(SC, bpm_ords=bpm_ords)[0]) - bref

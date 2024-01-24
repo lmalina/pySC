@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from pySC.utils.sc_tools import SCgetOrds
+from pySC.utils import sc_tools
 from pySC.correction.injection_fit import fit_injection_trajectory, fit_injection_drift
 from pySC.core.simulated_commissioning import SimulatedCommissioning
 from tests.test_at_wrapper import at_lattice
@@ -20,7 +20,7 @@ def test_fit_injection_drift(sc):
 @pytest.fixture
 def sc(at_lattice):
     SC = SimulatedCommissioning(at_lattice)
-    SC.register_bpms(SCgetOrds(SC.RING, 'BPM'), CalError=5E-2 * np.ones(2),
+    SC.register_bpms(sc_tools.ords_from_regex(SC.RING, 'BPM'), CalError=5E-2 * np.ones(2),
                      Offset=200E-6 * np.ones(2),
                      Noise=10E-6 * np.ones(2),
                      Roll=1E-3)

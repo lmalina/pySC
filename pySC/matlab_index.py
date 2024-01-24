@@ -21,8 +21,7 @@ from pySC.core.classes import DotDict
 from pySC.core.lattice_setting import switch_cavity_and_radiation
 from pySC.correction.bba import trajectory_bba, orbit_bba, fake_bba
 from pySC.correction.injection_fit import fit_injection_trajectory, fit_injection_drift
-from pySC.correction.orbit_trajectory import SCfeedbackFirstTurn as first_turn, SCfeedbackStitch as stitch, \
-    SCfeedbackRun as frun, SCfeedbackBalance as fbalance
+from pySC.correction import orbit_trajectory
 from pySC.correction.ramp_errors import SCrampUpErrors as ramp_up_errors
 from pySC.correction.rf import correct_rf_phase, correct_rf_frequency
 from pySC.correction.tune import tune_scan
@@ -35,9 +34,8 @@ from pySC.lattice_properties.response_model import SCgetModelRM as model_rm, SCg
 from pySC.plotting.plot_lattice import plot_lattice, plot_cm_strengths
 from pySC.plotting.plot_phase_space import plot_phase_space
 from pySC.plotting.plot_support import plot_support
-from pySC.utils import logging_tools
-from pySC.utils.sc_tools import SCgetOrds as get_ords, SCgetPinv as get_pinv, SCrandnc as randnc, \
-    SCscaleCircumference as scale_circumference, update_transformation, SCmultipolesRead as read_multipoles
+from pySC.utils import logging_tools, sc_tools
+
 
 LOGGER = logging_tools.get_logger(__name__)
 LOGGER.warn("Matlab_index imported: \n"
@@ -72,28 +70,28 @@ def SCdynamicAperture(RING, dE, /, *, bounds=np.array([0, 1e-3]), nturns=1000, t
 
 
 def SCfeedbackBalance(SC, Mplus, /, *, R0=None, CMords=None, BPMords=None, eps=1e-4, maxsteps=10, verbose=False):
-    return fbalance(SC, Mplus, reference=R0, CMords=CMords, BPMords=BPMords, eps=eps, maxsteps=maxsteps)
+    return orbit_trajectory.balance(SC, np.linalg.pinv(Mplus), reference=R0, cm_ords=CMords, bpm_ords=BPMords,
+                                    eps=eps, maxsteps=maxsteps)
 
 
 def SCfeedbackFirstTurn(SC, Mplus, /, *, R0=None, CMords=None, BPMords=None, maxsteps=100, wiggleAfter=20,
                         wiggleSteps=32, wiggleRange=np.array([500E-6, 1000E-6]), verbose=False):
-    return first_turn(SC, Mplus, reference=R0, CMords=CMords, BPMords=BPMords, maxsteps=maxsteps,
-                      wiggle_after=wiggleAfter,
-                      wiggle_steps=wiggleSteps, wiggle_range=wiggleRange)
+    # wiggle parameters are constants of pySC.correction.orbit_trajectory module
+    return orbit_trajectory.first_turn(SC, np.linalg.pinv(Mplus), reference=R0, cm_ords=CMords, bpm_ords=BPMords,
+                                       maxsteps=maxsteps)
 
 
 def SCfeedbackRun(SC, Mplus, /, *, R0=None, CMords=None, BPMords=None, eps=1e-4, target=0, maxsteps=30, scaleDisp=0,
                   weight=None, verbose=False):
-    return frun(SC, Mplus, reference=R0, CMords=CMords, BPMords=BPMords, eps=eps, target=target, maxsteps=maxsteps,
-                scaleDisp=scaleDisp)
+    return orbit_trajectory.correct(SC, np.linalg.pinv(Mplus), reference=R0, cm_ords=CMords, bpm_ords=BPMords,
+                                    eps=eps, target=target, maxsteps=maxsteps, scaleDisp=scaleDisp)
 
 
 def SCfeedbackStitch(SC, Mplus, /, *, R0=None, CMords=None, BPMords=None, nBPMs=4, maxsteps=30, nRepro=3,
                      wiggle_steps=32,
                      wiggle_range=np.array([500E-6, 1000E-6])):
-    return stitch(SC, Mplus, reference=R0, CMords=CMords, BPMords=BPMords, nBPMs=nBPMs, maxsteps=maxsteps,
-                  nRepro=nRepro,
-                  wiggle_steps=wiggle_steps, wiggle_range=wiggle_range)
+    # wiggle parameters are constants of pySC.correction.orbit_trajectory module
+    return orbit_trajectory.stitch(SC, np.linalg.pinv(Mplus), reference=R0, cm_ords=CMords, bpm_ords=BPMords, n_bpms=nBPMs, maxsteps=maxsteps)
 
 
 def SCfitInjectionZ(SC, mode, /, *, nDims=np.array([0, 1]), nBPMs=np.array([0, 1, 2]), nShots=None, verbose=0,
@@ -150,11 +148,11 @@ def SCgetModelRM(SC, BPMords, CMords, /, *, trackMode='TBT', Z0=np.zeros(6), nTu
 
 
 def SCgetOrds(ring: Lattice, regex: str, /, *, verbose: bool = False) -> ndarray:
-    return get_ords(ring=ring, regex=regex)
+    return sc_tools.ords_from_regex(ring=ring, regex=regex)
 
 
 def SCgetPinv(matrix: ndarray, /, *, N: int = 0, alpha: float = 0, damping: float = 1, plot: bool = False) -> ndarray:
-    return get_pinv(matrix=matrix, num_removed=N, alpha=alpha, damping=damping, plot=plot)
+    return sc_tools.pinv(matrix=matrix, num_removed=N, alpha=alpha, damping=damping, plot=plot)
 
 
 def SCgetRespMat(SC, Amp, BPMords, CMords, /, *, mode='fixedKick', nSteps=2, fit='linear', verbose=0):
@@ -178,7 +176,7 @@ def SCgetTransformation(dx, dy, dz, ax, ay, az, magTheta, magLength, refPoint='c
         dict(Length=magLength, BendingAngle=magTheta, SupportOffset=np.zeros(3), SupportRoll=np.zeros(3),
              MagnetOffset=np.array([dx, dy, dz]),
              MagnetRoll=np.roll(np.array([ax, ay, az]), 1)))  # inside the function, it will be rolled back
-    fake_element = update_transformation(fake_element)
+    fake_element = sc_tools.update_transformation(fake_element)
     return fake_element.T1, fake_element.T2, fake_element.R1, fake_element.R2
 
 
@@ -195,7 +193,7 @@ def SCmomentumAperture(RING, REFPTS, inibounds, /, *, nturns=1000, accuracy=1e-4
 
 
 def SCmultipolesRead(fname):
-    return read_multipoles(fname)
+    return sc_tools.read_multipoles(fname)
 
 
 def SCparticlesIn3D(*args):
@@ -237,7 +235,7 @@ def SCrampUpErrors(SC, /, *, nStepsRamp=10, eps=1e-5, target=0, alpha=10, maxste
 
 
 def SCrandnc(cut_off: float = 2, shape: tuple = (1,)) -> ndarray:
-    return randnc(cut_off, shape)
+    return sc_tools.randnc(cut_off, shape)
 
 
 def SCregisterBPMs(SC: SimulatedCommissioning, BPMords: ndarray, **kwargs) -> SimulatedCommissioning:
@@ -266,7 +264,7 @@ def SCSanityCheck(SC: SimulatedCommissioning) -> None:
 
 
 def SCscaleCircumference(RING, circ, /, *, mode='abs'):
-    return scale_circumference(RING, circ, mode=mode)
+    return sc_tools.scale_circumference(RING, circ, mode=mode)
 
 
 def SCsetCavs2SetPoints(SC: SimulatedCommissioning, CAVords: ndarray, type: str, setpoints: ndarray, /, *,
