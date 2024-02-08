@@ -7,10 +7,57 @@ from pySC.core.constants import TRACK_TBT, NUM_TO_AB, SETTING_REL, SETTING_ABS
 from pySC.utils import at_wrapper, logging_tools, sc_tools, stats
 from pySC.correction import orbit_trajectory
 
+import multiprocessing
 
 LOGGER = logging_tools.get_logger(__name__)
 CONFIDENCE_LEVEL_SIGMAS = 2.5
 OUTLIER_LIMIT = 1.5e-3
+
+
+def trajectory_bba_parallel(SC, bpm_ords, mag_ords, **kwargs):
+    par = DotDict(dict(n_steps=10, fit_order=1, magnet_order=1, skewness=False, setpoint_method=SETTING_REL,
+                       q_ord_phase=np.array([], dtype=int), q_ord_setpoints=np.ones(1),
+                       magnet_strengths=np.array([0.95, 1.05]),
+                       num_downstream_bpms=len(SC.ORD.BPM), max_injection_pos_angle=np.array([0.9E-3, 0.9E-3]),
+                       dipole_compensation=True, plot_results=False))
+    par.update(**kwargs)
+    par = _check_input(bpm_ords, mag_ords, par)
+    if SC.INJ.trackMode != TRACK_TBT or SC.INJ.nTurns != 2:
+        raise ValueError('Beam-trajectory-based alignment works in TBT mode with 2 turns. '
+                         'Please set: SC.INJ.nTurns = 2 and SC.INJ.trackMode = "TBT"')
+    SC0 = SC.very_deep_copy()
+    q0 = at_wrapper.atgetfieldvalues(SC.RING, par.q_ord_phase, "SetPointB", index=1)
+    bba_offsets = np.full(bpm_ords.shape, np.nan)
+    bba_offset_errors = np.full(bpm_ords.shape, np.nan)
+    for n_dim in range(bpm_ords.shape[0]):  # TODO currently assumes either horizontal or both planes
+        last_bpm_ind = np.where(bpm_ords[n_dim, -1] == SC.ORD.BPM)[0][0]
+        quads_strengths, scalings, bpm_ranges = _phase_advance_injection_scan(SC, n_dim, last_bpm_ind, par)
+        LOGGER.info(f"Scanned plane {n_dim}")
+        with multiprocessing.Pool() as pool:
+            items = [(SC0, bpm_ords, j_bpm, mag_ords, n_dim, quads_strengths, scalings, bpm_ranges, q0, par) for j_bpm
+                     in range(bpm_ords.shape[1])]
+            for results in pool.imap(single_plane_bpm_bba, items):
+                bba_offset, bba_offset_error, j_bpm = results
+                bba_offsets[n_dim, j_bpm], bba_offset_errors[n_dim, j_bpm] = bba_offset, bba_offset_error
+    SC = apply_bpm_offsets(SC, bpm_ords, bba_offsets, bba_offset_errors)
+    if par.plot_results:
+        plot_bba_results(SC, bpm_ords, bba_offsets, bba_offset_errors)
+    return SC, bba_offsets, bba_offset_errors
+
+
+def single_plane_bpm_bba(inputs):
+    SC0, bpm_ords, j_bpm, mag_ords, n_dim, quads_strengths, scalings, bpm_ranges, q0, par = inputs
+    SC = SC0.very_deep_copy()
+    bpm_ind = np.where(bpm_ords[n_dim, j_bpm] == SC.ORD.BPM)[0][0]
+    m_ord = mag_ords[n_dim, j_bpm]
+    set_ind = np.argmax(bpm_ranges[:, bpm_ind])
+    SC.set_magnet_setpoints(par.q_ord_phase, quads_strengths[set_ind], False, 1, method=SETTING_REL,
+                              dipole_compensation=True)
+    bpm_pos, downstream_trajectories = _data_measurement_tbt(SC, m_ord, bpm_ind, j_bpm, n_dim, scalings[set_ind], par)
+    bba_offset, bba_offset_error = _data_evaluation(SC, bpm_pos, downstream_trajectories,
+                                                    par.magnet_strengths[n_dim, j_bpm],
+                                                    n_dim, m_ord, par)
+    return bba_offset, bba_offset_error, j_bpm
 
 
 def trajectory_bba(SC, bpm_ords, mag_ords, **kwargs):
@@ -66,7 +113,7 @@ def orbit_bba(SC, bpm_ords, mag_ords, **kwargs):
             LOGGER.debug(f'BBA-BPM {j_bpm}/{bpm_ords.shape[1]}, n_dim = {n_dim}')
             bpm_ind = np.where(bpm_ords[n_dim, j_bpm] == SC.ORD.BPM)[0][0]
             m_ord = mag_ords[n_dim, j_bpm]
-            SC0 = SC.very_deep_copy
+            SC0 = SC.very_deep_copy()
             bpm_pos, orbits = _data_measurement_orb(SC, m_ord, bpm_ind, j_bpm, n_dim, par,
                                                *_get_orbit_bump(SC, m_ord, bpm_ords[n_dim, j_bpm], n_dim, par))
             bba_offsets[n_dim, j_bpm], bba_offset_errors[n_dim, j_bpm] = _data_evaluation(SC, bpm_pos, orbits, par.magnet_strengths[n_dim, j_bpm], n_dim, m_ord, par)
@@ -234,7 +281,6 @@ def plot_bpm_offsets_from_magnets(SC, bpm_ords, mag_ords, error_flags):
     f.show()
 
 
-    
 # trajectory BBA helper functions
 
 
@@ -302,6 +348,7 @@ def _scale_injection_to_reach_bpms(SC, n_dim, last_bpm_ind, max_injection_pos_an
         LOGGER.warning('Something went wrong. No beam transmission at all(?)')
         SC.INJ.nTurns = initial_nturns
         return scaling_factor, np.zeros(len(SC.ORD.BPM))
+
 
 # orbit BBA helper functions
 
