@@ -271,7 +271,9 @@ def _data_evaluation(SC, bpm_pos, trajectories, mag_vec, n_dim, m_ord, par):
         center[j] = -p[1] / (par.fit_order * p[0])  # zero-crossing if linear, minimum is quadratic
         center_err[j] = np.sqrt(center[j] ** 2 * (pcov[0,0]/p[0]**2 + pcov[1,1]/p[1]**2 - 2 * pcov[0, 1] / p[0] / p[1]))
     mask = ~np.isnan(center)
-    offset_change = stats.weighted_mean(center[mask], center_err[mask])  # TODO catch ZeroDivisionError
+    if np.sum(mask) < 2:
+        return 0.0, 1.0
+    offset_change = stats.weighted_mean(center[mask], center_err[mask])
     offset_change_error = stats.weighted_error(center[mask]-offset_change, center_err[mask]) / np.sqrt(stats.effective_sample_size(center[mask], stats.weights_from_errors(center_err[mask])))
     if not par.dipole_compensation and n_dim == 0 and SC.RING[m_ord].NomPolynomB[1] != 0:
         offset_change += getattr(SC.RING[m_ord], 'BendingAngle', 0) / SC.RING[m_ord].NomPolynomB[1] / SC.RING[m_ord].Length
