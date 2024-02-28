@@ -110,10 +110,10 @@ def orbit_bba_parallel(SC, bpm_ords, mag_ords, **kwargs):
     bba_offset_errors = np.full(bpm_ords.shape, np.nan)
 
     for n_dim in range(bpm_ords.shape[0]):
-        cm_ords, bpm_ranges = _response_scan(SC, n_dim, par)
+        cm_ords, bpm_ranges, scaling = _response_scan(SC, n_dim, par.cm_ord_orbit, par.cm_ord_setpoint)
         LOGGER.info(f"Scanned plane {n_dim}")
         with multiprocessing.Pool() as pool:
-            items = [(SC0, bpm_ords, cm_ords, j_bpm, mag_ords, n_dim, bpm_ranges, par) for j_bpm
+            items = [(SC0, bpm_ords, cm_ords, j_bpm, mag_ords, n_dim, bpm_ranges, par, scaling) for j_bpm
                      in range(bpm_ords.shape[1])]
             for results in pool.imap(single_plane_bba_orbit, items):
                 bba_offset, bba_offset_error, j_bpm = results
@@ -125,7 +125,7 @@ def orbit_bba_parallel(SC, bpm_ords, mag_ords, **kwargs):
 
 
 def single_plane_bba_orbit(inputs):
-    SC0, bpm_ords, cm_ords, j_bpm, mag_ords, n_dim, bpm_ranges, par = inputs
+    SC0, bpm_ords, cm_ords, j_bpm, mag_ords, n_dim, bpm_ranges, par, scaling = inputs
     bpm_ind = np.where(bpm_ords[n_dim, j_bpm] == SC0.ORD.BPM)[0][0]
     m_ord = mag_ords[n_dim, j_bpm]
     mask = ~np.isnan(bpm_ranges[:, bpm_ind])
@@ -133,9 +133,10 @@ def single_plane_bba_orbit(inputs):
         return 0.0, 1.0, j_bpm
     set_ind = np.argmax(bpm_ranges[mask, bpm_ind])
     bpm_pos, orbits = _data_measurement_orbit_simple(SC0, m_ord, bpm_ind, j_bpm, n_dim, par, cm_ords[set_ind],
-                                                     par.cm_ord_setpoint)
+                                                     scaling * par.cm_ord_setpoint)
     bba_offsets, bba_offset_errors = _data_evaluation(SC0, bpm_pos, orbits, par.magnet_strengths[n_dim, j_bpm], n_dim, m_ord, par)
     return bba_offsets, bba_offset_errors, j_bpm
+
 
 def orbit_bba(SC, bpm_ords, mag_ords, **kwargs):
     par = DotDict(dict(n_steps=10, fit_order=1, magnet_order=1, skewness=False, setpoint_method=SETTING_REL,
@@ -152,7 +153,7 @@ def orbit_bba(SC, bpm_ords, mag_ords, **kwargs):
     bba_offset_errors = np.full(bpm_ords.shape, np.nan)
 
     for n_dim in range(bpm_ords.shape[0]):
-        cm_ords, bpm_ranges = _response_scan(SC, n_dim, par)
+        cm_ords, bpm_ranges, scaling = _response_scan(SC, n_dim, par.cm_ord_orbit, par.cm_ord_setpoint)
         LOGGER.info(f"Scanned plane {n_dim}")
         for j_bpm in range(bpm_ords.shape[1]):  # j_bpm: Index of BPM adjacent to magnet for BBA
             LOGGER.info(f"BPM number {j_bpm}")
@@ -166,7 +167,7 @@ def orbit_bba(SC, bpm_ords, mag_ords, **kwargs):
             SC0 = SC.very_deep_copy()
             # bpm_pos, orbits = _data_measurement_orb(SC, m_ord, bpm_ind, j_bpm, n_dim, par,
             #                                    *_get_orbit_bump(SC, m_ord, bpm_ords[n_dim, j_bpm], n_dim, par))
-            bpm_pos, orbits = _data_measurement_orbit_simple(SC, m_ord, bpm_ind, j_bpm, n_dim, par, cm_ords[set_ind], par.cm_ord_setpoint)
+            bpm_pos, orbits = _data_measurement_orbit_simple(SC, m_ord, bpm_ind, j_bpm, n_dim, par, cm_ords[set_ind], scaling * par.cm_ord_setpoint)
             bba_offsets[n_dim, j_bpm], bba_offset_errors[n_dim, j_bpm] = _data_evaluation(SC, bpm_pos, orbits, par.magnet_strengths[n_dim, j_bpm], n_dim, m_ord, par)
     SC = apply_bpm_offsets(SC, bpm_ords, bba_offsets, bba_offset_errors)
     if par.plot_results:
@@ -468,17 +469,26 @@ def _data_measurement_orbit_simple(SC, m_ord, bpm_ind, j_bpm, n_dim, par, cm_ord
     return bpm_pos, orbits
 
 
-def _response_scan(SC, n_dim, par):
-    n_setpoints = len(par.cm_ord_orbit)
+def _response_scan(SC, n_dim, cm_ord_orbit, cm_ord_setpoint):
+    n_setpoints = len(cm_ord_orbit)
+    scaling_factor = 1.0
     bpm_ranges = np.zeros((n_setpoints, len(SC.ORD.BPM)))
-    for i, ord1 in enumerate(par.cm_ord_orbit):
-        SC.set_cm_setpoints(ord1, par.cm_ord_setpoint, skewness=bool(n_dim), method=SETTING_ADD)
-        bpm_plus = bpm_reading(SC)[0][n_dim, :]
-        SC.set_cm_setpoints(ord1, - 2 * par.cm_ord_setpoint, skewness=bool(n_dim), method=SETTING_ADD)
-        bpm_minus = bpm_reading(SC)[0][n_dim, :]
-        bpm_ranges[i, :] = np.abs(bpm_plus - bpm_minus)
-        SC.set_cm_setpoints(ord1, par.cm_ord_setpoint, skewness=bool(n_dim), method=SETTING_ADD)
-    return par.cm_ord_orbit, bpm_ranges
+    for _ in range(20):
+        bpm_ranges = np.zeros((n_setpoints, len(SC.ORD.BPM)))
+        for i, ord1 in enumerate(cm_ord_orbit):
+            SC.set_cm_setpoints(ord1, cm_ord_setpoint, skewness=bool(n_dim), method=SETTING_ADD)
+            bpm_plus = bpm_reading(SC)[0][n_dim, :]
+            SC.set_cm_setpoints(ord1, - 2 * cm_ord_setpoint, skewness=bool(n_dim), method=SETTING_ADD)
+            bpm_minus = bpm_reading(SC)[0][n_dim, :]
+            bpm_ranges[i, :] = np.abs(bpm_plus - bpm_minus)
+            SC.set_cm_setpoints(ord1, cm_ord_setpoint, skewness=bool(n_dim), method=SETTING_ADD)
+        if np.sum(np.isnan(bpm_ranges)) < 0.5 * n_setpoints * len(SC.ORD.BPM):
+            return cm_ord_orbit, bpm_ranges, scaling_factor
+        scaling_factor *= 0.8
+    else:
+        LOGGER.warning('Something went wrong. No beam transmission at all(?)')
+        return cm_ord_orbit, bpm_ranges, scaling_factor
+
 
 
 def _plot_bba_step(SC, ax, bpm_ind, n_dim):

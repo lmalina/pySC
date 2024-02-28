@@ -12,7 +12,7 @@ import numpy as np
 from typing import Tuple
 
 from pySC.core.beam import bpm_reading
-from pySC.core.constants import SETTING_ADD
+from pySC.core.constants import SETTING_ADD, TRACK_PORB
 from pySC.utils import logging_tools, sc_tools
 
 LOGGER = logging_tools.get_logger(__name__)
@@ -324,7 +324,7 @@ def _check_ords(SC, response_matrix, reference, bpm_ords, cm_ords):
         cm_ords = SC.ORD.CM.copy()
     if bpm_ords is None:
         bpm_ords = SC.ORD.BPM.copy()
-    if response_matrix.shape[0] != 2 * len(bpm_ords) * SC.INJ.nTurns:
+    if response_matrix.shape[0] != 2 * len(bpm_ords) * (1 if SC.INJ.trackMode == TRACK_PORB else SC.INJ.nTurns):
         raise ValueError("Response matrix shape does not match the number of BPMs.")
     if response_matrix.shape[1] != len(cm_ords[0]) + len(cm_ords[1]):
         raise ValueError("Response matrix shape does not match the number of CMs.")
