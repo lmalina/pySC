@@ -175,6 +175,40 @@ def orbit_bba(SC, bpm_ords, mag_ords, **kwargs):
     return SC, bba_offsets, bba_offset_errors
 
 
+def orbit_bump_bba(SC, bpm_ords, mag_ords, **kwargs):
+    par = DotDict(dict(n_steps=10, fit_order=1, magnet_order=1, skewness=False, setpoint_method=SETTING_REL,
+                       magnet_strengths=np.array([0.95, 1.05]), RMstruct=[], orbBumpWindow=5, BBABPMtarget=1E-3,
+                       cm_ord_orbit=np.array([], dtype=int), cm_ord_setpoint=np.ones(1),
+                       num_downstream_bpms=len(SC.ORD.BPM), dipole_compensation=True,
+                       use_bpm_reading_for_orbit_bump_ref=False, plotResults=False))
+    par.update(**kwargs)
+    par = _check_input(bpm_ords, mag_ords, par)
+    if SC.INJ.trackMode == TRACK_TBT:
+        raise ValueError('Beam-orbit-based alignment does not work in TBT mode. '
+                         'Please set: SC.INJ.trackMode to  "ORB" or "PORB".')
+    bba_offsets = np.full(bpm_ords.shape, np.nan)
+    bba_offset_errors = np.full(bpm_ords.shape, np.nan)
+
+    for n_dim in range(bpm_ords.shape[0]):
+        LOGGER.info(f"Scanned plane {n_dim}")
+        for j_bpm in range(bpm_ords.shape[1]):  # j_bpm: Index of BPM adjacent to magnet for BBA
+            LOGGER.info(f"BPM number {j_bpm}")
+            bpm_ind = np.where(bpm_ords[n_dim, j_bpm] == SC.ORD.BPM)[0][0]
+            m_ord = mag_ords[n_dim, j_bpm]
+            SC0 = SC.very_deep_copy()
+            # bpm_pos, orbits = _data_measurement_orb(SC, m_ord, bpm_ind, j_bpm, n_dim, par,
+            #                                    *_get_orbit_bump(SC, m_ord, bpm_ords[n_dim, j_bpm], n_dim, par))
+            try:
+                bpm_pos, orbits = _data_measurement_orbit_simple(SC0, m_ord, bpm_ind, j_bpm, n_dim, par, par.cm_ord_orbit[:, j_bpm], par.cm_ord_setpoint)
+                bba_offsets[n_dim, j_bpm], bba_offset_errors[n_dim, j_bpm] = _data_evaluation(SC, bpm_pos, orbits, par.magnet_strengths[n_dim, j_bpm], n_dim, m_ord, par)
+            except:
+                bba_offsets[n_dim, j_bpm], bba_offset_errors[n_dim, j_bpm] = 0.0, 1.0
+    SC = apply_bpm_offsets(SC, bpm_ords, bba_offsets, bba_offset_errors)
+    if par.plot_results:
+        plot_bba_results(SC, bpm_ords, bba_offsets, bba_offset_errors)
+    return SC, bba_offsets, bba_offset_errors
+
+
 def fake_bba(SC, bpm_ords, mag_ords, errors=None, fake_offset=None):
     """Example use:
     SC = fake_bba(SC, bpm_ords, mag_ords, is_bba_errored(bba_offsets, bba_offset_errors))"""
@@ -490,7 +524,6 @@ def _response_scan(SC, n_dim, cm_ord_orbit, cm_ord_setpoint):
     else:
         LOGGER.warning('Something went wrong. No beam transmission at all(?)')
         return cm_ord_orbit, bpm_ranges, scaling_factor
-
 
 
 def _plot_bba_step(SC, ax, bpm_ind, n_dim):
