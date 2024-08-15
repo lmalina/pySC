@@ -22,13 +22,13 @@ from at import Lattice
 
 
 def atpass(ring: Lattice, init_pos: ndarray, nturns: int, refpts: ndarray, keep_lattice: bool = False):
-    return at.lattice_pass(lattice=ring.copy(), r_in=init_pos.copy(), nturns=nturns, refpts=refpts,
-                           keep_lattice=keep_lattice)
+    return at.lattice_track(lattice=ring.copy(), r_in=init_pos.copy(), nturns=nturns, refpts=refpts,
+                           keep_lattice=keep_lattice)[0]
 
 
 def patpass(ring: Lattice, init_pos: ndarray, nturns: int, refpts: ndarray, keep_lattice: bool = False):
-    return at.patpass(lattice=ring.copy(), r_in=init_pos.copy(), nturns=nturns, refpts=refpts,
-                      keep_lattice=keep_lattice)
+    return at.lattice_track(lattice=ring.copy(), r_in=init_pos.copy(), nturns=nturns, refpts=refpts,
+                      keep_lattice=keep_lattice, use_mp=True)[0]
 
 
 def atgetfieldvalues(ring: Lattice, refpts: ndarray, attrname: str, index: int = None):

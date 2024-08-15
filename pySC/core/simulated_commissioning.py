@@ -35,7 +35,7 @@ class SimulatedCommissioning:
     Examples:
 
         >>> import at
-        >>> SC = SimulatedCommissioning(at.Lattice(at.Monitor('BPM'))
+        >>> SC = SimulatedCommissioning(at.Lattice(at.Monitor('BPM')))
         >>> SC.register_bpms(np.array(0), Offset=2e-6*np.ones(2))
         >>> print(SC.ORD)
         0
@@ -560,7 +560,7 @@ class SimulatedCommissioning:
         self.INJ.randomInjectionZ = 1 * self.SIG.randomInjectionZ
         # Circumference
         if 'Circumference' in self.SIG.keys():
-            circScaling = 1 + self.SIG.Circumference * sc_tools.randnc(nsigmas, (1, 1))
+            circScaling = 1 + self.SIG.Circumference * sc_tools.randnc(nsigmas, (1, ))[0]
             self.RING = sc_tools.scale_circumference(self.RING, circScaling, 'rel')
             LOGGER.info('Circumference error applied.')
         # Misalignments
@@ -586,7 +586,7 @@ class SimulatedCommissioning:
                             classdef_tools.randn_cutoff(value, nsigmas) if field in self.SIG.Support[ordPair[1]].keys()
                             else getattr(self.RING[ordPair[0]], field))
 
-                struct_length = np.remainder(np.diff(s_pos[ordPair]), s_pos[-1])
+                struct_length = np.remainder(s_pos[ordPair][1] - s_pos[ordPair][0], s_pos[-1])
                 rolls0 = copy.deepcopy(getattr(self.RING[ordPair[0]], f"{support_type}Roll"))  # Twisted supports are not considered
                 offsets0 = copy.deepcopy(getattr(self.RING[ordPair[0]], f"{support_type}Offset"))
                 offsets1 = copy.deepcopy(getattr(self.RING[ordPair[1]], f"{support_type}Offset"))

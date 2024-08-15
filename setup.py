@@ -16,17 +16,17 @@ with README.open("r") as docs:
 
 # Dependencies for the package itself
 DEPENDENCIES = [
-    "numpy>=1.22.0",
-    "scipy>=1.8.0",
-    "matplotlib>=3.5.0",
-    "accelerator-toolbox>=0.4.0"
+    "numpy>=2.0.0",
+    "scipy>=1.11.4",
+    "matplotlib>=3.7.3",
+    "accelerator-toolbox>=0.6.1"
 
 ]
 
 # Extra dependencies
 EXTRA_DEPENDENCIES = {
     "test": [
-        "pytest>=7.0",
+        "pytest>=7.4",
         "pytest-cov>=3.0",
 
 
@@ -51,16 +51,16 @@ setuptools.setup(
     author_email=ABOUT_PYSC["__author_email__"],
     url=ABOUT_PYSC["__url__"],
     packages=setuptools.find_packages(exclude=["tests", "doc"]),
-    python_requires=">=3.8",
+    python_requires=">=3.9",
     classifiers=[
         "Intended Audience :: Science/Research",
         "Natural Language :: English",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3 :: Only",
-        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Topic :: Scientific/Engineering :: Physics",
     ],
     install_requires=DEPENDENCIES,

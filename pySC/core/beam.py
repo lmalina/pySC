@@ -61,7 +61,7 @@ def bpm_reading(SC: SimulatedCommissioning, bpm_ords: ndarray = None, calculate_
         mean_bpm_sums_3d = np.nansum(mean_bpm_sums_3d, axis=2, keepdims=True) / SC.INJ.nTurns
     if calculate_errors and SC.INJ.trackMode == TRACK_TBT:
         bpm_orbits_4d[np.sum(np.isnan(bpm_orbits_4d), axis=3) > 0, :] = np.nan
-        squared_orbit_diffs = np.square(bpm_orbits_4d - mean_bpm_orbits_3d)
+        squared_orbit_diffs = np.square(bpm_orbits_4d - mean_bpm_orbits_3d[:, :, :, np.newaxis])
         err_bpm_orbits_3d = np.sqrt(np.average(np.ma.array(squared_orbit_diffs, mask=np.isnan(bpm_orbits_4d)),
                                    weights=np.ma.array(bpm_sums_4d, mask=np.isnan(bpm_orbits_4d)), axis=3)).filled(np.nan)
         # Organising the array 2 x (nturns x nbpms) sorted by "arrival time"
