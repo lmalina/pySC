@@ -5,7 +5,7 @@ import numpy as np
 from numpy.testing import assert_equal
 import at
 from at import Lattice
-from pySC.utils.at_wrapper import findspos, atgetfieldvalues, atpass, patpass, findorbit6, findorbit4
+from pySC.utils.at_wrapper import findspos, atgetfieldvalues, lattice_track, patpass, findorbit6, findorbit4
 
 
 
@@ -30,7 +30,7 @@ def test_atpass(at_lattice):
     indices = np.arange(11, 450, 22, dtype=int)
     initial_pos = np.random.randn(6)
     copy_initial_pos = copy.deepcopy(initial_pos)
-    tracking = atpass(at_lattice, initial_pos, 3, indices,)
+    tracking = lattice_track(at_lattice, initial_pos, 3, indices, )
     assert tracking.shape == (6, 1, 20, 3)
     assert_equal(initial_pos, copy_initial_pos)
     assert at_lattice.__repr__() == lattice_copy.__repr__()

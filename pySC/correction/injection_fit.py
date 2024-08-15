@@ -68,7 +68,7 @@ def _fit_bpm_data(s_bpm, bref):
 
 
 def _merit_function(x, SC, bref, ords_used):
-    t = at_wrapper.atpass(SC.IDEALRING, np.concatenate((x, np.zeros(2))), 1, ords_used, keep_lattice=False)[[0, 2], 0, :, 0]
+    t = at_wrapper.lattice_track(SC.IDEALRING, np.concatenate((x, np.zeros(2))), 1, ords_used, keep_lattice=False)[[0, 2], 0, :, 0]
     return np.sqrt(np.mean(bref - t) ** 2)
 
 

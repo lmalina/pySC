@@ -185,7 +185,7 @@ def _real_bpm_reading(SC, track_mat, bpm_inds=None):  # track_mat should be only
     bpm_noise = bpm_noise[:, :, np.newaxis] * sc_tools.randnc(2, (2, n_bpms, nTurns))
     bpm_offset = np.transpose(at_wrapper.atgetfieldvalues(SC.RING, bpm_ords, 'Offset') + at_wrapper.atgetfieldvalues(SC.RING, bpm_ords, 'SupportOffset'))
     bpm_cal_error = np.transpose(at_wrapper.atgetfieldvalues(SC.RING, bpm_ords, 'CalError'))
-    bpm_roll = np.squeeze(at_wrapper.atgetfieldvalues(SC.RING, bpm_ords, 'Roll') + at_wrapper.atgetfieldvalues(SC.RING, bpm_ords, 'SupportRoll'), axis=1)
+    bpm_roll = np.ravel(at_wrapper.atgetfieldvalues(SC.RING, bpm_ords, 'Roll')) + np.ravel(at_wrapper.atgetfieldvalues(SC.RING, bpm_ords, 'SupportRoll'))
     bpm_sum_error = np.transpose(at_wrapper.atgetfieldvalues(SC.RING, bpm_ords, 'SumError'))[:, np.newaxis] * sc_tools.randnc(2, (n_bpms, nTurns))
     # averaging the X and Y positions at BPMs over particles
     mean_orbit = np.nanmean(track_mat, axis=1)
@@ -211,7 +211,7 @@ def _tracking(SC: SimulatedCommissioning, refs: ndarray) -> ndarray:
     if SC.INJ.trackMode == TRACK_ORB:
         pos = np.transpose(at_wrapper.findorbit6(SC.RING, refs, keep_lattice=False)[1])[[0, 2], :].reshape(2, 1, len(refs), 1)
     else:
-        pos = at_wrapper.atpass(SC.RING, generate_bunches(SC), SC.INJ.nTurns, refs, keep_lattice=False)[[0, 2], :, :, :]
+        pos = at_wrapper.lattice_track(SC.RING, generate_bunches(SC), SC.INJ.nTurns, refs, keep_lattice=False)[[0, 2], :, :, :]
     pos[1, np.isnan(pos[0, :, :, :])] = np.nan
     return pos
 

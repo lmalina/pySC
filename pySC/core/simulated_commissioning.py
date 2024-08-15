@@ -560,7 +560,7 @@ class SimulatedCommissioning:
         self.INJ.randomInjectionZ = 1 * self.SIG.randomInjectionZ
         # Circumference
         if 'Circumference' in self.SIG.keys():
-            circScaling = 1 + self.SIG.Circumference * sc_tools.randnc(nsigmas, (1, ))[0]
+            circScaling = 1 + self.SIG.Circumference * sc_tools.randnc(nsigmas, ())
             self.RING = sc_tools.scale_circumference(self.RING, circScaling, 'rel')
             LOGGER.info('Circumference error applied.')
         # Misalignments
@@ -696,7 +696,7 @@ class SimulatedCommissioning:
                 for i, ind in enumerate(self.ORD.BPM):
                     setattr(self.RING[ind], "SupportOffset", offsets[0:2, i])  # No longitudinal BPM offsets implemented
                     setattr(self.RING[ind], "SupportRoll",
-                            np.array([rolls[0, i]]))  # BPM pitch and yaw angles not  implemented
+                            rolls[0, i])  # BPM pitch and yaw angles not  implemented
             else:
                 LOGGER.warning('SC: No BPMs have been registered!')
 

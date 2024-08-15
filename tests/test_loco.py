@@ -30,7 +30,7 @@ def test_loco_hmba(at_ring):
     cav_ords = sc_tools.ords_from_regex(sc.RING, 'RFC')
     quads_ords = [sc_tools.ords_from_regex(sc.RING, 'QF'), sc_tools.ords_from_regex(sc.RING, 'QD')]
 
-    CMstep = np.array([1.e-4])  # correctors change [rad]
+    CMstep = 1.e-4  # correctors change [rad]
     dk = 1.e-4  # quads change
     RFstep = 1e3
 
