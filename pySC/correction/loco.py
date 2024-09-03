@@ -165,3 +165,100 @@ def get_inverse(jacobian, B, s_cut, weights, plot=False):
     results = np.ravel(np.dot(inv_matrix, B))
     # e = np.ravel(np.dot(matrix, results)) - np.ravel(B)
     return results
+
+
+
+
+'''
+The code below is for optics calculations (based on AT get_optics) and generates plots for analyzing the lattice.
+ Example usage:
+
+ [-, -, twiss] = at.get_optics(SC.IDEALRING, SC.ORD.BPM)
+ analyze_ring(SC, twiss, SC.ORD.BPM, makeplot=False)
+'''
+
+def analyze_ring(SC, twiss, bpm_indices, makeplot=False): 
+    rmsx, rmsy = rms_orbits(SC.RING, bpm_indices)
+    bx_rms_err, by_rms_err = getBetaBeat(SC.RING, twiss, bpm_indices)
+    dx_rms_err, dy_rms_err = getDispersionErr(SC.RING, twiss, bpm_indices)
+
+    print(f"RMS horizontal orbit: {rmsx * 1.e6:.2f} µm, RMS vertical orbit: {rmsy * 1.e6:.2f} µm")
+    print(f"RMS horizontal beta beating: {bx_rms_err * 100:.2f}%, RMS vertical beta beating: {by_rms_err * 100:.2f}%")
+    print(f"RMS relative horizontal dispersion: {dx_rms_err:.4f} mm, RMS relative vertical dispersion: {dy_rms_err:.4f} mm")
+    print(f"Tune values: {at.get_tune(ring, get_integer=True)}, Chromaticity values: {at.get_chrom(ring)}")
+
+    if makeplot:
+        plot_orbits(SC.RING, bpm_indices)
+        plot_beta_beat(SC.RING, twiss, bpm_indices)
+        plot_dispersion_err(SC.RING, twiss, bpm_indices)
+
+def calculate_rms(data):
+    return np.sqrt(np.mean(data ** 2))
+
+def plot_data(s_pos, data, xlabel, ylabel, title):
+    plt.rc('font', size=13)
+    fig, ax = plt.subplots(figsize=(6, 3))
+    ax.plot(s_pos, data)
+    ax.set_xlabel(xlabel, fontsize=14)
+    ax.set_ylabel(ylabel, fontsize=14)
+    ax.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
+    ax.grid(True, which='both', linestyle=':', color='gray')
+    plt.title(title)
+    plt.show()
+
+def rms_orbits(SC, elements_indexes):
+    _, _, elemdata = at.get_optics(SC.RING, elements_indexes)
+    closed_orbitx = elemdata.closed_orbit[:, 0]
+    closed_orbity = elemdata.closed_orbit[:, 2]
+
+    rmsx = calculate_rms(closed_orbitx)
+    rmsy = calculate_rms(closed_orbity)
+
+    return rmsx, rmsy
+
+def getBetaBeat(SC, twiss, elements_indexes):
+    _, _, twiss_error = at.get_optics(SC.RING, elements_indexes)
+    bx = (twiss_error.beta[:, 0] - twiss.beta[:, 0]) / twiss.beta[:, 0]
+    by = (twiss_error.beta[:, 1] - twiss.beta[:, 1]) / twiss.beta[:, 1]
+
+    bx_rms = calculate_rms(bx)
+    by_rms = calculate_rms(by)
+
+    return bx_rms, by_rms
+
+def getDispersionErr(SC, twiss, elements_indexes):
+    _, _, twiss_error = at.get_optics(SC.RING, elements_indexes)
+    dx = twiss_error.dispersion[:, 0] - twiss.dispersion[:, 0]
+    dy = twiss_error.dispersion[:, 2] - twiss.dispersion[:, 2]
+
+    dx_rms = calculate_rms(dx)
+    dy_rms = calculate_rms(dy)
+
+    return dx_rms, dy_rms
+
+def plot_orbits(SC, elements_indexes):
+    _, _, elemdata = at.get_optics(SC.RING, elements_indexes)
+    s_pos = elemdata.s_pos
+    closed_orbitx = elemdata.closed_orbit[:, 0] / 1.e-06
+    closed_orbity = elemdata.closed_orbit[:, 2] / 1.e-06
+
+    plot_data(s_pos, closed_orbitx, "s_pos [m]", r"closed_orbit x [µm]", "Horizontal closed orbit")
+    plot_data(s_pos, closed_orbity, "s_pos [m]", r"closed_orbit y [µm]", "Vertical closed orbit")
+
+def plot_beta_beat(SC, twiss, elements_indexes):
+    _, _, twiss_error = at.get_optics(SC.RING, elements_indexes)
+    s_pos = twiss_error.s_pos
+    bx = (twiss_error.beta[:, 0] - twiss.beta[:, 0]) / twiss.beta[:, 0]
+    by = (twiss_error.beta[:, 1] - twiss.beta[:, 1]) / twiss.beta[:, 1]
+
+    plot_data(s_pos, bx, "s_pos [m]", r'$\Delta \beta_x / \beta_x$', "Horizontal beta beating")
+    plot_data(s_pos, by, "s_pos [m]", r'$\Delta \beta_y / \beta_y$', "Vertical beta beating")
+
+def plot_dispersion_err(SC, elements_indexes):
+    _, _, twiss_error = at.get_optics(SC.RING, elements_indexes)
+    s_pos = twiss_error.s_pos
+    dx = twiss_error.dispersion[:, 0]
+    dy = twiss_error.dispersion[:, 2]
+
+    plot_data(s_pos, dx, "s_pos [m]", r'$\Delta \eta_x$ [m]', "Horizontal dispersion error")
+    plot_data(s_pos, dy, "s_pos [m]", r'$\Delta  \eta_y$ [m]', "Vertical dispersion error")
