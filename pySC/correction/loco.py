@@ -6,7 +6,8 @@ from pySC.core.constants import SETTING_ADD, TRACK_ORB
 from pySC.core.beam import bpm_reading
 import matplotlib.pyplot as plt
 from scipy.optimize import least_squares
-from pySC.utils import logging_tools, sc_tools
+from pySC.utils import logging_tools, sc_tools, , at_wrapper
+from pySC.lattice_properties.response_model import SCgetModelRING,orbpass
 LOGGER = logging_tools.get_logger(__name__)
 
 
@@ -50,13 +51,20 @@ def generating_quads_response_matrices(args):
         SC.set_magnet_setpoints(quad_index, -dk, skewness, order, method)
         return C_measured - C_model
 
-    dispersion_model = SCgetModelDispersion(SC, used_bpm_indexes, CAVords=cav_ords)
+    
+    #dispersion_model = SCgetModelDispersion(SC, used_bpm_indexes, CAVords=cav_ords, rfStep=rf_step)
+    _, _, twiss = at.get_optics(SC.IDEALRING, used_bpm_indexes)  ## ADD dispersion to the ORMs from AT get_optics
+    dx = twiss.dispersion[:, 0], dy = twiss.dispersion[:, 2]
+    dispersion_model=  np.column_stack((dx, dy))
     SC.set_magnet_setpoints(quad_index, dk, skewness, order, method)
     C_measured = SCgetModelRM(SC, used_bpm_indexes, used_cor_indexes, dkick=correctors_kick, useIdealRing=useIdealRing,
                               trackMode=trackMode)
-    dispersion_meas = SCgetModelDispersion(SC, used_bpm_indexes, CAVords=cav_ords, rfStep=rf_step)
+    #dispersion_meas = SCgetModelDispersion(SC, used_bpm_indexes, CAVords=cav_ords, rfStep=rf_step, useIdealRing=False)
+    _, _, twiss = at.get_optics(SC.RING, used_bpm_indexes)
+    dx = twiss.dispersion[:, 0], dy = twiss.dispersion[:, 2]
+    dispersion_model=  np.column_stack((dx, dy))
     SC.set_magnet_setpoints(quad_index, -dk, skewness, order, method)
-    return np.hstack((C_measured - C_model, (dispersion_meas - dispersion_model).reshape(-1, 1)))
+    return np.hstack((C_measured - C_model, ((dispersion_meas - dispersion_model)/correctors_kick).reshape(-1, 1)))
 
 
 def measure_closed_orbit_response_matrix(SC, bpm_ords, cm_ords, dkick=1e-5):
@@ -177,10 +185,11 @@ The code below is for optics calculations (based on AT get_optics) and generates
  analyze_ring(SC, twiss, SC.ORD.BPM, makeplot=False)
 '''
 
-def analyze_ring(SC, twiss, bpm_indices, makeplot=False): 
-    rmsx, rmsy = rms_orbits(SC.RING, bpm_indices)
-    bx_rms_err, by_rms_err = getBetaBeat(SC.RING, twiss, bpm_indices)
-    dx_rms_err, dy_rms_err = getDispersionErr(SC.RING, twiss, bpm_indices)
+def analyze_ring(SC, twiss, bpm_indices, useIdealRing=True, makeplot=False):
+    ring = SC.IDEALRING.deepcopy() if useIdealRing else SC.RING #SCgetModelRING(SC)
+    rmsx, rmsy = rms_orbits(ring, bpm_indices)
+    bx_rms_err, by_rms_err = getBetaBeat(ring, twiss, bpm_indices)
+    dx_rms_err, dy_rms_err = getDispersionErr(ring, twiss, bpm_indices)
 
     print(f"RMS horizontal orbit: {rmsx * 1.e6:.2f} µm, RMS vertical orbit: {rmsy * 1.e6:.2f} µm")
     print(f"RMS horizontal beta beating: {bx_rms_err * 100:.2f}%, RMS vertical beta beating: {by_rms_err * 100:.2f}%")
@@ -188,9 +197,9 @@ def analyze_ring(SC, twiss, bpm_indices, makeplot=False):
     print(f"Tune values: {at.get_tune(ring, get_integer=True)}, Chromaticity values: {at.get_chrom(ring)}")
 
     if makeplot:
-        plot_orbits(SC.RING, bpm_indices)
-        plot_beta_beat(SC.RING, twiss, bpm_indices)
-        plot_dispersion_err(SC.RING, twiss, bpm_indices)
+        plot_orbits(ring, bpm_indices)
+        plot_beta_beat(ring, twiss, bpm_indices)
+        plot_dispersion_err(ring, twiss, bpm_indices)
 
 def calculate_rms(data):
     return np.sqrt(np.mean(data ** 2))
@@ -206,18 +215,23 @@ def plot_data(s_pos, data, xlabel, ylabel, title):
     plt.title(title)
     plt.show()
 
-def rms_orbits(SC, elements_indexes):
-    _, _, elemdata = at.get_optics(SC.RING, elements_indexes)
-    closed_orbitx = elemdata.closed_orbit[:, 0]
-    closed_orbity = elemdata.closed_orbit[:, 2]
+def rms_orbits(ring, elements_indexes, trackMode='ORB', Z0=np.zeros(6)):
+    track_methods = dict(TBT=at_wrapper.atpass, ORB=orbpass)
+    if trackMode == 'ORB':
+        nTurns = 1
+    trackmethod = track_methods['ORB']
+    Ta = trackmethod(ring, Z0=Z0, nTurns=nTurns, REFPTS=elements_indexes)
+
+    closed_orbitx = np.ravel(np.transpose(Ta[0, :, :, :], axes=(2, 1, 0)))
+    closed_orbity = np.ravel(np.transpose(Ta[2, :, :, :], axes=(2, 1, 0)))
 
     rmsx = calculate_rms(closed_orbitx)
     rmsy = calculate_rms(closed_orbity)
 
     return rmsx, rmsy
 
-def getBetaBeat(SC, twiss, elements_indexes):
-    _, _, twiss_error = at.get_optics(SC.RING, elements_indexes)
+def getBetaBeat(ring, twiss, elements_indexes):
+    _, _, twiss_error = at.get_optics(ring, elements_indexes)
     bx = (twiss_error.beta[:, 0] - twiss.beta[:, 0]) / twiss.beta[:, 0]
     by = (twiss_error.beta[:, 1] - twiss.beta[:, 1]) / twiss.beta[:, 1]
 
@@ -226,8 +240,8 @@ def getBetaBeat(SC, twiss, elements_indexes):
 
     return bx_rms, by_rms
 
-def getDispersionErr(SC, twiss, elements_indexes):
-    _, _, twiss_error = at.get_optics(SC.RING, elements_indexes)
+def getDispersionErr(ring, twiss, elements_indexes):
+    _, _, twiss_error = at.get_optics(ring, elements_indexes)
     dx = twiss_error.dispersion[:, 0] - twiss.dispersion[:, 0]
     dy = twiss_error.dispersion[:, 2] - twiss.dispersion[:, 2]
 
@@ -236,29 +250,30 @@ def getDispersionErr(SC, twiss, elements_indexes):
 
     return dx_rms, dy_rms
 
-def plot_orbits(SC, elements_indexes):
-    _, _, elemdata = at.get_optics(SC.RING, elements_indexes)
-    s_pos = elemdata.s_pos
-    closed_orbitx = elemdata.closed_orbit[:, 0] / 1.e-06
-    closed_orbity = elemdata.closed_orbit[:, 2] / 1.e-06
+def plot_orbits(ring, elements_indexes, trackMode='ORB', Z0=np.zeros(6)):
+    _, _, twiss = at.get_optics(ring, elements_indexes)
+    track_methods = dict(TBT=at_wrapper.atpass, ORB=orbpass)
+    if trackMode == 'ORB':
+       nTurns = 1
+    trackmethod = track_methods['ORB']
+    Ta = trackmethod(ring, Z0=Z0, nTurns=nTurns, REFPTS=elements_indexes)
+    closed_orbitx = np.ravel(np.transpose(Ta[0, :, :, :], axes=(2, 1, 0))) / 1.e-06
+    closed_orbity = np.ravel(np.transpose(Ta[2, :, :, :], axes=(2, 1, 0))) / 1.e-06
+    plot_data(twiss.s_pos, closed_orbitx, "s_pos [m]", r"closed_orbit x [$\mu$m]", "Horizontal closed orbit")
+    plot_data(twiss.s_pos, closed_orbity, "s_pos [m]", r"closed_orbit y [$\mu$m]", "Vertical closed orbit")
 
-    plot_data(s_pos, closed_orbitx, "s_pos [m]", r"closed_orbit x [µm]", "Horizontal closed orbit")
-    plot_data(s_pos, closed_orbity, "s_pos [m]", r"closed_orbit y [µm]", "Vertical closed orbit")
-
-def plot_beta_beat(SC, twiss, elements_indexes):
-    _, _, twiss_error = at.get_optics(SC.RING, elements_indexes)
-    s_pos = twiss_error.s_pos
+def plot_beta_beat(ring, twiss, elements_indexes):
+    _, _, twiss_error = at.get_optics(ring, elements_indexes)
     bx = (twiss_error.beta[:, 0] - twiss.beta[:, 0]) / twiss.beta[:, 0]
     by = (twiss_error.beta[:, 1] - twiss.beta[:, 1]) / twiss.beta[:, 1]
 
-    plot_data(s_pos, bx, "s_pos [m]", r'$\Delta \beta_x / \beta_x$', "Horizontal beta beating")
-    plot_data(s_pos, by, "s_pos [m]", r'$\Delta \beta_y / \beta_y$', "Vertical beta beating")
+    plot_data(twiss_error.s_pos, bx, "s_pos [m]", r'$\Delta \beta_x / \beta_x$', "Horizontal beta beating")
+    plot_data(twiss_error.s_pos, by, "s_pos [m]", r'$\Delta \beta_y / \beta_y$', "Vertical beta beating")
 
-def plot_dispersion_err(SC, elements_indexes):
-    _, _, twiss_error = at.get_optics(SC.RING, elements_indexes)
-    s_pos = twiss_error.s_pos
-    dx = twiss_error.dispersion[:, 0]
-    dy = twiss_error.dispersion[:, 2]
+def plot_dispersion_err(ring, twiss, elements_indexes):
+    _, _, twiss_error = at.get_optics(ring, elements_indexes)
+    dx = twiss_error.dispersion[:, 0] - twiss.dispersion[:, 0]
+    dy = twiss_error.dispersion[:, 2] - twiss.dispersion[:, 2]
 
-    plot_data(s_pos, dx, "s_pos [m]", r'$\Delta \eta_x$ [m]', "Horizontal dispersion error")
-    plot_data(s_pos, dy, "s_pos [m]", r'$\Delta  \eta_y$ [m]', "Vertical dispersion error")
+    plot_data(twiss_error.s_pos, dx, "s_pos [m]", r'$\Delta \eta_x$ [m]', "Horizontal dispersion error")
+    plot_data(twiss_error.s_pos, dy, "s_pos [m]", r'$\Delta  \eta_y$ [m]', "Vertical dispersion error")
