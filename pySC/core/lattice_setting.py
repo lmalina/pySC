@@ -49,20 +49,51 @@ def switch_cavity_and_radiation(ring: Lattice, *args: str) -> Lattice:  # TODO s
     if invalid_args := [arg for arg in args if arg not in valid_args]:
         raise ValueError(f"Unknown arguments found: {invalid_args}"
                          f"Available options are: {valid_args}")
-    non_rad_pass_methods = ['BndMPoleSymplectic4Pass', 'BndMPoleSymplectic4E2Pass', 'StrMPoleSymplectic4Pass']
-    rad_pass_methods = [method.replace("Pass", "RadPass") for method in non_rad_pass_methods]
+
+    # present cavity state
+    ords = np.arange(len(ring))
+    cavs = [i for i in np.ravel(np.array([ords], dtype=int)) if hasattr(ring[i], 'Frequency')]
+
+    cavstate = False
+    pm=[]
+    for ind in cavs:
+        pm.append(ring[ind].PassMethod)
+    cavpm=np.unique(pm)
+    if len(cavpm) > 1:
+        print(f'cavity pass methods are inconsistent. Assume cavities are off.')
+        cavstate=False
+    elif len(cavpm) == 1:
+        if cavpm == 'RFCavityPass':
+            cavstate = True
+        else:
+            cavstate = False
 
     if 'radiationoff' in args:
-        for ind in range(len(ring)):
-            if ring[ind].PassMethod in rad_pass_methods:
-                ring[ind].PassMethod = ring[ind].PassMethod.replace("Rad", "")
+        if cavstate:  # rad off, cav on
+            ring.disable_6d(cavity_pass='RFCavityPass')
+        else:  # rad off, cav off
+            ring.disable_6d()
+
     elif 'radiationon' in args:
-        for ind in range(len(ring)):
-            if ring[ind].PassMethod in non_rad_pass_methods:
-                ring[ind].PassMethod = ring[ind].PassMethod.replace("Pass", "RadPass")
+        if cavstate:  # rad on, cav on
+            ring.enable_6d()
+        else:  # rad on, cav off
+            ring.enable_6d(cavity_pass='IdentityPass')
+
+    # get radiation state
+    radstate=ring.radiation
+
     if 'cavityoff' in args:
-        return switch_rf(ring, np.arange(len(ring)), False)
+        if radstate:  # rad on, cav off
+            ring.enable_6d(cavity_pass='IdentityPass')
+        else:  # rad off, cav off
+            ring.disable_6d()
+
     elif 'cavityon' in args:
-        return switch_rf(ring, np.arange(len(ring)), True)
+        if radstate:  # rad on, cav on
+            ring.enable_6d()
+        else:  # rad off, cav on
+            ring.disable_6d(cavity_pass='RFCavityPass')
+
     return ring
 
