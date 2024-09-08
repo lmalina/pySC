@@ -1,0 +1,78 @@
+[build-system]
+requires = ["setuptools>=64.0.0"]
+build-backend = "setuptools.build_meta"
+#requires = ["hatchling"]
+#build-backend = "hatchling.build"
+#
+#[tool.hatch.version]
+#path = "pySC/__init__.py"
+#
+#[tool.hatch.build.targets.sdist]
+#exclude = [
+#  "/.github",
+#  "/doc",
+#  "/tests",
+#]
+#
+#[tool.hatch.build.targets.wheel]
+#packages = ["pySC"]
+
+[project]
+#dynamic = ["version"]
+name = "pySC"
+version = "0.2.0"
+description = "Python version of Simulated Commissioning toolkit for synchrotrons (https://github.com/ThorstenHellert/SC) "
+readme = "README.md"
+requires-python = ">=3.9"
+#license = {file = "LICENSE.txt"}
+#keywords = ["Accelerator", "Synchrotron", "Commissioning", ]
+authors = [
+    {email = "lukas.malina@desy.de"},
+    {name = "Lukas Malina"}
+]
+maintainers = [
+    {name = "Lukas Malina", email = "lukas.malina@desy.de"}
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+
+dependencies = [
+    "numpy>=2.0.0",
+    "scipy>=1.11.4",
+    "matplotlib>=3.7.3",
+    "accelerator-toolbox>=0.6.1"
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.4",
+    "pytest-cov>=3.0",
+]
+doc = [
+    "sphinx",
+    "travis-sphinx",
+    "sphinx-rtd-theme"
+]
+
+[project.urls]
+Homepage = "https://github.com/lmalina/pySC"
+Documentation = "https://lmalina.github.io/pySC/"
+Repository = "https://github.com/lmalina/pySC.git"
+
+[tool.setuptools.packages.find]
+include = ["pySC*"]
+#packages = ["pySC"]
+exclude = ["tests*", "doc*", ".github*"]
+
+#[tool.setuptools.dynamic]
+#version = {attr = "pySC.__version__"}
