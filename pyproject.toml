@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [tool.hatch.version]
 path = "pySC/__init__.py"
-#
+
 [tool.hatch.build.targets.sdist]
 exclude = [
   "/.github",
@@ -17,18 +17,14 @@ packages = ["pySC"]
 
 [project]
 name = "pySC"
-version = "0.2.0"
 description = "Python version of Simulated Commissioning toolkit for synchrotrons (https://github.com/ThorstenHellert/SC) "
 readme = "README.md"
 requires-python = ">=3.9"
+dynamic = ["version"]
 #license = {file = "LICENSE.txt"}
-#keywords = ["Accelerator", "Synchrotron", "Commissioning", ]
-authors = [
-    {email = "lukas.malina@desy.de"},
-    {name = "Lukas Malina"}
-]
+keywords = ["Accelerator", "Synchrotron", "Commissioning", ]
 maintainers = [
-    {name = "Lukas Malina", email = "lukas.malina@desy.de"}
+    {name = "Lukáš Malina", email = "lukas.malina@desy.de"}
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
