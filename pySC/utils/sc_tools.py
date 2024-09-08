@@ -2,8 +2,9 @@ import re
 
 import numpy as np
 from matplotlib import pyplot as plt
-from numpy import ndarray
+from numpy import ndarray, float64
 from at import Lattice
+from typing import Union
 
 from pySC.utils import at_wrapper, logging_tools
 
@@ -11,9 +12,10 @@ from pySC.utils import at_wrapper, logging_tools
 LOGGER = logging_tools.get_logger(__name__)
 
 
-def randnc(cut_off: float = 2, shape: tuple = (1,)) -> ndarray:
+def randnc(cut_off: float = 2, shape: tuple = (1,)) -> Union[ndarray, float64]:
     """
     Generates an array of random number(s) from normal distribution with a cut-off.
+    If shape = () a single float value is returned.
 
     Parameters
     ----------
@@ -24,15 +26,19 @@ def randnc(cut_off: float = 2, shape: tuple = (1,)) -> ndarray:
 
     Returns
     -------
-    out : ndarray
-        The output array.
+    out : Union[ndarray, float64]
+        The output array (If shape = () a single float value)
     """
+    if np.any([s < 0 for s in shape]):
+        raise ValueError('The shape of the output array must be positive.')
     out_shape = (1,) if np.sum(shape) < 1 else shape
     out = np.random.randn(np.prod(out_shape))
     outindex = np.abs(out) > np.abs(cut_off)
     while np.sum(outindex):
         out[outindex] = np.random.randn(np.sum(outindex))
         outindex = np.abs(out) > np.abs(cut_off)
+    if np.sum(shape) < 1:
+        return out[0]
     return out.reshape(out_shape)
 
 
@@ -165,10 +171,10 @@ def _plot_singular_values(s_mat, d_mat):
     fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(12, 4), dpi=100, facecolor="w")
     ax[0].semilogy(np.diag(s_mat) / np.max(np.diag(s_mat)), 'o--')
     ax[0].set_xlabel('Number of SV')
-    ax[0].set_ylabel('$\sigma/\sigma_0$')
+    ax[0].set_ylabel(r'$\sigma/\sigma_0$')
     ax[1].plot(s_mat * d_mat, 'o--')
     ax[1].set_xlabel('Number of SV')
-    ax[1].set_ylabel('$\sigma * \sigma^+$')
+    ax[1].set_ylabel(r'$\sigma * \sigma^+$')
     ax[1].yaxis.tick_right()
     ax[1].yaxis.set_label_position("right")
     fig.show()

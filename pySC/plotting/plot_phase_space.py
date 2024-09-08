@@ -10,7 +10,7 @@ def plot_phase_space(SC, ords=np.zeros(1, dtype=int), custom_bunch=None, nPartic
     init_font = plt.rcParams["font.size"]
     plt.rcParams.update({'font.size': 18})
     z_in, n_particles, n_turns = _check_input(SC, custom_bunch, nParticles, nTurns)
-    T = at_wrapper.atpass(SC.RING, z_in, n_turns, ords, keep_lattice=False)
+    T = at_wrapper.lattice_track(SC.RING, z_in, n_turns, ords, keep_lattice=False)
     T[:, np.isnan(T[0, :])] = np.nan
     label_str = [r'$\Delta x$ [$\mu$m]', r"$\Delta x'$ [$\mu$rad]", r'$\Delta y$ [$\mu$m]', r"$\Delta y'$ [$\mu$rad]",
                  r'$\Delta S$ [m]', r'$\delta E$ $[\%]$']

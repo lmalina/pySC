@@ -6,7 +6,7 @@ This module contains wrappers to all the ``pyAT`` functions, used in ``pySC``,
 which are not member functions of used ``pyAT`` objects.
 This is due to observed side effects, such as modification of input parameters.
 
-Tracking fuctions ``latice_pass``, ``find_orbit4``, ``find_orbit6``
+Tracking fuctions ``latice_track``, ``find_orbit4``, ``find_orbit6``
 index the result the same way as ``get_s_pos``,
 i.e. 0 means entrance of the first element, len(elements) means end of the last element.
 Function ``get_value_refpts`` indexes elements as usual.
@@ -21,14 +21,10 @@ from numpy import ndarray
 from at import Lattice
 
 
-def atpass(ring: Lattice, init_pos: ndarray, nturns: int, refpts: ndarray, keep_lattice: bool = False):
-    return at.lattice_pass(lattice=ring.copy(), r_in=init_pos.copy(), nturns=nturns, refpts=refpts,
-                           keep_lattice=keep_lattice)
-
-
-def patpass(ring: Lattice, init_pos: ndarray, nturns: int, refpts: ndarray, keep_lattice: bool = False):
-    return at.patpass(lattice=ring.copy(), r_in=init_pos.copy(), nturns=nturns, refpts=refpts,
-                      keep_lattice=keep_lattice)
+def lattice_track(ring: Lattice, init_pos: ndarray, nturns: int, refpts: ndarray, keep_lattice: bool = False,
+                  use_mp: bool = False):
+    return at.lattice_track(lattice=ring.copy(), r_in=init_pos.copy(), nturns=nturns, refpts=refpts,
+                           keep_lattice=keep_lattice, in_place=False, use_mp=use_mp)[0]
 
 
 def atgetfieldvalues(ring: Lattice, refpts: ndarray, attrname: str, index: int = None):

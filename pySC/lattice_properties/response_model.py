@@ -49,7 +49,7 @@ def SCgetModelRM(SC, BPMords, CMords, trackMode='TBT', Z0=np.zeros(6), nTurns=1,
 
     """
     LOGGER.info('Calculating model response matrix')
-    track_methods = dict(TBT=at_wrapper.atpass, ORB=orbpass)
+    track_methods = dict(TBT=at_wrapper.lattice_track, ORB=orbpass)
     if trackMode not in track_methods.keys():
         ValueError(f'Unknown track mode {trackMode}. Valid values are {track_methods.keys()}')
     ring = SC.IDEALRING.deepcopy() if useIdealRing else SCgetModelRING(SC)
@@ -121,7 +121,7 @@ def SCgetModelDispersion(SC, BPMords, CAVords, trackMode='ORB', Z0=np.zeros(6), 
 
     """
     LOGGER.info('Calculating model dispersion')
-    track_methods = dict(TBT=at_wrapper.atpass, ORB=orbpass)
+    track_methods = dict(TBT=at_wrapper.lattice_track, ORB=orbpass)
     if trackMode not in track_methods.keys():
         ValueError(f'Unknown track mode {trackMode}. Valid values are {track_methods.keys()}')
     ring = SC.IDEALRING.deepcopy() if useIdealRing else SCgetModelRING(SC)

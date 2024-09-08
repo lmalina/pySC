@@ -64,9 +64,9 @@ def plot_support(SC: SimulatedCommissioning, font_size: int = 8, x_lim: Tuple[fl
     # Longitudinal offsets and Pitch and Yaw angles not supported for BPMs
     pad_off, pad_roll = ((0, 0), (0, 1)), ((0, 0), (0, 2))
     off_bpm = np.pad(at_wrapper.atgetfieldvalues(SC.RING, SC.ORD.BPM, "Offset"), pad_off)
-    roll_bpm = np.pad(at_wrapper.atgetfieldvalues(SC.RING, SC.ORD.BPM, "Roll"), pad_roll)
+    roll_bpm = np.pad(np.ravel(at_wrapper.atgetfieldvalues(SC.RING, SC.ORD.BPM, "Roll"))[:, np.newaxis], pad_roll)
     off_bpm_support = np.pad(at_wrapper.atgetfieldvalues(SC.RING, SC.ORD.BPM, "SupportOffset"), pad_off)
-    roll_bpm_support = np.pad(at_wrapper.atgetfieldvalues(SC.RING, SC.ORD.BPM, "SupportRoll"), pad_roll)
+    roll_bpm_support = np.pad(np.ravel(at_wrapper.atgetfieldvalues(SC.RING, SC.ORD.BPM, "SupportRoll"))[:, np.newaxis], pad_roll)
 
     # create figure
     fig, ax = plt.subplots(nrows=9, ncols=2, num=1213, sharex="all", figsize=(10, 15))
