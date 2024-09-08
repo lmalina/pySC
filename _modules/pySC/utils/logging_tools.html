@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en">
+<html class="writer-html5" lang="en" data-content_root="../../../">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>pySC.utils.logging_tools &mdash; pySC 0.1.0 documentation</title>
+  <title>pySC.utils.logging_tools &mdash; pySC 0.2.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=fa44fd50" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=988d0652" />
@@ -15,9 +15,9 @@
   
         <script src="../../../_static/jquery.js?v=5d32c60e"></script>
         <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js?v=2389946f"></script>
-        <script src="../../../_static/doctools.js?v=888ff710"></script>
-        <script src="../../../_static/sphinx_highlight.js?v=4825356b"></script>
+        <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+        <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
@@ -36,7 +36,7 @@
               <img src="../../../_static/pySC_logo.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                0.1
+                0.2
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
@@ -153,7 +153,9 @@
 <span class="c1"># Classes and Contexts #########################################################</span>
 
 
-<div class="viewcode-block" id="MaxFilter"><a class="viewcode-back" href="../../../modules/logging.html#pySC.utils.logging_tools.MaxFilter">[docs]</a><span class="k">class</span> <span class="nc">MaxFilter</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="MaxFilter">
+<a class="viewcode-back" href="../../../modules/logging.html#pySC.utils.logging_tools.MaxFilter">[docs]</a>
+<span class="k">class</span> <span class="nc">MaxFilter</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;To get messages only up to a certain level.&quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">level</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__level</span> <span class="o">=</span> <span class="n">level</span>
@@ -162,7 +164,10 @@
         <span class="k">return</span> <span class="n">log_record</span><span class="o">.</span><span class="n">levelno</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__level</span></div>
 
 
-<div class="viewcode-block" id="DebugMode"><a class="viewcode-back" href="../../../modules/logging.html#pySC.utils.logging_tools.DebugMode">[docs]</a><span class="k">class</span> <span class="nc">DebugMode</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+<div class="viewcode-block" id="DebugMode">
+<a class="viewcode-back" href="../../../modules/logging.html#pySC.utils.logging_tools.DebugMode">[docs]</a>
+<span class="k">class</span> <span class="nc">DebugMode</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Context Manager for the debug mode.</span>
 
@@ -218,10 +223,13 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">mod_logger</span><span class="o">.</span><span class="n">removeHandler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_h</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mod_logger</span><span class="o">.</span><span class="n">removeHandler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">console_h</span><span class="p">)</span></div>
 
+
 <span class="c1"># Public Methods ###############################################################</span>
 
 
-<div class="viewcode-block" id="get_logger"><a class="viewcode-back" href="../../../modules/logging.html#pySC.utils.logging_tools.get_logger">[docs]</a><span class="k">def</span> <span class="nf">get_logger</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">level_root</span><span class="o">=</span><span class="n">DEBUG</span><span class="p">,</span> <span class="n">level_console</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">BASIC_FORMAT</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="get_logger">
+<a class="viewcode-back" href="../../../modules/logging.html#pySC.utils.logging_tools.get_logger">[docs]</a>
+<span class="k">def</span> <span class="nf">get_logger</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">level_root</span><span class="o">=</span><span class="n">DEBUG</span><span class="p">,</span> <span class="n">level_console</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">BASIC_FORMAT</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Sets up logger if name is **__main__**. Returns logger based on module name.</span>
 
@@ -286,7 +294,10 @@
     <span class="k">return</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">logger_name</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="file_handler"><a class="viewcode-back" href="../../../modules/logging.html#pySC.utils.logging_tools.file_handler">[docs]</a><span class="k">def</span> <span class="nf">file_handler</span><span class="p">(</span><span class="n">logfile</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="n">DEBUG</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">BASIC_FORMAT</span><span class="p">):</span>
+
+<div class="viewcode-block" id="file_handler">
+<a class="viewcode-back" href="../../../modules/logging.html#pySC.utils.logging_tools.file_handler">[docs]</a>
+<span class="k">def</span> <span class="nf">file_handler</span><span class="p">(</span><span class="n">logfile</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="n">DEBUG</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">BASIC_FORMAT</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Convenience function so the caller does not have to import logging.&quot;&quot;&quot;</span>
     <span class="n">handler</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">FileHandler</span><span class="p">(</span><span class="n">logfile</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;w&#39;</span><span class="p">,</span> <span class="p">)</span>
     <span class="n">handler</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">level</span><span class="p">)</span>
@@ -295,7 +306,10 @@
     <span class="k">return</span> <span class="n">handler</span></div>
 
 
-<div class="viewcode-block" id="stream_handler"><a class="viewcode-back" href="../../../modules/logging.html#pySC.utils.logging_tools.stream_handler">[docs]</a><span class="k">def</span> <span class="nf">stream_handler</span><span class="p">(</span><span class="n">stream</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="n">DEBUG</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">BASIC_FORMAT</span><span class="p">,</span> <span class="n">max_level</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+<div class="viewcode-block" id="stream_handler">
+<a class="viewcode-back" href="../../../modules/logging.html#pySC.utils.logging_tools.stream_handler">[docs]</a>
+<span class="k">def</span> <span class="nf">stream_handler</span><span class="p">(</span><span class="n">stream</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="n">DEBUG</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">BASIC_FORMAT</span><span class="p">,</span> <span class="n">max_level</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Convenience function so the caller does not have to import logging.&quot;&quot;&quot;</span>
     <span class="n">handler</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">StreamHandler</span><span class="p">(</span><span class="n">stream</span><span class="p">)</span>
     <span class="n">handler</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">level</span><span class="p">)</span>
@@ -304,6 +318,7 @@
     <span class="k">if</span> <span class="n">max_level</span><span class="p">:</span>
         <span class="n">handler</span><span class="o">.</span><span class="n">addFilter</span><span class="p">(</span><span class="n">MaxFilter</span><span class="p">(</span><span class="n">max_level</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">handler</span></div>
+
 
 
 <span class="c1"># Private Methods ##############################################################</span>

@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en">
+<html class="writer-html5" lang="en" data-content_root="../">
 <head>
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Utils &mdash; pySC 0.1.0 documentation</title>
+  <title>Utils &mdash; pySC 0.2.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
       <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=988d0652" />
@@ -16,9 +16,9 @@
   
         <script src="../_static/jquery.js?v=5d32c60e"></script>
         <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=2389946f"></script>
-        <script src="../_static/doctools.js?v=888ff710"></script>
-        <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
+        <script src="../_static/documentation_options.js?v=938c9ccc"></script>
+        <script src="../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -38,7 +38,7 @@
               <img src="../_static/pySC_logo.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                0.1
+                0.2
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -133,20 +133,20 @@
            <div itemprop="articleBody">
              
   <section id="module-pySC.utils.at_wrapper">
-<span id="utils"></span><h1>Utils<a class="headerlink" href="#module-pySC.utils.at_wrapper" title="Permalink to this heading"></a></h1>
+<span id="utils"></span><h1>Utils<a class="headerlink" href="#module-pySC.utils.at_wrapper" title="Link to this heading"></a></h1>
 <section id="at-wrapper">
-<h2>AT wrapper<a class="headerlink" href="#at-wrapper" title="Permalink to this heading"></a></h2>
+<h2>AT wrapper<a class="headerlink" href="#at-wrapper" title="Link to this heading"></a></h2>
 <p>This module contains wrappers to all the <code class="docutils literal notranslate"><span class="pre">pyAT</span></code> functions, used in <code class="docutils literal notranslate"><span class="pre">pySC</span></code>,
 which are not member functions of used <code class="docutils literal notranslate"><span class="pre">pyAT</span></code> objects.
 This is due to observed side effects, such as modification of input parameters.</p>
-<p>Tracking fuctions <code class="docutils literal notranslate"><span class="pre">latice_pass</span></code>, <code class="docutils literal notranslate"><span class="pre">find_orbit4</span></code>, <code class="docutils literal notranslate"><span class="pre">find_orbit6</span></code>
+<p>Tracking fuctions <code class="docutils literal notranslate"><span class="pre">latice_track</span></code>, <code class="docutils literal notranslate"><span class="pre">find_orbit4</span></code>, <code class="docutils literal notranslate"><span class="pre">find_orbit6</span></code>
 index the result the same way as <code class="docutils literal notranslate"><span class="pre">get_s_pos</span></code>,
 i.e. 0 means entrance of the first element, len(elements) means end of the last element.
 Function <code class="docutils literal notranslate"><span class="pre">get_value_refpts</span></code> indexes elements as usual.</p>
 </section>
-<span class="target" id="module-pySC.utils.classdef_tools"></span><span class="target" id="module-pySC.utils.sc_tools"></span><dl class="py function">
-<dt class="sig sig-object py" id="pySC.utils.sc_tools.ords_from_regex">
-<span class="sig-prename descclassname"><span class="pre">pySC.utils.sc_tools.</span></span><span class="sig-name descname"><span class="pre">ords_from_regex</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ring</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Lattice</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regex</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/pySC/utils/sc_tools.html#ords_from_regex"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pySC.utils.sc_tools.ords_from_regex" title="Permalink to this definition"></a></dt>
+<dl class="py function" id="module-pySC.utils.sc_tools">
+<span id="module-pySC.utils.classdef_tools"></span><dt class="sig sig-object py" id="pySC.utils.sc_tools.ords_from_regex">
+<span class="sig-prename descclassname"><span class="pre">pySC.utils.sc_tools.</span></span><span class="sig-name descname"><span class="pre">ords_from_regex</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ring</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Lattice</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regex</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/pySC/utils/sc_tools.html#ords_from_regex"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pySC.utils.sc_tools.ords_from_regex" title="Link to this definition"></a></dt>
 <dd><p>Returns the indices of the elements in the ring whose names match the regex.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -166,7 +166,7 @@ Function <code class="docutils literal notranslate"><span class="pre">get_value_
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pySC.utils.sc_tools.pinv">
-<span class="sig-prename descclassname"><span class="pre">pySC.utils.sc_tools.</span></span><span class="sig-name descname"><span class="pre">pinv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_removed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">damping</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/pySC/utils/sc_tools.html#pinv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pySC.utils.sc_tools.pinv" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">pySC.utils.sc_tools.</span></span><span class="sig-name descname"><span class="pre">pinv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_removed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">damping</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/pySC/utils/sc_tools.html#pinv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pySC.utils.sc_tools.pinv" title="Link to this definition"></a></dt>
 <dd><p>Computes the pseudo-inverse of a matrix using the Singular Value Decomposition (SVD) method.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -189,8 +189,9 @@ Function <code class="docutils literal notranslate"><span class="pre">get_value_
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pySC.utils.sc_tools.randnc">
-<span class="sig-prename descclassname"><span class="pre">pySC.utils.sc_tools.</span></span><span class="sig-name descname"><span class="pre">randnc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cut_off</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(1,)</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/pySC/utils/sc_tools.html#randnc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pySC.utils.sc_tools.randnc" title="Permalink to this definition"></a></dt>
-<dd><p>Generates an array of random number(s) from normal distribution with a cut-off.</p>
+<span class="sig-prename descclassname"><span class="pre">pySC.utils.sc_tools.</span></span><span class="sig-name descname"><span class="pre">randnc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cut_off</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(1,)</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float64</span></span></span><a class="reference internal" href="../_modules/pySC/utils/sc_tools.html#randnc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pySC.utils.sc_tools.randnc" title="Link to this definition"></a></dt>
+<dd><p>Generates an array of random number(s) from normal distribution with a cut-off.
+If shape = () a single float value is returned.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -199,10 +200,10 @@ Function <code class="docutils literal notranslate"><span class="pre">get_value_
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>out</strong> -- The output array.</p>
+<dd class="field-even"><p><strong>out</strong> -- The output array (If shape = () a single float value)</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>ndarray</p>
+<dd class="field-odd"><p>Union[ndarray, float64]</p>
 </dd>
 </dl>
 </dd></dl>
