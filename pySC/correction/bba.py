@@ -227,7 +227,7 @@ def fake_bba(SC, bpm_ords, mag_ords, errors=None, fake_offset=None):
         fake_bpm_offset = (SC.RING[mag_ords[inds[0], inds[1]]].MagnetOffset[inds[0]]
                            + SC.RING[mag_ords[inds[0], inds[1]]].SupportOffset[inds[0]]
                            - SC.RING[bpm_ords[inds[0], inds[1]]].SupportOffset[inds[0]]
-                           + fake_offset[inds[0]] * sc_tools.randnc())
+                           + fake_offset[inds[0]] * sc_tools.randnc(2, ()))
         if not np.isnan(fake_bpm_offset):
             SC.RING[bpm_ords[inds[0], inds[1]]].Offset[inds[0]] = fake_bpm_offset
         else:

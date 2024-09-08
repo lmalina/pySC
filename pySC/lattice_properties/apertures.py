@@ -26,7 +26,7 @@ def SCdynamicAperture(RING, dE, bounds=np.array([0, 1e-3]), nturns=1000, thetas=
     for cntt in range(len(thetas)):  # Loop over angles
         theta = thetas[cntt]
         limits = inibounds
-        at_wrapper.atpass(RING, np.full(6, np.nan), 1, [1])  # Fake Track to initialize lattice
+        at_wrapper.lattice_track(RING, np.full(6, np.nan), 1, [1])  # Fake Track to initialize lattice
         scales = 0
         while scales < 16:
             if _check_bounds(RING, ZCO, nturns, theta, limits):
@@ -102,7 +102,7 @@ def _check_bounds(RING, ZCO, nturns, theta, boundsIn):
     Zmax = ZCO[:]
     Zmax[0] = boundsIn[1] * np.cos(theta)
     Zmax[2] = boundsIn[1] * np.sin(theta)
-    ROUT = at_wrapper.atpass(RING, [Zmin, Zmax], nturns, len(RING), keep_lattice=True)  # Track
+    ROUT = at_wrapper.lattice_track(RING, [Zmin, Zmax], nturns, len(RING), keep_lattice=True)  # Track
     RLAST = ROUT[:, len(ROUT) - 1:len(ROUT)]  # Get positions after last turn
     return ~np.isnan(RLAST[0, 0]) and np.isnan(RLAST[0, 1])
 
@@ -114,7 +114,7 @@ def _refine_bounds(RING, ZCO, nturns, theta, boundsIn):
     Z = ZCO[:]
     Z[0] = rmid * np.cos(theta)
     Z[2] = rmid * np.sin(theta)
-    ROUT = at_wrapper.atpass(RING, Z, nturns, len(RING), keep_lattice=True)  # Track
+    ROUT = at_wrapper.lattice_track(RING, Z, nturns, len(RING), keep_lattice=True)  # Track
     RLAST = ROUT[:, len(ROUT) - 1]  # Get positions after last turn
     return [rmin, rmid] if np.isnan(RLAST[0]) else [rmid, rmax]  # Midpoint is outside or inside DA
 
@@ -146,7 +146,7 @@ def refine_bounds(local_bounds, RING, ZCO, nturns):
     dmean = np.mean(local_bounds)
     Z0 = ZCO
     Z0[4] = Z0[4] + dmean
-    ROUT = at_wrapper.atpass(RING, Z0, nturns, len(RING))
+    ROUT = at_wrapper.lattice_track(RING, Z0, nturns, len(RING))
     if np.isnan(ROUT[0]):  # Particle dead :(
         local_bounds[1] = dmean  # Set abs-upper bound to midpoint
     else:  # Particle alive :)
@@ -157,7 +157,7 @@ def refine_bounds(local_bounds, RING, ZCO, nturns):
 def check_bounds(local_bounds, RING, ZCO, nturns):
     Z = np.array([ZCO, ZCO])
     Z[4, :] = Z[4, :] + local_bounds[:]
-    ROUT = at_wrapper.atpass(RING, Z, nturns, len(RING))
+    ROUT = at_wrapper.lattice_track(RING, Z, nturns, len(RING))
     if np.isnan(ROUT[0, 0]) and not np.isnan(ROUT[0, 1]):
         LOGGER.warning('Closer-to-momentum particle is unstable. This shouldnt be!')
     return not np.isnan(ROUT[0, 0]) and np.isnan(ROUT[0, 1])
