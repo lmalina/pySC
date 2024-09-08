@@ -1,0 +1,35 @@
+{
+    "creators": [
+        {
+            "name": "Lukáš Malina",
+            "affiliation": "DESY",
+            "orcid": "0000-0002-4673-6035"
+        },
+        {
+            "name": "Thorsten Hellert",
+            "affiliation": "LBNL",
+            "orcid": "0000-0002-2797-0926"
+        },
+        {
+            "name": "Simone Liuzzo",
+            "affiliation": "ESRF",
+            "orcid": "0000-0003-3596-4654"
+        },
+        {
+            "name": "Elaf Musa",
+            "affiliation": "DESY"
+        },
+        {
+            "name": "Lina Hoummi",
+            "affiliation": "ESRF",
+            "orcid": "0009-0002-7631-3313"
+        },
+        {
+            "name": "Bianca Veglia",
+            "affiliation": "DESY"
+        }
+
+    ],
+    "title": "pySC",
+    "description": "Python library for simulated commissioning of storage-ring particle accelerators."
+}
