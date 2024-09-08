@@ -128,7 +128,8 @@ def beam_transmission(SC: SimulatedCommissioning, nParticles: int = None, nTurns
     if nTurns is None:
         nTurns = SC.INJ.nTurns
     LOGGER.debug(f'Calculating maximum beam transmission for {nParticles} particles and {nTurns} turns: ')
-    T = at_wrapper.patpass(SC.RING, generate_bunches(SC, nParticles=nParticles), nTurns, np.array([len(SC.RING)]), keep_lattice=False)
+    T = at_wrapper.lattice_track(SC.RING, generate_bunches(SC, nParticles=nParticles), nTurns, np.array([len(SC.RING)]),
+                                 keep_lattice=False, use_mp=True)
     fraction_survived = np.mean(~np.isnan(T[0, :, :, :]), axis=(0, 1))
     max_turns = np.sum(fraction_survived > 1 - SC.INJ.beamLostAt)
     if plot:

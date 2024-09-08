@@ -21,14 +21,10 @@ from numpy import ndarray
 from at import Lattice
 
 
-def lattice_track(ring: Lattice, init_pos: ndarray, nturns: int, refpts: ndarray, keep_lattice: bool = False):
+def lattice_track(ring: Lattice, init_pos: ndarray, nturns: int, refpts: ndarray, keep_lattice: bool = False,
+                  use_mp: bool = False):
     return at.lattice_track(lattice=ring.copy(), r_in=init_pos.copy(), nturns=nturns, refpts=refpts,
-                           keep_lattice=keep_lattice, in_place=False)[0]
-
-
-def patpass(ring: Lattice, init_pos: ndarray, nturns: int, refpts: ndarray, keep_lattice: bool = False):
-    return at.lattice_track(lattice=ring.copy(), r_in=init_pos.copy(), nturns=nturns, refpts=refpts,
-                      keep_lattice=keep_lattice, in_place=False, use_mp=True)[0]
+                           keep_lattice=keep_lattice, in_place=False, use_mp=use_mp)[0]
 
 
 def atgetfieldvalues(ring: Lattice, refpts: ndarray, attrname: str, index: int = None):
