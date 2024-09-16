@@ -199,7 +199,7 @@ The code below is for optics calculations (based on AT get_optics) and generates
  Example usage:
 
  [-, -, twiss] = at.get_optics(SC.IDEALRING, SC.ORD.BPM)
- analyze_ring(SC, twiss, SC.ORD.BPM, makeplot=False)
+ analyze_ring(SC, twiss, SC.ORD.BPM, useIdealRing=False, makeplot=False)
 '''
 
 def analyze_ring(SC, twiss, bpm_indices, useIdealRing=True, makeplot=False):
