@@ -98,7 +98,7 @@ def measure_closed_orbit_response_matrix(SC, bpm_ords, cm_ords, dkick=1e-5, incl
 
 def loco_correction_lm(initial_guess0, orm_model, orm_measured, Jn, lengths, including_fit_parameters, bounds=(-np.inf, np.inf), weights=1,
                        verbose=2):
-    mask = _get_parameters_mask(including_fit_parameters, lengths)
+    mask = _get_parameters_mask2(including_fit_parameters, lengths)
     result = least_squares(lambda delta_params: objective(delta_params, orm_measured - orm_model, Jn[mask, :, :], weights),
                            initial_guess0[mask], #bounds=bounds,
                            method="lm",
@@ -108,7 +108,7 @@ def loco_correction_lm(initial_guess0, orm_model, orm_measured, Jn, lengths, inc
 
 def loco_correction_ng(initial_guess0, orm_model, orm_measured, J, lengths, including_fit_parameters, s_cut, weights=1, includeDispersion=False):
     initial_guess = initial_guess0.copy()
-    mask = _get_parameters_mask(including_fit_parameters, lengths)
+    mask = _get_parameters_mask2(including_fit_parameters, lengths)
     residuals = objective(initial_guess[mask], orm_measured - orm_model, J[mask, :, :], weights)
     r = residuals.reshape(np.transpose(orm_model).shape)
     t2 = np.zeros([len(initial_guess[mask]), 1])
