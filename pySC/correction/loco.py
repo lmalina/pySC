@@ -6,7 +6,7 @@ from pySC.core.constants import SETTING_ADD, TRACK_ORB
 from pySC.core.beam import bpm_reading
 import matplotlib.pyplot as plt
 from scipy.optimize import least_squares
-from pySC.utils import logging_tools, sc_tools, , at_wrapper
+from pySC.utils import logging_tools, sc_tools, at_wrapper
 from pySC.lattice_properties.response_model import SCgetModelRING,orbpass
 LOGGER = logging_tools.get_logger(__name__)
 
@@ -54,20 +54,22 @@ def generating_quads_response_matrices(args):
     
     #dispersion_model = SCgetModelDispersion(SC, used_bpm_indexes, CAVords=cav_ords, rfStep=rf_step)
     _, _, twiss = at.get_optics(SC.IDEALRING, used_bpm_indexes)  ## ADD dispersion to the ORMs from AT get_optics
-    dx = twiss.dispersion[:, 0], dy = twiss.dispersion[:, 2]
+    dx = twiss.dispersion[:, 0]
+    dy = twiss.dispersion[:, 2]
     dispersion_model=  np.column_stack((dx, dy))
     SC.set_magnet_setpoints(quad_index, dk, skewness, order, method)
     C_measured = SCgetModelRM(SC, used_bpm_indexes, used_cor_indexes, dkick=correctors_kick, useIdealRing=useIdealRing,
                               trackMode=trackMode)
     #dispersion_meas = SCgetModelDispersion(SC, used_bpm_indexes, CAVords=cav_ords, rfStep=rf_step, useIdealRing=False)
     _, _, twiss = at.get_optics(SC.RING, used_bpm_indexes)
-    dx = twiss.dispersion[:, 0], dy = twiss.dispersion[:, 2]
-    dispersion_model=  np.column_stack((dx, dy))
+    dx = twiss.dispersion[:, 0]
+    dy = twiss.dispersion[:, 2]
+    dispersion_meas =  np.column_stack((dx, dy))
     SC.set_magnet_setpoints(quad_index, -dk, skewness, order, method)
     return np.hstack((C_measured - C_model, ((dispersion_meas - dispersion_model)/correctors_kick).reshape(-1, 1)))
 
 
-def measure_closed_orbit_response_matrix(SC, bpm_ords, cm_ords, dkick=1e-5):
+def measure_closed_orbit_response_matrix(SC, bpm_ords, cm_ords, dkick=1e-5, includeDispersion=False):
     LOGGER.info('Calculating Measure response matrix')
     n_turns = 1
     n_bpms = len(bpm_ords)
@@ -84,6 +86,13 @@ def measure_closed_orbit_response_matrix(SC, bpm_ords, cm_ords, dkick=1e-5):
             SC.set_cm_setpoints(cm_ord, -dkick, skewness=bool(n_dim), method=SETTING_ADD)
             response_matrix[:, cnt] = np.ravel((closed_orbits1 - closed_orbits0) / dkick)
             cnt = cnt + 1
+    if includeDispersion == True:
+        _, _, twiss = at.get_optics(SC.RING, bpm_ords)
+        dx = twiss.dispersion[:, 0]
+        dy = twiss.dispersion[:, 2]
+        dispersion_meas = np.column_stack((dx, dy))
+        return np.hstack(
+            (response_matrix, ((dispersion_meas) / dkick).reshape(-1, 1)))      
     return response_matrix
 
 
@@ -97,7 +106,7 @@ def loco_correction_lm(initial_guess0, orm_model, orm_measured, Jn, lengths, inc
     return result.x
 
 
-def loco_correction_ng(initial_guess0, orm_model, orm_measured, J, lengths, including_fit_parameters, s_cut, weights=1):
+def loco_correction_ng(initial_guess0, orm_model, orm_measured, J, lengths, including_fit_parameters, s_cut, weights=1, includeDispersion=False):
     initial_guess = initial_guess0.copy()
     mask = _get_parameters_mask(including_fit_parameters, lengths)
     residuals = objective(initial_guess[mask], orm_measured - orm_model, J[mask, :, :], weights)
@@ -119,6 +128,14 @@ def _get_parameters_mask(including_fit_parameters, lengths):
     mask[:len_quads] = 'quads' in including_fit_parameters
     mask[len_quads:len_quads + len_corr] = 'cor' in including_fit_parameters
     mask[len_quads + len_corr:] = 'bpm' in including_fit_parameters
+    return mask
+
+def _get_parameters_mask2(including_fit_parameters, lengths):
+    mask = np.zeros(sum(lengths), dtype=bool)
+    current_index = 0
+    for param, length in zip(including_fit_parameters, lengths):
+        mask[current_index:current_index + length] = True
+        current_index += length
     return mask
 
 
