@@ -160,8 +160,8 @@ def select_equally_spaced_elements(total_elements, num_elements):
 def get_inverse(jacobian, B, s_cut, weights, LM_lambda=0, plot=False):
     n_resp_mats = len(jacobian)
     Jt = np.sum(jacobian, axis=2)          # Sum over i and j for all planes
-    Jt_dot_J = np.dot(np.dot(sum_corr, weights), sum_corr.T)
-    matrix = Jt_dot_J + LM_lambda * np.diag(Jt_dot_J)
+    Jt_dot_J = np.dot(np.dot(Jt, weights), Jt.T)
+    matrix = Jt_dot_J + LM_lambda * np.diag(np.diag(Jt_dot_J))
     inv_matrix = sc_tools.pinv(matrix, num_removed=n_resp_mats - min(n_resp_mats, s_cut), plot=plot)
     results = np.ravel(np.dot(inv_matrix, B))
     # e = np.ravel(np.dot(matrix, results)) - np.ravel(B)
