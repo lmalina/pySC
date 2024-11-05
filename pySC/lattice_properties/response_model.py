@@ -160,8 +160,8 @@ def SCgetModelRING(SC: SimulatedCommissioning, includeAperture: bool =False) -> 
     ring = SC.IDEALRING.deepcopy()
     for ord in range(len(SC.RING)):
         if hasattr(SC.RING[ord], 'SetPointA') and hasattr(SC.RING[ord], 'SetPointB'):
-            ring[ord].PolynomA = SC.RING[ord].SetPointA
-            ring[ord].PolynomB = SC.RING[ord].SetPointB
+            ring[ord].PolynomA = copy.deepcopy(SC.RING[ord].SetPointA)
+            ring[ord].PolynomB = copy.deepcopy(SC.RING[ord].SetPointB)
             ring[ord].PolynomA[0] = 0.0
             ring[ord].PolynomB[0] = 0.0
         if includeAperture:
