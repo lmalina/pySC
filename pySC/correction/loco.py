@@ -158,6 +158,24 @@ def select_equally_spaced_elements(total_elements, num_elements):
 
 
 def get_inverse(jacobian, B, s_cut, weights, LM_lambda=0, plot=False):
+    """
+    Calculates $(J^t J + \lambda diag(J^t J))^{-1} J^t r_0$ using a modified 
+    version of the Levenberg-Marquardt method. More information at p.114 of
+    https://inis.iaea.org/collection/NCLCollectionStore/_Public/54/003/54003559.pdf
+
+    Args:
+        jacobian: jacobian matrix obtained from calculate_jacobian()
+        bpm_ords: array of element indices of registered BPMs for which to calculate readings
+            (for convenience, otherwise `SC.ORD.BPM` is used)
+        s_cut: number of kept singular values when inverting the matrix
+        weights: weights applied to the elements of the jacobian
+        LM_lambda: Levenberg-Marquardt lambda parameter. If LM_lambda=0, the 
+        function is equivalent to the Gauss-Newton method
+        plot: boolean flag to plot the resulting inverse matrix
+        
+    Returns:
+        Array of correction values of the same size as B.
+    """
     n_resp_mats = len(jacobian)
     Jt = np.sum(jacobian, axis=2)          # Sum over i and j for all planes
     Jt_dot_J = np.dot(np.dot(Jt, weights), Jt.T)
