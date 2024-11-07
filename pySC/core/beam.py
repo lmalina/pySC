@@ -47,8 +47,8 @@ def bpm_reading(SC: SimulatedCommissioning, bpm_ords: ndarray = None, calculate_
         bpm_orbits_4d[:, :, :, shot_num], bpm_sums_4d[:, :, :, shot_num] = _real_bpm_reading(SC, tracking_4d, bpm_inds)
 
     # mean_bpm_orbits_3d is 3D (dim, BPM, turn)
-    mean_bpm_orbits_3d = np.ma.average(np.ma.array(bpm_orbits_4d, mask=np.isnan(bpm_orbits_4d)),
-                                       weights=np.ma.array(bpm_sums_4d, mask=np.isnan(bpm_sums_4d)), axis=3).filled(np.nan)
+    mean_bpm_orbits_3d = np.average(np.ma.array(bpm_orbits_4d, mask=np.isnan(bpm_orbits_4d)),
+                                    weights=np.ma.array(bpm_sums_4d, mask=np.isnan(bpm_sums_4d)), axis=3).filled(np.nan)
     # averaging "charge" also when the beam did not reach the location
     mean_bpm_sums_3d = np.nansum(bpm_sums_4d, axis=3) / SC.INJ.nShots
 
