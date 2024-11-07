@@ -89,7 +89,7 @@ def loco_correction_lm(initial_guess0, orm_model, orm_measured, Jn, lengths, inc
     return result.x
 
 
-def loco_correction_ng(initial_guess0, orm_model, orm_measured, J, lengths, including_fit_parameters, s_cut, weights=1):
+def loco_correction_ng(initial_guess0, orm_model, orm_measured, J, lengths, including_fit_parameters, s_cut, weights=1, LM_lambda=0):
     initial_guess = initial_guess0.copy()
     mask = _get_parameters_mask(including_fit_parameters, lengths)
     residuals = objective(initial_guess[mask], orm_measured - orm_model, J[mask, :, :], weights)
@@ -97,7 +97,7 @@ def loco_correction_ng(initial_guess0, orm_model, orm_measured, J, lengths, incl
     t2 = np.zeros([len(initial_guess[mask]), 1])
     for i in range(len(initial_guess[mask])):
         t2[i] = np.sum(np.dot(np.dot(J[i].T, weights), r.T))
-    return get_inverse(J[mask, :, :], t2, s_cut, weights)
+    return get_inverse(J[mask, :, :], t2, s_cut, weights, LM_lambda=LM_lambda)
 
 
 def objective(masked_params, orm_residuals, masked_jacobian, weights):
@@ -157,10 +157,29 @@ def select_equally_spaced_elements(total_elements, num_elements):
     return total_elements[::step]
 
 
-def get_inverse(jacobian, B, s_cut, weights, plot=False):
+def get_inverse(jacobian, B, s_cut, weights, LM_lambda=0, plot=False):
+    """
+    Calculates $(J^t J + \lambda diag(J^t J))^{-1} J^t r_0$ using a modified 
+    version of the Levenberg-Marquardt method. More information at p.114 of
+    https://inis.iaea.org/collection/NCLCollectionStore/_Public/54/003/54003559.pdf
+
+    Args:
+        jacobian: jacobian matrix obtained from calculate_jacobian()
+        bpm_ords: array of element indices of registered BPMs for which to calculate readings
+            (for convenience, otherwise `SC.ORD.BPM` is used)
+        s_cut: number of kept singular values when inverting the matrix
+        weights: weights applied to the elements of the jacobian
+        LM_lambda: Levenberg-Marquardt lambda parameter. If LM_lambda=0, the 
+        function is equivalent to the Gauss-Newton method
+        plot: boolean flag to plot the resulting inverse matrix
+        
+    Returns:
+        Array of correction values of the same size as B.
+    """
     n_resp_mats = len(jacobian)
-    sum_corr = np.sum(jacobian, axis=2)          # Sum over i and j for all planes
-    matrix = np.dot(np.dot(sum_corr, weights), sum_corr.T)
+    Jt = np.sum(jacobian, axis=2)          # Sum over i and j for all planes
+    Jt_dot_J = np.dot(np.dot(Jt, weights), Jt.T)
+    matrix = Jt_dot_J + LM_lambda * np.diag(np.diag(Jt_dot_J))
     inv_matrix = sc_tools.pinv(matrix, num_removed=n_resp_mats - min(n_resp_mats, s_cut), plot=plot)
     results = np.ravel(np.dot(inv_matrix, B))
     # e = np.ravel(np.dot(matrix, results)) - np.ravel(B)
