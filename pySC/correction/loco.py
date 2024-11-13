@@ -7,12 +7,14 @@ from pySC.core.beam import bpm_reading
 import matplotlib.pyplot as plt
 from scipy.optimize import least_squares
 from pySC.utils import logging_tools, sc_tools, at_wrapper
-from pySC.lattice_properties.response_model import SCgetModelRING,orbpass
+from pySC.lattice_properties.response_model import SCgetModelRING, orbpass
+
 LOGGER = logging_tools.get_logger(__name__)
 
 
 def calculate_jacobian(SC, C_model, dkick, used_cor_ind, bpm_indexes, quads_ind, dk, trackMode=TRACK_ORB,
-                       useIdealRing=True, skewness=False, order=1, method=SETTING_ADD, includeDispersion=False, rf_step=1E3,
+                       useIdealRing=True, skewness=False, order=1, method=SETTING_ADD, includeDispersion=False,
+                       rf_step=1E3,
                        cav_ords=None, full_jacobian=True):
     pool = multiprocessing.Pool()
     quad_args = [(quad_index, SC, C_model, dkick, used_cor_ind, bpm_indexes, dk, trackMode, useIdealRing,
@@ -31,7 +33,7 @@ def calculate_jacobian(SC, C_model, dkick, used_cor_ind, bpm_indexes, quads_ind,
         n_bpms = len(bpm_indexes) * 2  # in both planes
         j_cor = np.zeros((n_correctors,) + C_model.shape)
         for i in range(n_correctors):
-            j_cor[i, :, i] = C_model[:, i]   # a single column of response matrix corresponding to a corrector
+            j_cor[i, :, i] = C_model[:, i]  # a single column of response matrix corresponding to a corrector
         j_bpm = np.zeros((n_bpms,) + C_model.shape)
         for i in range(n_bpms):
             j_bpm[i, i, :] = C_model[i, :]  # a single row of response matrix corresponding to a given plane of BPM
@@ -51,22 +53,21 @@ def generating_quads_response_matrices(args):
         SC.set_magnet_setpoints(quad_index, -dk, skewness, order, method)
         return C_measured - C_model
 
-    
-    #dispersion_model = SCgetModelDispersion(SC, used_bpm_indexes, CAVords=cav_ords, rfStep=rf_step)
+    # dispersion_model = SCgetModelDispersion(SC, used_bpm_indexes, CAVords=cav_ords, rfStep=rf_step)
     _, _, twiss = at.get_optics(SC.IDEALRING, used_bpm_indexes)  ## ADD dispersion to the ORMs from AT get_optics
     dx = twiss.dispersion[:, 0]
     dy = twiss.dispersion[:, 2]
-    dispersion_model=  np.column_stack((dx, dy))
+    dispersion_model = np.column_stack((dx, dy))
     SC.set_magnet_setpoints(quad_index, dk, skewness, order, method)
     C_measured = SCgetModelRM(SC, used_bpm_indexes, used_cor_indexes, dkick=correctors_kick, useIdealRing=useIdealRing,
                               trackMode=trackMode)
-    #dispersion_meas = SCgetModelDispersion(SC, used_bpm_indexes, CAVords=cav_ords, rfStep=rf_step, useIdealRing=False)
+    # dispersion_meas = SCgetModelDispersion(SC, used_bpm_indexes, CAVords=cav_ords, rfStep=rf_step, useIdealRing=False)
     _, _, twiss = at.get_optics(SC.RING, used_bpm_indexes)
     dx = twiss.dispersion[:, 0]
     dy = twiss.dispersion[:, 2]
-    dispersion_meas =  np.column_stack((dx, dy))
+    dispersion_meas = np.column_stack((dx, dy))
     SC.set_magnet_setpoints(quad_index, -dk, skewness, order, method)
-    return np.hstack((C_measured - C_model, ((dispersion_meas - dispersion_model)/correctors_kick).reshape(-1, 1)))
+    return np.hstack((C_measured - C_model, ((dispersion_meas - dispersion_model) / correctors_kick).reshape(-1, 1)))
 
 
 def measure_closed_orbit_response_matrix(SC, bpm_ords, cm_ords, dkick=1e-5, includeDispersion=False):
@@ -92,21 +93,24 @@ def measure_closed_orbit_response_matrix(SC, bpm_ords, cm_ords, dkick=1e-5, incl
         dy = twiss.dispersion[:, 2]
         dispersion_meas = np.column_stack((dx, dy))
         return np.hstack(
-            (response_matrix, ((dispersion_meas) / dkick).reshape(-1, 1)))      
+            (response_matrix, ((dispersion_meas) / dkick).reshape(-1, 1)))
     return response_matrix
 
 
-def loco_correction_lm(initial_guess0, orm_model, orm_measured, Jn, lengths, including_fit_parameters, bounds=(-np.inf, np.inf), weights=1,
+def loco_correction_lm(initial_guess0, orm_model, orm_measured, Jn, lengths, including_fit_parameters,
+                       bounds=(-np.inf, np.inf), weights=1,
                        verbose=2):
     mask = _get_parameters_mask2(including_fit_parameters, lengths)
-    result = least_squares(lambda delta_params: objective(delta_params, orm_measured - orm_model, Jn[mask, :, :], weights),
-                           initial_guess0[mask], #bounds=bounds,
-                           method="lm",
-                           verbose=verbose)
+    result = least_squares(
+        lambda delta_params: objective(delta_params, orm_measured - orm_model, Jn[mask, :, :], weights),
+        initial_guess0[mask],  # bounds=bounds,
+        method="lm",
+        verbose=verbose)
     return result.x
 
 
-def loco_correction_ng(initial_guess0, orm_model, orm_measured, J, lengths, including_fit_parameters, s_cut, weights=1, includeDispersion=False):
+def loco_correction_ng(initial_guess0, orm_model, orm_measured, J, lengths, including_fit_parameters, s_cut, weights=1,
+                       includeDispersion=False):
     initial_guess = initial_guess0.copy()
     mask = _get_parameters_mask2(including_fit_parameters, lengths)
     residuals = objective(initial_guess[mask], orm_measured - orm_model, J[mask, :, :], weights)
@@ -130,6 +134,7 @@ def _get_parameters_mask(including_fit_parameters, lengths):
     mask[len_quads + len_corr:] = 'bpm' in including_fit_parameters
     return mask
 
+
 def _get_parameters_mask2(including_fit_parameters, lengths):
     mask = np.zeros(sum(lengths), dtype=bool)
     current_index = 0
@@ -139,7 +144,8 @@ def _get_parameters_mask2(including_fit_parameters, lengths):
     return mask
 
 
-def set_correction(SC, r, elem_ind, individuals=True, skewness=False, order=1, method=SETTING_ADD, dipole_compensation=True):
+def set_correction(SC, r, elem_ind, individuals=True, skewness=False, order=1, method=SETTING_ADD,
+                   dipole_compensation=True):
     if individuals:
         SC.set_magnet_setpoints(elem_ind, -r, skewness, order, method, dipole_compensation=dipole_compensation)
         return SC
@@ -184,14 +190,12 @@ def select_equally_spaced_elements(total_elements, num_elements):
 
 def get_inverse(jacobian, B, s_cut, weights, plot=False):
     n_resp_mats = len(jacobian)
-    sum_corr = np.sum(jacobian, axis=2)          # Sum over i and j for all planes
+    sum_corr = np.sum(jacobian, axis=2)  # Sum over i and j for all planes
     matrix = np.dot(np.dot(sum_corr, weights), sum_corr.T)
     inv_matrix = sc_tools.pinv(matrix, num_removed=n_resp_mats - min(n_resp_mats, s_cut), plot=plot)
     results = np.ravel(np.dot(inv_matrix, B))
     # e = np.ravel(np.dot(matrix, results)) - np.ravel(B)
     return results
-
-
 
 
 '''
@@ -202,15 +206,17 @@ The code below is for optics calculations (based on AT get_optics) and generates
  analyze_ring(SC, twiss, SC.ORD.BPM, useIdealRing=False, makeplot=False)
 '''
 
+
 def analyze_ring(SC, twiss, bpm_indices, useIdealRing=True, makeplot=False):
-    ring = SC.IDEALRING.deepcopy() if useIdealRing else SC.RING #SCgetModelRING(SC)
+    ring = SC.IDEALRING.deepcopy() if useIdealRing else SC.RING  # SCgetModelRING(SC)
     rmsx, rmsy = rms_orbits(ring, bpm_indices)
     bx_rms_err, by_rms_err = getBetaBeat(ring, twiss, bpm_indices)
     dx_rms_err, dy_rms_err = getDispersionErr(ring, twiss, bpm_indices)
 
     print(f"RMS horizontal orbit: {rmsx * 1.e6:.2f} µm, RMS vertical orbit: {rmsy * 1.e6:.2f} µm")
     print(f"RMS horizontal beta beating: {bx_rms_err * 100:.2f}%, RMS vertical beta beating: {by_rms_err * 100:.2f}%")
-    print(f"RMS relative horizontal dispersion: {dx_rms_err:.4f} mm, RMS relative vertical dispersion: {dy_rms_err:.4f} mm")
+    print(
+        f"RMS relative horizontal dispersion: {dx_rms_err:.4f} mm, RMS relative vertical dispersion: {dy_rms_err:.4f} mm")
     print(f"Tune values: {at.get_tune(ring, get_integer=True)}, Chromaticity values: {at.get_chrom(ring)}")
 
     if makeplot:
@@ -218,8 +224,10 @@ def analyze_ring(SC, twiss, bpm_indices, useIdealRing=True, makeplot=False):
         plot_beta_beat(ring, twiss, bpm_indices)
         plot_dispersion_err(ring, twiss, bpm_indices)
 
+
 def calculate_rms(data):
     return np.sqrt(np.mean(data ** 2))
+
 
 def plot_data(s_pos, data, xlabel, ylabel, title):
     plt.rc('font', size=13)
@@ -231,6 +239,7 @@ def plot_data(s_pos, data, xlabel, ylabel, title):
     ax.grid(True, which='both', linestyle=':', color='gray')
     plt.title(title)
     plt.show()
+
 
 def rms_orbits(ring, elements_indexes, trackMode='ORB', Z0=np.zeros(6)):
     track_methods = dict(TBT=at_wrapper.atpass, ORB=orbpass)
@@ -247,6 +256,7 @@ def rms_orbits(ring, elements_indexes, trackMode='ORB', Z0=np.zeros(6)):
 
     return rmsx, rmsy
 
+
 def getBetaBeat(ring, twiss, elements_indexes):
     _, _, twiss_error = at.get_optics(ring, elements_indexes)
     bx = (twiss_error.beta[:, 0] - twiss.beta[:, 0]) / twiss.beta[:, 0]
@@ -256,6 +266,7 @@ def getBetaBeat(ring, twiss, elements_indexes):
     by_rms = calculate_rms(by)
 
     return bx_rms, by_rms
+
 
 def getDispersionErr(ring, twiss, elements_indexes):
     _, _, twiss_error = at.get_optics(ring, elements_indexes)
@@ -267,17 +278,19 @@ def getDispersionErr(ring, twiss, elements_indexes):
 
     return dx_rms, dy_rms
 
+
 def plot_orbits(ring, elements_indexes, trackMode='ORB', Z0=np.zeros(6)):
     _, _, twiss = at.get_optics(ring, elements_indexes)
     track_methods = dict(TBT=at_wrapper.atpass, ORB=orbpass)
     if trackMode == 'ORB':
-       nTurns = 1
+        nTurns = 1
     trackmethod = track_methods['ORB']
     Ta = trackmethod(ring, Z0=Z0, nTurns=nTurns, REFPTS=elements_indexes)
     closed_orbitx = np.ravel(np.transpose(Ta[0, :, :, :], axes=(2, 1, 0))) / 1.e-06
     closed_orbity = np.ravel(np.transpose(Ta[2, :, :, :], axes=(2, 1, 0))) / 1.e-06
     plot_data(twiss.s_pos, closed_orbitx, "s_pos [m]", r"closed_orbit x [$\mu$m]", "Horizontal closed orbit")
     plot_data(twiss.s_pos, closed_orbity, "s_pos [m]", r"closed_orbit y [$\mu$m]", "Vertical closed orbit")
+
 
 def plot_beta_beat(ring, twiss, elements_indexes):
     _, _, twiss_error = at.get_optics(ring, elements_indexes)
@@ -286,6 +299,7 @@ def plot_beta_beat(ring, twiss, elements_indexes):
 
     plot_data(twiss_error.s_pos, bx, "s_pos [m]", r'$\Delta \beta_x / \beta_x$', "Horizontal beta beating")
     plot_data(twiss_error.s_pos, by, "s_pos [m]", r'$\Delta \beta_y / \beta_y$', "Vertical beta beating")
+
 
 def plot_dispersion_err(ring, twiss, elements_indexes):
     _, _, twiss_error = at.get_optics(ring, elements_indexes)
