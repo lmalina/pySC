@@ -66,8 +66,9 @@ def generating_quads_response_matrices(args):
     dx = twiss.dispersion[:, 0]
     dy = twiss.dispersion[:, 2]
     dispersion_meas = np.column_stack((dx, dy))
+    C_measured = np.hstack((C_measured, ((dispersion_meas - dispersion_model) / correctors_kick).reshape(-1, 1)))
     SC.set_magnet_setpoints(quad_index, -dk, skewness, order, method)
-    return np.hstack((C_measured - C_model, ((dispersion_meas - dispersion_model) / correctors_kick).reshape(-1, 1)))
+    return C_measured - C_model
 
 
 def measure_closed_orbit_response_matrix(SC, bpm_ords, cm_ords, dkick=1e-5, includeDispersion=False):
