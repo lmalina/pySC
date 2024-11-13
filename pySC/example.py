@@ -307,7 +307,7 @@ if __name__ == "__main__":
 
     n_iter = 1
     
-    for x in range(n_iter):  # optics correction using QF and QD
+    for x in range(n_iter):  # optics correction using normal and skew quads
         LOGGER.info(f'LOCO iteration {x}')
         print('Optics parameters after LOCO')
         loco.analyze_ring(SC, twiss, SC.ORD.BPM, useIdealRing=False, makeplot=False)
