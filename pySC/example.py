@@ -185,7 +185,6 @@ if __name__ == "__main__":
                             nTurns=200)
     # LOCO
  
-    cor_ords = sc_tools.ords_from_regex(SC.RING, 'CXY')
     used_correctors1 = loco.select_equally_spaced_elements(SC.ORD.CM[0], 20)
     used_correctors2 = loco.select_equally_spaced_elements(SC.ORD.CM[1], 20)
     used_cor_ords = [used_correctors1, used_correctors2]
@@ -193,11 +192,12 @@ if __name__ == "__main__":
     cav_ords = sc_tools.ords_from_regex(SC.RING, 'RFC')
     quads_ords = [sc_tools.ords_from_regex(SC.RING, 'QF'), sc_tools.ords_from_regex(SC.RING, 'QD')]
     sext_ords = [sc_tools.ords_from_regex(SC.RING, 'SF'), sc_tools.ords_from_regex(SC.RING, 'SD')]
-
+    
     CMstep = np.array([1.e-4])  # correctors change [rad]
     dk = 1.e-4  # quads change
     RFstep = 1e3
-
+    
+    
     orbit_response_matrix_model = SCgetModelRM(SC, used_bpms_ords, used_cor_ords, trackMode='ORB', useIdealRing=True, dkick=CMstep)
     _, _, twiss = at.get_optics(SC.IDEALRING, SC.ORD.BPM)
     dx = twiss.dispersion[:, 0]
@@ -205,29 +205,94 @@ if __name__ == "__main__":
     dispersion_meas = np.column_stack((dx, dy))
     orbit_response_matrix_model2 = np.hstack(
     (orbit_response_matrix_model, ((dispersion_meas) / CMstep).reshape(-1, 1)))
-    
+    print('Optics parameters before LOCO')
     loco.analyze_ring(SC, twiss, SC.ORD.BPM, useIdealRing=False, makeplot=False)
     
     Jn = loco.calculate_jacobian(SC, orbit_response_matrix_model, CMstep, used_cor_ords, used_bpms_ords, np.concatenate(quads_ords), dk,
                         trackMode='ORB', useIdealRing=False, skewness=False, order=1, method='add',
-                        includeDispersion=False, rf_step=RFstep, cav_ords=cav_ords)
+                        includeDispersion=False, rf_step=RFstep, cav_ords=cav_ords, full_jacobian=True)
     
-    Jn2 = loco.calculate_jacobian(SC, orbit_response_matrix_model, CMstep, used_cor_ords, used_bpms_ords, np.concatenate(quads_ords), dk,
+    Jn2 = loco.calculate_jacobian(SC, orbit_response_matrix_model2, CMstep, used_cor_ords, used_bpms_ords, np.concatenate(quads_ords), dk,
                     trackMode='ORB', useIdealRing=False, skewness=False, order=1, method='add',
                     includeDispersion=True, rf_step=RFstep, cav_ords=cav_ords, full_jacobian=False)
     
-    Js = loco.calculate_jacobian(SC, orbit_response_matrix_model, CMstep, used_cor_ords, used_bpms_ords, np.concatenate(sext_ords), 1.e-3,
+    Js = loco.calculate_jacobian(SC, orbit_response_matrix_model2, CMstep, used_cor_ords, used_bpms_ords, np.concatenate(sext_ords), 1.e-3,
                         trackMode='ORB', useIdealRing=False, skewness=True, order=1, method='add',
-                        includeDispersion=True, rf_step=RFstep, cav_ords=cav_ords, full_jacobian=False)
+                        includeDispersion=True, rf_step=RFstep, cav_ords=cav_ords, full_jacobian=True)
     
     Jc =  np.concatenate((Jn2, Js), axis=0)
-
-    # Beta correction iterations
+    
+    
     
     #Jn = np.transpose(Jn, (0, 2, 1))
     #weights = 1
     weights = np.eye(len(used_bpms_ords) * 2)
     tmp = np.sum(Jn, axis=2)
+    A = tmp @ weights @ tmp.T
+    u, s, v = np.linalg.svd(A, full_matrices=True)
+    import matplotlib.pyplot as plt
+    plt.plot(np.log(s), 'd--')
+    plt.title('singular value')
+    plt.xlabel('singular values')
+    plt.ylabel('$\log(\sigma_i)$')
+    plt.show()
+    
+    n_singular_values = 80
+    
+    #Jt = loco_test.get_inverse(Jn, n_singular_values, weights)
+    
+    _, _, twiss_err = at.get_optics(SC.RING, SC.ORD.BPM)
+    bx_rms_err, by_rms_err = loco.model_beta_beat(SC.RING, twiss, SC.ORD.BPM, plot=False)
+    info_tab = 14 * " "
+    LOGGER.info("RMS Beta-beating before LOCO:\n"
+            f"{info_tab}{bx_rms_err * 100:04.2f}% horizontal\n{info_tab}{by_rms_err * 100:04.2f}% vertical  ")
+    n_iter = 2
+    # beta beating iterations
+    for x in range(n_iter):  # optics correction using QF and QD
+        LOGGER.info(f'LOCO iteration {x}')
+        orbit_response_matrix_measured = loco.measure_closed_orbit_response_matrix(SC, used_bpms_ords, used_cor_ords, CMstep, includeDispersion=False)
+        n_quads, n_corrs, n_bpms = len(np.concatenate(quads_ords)), len(np.concatenate(used_cor_ords)), len(used_bpms_ords) * 2
+        bx_rms_err, by_rms_err = loco.model_beta_beat(SC.RING, twiss, SC.ORD.BPM, plot=False)
+        dx_rms_err, dy_rms_err = loco.getDispersionErr(SC.RING, twiss, SC.ORD.BPM)
+        total_length = n_bpms + n_corrs + n_quads
+        lengths = [n_quads, n_corrs, n_bpms]
+        including_fit_parameters = ['quads', 'cor', 'bpm']
+        initial_guess = np.zeros(total_length)
+    
+        initial_guess[:lengths[0]] = 1e-6
+        initial_guess[lengths[0]:lengths[0] + lengths[1]] = 1e-6
+        initial_guess[lengths[0] + lengths[1]:] = 1e-6
+    
+    
+        # method lm (least squares)
+        #fit_parameters = loco.loco_correction_lm(initial_guess, (orbit_response_matrix_model),
+        #                                         (orbit_response_matrix_measured), np.array(Jn), lengths,
+        #                                         including_fit_parameters, bounds=(-0.03, 0.03), weights=weights, verbose=2)
+        # method ng
+        fit_parameters = loco.loco_correction_ng(initial_guess, orbit_response_matrix_model,
+                                                  orbit_response_matrix_measured, np.array(Jn), lengths,
+                                                  including_fit_parameters, n_singular_values, weights=weights)
+    
+        dg = fit_parameters[:lengths[0]] if len(fit_parameters) > n_quads else fit_parameters
+        SC = loco.set_correction(SC, dg, np.concatenate(quads_ords))
+        bx_rms_cor, by_rms_cor = loco.model_beta_beat(SC.RING, twiss, SC.ORD.BPM, plot=False)
+        dx_rms_cor, dy_rms_cor = loco.getDispersionErr(SC.RING, twiss, SC.ORD.BPM)
+        LOGGER.info(f"RMS Beta-beating after {x + 1} LOCO iterations:\n"
+                    f"{info_tab}{bx_rms_cor * 100:04.2f}% horizontal\n{info_tab}{by_rms_cor * 100:04.2f}% vertical  ")
+        LOGGER.info(f"Correction reduction: \n"
+                    f"    beta_x: {(1 - bx_rms_cor / bx_rms_err) * 100:.2f}%\n"
+                    f"    beta_y: {(1 - by_rms_cor / by_rms_err) * 100:.2f}%\n")
+        LOGGER.info(f"RMS dispersion after {x + 1} LOCO iterations:\n"
+                    f"{info_tab}{dx_rms_cor * 100:04.2f}% horizontal\n{info_tab}{dy_rms_cor * 100:04.2f}% vertical  ")
+        LOGGER.info(f"Correction reduction: \n"
+                    f"    dispersion_x: {(1 - dx_rms_cor / dx_rms_err) * 100:.2f}%\n"
+                    f"    dispersion_y: {(1 - dy_rms_cor / dy_rms_err) * 100:.2f}%\n")
+        print('Optics parameters after LOCO')
+        loco.analyze_ring(SC, twiss, SC.ORD.BPM, useIdealRing=False, makeplot=False)
+
+    # dispersion correction iterations
+    weights = np.eye(len(used_bpms_ords) * 2)
+    tmp = np.sum(Jc, axis=2)
     A = tmp @ weights @ tmp.T
     u, s, v = np.linalg.svd(A, full_matrices=True)
     import matplotlib.pyplot as plt
@@ -238,74 +303,21 @@ if __name__ == "__main__":
     plt.ylabel('$\log(\sigma_i)$')
     plt.show()
     
-    n_singular_values = 40
-    
-    #Jt = loco_test.get_inverse(Jn, n_singular_values, weights)
-    
-    _, _, twiss_err = at.get_optics(SC.RING, SC.ORD.BPM)
-    bx_rms_err, by_rms_err = loco.model_beta_beat(SC.RING, twiss, SC.ORD.BPM, plot=False)
-    info_tab = 14 * " "
-    LOGGER.info("RMS Beta-beating before LOCO:\n"
-            f"{info_tab}{bx_rms_err * 100:04.2f}% horizontal\n{info_tab}{by_rms_err * 100:04.2f}% vertical  ")
-    n_iter = 3
-    
-    for x in range(n_iter):  # optics correction using QF and QD
-        LOGGER.info(f'LOCO iteration {x}')
-        orbit_response_matrix_measured = loco.measure_closed_orbit_response_matrix(SC, used_bpms_ords, used_cor_ords, CMstep)
-        n_quads, n_corrs, n_bpms = len(np.concatenate(quads_ords)), len(np.concatenate(used_cor_ords)), len(used_bpms_ords) * 2
-        bx_rms_err, by_rms_err = loco.model_beta_beat(SC.RING, twiss, SC.ORD.BPM, plot=False)
-        total_length = n_bpms + n_corrs + n_quads
-        lengths = [n_quads, n_corrs, n_bpms]
-        including_fit_parameters = ['quads', 'cor', 'bpm']
-        initial_guess = np.zeros(total_length)
-    
-        initial_guess[:lengths[0]] = 1e-6
-        initial_guess[lengths[0]:lengths[0] + lengths[1]] = 1e-6
-        initial_guess[lengths[0] + lengths[1]:] = 1e-6
-    
-        # method lm (least squares)
-        #fit_parameters = loco.loco_correction_lm(initial_guess, (orbit_response_matrix_model),
-        #                                         (orbit_response_matrix_measured), Jn, lengths,
-        #                                         including_fit_parameters, bounds=(-0.03, 0.03), weights=weights, verbose=2)
-    
-        # method ng
-        fit_parameters = loco.loco_correction_ng(initial_guess, orbit_response_matrix_model,
-                                                  orbit_response_matrix_measured, np.array(Jn), lengths,
-                                                  including_fit_parameters, n_singular_values, weights=weights)
-    
-        dg = fit_parameters[:lengths[0]] if len(fit_parameters) > n_quads else fit_parameters
-        SC = loco.set_correction(SC, dg, np.concatenate(quads_ords))
-        bx_rms_cor, by_rms_cor = loco.model_beta_beat(SC.RING, twiss, SC.ORD.BPM, plot=False)
-        LOGGER.info(f"RMS Beta-beating after {x + 1} LOCO iterations:\n"
-                    f"{info_tab}{bx_rms_cor * 100:04.2f}% horizontal\n{info_tab}{by_rms_cor * 100:04.2f}% vertical  ")
-        LOGGER.info(f"Correction reduction: \n"
-                    f"    beta_x: {(1 - bx_rms_cor / bx_rms_err) * 100:.2f}%\n"
-                    f"    beta_y: {(1 - by_rms_cor / by_rms_err) * 100:.2f}%\n")
+    n_singular_values = 75
 
-    # Coupling correction iterations
-    weights = np.eye(len(used_bpms_ords) * 2)
-    tmp = np.sum(Jc, axis=2)
-    A = tmp @ weights @ tmp.T
-    u, s, v = np.linalg.svd(A, full_matrices=True)    
-    plt.plot(np.log(s), 'd--')
-    plt.title('singular value')
-    plt.xlabel('singular values')
-    plt.ylabel('$\log(\sigma_i)$')
-    plt.show()
-    
-    n_singular_values = 60
-    n_iter = 2
+    n_iter = 1
     
     for x in range(n_iter):  # optics correction using QF and QD
         LOGGER.info(f'LOCO iteration {x}')
+        print('Optics parameters after LOCO')
+        loco.analyze_ring(SC, twiss, SC.ORD.BPM, useIdealRing=False, makeplot=False)
+    
         orbit_response_matrix_measured = loco.measure_closed_orbit_response_matrix(SC, used_bpms_ords, used_cor_ords, CMstep, includeDispersion=True)
-        _, _, twiss_ = at.get_optics(SC.RING, used_bpms_ords)
-        dx = twiss_.dispersion[:, 0]
-        dy = twiss_.dispersion[:, 2]
-        dispersion_meas = np.column_stack((dx, dy))
-        orbit_response_matrix_measured = loco.measure_closed_orbit_response_matrix(SC, used_bpms_ords, used_cor_ords, CMstep)
-        n_quads, n_corrs, n_bpms = len(np.concatenate(quads_ords)), len(np.concatenate(used_cor_ords)), len(used_bpms_ords) * 2
+    
+        n_quads, n_corrs, n_bpms = len(np.concatenate(quads_ords)) + len(np.concatenate(sext_ords)), len(np.concatenate(used_cor_ords)), len(used_bpms_ords) * 2
         bx_rms_err, by_rms_err = loco.model_beta_beat(SC.RING, twiss, SC.ORD.BPM, plot=False)
+        dx_rms_err, dy_rms_err = loco.getDispersionErr(SC.RING, twiss, SC.ORD.BPM)
+    
         total_length = n_bpms + n_corrs + n_quads
         lengths = [n_quads, n_corrs, n_bpms]
         including_fit_parameters = ['quads', 'cor', 'bpm']
@@ -316,26 +328,32 @@ if __name__ == "__main__":
         initial_guess[lengths[0] + lengths[1]:] = 1e-6
     
         # method lm (least squares)
-        #fit_parameters = loco.loco_correction_lm(initial_guess, (orbit_response_matrix_model),
-        #                                         (orbit_response_matrix_measured), Jn, lengths,
+        #fit_parameters = loco.loco_correction_lm(initial_guess, (orbit_response_matrix_model2),
+        #                                         (orbit_response_matrix_measured), Jc, lengths,
         #                                         including_fit_parameters, bounds=(-0.03, 0.03), weights=weights, verbose=2)
     
         # method ng
         fit_parameters = loco.loco_correction_ng(initial_guess, orbit_response_matrix_model2,
-                                                  orbit_response_matrix_measured, Jc, lengths,
-                                                  including_fit_parameters, n_singular_values, weights=weights)
+                                                 orbit_response_matrix_measured, Jc, lengths,
+                                                 including_fit_parameters, n_singular_values, weights=weights)
     
         dgn = fit_parameters[:len(np.concatenate(quads_ords))] #if len(fit_parameters) > n_quads else fit_parameters
-        dgs = fit_parameters[len(np.concatenate(quads_ords))::] #if len(fit_parameters) > n_quads else fit_parameters
+        dgs = fit_parameters[len(np.concatenate(quads_ords)):len(np.concatenate(sext_ords))+len(np.concatenate(quads_ords))] #if len(fit_parameters) > n_quads else fit_parameters
     
         SC = loco.set_correction(SC, dgn, np.concatenate(quads_ords))
         SC = loco.set_correction(SC, dgs, np.concatenate(sext_ords), skewness=True)
     
         bx_rms_cor, by_rms_cor = loco.model_beta_beat(SC.RING, twiss, SC.ORD.BPM, plot=False)
+        dx_rms_cor, dy_rms_cor = loco.getDispersionErr(SC.RING, twiss, SC.ORD.BPM)
         LOGGER.info(f"RMS Beta-beating after {x + 1} LOCO iterations:\n"
                     f"{info_tab}{bx_rms_cor * 100:04.2f}% horizontal\n{info_tab}{by_rms_cor * 100:04.2f}% vertical  ")
         LOGGER.info(f"Correction reduction: \n"
                     f"    beta_x: {(1 - bx_rms_cor / bx_rms_err) * 100:.2f}%\n"
                     f"    beta_y: {(1 - by_rms_cor / by_rms_err) * 100:.2f}%\n")
-    
-        loco.analyze_ring(SC, twiss, SC.ORD.BPM,  useIdealRing=False,  makeplot=False)
+        LOGGER.info(f"RMS dispersion after {x + 1} LOCO iterations:\n"
+                    f"{info_tab}{dx_rms_cor * 100:04.2f}% horizontal\n{info_tab}{dy_rms_cor * 100:04.2f}% vertical  ")
+        LOGGER.info(f"Correction reduction: \n"
+                    f"    dispersion_x: {(1 - dx_rms_cor / dx_rms_err) * 100:.2f}%\n"
+                    f"    dispersion_y: {(1 - dy_rms_cor / dy_rms_err) * 100:.2f}%\n")
+        print('Optics parameters after LOCO')
+        loco.analyze_ring(SC, twiss, SC.ORD.BPM, useIdealRing=False, makeplot=False)
