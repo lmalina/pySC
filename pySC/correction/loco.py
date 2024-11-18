@@ -2,7 +2,7 @@ import at
 import numpy as np
 import multiprocessing
 from pySC.lattice_properties.response_model import SCgetModelRM, SCgetModelDispersion
-from pySC.core.constants import SETTING_ADD, TRACK_ORB
+from pySC.core.constants import SETTING_ADD, SETTING_ABS, TRACK_ORB
 from pySC.core.beam import bpm_reading
 import matplotlib.pyplot as plt
 from scipy.optimize import least_squares
@@ -71,9 +71,10 @@ def measure_closed_orbit_response_matrix(SC, bpm_ords, cm_ords, dkick=1e-5):
     cnt = 0
     for n_dim in range(2):
         for cm_ord in cm_ords[n_dim]:
+            initial_cm_value = SC.get_cm_setpoints(cm_ord, skewness=bool(n_dim))
             SC.set_cm_setpoints(cm_ord, dkick, skewness=bool(n_dim), method=SETTING_ADD)
             closed_orbits1 = bpm_reading(SC, bpm_ords=bpm_ords)[0]
-            SC.set_cm_setpoints(cm_ord, -dkick, skewness=bool(n_dim), method=SETTING_ADD)
+            SC.set_cm_setpoints(cm_ord, initial_cm_value, skewness=bool(n_dim), method=SETTING_ABS)
             response_matrix[:, cnt] = np.ravel((closed_orbits1 - closed_orbits0) / dkick)
             cnt = cnt + 1
     return response_matrix
