@@ -82,8 +82,8 @@ def _plotting_properties(element_type):
         sextupole=dict(label='Sextupoles', facecolor=(0.5, 1.0, 0.5)),
         multipole=dict(label='Multipoles', facecolor=(0.25, 0.75, 0.25)),
         monitor=dict(label='Monitors', facecolor=(0.0, 0.0, 0.0, 1.0), edgecolor=(0.0, 0.0, 0.0, 1), lw=2),
-        hcor=dict(label='Hor. Cor.', facecolor=(0.0, 0.0, 0.0, 0.0), edgecolor=(0.0, 0.0, 0.7, 1), lw=2),
-        vcor=dict(label='Ver. Cor.', facecolor=(0.0, 0.0, 0.0, 0.0), edgecolor=(0.7, 0.0, 0.0, 1), lw=2),
+        hcor=dict(label='Hor. Cor.', facecolor=(0.0, 0.0, 0.7, 1), edgecolor=(0.0, 0.0, 0.7, 1), lw=2),
+        vcor=dict(label='Ver. Cor.', facecolor=(0.7, 0.0, 0.0, 1), edgecolor=(0.7, 0.0, 0.0, 1), lw=2),
         skewquadrupole=dict(label='Skew Quad.', facecolor=(0.0, 0.0, 0.0, 0.0), edgecolor=(75 / 256, 139 / 255, 39 / 255, 1), lw=2)
          )
     return plotting_properties[element_type].copy()
