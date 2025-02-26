@@ -1,23 +1,21 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="../../../">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>pySC.correction.rf &mdash; pySC 0.2.0 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=fa44fd50" />
-      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=988d0652" />
 
   
-  <!--[if lt IE 9]>
-    <script src="../../../_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
-        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
-        <script src="../../../_static/doctools.js?v=9a2dae69"></script>
-        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
@@ -35,9 +33,6 @@
             
               <img src="../../../_static/pySC_logo.png" class="logo" alt="Logo"/>
           </a>
-              <div class="version">
-                0.2
-              </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
@@ -136,21 +131,21 @@
 
 <span class="sd">This module contains functions to correct RF phase and frequency.</span>
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">curve_fit</span><span class="p">,</span> <span class="n">fsolve</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.optimize</span><span class="w"> </span><span class="kn">import</span> <span class="n">curve_fit</span><span class="p">,</span> <span class="n">fsolve</span>
 
-<span class="kn">from</span> <span class="nn">pySC.core.beam</span> <span class="kn">import</span> <span class="n">bpm_reading</span>
-<span class="kn">from</span> <span class="nn">pySC.core.constants</span> <span class="kn">import</span> <span class="n">SPEED_OF_LIGHT</span>
-<span class="kn">from</span> <span class="nn">pySC.utils</span> <span class="kn">import</span> <span class="n">at_wrapper</span><span class="p">,</span> <span class="n">logging_tools</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pySC.core.beam</span><span class="w"> </span><span class="kn">import</span> <span class="n">bpm_reading</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pySC.core.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">SPEED_OF_LIGHT</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pySC.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">at_wrapper</span><span class="p">,</span> <span class="n">logging_tools</span>
 
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging_tools</span><span class="o">.</span><span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 <span class="n">MIN_TURNS_FOR_LINEAR_FIT</span> <span class="o">=</span> <span class="mi">3</span>
 <span class="n">MIN_TURNS_FOR_SINE_FIT</span> <span class="o">=</span> <span class="mi">6</span>
 
 
-<span class="k">def</span> <span class="nf">correct_rf_phase</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">cav_ords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bpm_ords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_steps</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">plot_results</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">plot_progress</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">_sin_fit_fun</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">correct_rf_phase</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">cav_ords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bpm_ords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_steps</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">plot_results</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">plot_progress</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_sin_fit_fun</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">a</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="n">b</span><span class="p">)</span> <span class="o">+</span> <span class="n">c</span>
 
     <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Calibrate RF phase with: </span><span class="se">\n</span><span class="s1"> </span><span class="si">{</span><span class="n">SC</span><span class="o">.</span><span class="n">INJ</span><span class="o">.</span><span class="n">nParticles</span><span class="si">}</span><span class="s1"> Particles </span><span class="se">\n</span><span class="s1"> </span><span class="si">{</span><span class="n">SC</span><span class="o">.</span><span class="n">INJ</span><span class="o">.</span><span class="n">nTurns</span><span class="si">}</span><span class="s1"> Turns &#39;</span>
@@ -192,7 +187,7 @@
     <span class="k">return</span> <span class="n">SC</span>
 
 
-<span class="k">def</span> <span class="nf">correct_rf_frequency</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">cav_ords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bpm_ords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_steps</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">f_range</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mf">1E3</span><span class="p">,</span> <span class="mf">1E3</span><span class="p">),</span> <span class="n">plot_results</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">correct_rf_frequency</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">cav_ords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bpm_ords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_steps</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">f_range</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mf">1E3</span><span class="p">,</span> <span class="mf">1E3</span><span class="p">),</span> <span class="n">plot_results</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                          <span class="n">plot_progress</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
     <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Correct energy error with: </span><span class="se">\n</span><span class="s1"> &#39;</span>
                  <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">SC</span><span class="o">.</span><span class="n">INJ</span><span class="o">.</span><span class="n">nParticles</span><span class="si">}</span><span class="s1"> Particles </span><span class="se">\n</span><span class="s1"> </span><span class="si">{</span><span class="n">SC</span><span class="o">.</span><span class="n">INJ</span><span class="o">.</span><span class="n">nTurns</span><span class="si">}</span><span class="s1"> Turns </span><span class="se">\n</span><span class="s1"> </span><span class="si">{</span><span class="n">SC</span><span class="o">.</span><span class="n">INJ</span><span class="o">.</span><span class="n">nShots</span><span class="si">}</span><span class="s1"> Shots </span><span class="se">\n</span><span class="s1"> </span><span class="si">{</span><span class="n">n_steps</span><span class="si">}</span><span class="s1"> &#39;</span>
@@ -229,7 +224,7 @@
 
 <div class="viewcode-block" id="phase_and_energy_error">
 <a class="viewcode-back" href="../../../modules/correction.html#pySC.correction.rf.phase_and_energy_error">[docs]</a>
-<span class="k">def</span> <span class="nf">phase_and_energy_error</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">cav_ords</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">phase_and_energy_error</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">cav_ords</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;This is not a simple observable in reality.&quot;&quot;&quot;</span>
     <span class="n">lamb</span> <span class="o">=</span> <span class="n">SPEED_OF_LIGHT</span> <span class="o">/</span> <span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="n">cav_ords</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">Frequency</span>
     <span class="n">orbit6</span> <span class="o">=</span> <span class="n">at_wrapper</span><span class="o">.</span><span class="n">findorbit6</span><span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">RING</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
@@ -241,14 +236,14 @@
 
 
 
-<span class="k">def</span> <span class="nf">_check_data</span><span class="p">(</span><span class="n">test_vec</span><span class="p">,</span> <span class="n">bpm_shift</span><span class="p">,</span> <span class="n">bpm_shift_err</span><span class="p">,</span> <span class="n">min_num_points</span><span class="o">=</span><span class="mi">6</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_data</span><span class="p">(</span><span class="n">test_vec</span><span class="p">,</span> <span class="n">bpm_shift</span><span class="p">,</span> <span class="n">bpm_shift_err</span><span class="p">,</span> <span class="n">min_num_points</span><span class="o">=</span><span class="mi">6</span><span class="p">):</span>
     <span class="n">mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">bpm_shift</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">bpm_shift</span><span class="p">))</span> <span class="o">&lt;</span> <span class="n">min_num_points</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Not enough data points for fit.&#39;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">test_vec</span><span class="p">[</span><span class="n">mask</span><span class="p">],</span> <span class="n">bpm_shift</span><span class="p">[</span><span class="n">mask</span><span class="p">],</span> <span class="n">bpm_shift_err</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
 
 
-<span class="k">def</span> <span class="nf">_get_tbt_energy_shift</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">bpm_ords</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_tbt_energy_shift</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">bpm_ords</span><span class="p">):</span>
     <span class="n">bpm_readings</span> <span class="o">=</span> <span class="n">bpm_reading</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">bpm_ords</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">x_reading</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">bpm_readings</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:],</span> <span class="p">(</span><span class="n">SC</span><span class="o">.</span><span class="n">INJ</span><span class="o">.</span><span class="n">nTurns</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">bpm_ords</span><span class="p">)))</span>
     <span class="n">mean_tbt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">x_reading</span> <span class="o">-</span> <span class="n">x_reading</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
@@ -262,7 +257,7 @@
     <span class="k">return</span> <span class="n">slope</span><span class="p">,</span> <span class="n">err_slope</span><span class="p">,</span> <span class="n">mean_tbt</span>
 
 
-<span class="k">def</span> <span class="nf">_plot_progress</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">mean_tbt</span><span class="p">,</span> <span class="n">phase</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_plot_progress</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">mean_tbt</span><span class="p">,</span> <span class="n">phase</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
     <span class="n">test_vec</span><span class="p">,</span> <span class="n">bpm_shift</span><span class="p">,</span> <span class="n">bpm_shift_err</span> <span class="o">=</span> <span class="n">data</span>
     <span class="n">f</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">nrows</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
     <span class="n">y_scale</span> <span class="o">=</span> <span class="mf">1e6</span>
@@ -277,7 +272,7 @@
     <span class="n">f</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 
 
-<span class="k">def</span> <span class="nf">_plot_results</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">fit</span><span class="p">,</span> <span class="n">corrected</span><span class="p">,</span> <span class="n">x_scale</span><span class="p">,</span> <span class="n">phase</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_plot_results</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">fit</span><span class="p">,</span> <span class="n">corrected</span><span class="p">,</span> <span class="n">x_scale</span><span class="p">,</span> <span class="n">phase</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
     <span class="n">test_vec</span><span class="p">,</span> <span class="n">bpm_shift</span><span class="p">,</span> <span class="n">bpm_shift_err</span> <span class="o">=</span> <span class="n">data</span>
     <span class="n">f</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">nrows</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">y_scale</span> <span class="o">=</span> <span class="mf">1e6</span>
@@ -292,14 +287,14 @@
     <span class="n">f</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 
 
-<span class="k">def</span> <span class="nf">_fold_phase</span><span class="p">(</span><span class="n">delta_phi</span><span class="p">,</span> <span class="n">lamb</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_fold_phase</span><span class="p">(</span><span class="n">delta_phi</span><span class="p">,</span> <span class="n">lamb</span><span class="p">):</span>
     <span class="n">dphi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">remainder</span><span class="p">(</span><span class="n">delta_phi</span><span class="p">,</span> <span class="n">lamb</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">dphi</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">lamb</span> <span class="o">/</span> <span class="mi">2</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">dphi</span> <span class="o">-</span> <span class="n">lamb</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">dphi</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">dphi</span>
 
 
-<span class="k">def</span> <span class="nf">_check_inputs</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">cav_ords</span><span class="p">,</span> <span class="n">bpm_ords</span><span class="p">,</span> <span class="n">n_steps</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_inputs</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">cav_ords</span><span class="p">,</span> <span class="n">bpm_ords</span><span class="p">,</span> <span class="n">n_steps</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">cav_ords</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">cav_ords</span> <span class="o">=</span> <span class="n">SC</span><span class="o">.</span><span class="n">ORD</span><span class="o">.</span><span class="n">RF</span>
     <span class="k">if</span> <span class="n">bpm_ords</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>

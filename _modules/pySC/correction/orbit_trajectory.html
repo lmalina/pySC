@@ -1,23 +1,21 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="../../../">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>pySC.correction.orbit_trajectory &mdash; pySC 0.2.0 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=fa44fd50" />
-      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=988d0652" />
 
   
-  <!--[if lt IE 9]>
-    <script src="../../../_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
-        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
-        <script src="../../../_static/doctools.js?v=9a2dae69"></script>
-        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
@@ -35,9 +33,6 @@
             
               <img src="../../../_static/pySC_logo.png" class="logo" alt="Logo"/>
           </a>
-              <div class="version">
-                0.2
-              </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
@@ -140,12 +135,12 @@
 <span class="sd">    registered CMs in SC.ORD.CM or cm_ords if provided</span>
 <span class="sd">    assumes all BPMs are used both horizontal and vertical plane</span>
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Tuple</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tuple</span>
 
-<span class="kn">from</span> <span class="nn">pySC.core.beam</span> <span class="kn">import</span> <span class="n">bpm_reading</span>
-<span class="kn">from</span> <span class="nn">pySC.core.constants</span> <span class="kn">import</span> <span class="n">SETTING_ADD</span>
-<span class="kn">from</span> <span class="nn">pySC.utils</span> <span class="kn">import</span> <span class="n">logging_tools</span><span class="p">,</span> <span class="n">sc_tools</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pySC.core.beam</span><span class="w"> </span><span class="kn">import</span> <span class="n">bpm_reading</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pySC.core.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">SETTING_ADD</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pySC.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">logging_tools</span><span class="p">,</span> <span class="n">sc_tools</span>
 
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging_tools</span><span class="o">.</span><span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 <span class="n">NREPRO</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span>
@@ -156,7 +151,7 @@
 
 <div class="viewcode-block" id="first_turn">
 <a class="viewcode-back" href="../../../modules/correction.html#pySC.correction.orbit_trajectory.first_turn">[docs]</a>
-<span class="k">def</span> <span class="nf">first_turn</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">response_matrix</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cm_ords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bpm_ords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">maxsteps</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="o">**</span><span class="n">pinv_params</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">first_turn</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">response_matrix</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cm_ords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bpm_ords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">maxsteps</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="o">**</span><span class="n">pinv_params</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Achieves one-turn transmission</span>
 
@@ -226,7 +221,7 @@
 
 <div class="viewcode-block" id="stitch">
 <a class="viewcode-back" href="../../../modules/correction.html#pySC.correction.orbit_trajectory.stitch">[docs]</a>
-<span class="k">def</span> <span class="nf">stitch</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">response_matrix</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cm_ords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bpm_ords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_bpms</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">maxsteps</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="o">**</span><span class="n">pinv_params</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">stitch</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">response_matrix</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cm_ords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bpm_ords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_bpms</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">maxsteps</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="o">**</span><span class="n">pinv_params</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Achieves 2-turn transmission</span>
 
@@ -312,7 +307,7 @@
 
 <div class="viewcode-block" id="balance">
 <a class="viewcode-back" href="../../../modules/correction.html#pySC.correction.orbit_trajectory.balance">[docs]</a>
-<span class="k">def</span> <span class="nf">balance</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">response_matrix</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cm_ords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bpm_ords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span> <span class="n">maxsteps</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="o">**</span><span class="n">pinv_params</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">balance</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">response_matrix</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cm_ords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bpm_ords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span> <span class="n">maxsteps</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="o">**</span><span class="n">pinv_params</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Balance two-turn BPM readings</span>
 
@@ -381,7 +376,7 @@
 
 <div class="viewcode-block" id="correct">
 <a class="viewcode-back" href="../../../modules/correction.html#pySC.correction.orbit_trajectory.correct">[docs]</a>
-<span class="k">def</span> <span class="nf">correct</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">response_matrix</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cm_ords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bpm_ords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">maxsteps</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">scaleDisp</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">pinv_params</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">correct</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">response_matrix</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cm_ords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bpm_ords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">maxsteps</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">scaleDisp</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">pinv_params</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Iterative orbit/trajectory correction</span>
 
@@ -463,7 +458,7 @@
 
 
 
-<span class="k">def</span> <span class="nf">_check_ords</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">response_matrix</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">bpm_ords</span><span class="p">,</span> <span class="n">cm_ords</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_ords</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">response_matrix</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">bpm_ords</span><span class="p">,</span> <span class="n">cm_ords</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">cm_ords</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">cm_ords</span> <span class="o">=</span> <span class="n">SC</span><span class="o">.</span><span class="n">ORD</span><span class="o">.</span><span class="n">CM</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">bpm_ords</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -479,7 +474,7 @@
     <span class="k">return</span> <span class="n">bpm_ords</span><span class="p">,</span> <span class="n">cm_ords</span><span class="p">,</span> <span class="n">reference</span>
 
 
-<span class="k">def</span> <span class="nf">_bpm_reading_and_logging</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">bpm_ords</span><span class="p">,</span> <span class="n">ind_history</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">orb_history</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_bpm_reading_and_logging</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">bpm_ords</span><span class="p">,</span> <span class="n">ind_history</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">orb_history</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="n">bpm_readings</span> <span class="o">=</span> <span class="n">bpm_reading</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">bpm_ords</span><span class="o">=</span><span class="n">bpm_ords</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">bpms_reached</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">bpm_readings</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
     <span class="k">if</span> <span class="n">ind_history</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">orb_history</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -489,7 +484,7 @@
     <span class="k">return</span> <span class="n">bpm_readings</span><span class="p">,</span> <span class="n">ind_history</span><span class="p">,</span> <span class="n">orb_history</span>  <span class="c1"># assumes no bad BPMs</span>
 
 
-<span class="k">def</span> <span class="nf">_get_last_cm</span><span class="p">(</span><span class="n">lastBPMidx</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">bpm_ords</span><span class="p">,</span> <span class="n">cm_ords</span><span class="p">):</span>  <span class="c1"># Refactored</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_last_cm</span><span class="p">(</span><span class="n">lastBPMidx</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">bpm_ords</span><span class="p">,</span> <span class="n">cm_ords</span><span class="p">):</span>  <span class="c1"># Refactored</span>
     <span class="c1"># Returns last CM ords and index of last CMs</span>
     <span class="k">if</span> <span class="n">lastBPMidx</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">bpm_ords</span><span class="p">):</span>  <span class="c1"># If there is no beam loss in the first turn</span>
         <span class="k">return</span> <span class="n">cm_ords</span><span class="p">[</span><span class="o">-</span><span class="n">n</span><span class="p">:],</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cm_ords</span><span class="p">)</span> <span class="o">-</span> <span class="n">n</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">cm_ords</span><span class="p">))</span>  <span class="c1"># ... just return the last n CMs</span>
@@ -498,13 +493,13 @@
     <span class="k">return</span> <span class="n">cm_ords</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">cm_ords</span> <span class="o">&lt;=</span> <span class="n">bpm_ords</span><span class="p">[</span><span class="n">lastBPMidx</span><span class="p">])[</span><span class="mi">0</span><span class="p">][</span><span class="o">-</span><span class="n">n</span><span class="p">:]],</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">cm_ords</span> <span class="o">&lt;=</span> <span class="n">bpm_ords</span><span class="p">[</span><span class="n">lastBPMidx</span><span class="p">])[</span><span class="mi">0</span><span class="p">][</span><span class="o">-</span><span class="n">n</span><span class="p">:]</span>
 
 
-<span class="k">def</span> <span class="nf">_is_repro</span><span class="p">(</span><span class="n">hist</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_repro</span><span class="p">(</span><span class="n">hist</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">hist</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">False</span>
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">hist</span><span class="p">[</span><span class="o">-</span><span class="n">n</span><span class="p">:])</span> <span class="o">-</span> <span class="n">hist</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span> <span class="o">==</span> <span class="mi">0</span>
 
 
-<span class="k">def</span> <span class="nf">_golden_donut_diffs</span><span class="p">(</span><span class="n">r0</span><span class="p">,</span> <span class="n">r1</span><span class="p">,</span> <span class="n">n_points</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_golden_donut_diffs</span><span class="p">(</span><span class="n">r0</span><span class="p">,</span> <span class="n">r1</span><span class="p">,</span> <span class="n">n_points</span><span class="p">):</span>
     <span class="n">r02</span><span class="p">,</span> <span class="n">r12</span> <span class="o">=</span> <span class="n">r0</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">r1</span> <span class="o">**</span> <span class="mi">2</span>
     <span class="n">ints</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n_points</span><span class="p">)</span>
     <span class="n">phi</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="p">((</span><span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>  <span class="c1"># golden ratio</span>
@@ -512,13 +507,13 @@
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span> <span class="n">pos_2d</span><span class="p">)),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_is_stable_or_converged</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="n">hist</span><span class="p">):</span>  <span class="c1"># TODO rethink</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_stable_or_converged</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="n">hist</span><span class="p">):</span>  <span class="c1"># TODO rethink</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">hist</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">False</span>
     <span class="k">return</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">hist</span><span class="p">[</span><span class="o">-</span><span class="n">n</span><span class="p">:])</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">hist</span><span class="p">[</span><span class="o">-</span><span class="n">n</span><span class="p">:]))</span> <span class="o">&lt;</span> <span class="n">eps</span>
 
 
-<span class="k">def</span> <span class="nf">_wiggling</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">bpm_ords</span><span class="p">,</span> <span class="n">cm_ords</span><span class="p">,</span> <span class="n">transmission_limit</span><span class="p">,</span> <span class="n">nums_correctors</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">9</span><span class="p">)):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_wiggling</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">bpm_ords</span><span class="p">,</span> <span class="n">cm_ords</span><span class="p">,</span> <span class="n">transmission_limit</span><span class="p">,</span> <span class="n">nums_correctors</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">9</span><span class="p">)):</span>
     <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Wiggling&#39;</span><span class="p">)</span>
     <span class="n">dpts</span> <span class="o">=</span> <span class="n">_golden_donut_diffs</span><span class="p">(</span><span class="n">WIGGLE_ANGLE_RANGE</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">WIGGLE_ANGLE_RANGE</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">WIGGLE_ANGLE_STEPS</span><span class="p">)</span>
     <span class="n">bpm_readings</span><span class="p">,</span> <span class="n">transmission_history</span><span class="p">,</span> <span class="n">rms_orbit_history</span> <span class="o">=</span> <span class="n">_bpm_reading_and_logging</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="n">bpm_ords</span><span class="o">=</span><span class="n">bpm_ords</span><span class="p">,</span> <span class="n">ind_history</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">orb_history</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>  <span class="c1"># Inject...</span>

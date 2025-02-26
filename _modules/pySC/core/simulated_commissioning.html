@@ -1,23 +1,21 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="../../../">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>pySC.core.simulated_commissioning &mdash; pySC 0.2.0 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=fa44fd50" />
-      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=988d0652" />
 
   
-  <!--[if lt IE 9]>
-    <script src="../../../_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
-        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
-        <script src="../../../_static/doctools.js?v=9a2dae69"></script>
-        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
@@ -35,9 +33,6 @@
             
               <img src="../../../_static/pySC_logo.png" class="logo" alt="Logo"/>
           </a>
-              <div class="version">
-                0.2
-              </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
@@ -137,26 +132,26 @@
 <span class="sd">This module contains the main data structure of ``pySC`` package</span>
 <span class="sd">built up around the ``at.Lattice`` under study.</span>
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">import</span> <span class="nn">copy</span>
-<span class="kn">import</span> <span class="nn">re</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">List</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">List</span>
 
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">at</span> <span class="kn">import</span> <span class="n">Lattice</span>
-<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">ndarray</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">at</span><span class="w"> </span><span class="kn">import</span> <span class="n">Lattice</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">ndarray</span>
 
-<span class="kn">from</span> <span class="nn">pySC.core.classes</span> <span class="kn">import</span> <span class="n">Injection</span><span class="p">,</span> <span class="n">Sigmas</span><span class="p">,</span> <span class="n">Indices</span><span class="p">,</span> <span class="n">DotDict</span>
-<span class="kn">from</span> <span class="nn">pySC.core.constants</span> <span class="kn">import</span> <span class="p">(</span><span class="n">BPM_ERROR_FIELDS</span><span class="p">,</span> <span class="n">RF_ERROR_FIELDS</span><span class="p">,</span> <span class="n">RF_PROPERTIES</span><span class="p">,</span> <span class="n">MAGNET_TYPE_FIELDS</span><span class="p">,</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pySC.core.classes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Injection</span><span class="p">,</span> <span class="n">Sigmas</span><span class="p">,</span> <span class="n">Indices</span><span class="p">,</span> <span class="n">DotDict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pySC.core.constants</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span><span class="n">BPM_ERROR_FIELDS</span><span class="p">,</span> <span class="n">RF_ERROR_FIELDS</span><span class="p">,</span> <span class="n">RF_PROPERTIES</span><span class="p">,</span> <span class="n">MAGNET_TYPE_FIELDS</span><span class="p">,</span>
                                  <span class="n">MAGNET_ERROR_FIELDS</span><span class="p">,</span> <span class="n">AB</span><span class="p">,</span> <span class="n">SUPPORT_TYPES</span><span class="p">,</span> <span class="n">SUPPORT_ERROR_FIELDS</span><span class="p">,</span> <span class="n">SETTING_ABS</span><span class="p">,</span> <span class="n">SETTING_REL</span><span class="p">,</span>
                                  <span class="n">SETTING_ADD</span><span class="p">,</span> <span class="n">NUM_TO_AB</span><span class="p">,</span> <span class="n">SETPOINT</span><span class="p">)</span>
-<span class="kn">from</span> <span class="nn">pySC.utils</span> <span class="kn">import</span> <span class="n">at_wrapper</span><span class="p">,</span> <span class="n">classdef_tools</span><span class="p">,</span> <span class="n">logging_tools</span><span class="p">,</span> <span class="n">sc_tools</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pySC.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">at_wrapper</span><span class="p">,</span> <span class="n">classdef_tools</span><span class="p">,</span> <span class="n">logging_tools</span><span class="p">,</span> <span class="n">sc_tools</span>
 
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging_tools</span><span class="o">.</span><span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="SimulatedCommissioning">
 <a class="viewcode-back" href="../../../modules/core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning">[docs]</a>
-<span class="k">class</span> <span class="nc">SimulatedCommissioning</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SimulatedCommissioning</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    The main structure of ``pySC``, which holds all the information about</span>
 <span class="sd">    lattice error sources and errors, injection settings and its errors.</span>
@@ -195,7 +190,7 @@
 <span class="sd">        plot:</span>
 <span class="sd">            (default=False) a boolean flag to trigger plots</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ring</span><span class="p">:</span> <span class="n">Lattice</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ring</span><span class="p">:</span> <span class="n">Lattice</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">RING</span><span class="p">:</span> <span class="n">Lattice</span> <span class="o">=</span> <span class="n">ring</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">IDEALRING</span><span class="p">:</span> <span class="n">Lattice</span> <span class="o">=</span> <span class="n">ring</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">ind</span><span class="p">,</span> <span class="n">element</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ring</span><span class="p">):</span>
@@ -209,7 +204,7 @@
 
 <div class="viewcode-block" id="SimulatedCommissioning.register_bpms">
 <a class="viewcode-back" href="../../../modules/core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning.register_bpms">[docs]</a>
-    <span class="k">def</span> <span class="nf">register_bpms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ords</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">register_bpms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ords</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;registers BPMs specified by the `ords` (element indices in the lattice) in the `SC` class instance</span>
 <span class="sd">        and initializes all required fields in the lattice elements. The ordinates of all registered BPMs are stored in</span>
 <span class="sd">        `SC.ORD.BPM`.</span>
@@ -277,7 +272,7 @@
 
 <div class="viewcode-block" id="SimulatedCommissioning.register_cavities">
 <a class="viewcode-back" href="../../../modules/core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning.register_cavities">[docs]</a>
-    <span class="k">def</span> <span class="nf">register_cavities</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ords</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">register_cavities</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ords</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Register cavities specified in `ords` in `SC` by initializing all required fields in the</span>
 <span class="sd">        corresponding cavity lattice elements and storing the ordinates in `SC.ORD.RF`.</span>
 
@@ -333,7 +328,7 @@
 
 <div class="viewcode-block" id="SimulatedCommissioning.register_magnets">
 <a class="viewcode-back" href="../../../modules/core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning.register_magnets">[docs]</a>
-    <span class="k">def</span> <span class="nf">register_magnets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ords</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>  <span class="c1"># TODO docstring is too long also verify all relates to Python</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">register_magnets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ords</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>  <span class="c1"># TODO docstring is too long also verify all relates to Python</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Registers magnets specified by `ords` in the `SC` structure and initializes all required fields</span>
 <span class="sd">        in the lattice elements. The ordinates of all registered magnets are stored in `SC.ORD.Magnet`.</span>
@@ -488,7 +483,7 @@
 
 <div class="viewcode-block" id="SimulatedCommissioning.register_supports">
 <a class="viewcode-back" href="../../../modules/core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning.register_supports">[docs]</a>
-    <span class="k">def</span> <span class="nf">register_supports</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">support_ords</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span> <span class="n">support_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">register_supports</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">support_ords</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span> <span class="n">support_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Initializes magnet support structures such as sections, plinths and girders in SC. The function</span>
 <span class="sd">        input be given as name-value pairs, starting with the structure type and structure ordinates</span>
 <span class="sd">        defining start-end endpoints. Optional arguments are set as the uncertainties of e.g. girder</span>
@@ -595,7 +590,7 @@
 
 <div class="viewcode-block" id="SimulatedCommissioning.set_systematic_multipole_errors">
 <a class="viewcode-back" href="../../../modules/core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning.set_systematic_multipole_errors">[docs]</a>
-    <span class="k">def</span> <span class="nf">set_systematic_multipole_errors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ords</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span> <span class="n">BA</span><span class="p">,</span> <span class="n">order</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">skewness</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_systematic_multipole_errors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ords</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span> <span class="n">BA</span><span class="p">,</span> <span class="n">order</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">skewness</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Applies multipole errors specified in `AB` in the lattice elements `ords` of `RING` depending on</span>
 <span class="sd">        the specified options.</span>
@@ -637,7 +632,7 @@
 
 <div class="viewcode-block" id="SimulatedCommissioning.set_random_multipole_errors">
 <a class="viewcode-back" href="../../../modules/core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning.set_random_multipole_errors">[docs]</a>
-    <span class="k">def</span> <span class="nf">set_random_multipole_errors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ords</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span> <span class="n">BA</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_random_multipole_errors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ords</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span> <span class="n">BA</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Applies random multipole errors specified in `BA` in the lattice elements `ords` of `RING`.</span>
 <span class="sd">        It generates random multipole components with a 2-sigma truncated Gaussian distribution</span>
@@ -672,7 +667,7 @@
 
 <div class="viewcode-block" id="SimulatedCommissioning.apply_errors">
 <a class="viewcode-back" href="../../../modules/core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning.apply_errors">[docs]</a>
-    <span class="k">def</span> <span class="nf">apply_errors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nsigmas</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">2</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">apply_errors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nsigmas</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">2</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Applies errors to cavities, injection trajectory, BPMs, circumference,</span>
 <span class="sd">        support structures and magnets if the corresponding uncertainties defined in</span>
@@ -727,7 +722,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">update_cavities</span><span class="p">()</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_apply_support_alignment_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nsigmas</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_apply_support_alignment_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nsigmas</span><span class="p">):</span>
         <span class="n">s_pos</span> <span class="o">=</span> <span class="n">at_wrapper</span><span class="o">.</span><span class="n">findspos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RING</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">support_type</span> <span class="ow">in</span> <span class="n">SUPPORT_TYPES</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">ordPair</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ORD</span><span class="p">[</span><span class="n">support_type</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">:</span>
@@ -769,7 +764,7 @@
 
 <div class="viewcode-block" id="SimulatedCommissioning.update_cavities">
 <a class="viewcode-back" href="../../../modules/core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning.update_cavities">[docs]</a>
-    <span class="k">def</span> <span class="nf">update_cavities</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ords</span><span class="p">:</span> <span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_cavities</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ords</span><span class="p">:</span> <span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Updates the cavity fields `Voltage`, `Frequency` and `TimeLag` in `SC.RING` as specified in `ords`.</span>
 <span class="sd">        If no ordinates are given explicitly, all registered cavities defined in `SC.ORD.RF` are</span>
@@ -791,7 +786,7 @@
 
 <div class="viewcode-block" id="SimulatedCommissioning.update_magnets">
 <a class="viewcode-back" href="../../../modules/core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning.update_magnets">[docs]</a>
-    <span class="k">def</span> <span class="nf">update_magnets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ords</span><span class="p">:</span> <span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_magnets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ords</span><span class="p">:</span> <span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Updates the magnets specified in `RING` as specified in `ords`. If no ordinates are given</span>
 <span class="sd">        explicitly, all registered magnets defined in `SC.ORD.Magnet` are updated. For each magnet the</span>
@@ -825,7 +820,7 @@
 
 <div class="viewcode-block" id="SimulatedCommissioning.update_supports">
 <a class="viewcode-back" href="../../../modules/core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning.update_supports">[docs]</a>
-    <span class="k">def</span> <span class="nf">update_supports</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">offset_bpms</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">offset_magnets</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_supports</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">offset_bpms</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">offset_magnets</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This function updates the offsets and rolls of the elements in `SC.RING`</span>
 <span class="sd">        based on the current support errors, by setting the lattice fields `T1`, `T2`, and</span>
@@ -866,7 +861,7 @@
 
 <div class="viewcode-block" id="SimulatedCommissioning.support_offset_and_roll">
 <a class="viewcode-back" href="../../../modules/core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning.support_offset_and_roll">[docs]</a>
-    <span class="k">def</span> <span class="nf">support_offset_and_roll</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s_locations</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">ndarray</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">support_offset_and_roll</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s_locations</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">ndarray</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This function evaluates the total offsets, roll, pitch and yaw angles of the support structures that have</span>
 <span class="sd">        been defined via *SC.register_support* at the longitudinal positions `s` by linearly interpolating</span>
@@ -934,7 +929,7 @@
 
 <div class="viewcode-block" id="SimulatedCommissioning.set_cavity_setpoints">
 <a class="viewcode-back" href="../../../modules/core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning.set_cavity_setpoints">[docs]</a>
-    <span class="k">def</span> <span class="nf">set_cavity_setpoints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ords</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">ndarray</span><span class="p">],</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_cavity_setpoints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ords</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">ndarray</span><span class="p">],</span>
                              <span class="n">setpoints</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">ndarray</span><span class="p">],</span>
                              <span class="n">param</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">SETTING_ABS</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -975,7 +970,7 @@
 
 <div class="viewcode-block" id="SimulatedCommissioning.get_cm_setpoints">
 <a class="viewcode-back" href="../../../modules/core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning.get_cm_setpoints">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_cm_setpoints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ords</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">ndarray</span><span class="p">],</span> <span class="n">skewness</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ndarray</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_cm_setpoints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ords</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">ndarray</span><span class="p">],</span> <span class="n">skewness</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 
 <span class="sd">        Return current dipole Corrector Magnets (CM) setpoints</span>
@@ -1003,7 +998,7 @@
 
 <div class="viewcode-block" id="SimulatedCommissioning.set_cm_setpoints">
 <a class="viewcode-back" href="../../../modules/core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning.set_cm_setpoints">[docs]</a>
-    <span class="k">def</span> <span class="nf">set_cm_setpoints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ords</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">ndarray</span><span class="p">],</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_cm_setpoints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ords</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">ndarray</span><span class="p">],</span>
                          <span class="n">setpoints</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">ndarray</span><span class="p">],</span>
                          <span class="n">skewness</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">SETTING_ABS</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -1055,7 +1050,7 @@
 
 <div class="viewcode-block" id="SimulatedCommissioning.set_magnet_setpoints">
 <a class="viewcode-back" href="../../../modules/core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning.set_magnet_setpoints">[docs]</a>
-    <span class="k">def</span> <span class="nf">set_magnet_setpoints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ords</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">ndarray</span><span class="p">],</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_magnet_setpoints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ords</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">ndarray</span><span class="p">],</span>
                              <span class="n">setpoints</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">ndarray</span><span class="p">],</span>
                              <span class="n">skewness</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">order</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">SETTING_ABS</span><span class="p">,</span>
                              <span class="n">dipole_compensation</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
@@ -1117,14 +1112,14 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">update_magnets</span><span class="p">(</span><span class="n">ords_1d</span><span class="p">)</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_dipole_compensation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">ord</span><span class="p">,</span> <span class="n">setpoint</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_dipole_compensation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">ord</span><span class="p">,</span> <span class="n">setpoint</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="nb">ord</span><span class="p">],</span> <span class="s1">&#39;BendingAngle&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">ord</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ORD</span><span class="o">.</span><span class="n">HCM</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set_cm_setpoints</span><span class="p">(</span>
                 <span class="nb">ord</span><span class="p">,</span>
                 <span class="p">(</span><span class="n">setpoint</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="nb">ord</span><span class="p">]</span><span class="o">.</span><span class="n">SetPointB</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="nb">ord</span><span class="p">]</span><span class="o">.</span><span class="n">NomPolynomB</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="nb">ord</span><span class="p">]</span><span class="o">.</span><span class="n">BendingAngle</span><span class="p">,</span>
                 <span class="n">skewness</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">SETTING_ADD</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">very_deep_copy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">very_deep_copy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">copied_structure</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="n">copied_structure</span><span class="o">.</span><span class="n">RING</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">RING</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">()</span>
         <span class="n">copied_structure</span><span class="o">.</span><span class="n">IDEALRING</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">IDEALRING</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">()</span>
@@ -1135,7 +1130,7 @@
 
 <div class="viewcode-block" id="SimulatedCommissioning.verify_structure">
 <a class="viewcode-back" href="../../../modules/core_structure.html#pySC.core.simulated_commissioning.SimulatedCommissioning.verify_structure">[docs]</a>
-    <span class="k">def</span> <span class="nf">verify_structure</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">verify_structure</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Verifies the integrity of SimilatedCommissionining class instance and warns if things look fishy.</span>
 <span class="sd">        If you find something that is missing please contact us.</span>
@@ -1232,11 +1227,11 @@
 
 
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">_check_kwargs</span><span class="p">(</span><span class="n">kwargs</span><span class="p">,</span> <span class="n">allowed_options</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_kwargs</span><span class="p">(</span><span class="n">kwargs</span><span class="p">,</span> <span class="n">allowed_options</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">unknown_keys</span> <span class="o">:=</span> <span class="p">[</span><span class="n">key</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">allowed_options</span><span class="p">]):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown keywords </span><span class="si">{</span><span class="n">unknown_keys</span><span class="si">}</span><span class="s2">. Allowed keywords are </span><span class="si">{</span><span class="n">allowed_options</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_optional_magnet_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ind</span><span class="p">,</span> <span class="n">MAGords</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_optional_magnet_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ind</span><span class="p">,</span> <span class="n">MAGords</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">if</span> <span class="s1">&#39;CF&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span><span class="o">.</span><span class="n">CombinedFunction</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">if</span> <span class="n">classdef_tools</span><span class="o">.</span><span class="n">intersect</span><span class="p">((</span><span class="s2">&quot;HCM&quot;</span><span class="p">,</span> <span class="s2">&quot;VCM&quot;</span><span class="p">),</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="n">ind</span><span class="p">],</span> <span class="s1">&#39;CMlimit&#39;</span><span class="p">):</span>
@@ -1252,7 +1247,7 @@
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Non-unique element index </span><span class="si">{</span><span class="n">ind</span><span class="si">}</span><span class="s2"> found together with ``MasterOf``&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span><span class="o">.</span><span class="n">MasterOf</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;MasterOf&#39;</span><span class="p">][:,</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">MAGords</span> <span class="o">==</span> <span class="n">ind</span><span class="p">)]</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">_update_magnets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source_ord</span><span class="p">,</span> <span class="n">target_ord</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_update_magnets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source_ord</span><span class="p">,</span> <span class="n">target_ord</span><span class="p">):</span>
         <span class="n">setpoints_a</span><span class="p">,</span> <span class="n">setpoints_b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="n">source_ord</span><span class="p">]</span><span class="o">.</span><span class="n">SetPointA</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="n">source_ord</span><span class="p">]</span><span class="o">.</span><span class="n">SetPointB</span>
         <span class="n">polynoms</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">A</span><span class="o">=</span><span class="n">setpoints_a</span> <span class="o">*</span> <span class="n">classdef_tools</span><span class="o">.</span><span class="n">add_padded</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">setpoints_a</span><span class="p">)),</span> <span class="bp">self</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="n">source_ord</span><span class="p">]</span><span class="o">.</span><span class="n">CalErrorA</span><span class="p">),</span>
                         <span class="n">B</span><span class="o">=</span><span class="n">setpoints_b</span> <span class="o">*</span> <span class="n">classdef_tools</span><span class="o">.</span><span class="n">add_padded</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">setpoints_b</span><span class="p">)),</span> <span class="bp">self</span><span class="o">.</span><span class="n">RING</span><span class="p">[</span><span class="n">source_ord</span><span class="p">]</span><span class="o">.</span><span class="n">CalErrorB</span><span class="p">))</span>
