@@ -1,4 +1,6 @@
 # pySC
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Flmalina%2FpySC.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Flmalina%2FpySC?ref=badge_shield)
+
 Python version of Simulated Commissioning toolkit for synchrotrons [SC](https://github.com/ThorstenHellert/SC), originally written in Matlab.
 
 ## Documentation
@@ -15,3 +17,7 @@ VCS in editable mode with all extra dependencies
 git clone https://github.com/lmalina/pySC
 pip install --editable "pySC[all]"
 ```
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Flmalina%2FpySC.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Flmalina%2FpySC?ref=badge_large)
