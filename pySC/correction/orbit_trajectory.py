@@ -238,7 +238,7 @@ def balance(SC, response_matrix, reference=None, cm_ords=None, bpm_ords=None, ep
     raise RuntimeError('Balancing two turns: FAIL (maxsteps reached, unstable)')
 
 
-def correct(SC, response_matrix, reference=None, cm_ords=None, bpm_ords=None, eps=1e-4, target=0, maxsteps=30, scaleDisp=0, **pinv_params):
+def correct(SC, response_matrix, reference=None, cm_ords=None, bpm_ords=None, eps=1e-4, target=0, maxsteps=30, scaleDisp=0, Mplus=None, **pinv_params):
     """
     Iterative orbit/trajectory correction
 
@@ -287,7 +287,19 @@ def correct(SC, response_matrix, reference=None, cm_ords=None, bpm_ords=None, ep
     bpm_ords, cm_ords, reference = _check_ords(SC, response_matrix[:, :-1] if scaleDisp else response_matrix,
                                                reference, bpm_ords, cm_ords)
     bpm_readings, transmission_history, rms_orbit_history = _bpm_reading_and_logging(SC, bpm_ords=bpm_ords)  # Inject ...
-    Mplus = sc_tools.pinv(response_matrix, **pinv_params)
+    
+    # Initial validation
+    if Mplus is not None:
+        expected_shape = (response_matrix.shape[1], response_matrix.shape[0])
+        if Mplus.shape != expected_shape:
+            raise ValueError(f"Invalid Mplus shape. Expected {expected_shape}, got {Mplus.shape}")
+    
+    # Pseudoinverse handling
+    if Mplus is None:
+        Mplus = sc_tools.pinv(response_matrix, **pinv_params)
+        LOGGER.debug(f'Computed pseudoinverse with params: {pinv_params}')
+    else:
+        LOGGER.debug('Using user-provided pseudoinverse matrix')
 
     # Main loop
     for steps in range(maxsteps):
